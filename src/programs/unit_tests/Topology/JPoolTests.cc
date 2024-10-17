@@ -1,92 +1,86 @@
 
+#include "JANA/JApplicationFwd.h"
+#include "JANA/Services/JComponentManager.h"
 #include <catch.hpp>
-#include <JANA/Topology/JPool.h>
+#include <JANA/Topology/JEventPool.h>
 
 namespace jana {
 namespace jpooltests {
 
-struct Event {
-    int x=3;
-    double y=7.8;
-    bool* was_dtor_called = nullptr;
-
-    ~Event() {
-        if (was_dtor_called != nullptr) {
-            *was_dtor_called = true;
-        }
-    }
-};
 
 TEST_CASE("JPoolTests_SingleLocationLimitEvents") {
+    JApplication app;
+    app.Initialize();
+    auto jcm = app.GetService<JComponentManager>();
 
-    JPool<Event> pool(3, 1, true);
+    JEventPool pool(jcm, 3, 1, true);
     pool.init();
 
-    Event* e = pool.get(0);
+    auto* e = pool.get(0);
     REQUIRE(e != nullptr);
-    REQUIRE(e->x == 3);
+    REQUIRE((*e)->GetEventNumber() == 0); // Will segfault if not initialized
 
-    Event* f = pool.get(0);
+    auto* f = pool.get(0);
     REQUIRE(f != nullptr);
-    REQUIRE(f->x == 3);
+    REQUIRE((*f)->GetEventNumber() == 0);
 
-    Event* g = pool.get(0);
+    auto* g = pool.get(0);
     REQUIRE(g != nullptr);
-    REQUIRE(g->x == 3);
+    REQUIRE((*g)->GetEventNumber() == 0);
 
-    Event* h = pool.get(0);
+    auto* h = pool.get(0);
     REQUIRE(h == nullptr);
 
-    f->x = 5;
+    (*f)->SetEventNumber(5);
     pool.put(f, true, 0);
 
     h = pool.get(0);
     REQUIRE(h != nullptr);
-    REQUIRE(h->x == 5);
+    REQUIRE((*h)->GetEventNumber() == 5);
 }
 
 TEST_CASE("JPoolTests_SingleLocationUnlimitedEvents") {
+    JApplication app;
+    app.Initialize();
+    auto jcm = app.GetService<JComponentManager>();
 
-    bool was_dtor_called = false;
-    JPool<Event> pool(3, 1, false);
+    JEventPool pool(jcm, 3, 1, false);
     pool.init();
 
-    Event* e = pool.get(0);
-    e->was_dtor_called = &was_dtor_called;
+    auto* e = pool.get(0);
     REQUIRE(e != nullptr);
-    REQUIRE(e->x == 3);
+    REQUIRE((*e)->GetEventNumber() == 0);
 
-    Event* f = pool.get(0);
-    f->was_dtor_called = &was_dtor_called;
+    auto* f = pool.get(0);
+    std::weak_ptr<JEvent> f_weak = *f;
     REQUIRE(f != nullptr);
-    REQUIRE(f->x == 3);
+    REQUIRE((*f)->GetEventNumber() == 0);
 
-    Event* g = pool.get(0);
-    g->was_dtor_called = &was_dtor_called;
+    auto* g = pool.get(0);
+    std::weak_ptr<JEvent> g_weak = *g;
     REQUIRE(g != nullptr);
-    REQUIRE(g->x == 3);
+    REQUIRE((*g)->GetEventNumber() == 0);
 
-    Event* h = pool.get(0);
+    auto* h = pool.get(0);
     // Unlike the others, h is allocated on the heap
-    h->x = 9;
-    h->was_dtor_called = &was_dtor_called;
+    (*h)->SetEventNumber(9);
+    std::weak_ptr<JEvent> h_weak = *h;
     REQUIRE(h != nullptr); 
-    REQUIRE(g->x == 3);
 
-    f->x = 5;
+    (*f)->SetEventNumber(5);
     pool.put(f, true, 0);
     // f goes back into the pool, so dtor does not get called
-    REQUIRE(was_dtor_called == false);
+    REQUIRE(f_weak.lock() != nullptr);
 
     pool.put(h, true, 0);
     // h's dtor DOES get called
-    REQUIRE(was_dtor_called == true);
+    REQUIRE(h_weak.lock() == nullptr);
 
     // When we retrieve another event, it comes from the pool
     // So we get what used to be f
-    Event* i = pool.get(0);
+    auto* i = pool.get(0);
     REQUIRE(i != nullptr);
-    REQUIRE(i->x == 5);
+    REQUIRE((*i)->GetEventNumber() == 5);
 }
 
 

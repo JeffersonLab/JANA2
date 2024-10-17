@@ -5,7 +5,7 @@
 
 #include <JANA/Topology/JArrow.h>
 #include <JANA/Topology/JMailbox.h>
-#include <JANA/Topology/JPool.h>
+#include <JANA/Topology/JEventPool.h>
 
 
 

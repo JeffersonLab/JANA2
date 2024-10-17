@@ -23,13 +23,13 @@ public:
     void set_input(JMailbox<Event*>* queue) {
         m_input.set_queue(queue);
     }
-    void set_input(JPool<Event>* pool) {
+    void set_input(JEventPool* pool) {
         m_input.set_pool(pool);
     }
     void set_output(JMailbox<Event*>* queue) {
         m_output.set_queue(queue);
     }
-    void set_output(JPool<Event>* pool) {
+    void set_output(JEventPool* pool) {
         m_output.set_pool(pool);
     }
 

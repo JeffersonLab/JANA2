@@ -4,7 +4,6 @@
 #pragma once
 
 #include <JANA/Topology/JArrow.h>
-#include <JANA/Utils/JEventPool.h>
 #include <JANA/Utils/JEventLevel.h>
 
 class JFoldArrow : public JArrow {

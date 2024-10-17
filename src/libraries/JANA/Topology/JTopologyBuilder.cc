@@ -52,7 +52,7 @@ std::string JTopologyBuilder::print_topology() {
         i += 1;
     }
     // Build index lookup for pools
-    for (JPoolBase* pool : pools) {
+    for (JEventPool* pool : pools) {
         lookup[pool] = i;
         i += 1;
     }

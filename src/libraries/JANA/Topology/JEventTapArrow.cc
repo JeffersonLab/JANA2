@@ -3,7 +3,6 @@
 
 
 #include <JANA/Topology/JEventTapArrow.h>
-#include <JANA/Utils/JEventPool.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventUnfolder.h>
 #include <JANA/JEvent.h>

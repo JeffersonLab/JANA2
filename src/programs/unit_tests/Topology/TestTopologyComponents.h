@@ -20,7 +20,7 @@ struct RandIntArrow : public JPipelineArrow<RandIntArrow> {
     size_t emit_count = 0;   // How many emitted so far
     int emit_sum = 0;        // Sum of all ints emitted so far
 
-    RandIntArrow(std::string name, JPool<EventT>* pool, JMailbox<EventT*>* output_queue)
+    RandIntArrow(std::string name, JEventPool* pool, JMailbox<EventT*>* output_queue)
         : JPipelineArrow(name, false, true, false) {
         this->set_input(pool);
         this->set_output(output_queue);
@@ -90,7 +90,7 @@ struct SumArrow : public JPipelineArrow<SumArrow> {
 
     double sum = 0;
 
-    SumArrow(std::string name, JMailbox<EventT*>* input_queue, JPool<EventT>* pool) 
+    SumArrow(std::string name, JMailbox<EventT*>* input_queue, JEventPool* pool) 
         : JPipelineArrow(name, false, false, true) {
         this->set_input(input_queue);
         this->set_output(pool);

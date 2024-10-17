@@ -6,7 +6,7 @@
 
 #include <JANA/Topology/JArrow.h>
 #include <JANA/Topology/JMailbox.h>
-#include <JANA/Topology/JPool.h>
+#include <JANA/Topology/JEventPool.h>
 
 using MessageT = std::shared_ptr<JEvent>;
 
@@ -27,13 +27,13 @@ public:
     void set_input(JMailbox<MessageT*>* queue) {
         m_input.set_queue(queue);
     }
-    void set_input(JPool<MessageT>* pool) {
+    void set_input(JEventPool* pool) {
         m_input.set_pool(pool);
     }
     void set_output(JMailbox<MessageT*>* queue) {
         m_output.set_queue(queue);
     }
-    void set_output(JPool<MessageT>* pool) {
+    void set_output(JEventPool* pool) {
         m_output.set_pool(pool);
     }
 

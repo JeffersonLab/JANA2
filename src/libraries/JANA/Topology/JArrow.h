@@ -10,7 +10,7 @@
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
 #include <JANA/Topology/JMailbox.h>
-#include <JANA/Topology/JPool.h>
+#include <JANA/Topology/JEventPool.h>
 
 
 #ifndef JANA2_ARROWDATA_MAX_SIZE
@@ -36,7 +36,7 @@ protected:
     // This is usable by subclasses.
     JLogger m_logger;
     friend class JTopologyBuilder;
-    std::vector<Place*> m_places;  // Will eventually supplant m_listeners, m_chunksize
+    std::vector<Place*> m_places;  // Will eventually supplant m_listeners
 
 public:
     std::string get_name() { return m_name; }
@@ -113,7 +113,7 @@ struct Place {
         this->is_queue = true;
     }
 
-    void set_pool(JPool<EventT>* pool) {
+    void set_pool(JEventPool* pool) {
         assert(pool != nullptr);
         this->place_ref = pool;
         this->is_queue = false;
@@ -138,7 +138,7 @@ struct Place {
                 return (data.item_count >= min_item_count);
             }
             else {
-                auto pool = static_cast<JPool<EventT>*>(place_ref);
+                auto pool = static_cast<JEventPool*>(place_ref);
                 data.item_count = pool->pop(data.items.data(), min_item_count, max_item_count, data.location_id);
                 data.reserve_count = 0;
                 return (data.item_count >= min_item_count);
@@ -169,7 +169,7 @@ struct Place {
         }
         else {
             if (is_input) {
-                auto pool = static_cast<JPool<EventT>*>(place_ref);
+                auto pool = static_cast<JEventPool*>(place_ref);
                 pool->push(data.items.data(), data.item_count, false, data.location_id);
             }
         }
@@ -185,7 +185,7 @@ struct Place {
             return is_input ? 0 : data.item_count;
         }
         else {
-            auto pool = static_cast<JPool<EventT>*>(place_ref);
+            auto pool = static_cast<JEventPool*>(place_ref);
             pool->push(data.items.data(), data.item_count, !is_input, data.location_id);
             data.item_count = 0;
             data.reserve_count = 0;

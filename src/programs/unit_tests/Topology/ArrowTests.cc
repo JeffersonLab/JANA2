@@ -2,7 +2,6 @@
 #include <catch.hpp>
 #include <JANA/Topology/JJunctionArrow.h>
 #include <JANA/JEvent.h>
-#include <JANA/Utils/JEventPool.h>
 
 namespace jana {
 namespace arrowtests {
@@ -17,9 +16,9 @@ using EventT = std::shared_ptr<JEvent>;
 struct TestJunctionArrow : public JJunctionArrow<TestJunctionArrow> {
 
     TestJunctionArrow(JMailbox<EventT*>* qi,
-                 JPool<EventT>* pi,
-                 JPool<EventT>* pd,
-                 JMailbox<EventT*>* qd) 
+                      JEventPool* pi,
+                      JEventPool* pd,
+                      JMailbox<EventT*>* qd) 
     : JJunctionArrow("testjunctionarrow", false, false, true) {
 
         first_input.set_queue(qi);

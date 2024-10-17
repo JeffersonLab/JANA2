@@ -5,7 +5,6 @@
 
 #include <JANA/Topology/JArrow.h>
 #include <JANA/JEventUnfolder.h>
-#include <JANA/Utils/JEventPool.h>
 
 class JUnfoldArrow : public JArrow {
 private:

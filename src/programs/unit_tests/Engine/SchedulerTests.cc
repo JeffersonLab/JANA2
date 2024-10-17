@@ -99,13 +99,17 @@ TEST_CASE("SchedulerTests") {
 }
 
 TEST_CASE("SchedulerRoundRobinBehaviorTests") {
+    
+    JApplication app;
+    app.Initialize();
+    auto jcm = app.GetService<JComponentManager>();
 
     auto q1 = new JMailbox<EventT*>();
     auto q2 = new JMailbox<EventT*>();
     auto q3 = new JMailbox<EventT*>();
 
-    auto p1 = new JPool<EventT>(0,1,false);
-    auto p2 = new JPool<EventT>(0,1,false);
+    auto p1 = new JEventPool(jcm, 0,1,false);
+    auto p2 = new JEventPool(jcm, 0,1,false);
     p1->init();
     p2->init();
 

@@ -4,7 +4,6 @@
 
 
 #include <JANA/Topology/JEventProcessorArrow.h>
-#include <JANA/Utils/JEventPool.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventSource.h>
 
