@@ -23,11 +23,11 @@ using EventT = std::shared_ptr<JEvent>;
 
 class JArrow {
 private:
-    const std::string m_name;     // Used for human understanding
-    const bool m_is_parallel;     // Whether or not it is safe to parallelize
-    const bool m_is_source;       // Whether or not this arrow should activate/drain the topology
-    bool m_is_sink;         // Whether or not tnis arrow contributes to the final event count
-    JArrowMetrics m_metrics;      // Performance information accumulated over all workers
+    std::string m_name;        // Used for human understanding
+    bool m_is_parallel;        // Whether or not it is safe to parallelize
+    bool m_is_source;          // Whether or not this arrow should activate/drain the topology
+    bool m_is_sink;            // Whether or not tnis arrow contributes to the final event count
+    JArrowMetrics m_metrics;   // Performance information accumulated over all workers
 
     friend class JScheduler;
     std::vector<JArrow *> m_listeners;    // Downstream Arrows
@@ -39,24 +39,19 @@ protected:
     std::vector<Place*> m_places;  // Will eventually supplant m_listeners, m_chunksize
 
 public:
+    std::string get_name() { return m_name; }
+    JLogger& get_logger() { return m_logger; }
     bool is_parallel() { return m_is_parallel; }
     bool is_source() { return m_is_source; }
     bool is_sink() { return m_is_sink; }
+    JArrowMetrics& get_metrics() { return m_metrics; }
 
-    std::string get_name() { return m_name; }
+    void set_name(std::string name) { m_name = name; }
+    void set_logger(JLogger logger) { m_logger = logger; }
+    void set_is_parallel(bool is_parallel) { m_is_parallel = is_parallel; }
+    void set_is_source(bool is_source) { m_is_source = is_source; }
+    void set_is_sink(bool is_sink) { m_is_sink = is_sink; }
 
-    void set_logger(JLogger logger) {
-        m_logger = logger;
-    }
-
-    void set_is_sink(bool is_sink) {
-        m_is_sink = is_sink;
-    }
-
-    // TODO: Metrics should be encapsulated so that only actions are to update, clear, or summarize
-    JArrowMetrics& get_metrics() {
-        return m_metrics;
-    }
 
     JArrow(std::string name, bool is_parallel, bool is_source, bool is_sink) :
             m_name(std::move(name)), m_is_parallel(is_parallel), m_is_source(is_source), m_is_sink(is_sink) {
