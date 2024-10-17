@@ -32,7 +32,7 @@ class JTestParser : public JEventSource {
 public:
 
     JTestParser() {
-        SetPrefix("parser");
+        SetPrefix("jtest:parser");
         SetTypeName(NAME_OF_THIS);
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }

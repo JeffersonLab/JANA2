@@ -24,7 +24,7 @@ class JTestPlotter : public JEventProcessor {
 public:
 
     JTestPlotter() {
-        SetPrefix("plotter");
+        SetPrefix("jtest:plotter");
         SetTypeName(NAME_OF_THIS);
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }

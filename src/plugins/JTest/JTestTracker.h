@@ -22,7 +22,7 @@ class JTestTracker : public JFactoryT<JTestTrackData> {
 
 public:
     JTestTracker() {
-        SetPrefix("tracker");
+        SetPrefix("jtest:tracker");
         SetTypeName(NAME_OF_THIS);
     }
 

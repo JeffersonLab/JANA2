@@ -27,7 +27,7 @@ class JTestDisentangler : public JFactoryT<JTestEventData> {
 public:
 
     JTestDisentangler() {
-        SetPrefix("disentangler");
+        SetPrefix("jtest:disentangler");
         SetTypeName(NAME_OF_THIS);
     }
 

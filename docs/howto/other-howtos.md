@@ -89,22 +89,22 @@ The `JTest` plugin lets you test JANA's performance for different workloads. It 
  
 | Name | Type | Default | Description |
 |:-----|:-----|:------------|:--------|
-jtest:parser_ms | int | 0 | Time spent during parsing
-jtest:parser_spread | int | 0.25 | Spread of time spent during parsing
-jtest:parser_bytes | int | 2000000 | Bytes written during parsing
-jtest:parser_bytes_spread | double | 0.25 | Spread of bytes written during parsing
-jtest:disentangler_ms | int | 20 | Time spent during disentangling
-jtest:disentangler_spread | double | 0.25 | Spread of time spent during disentangling
-jtest:disentangler_bytes | int | 500000 | Bytes written during disentangling
-jtest:disentangler_bytes_spread | double | 0.25 | Spread of bytes written during disentangling
-jtest:tracker_ms | int | 200 | Time spent during tracking
-jtest:tracker_spread | double | 0.25 | Spread of time spent during tracking
-jtest:tracker_bytes | int | 1000 | Bytes written during tracking
-jtest:tracker_bytes_spread | double | 0.25 | Spread of bytes written during tracking
-jtest:plotter_ms | int | 0 | Time spent during plotting
-jtest:plotter_spread | double | 0.25 | Spread of time spent during plotting
-jtest:plotter_bytes | int | 1000 | Bytes written during plotting
-jtest:plotter_bytes_spread | double | 0.25 | Spread of bytes written during plotting
+jtest:parser:cputime_ms | int | 0 | Time spent during parsing
+jtest:parser:cputime_spread | int | 0.25 | Spread of time spent during parsing
+jtest:parser:bytes | int | 2000000 | Bytes written during parsing
+jtest:parser:bytes_spread | double | 0.25 | Spread of bytes written during parsing
+jtest:disentangler:cputime_ms | int | 20 | Time spent during disentangling
+jtest:disentangler:cputime_spread | double | 0.25 | Spread of time spent during disentangling
+jtest:disentangler:bytes | int | 500000 | Bytes written during disentangling
+jtest:disentangler:bytes_spread | double | 0.25 | Spread of bytes written during disentangling
+jtest:tracker:cputime_ms | int | 200 | Time spent during tracking
+jtest:tracker:cputime_spread | double | 0.25 | Spread of time spent during tracking
+jtest:tracker:bytes | int | 1000 | Bytes written during tracking
+jtest:tracker:bytes_spread | double | 0.25 | Spread of bytes written during tracking
+jtest:plotter:cputime_ms | int | 0 | Time spent during plotting
+jtest:plotter:cputime_spread | double | 0.25 | Spread of time spent during plotting
+jtest:plotter:bytes | int | 1000 | Bytes written during plotting
+jtest:plotter:bytes_spread | double | 0.25 | Spread of bytes written during plotting
 
 
 
