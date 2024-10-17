@@ -20,7 +20,7 @@ class JTestDisentangler : public JFactoryT<JTestEventData> {
     Parameter<double> m_cputime_spread {this, "cputime_spread", 0.25, "Spread of time spent during disentangling"};
     Parameter<double> m_write_spread {this, "bytes_spread", 0.25, "Spread of bytes written during disentangling"};
 
-    std::shared_ptr<JTestCalibrationService> m_calibration_service;
+    Service<JTestCalibrationService> m_calibration_service {this};
 
     JBenchUtils m_bench_utils;
 
@@ -29,10 +29,6 @@ public:
     JTestDisentangler() {
         SetPrefix("disentangler");
         SetTypeName(NAME_OF_THIS);
-    }
-
-    void Init() override {
-        m_calibration_service = GetApplication()->GetService<JTestCalibrationService>();
     }
 
     void Process(const std::shared_ptr<const JEvent> &aEvent) override {
