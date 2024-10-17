@@ -6,11 +6,11 @@
 #include "JTopologyBuilder.h"
 
 #include "JEventSourceArrow.h"
-#include "JEventProcessorArrow.h"
 #include "JEventMapArrow.h"
 #include "JEventTapArrow.h"
 #include "JUnfoldArrow.h"
 #include "JFoldArrow.h"
+#include <JANA/JEventProcessor.h>
 #include <JANA/Utils/JTablePrinter.h>
 
 
