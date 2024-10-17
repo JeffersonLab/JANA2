@@ -8,7 +8,9 @@
 #include <JANA/Topology/JMailbox.h>
 #include <JANA/Topology/JPool.h>
 
-template <typename DerivedT, typename MessageT>
+using EventT = std::shared_ptr<JEvent>;
+
+template <typename DerivedT, typename MessageT=EventT>
 class JPipelineArrow : public JArrow {
 private:
     PlaceRef<MessageT> m_input {this, true, 1, 1};

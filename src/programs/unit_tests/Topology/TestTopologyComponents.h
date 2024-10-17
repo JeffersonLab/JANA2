@@ -4,93 +4,105 @@
 
 #pragma once
 
+#include "JANA/Topology/JArrowMetrics.h"
 #include <JANA/Topology/JPipelineArrow.h>
-#include "MapArrow.h"
+#include <JANA/JEvent.h>
 
+struct EventData {
+    int x = 0;
+    double y = 0.0;
+    double z = 0.0;
+};
 
-struct RandIntSource : public JPipelineArrow<RandIntSource, int> {
+struct RandIntArrow : public JPipelineArrow<RandIntArrow> {
 
     size_t emit_limit = 20;  // How many to emit
     size_t emit_count = 0;   // How many emitted so far
     int emit_sum = 0;        // Sum of all ints emitted so far
 
-    RandIntSource(std::string name, JPool<int>* pool, JMailbox<int*>* output_queue)
-        : JPipelineArrow<RandIntSource, int>(name, false, true, false) {
+    RandIntArrow(std::string name, JPool<EventT>* pool, JMailbox<EventT*>* output_queue)
+        : JPipelineArrow(name, false, true, false) {
         this->set_input(pool);
         this->set_output(output_queue);
     }
 
-    void process(int* item, bool& success, JArrowMetrics::Status& status) {
+    void process(EventT* event, bool& success, JArrowMetrics::Status& status) {
 
         if (emit_count >= emit_limit) {
             success = false;
             status = JArrowMetrics::Status::Finished;
             return;
         }
-        *item = 7;
-        emit_sum += *item;
+
+        auto data = new EventData {7};
+
+        (*event)->Insert(data, "first");
+
+        emit_sum += data->x;
         emit_count += 1;
-        LOG_DEBUG(JArrow::m_logger) << "RandIntSource emitted event " << emit_count << " with value " << *item << LOG_END;
+        LOG_DEBUG(JArrow::m_logger) << "RandIntSource emitted event " << emit_count << " with value " << data->x << LOG_END;
         success = true;
         status = (emit_count == emit_limit) ? JArrowMetrics::Status::Finished : JArrowMetrics::Status::KeepGoing;
         // This design lets us declare Finished immediately on the last event, instead of after
     }
-
-    void initialize() override {
-        LOG_INFO(JArrow::m_logger) << "RandIntSource.initialize() called!" << LOG_END;
-    };
-
-    void finalize() override {
-        LOG_INFO(JArrow::m_logger) << "RandIntSource.finalize() called!" << LOG_END;
-    }
 };
 
 
-struct MultByTwoProcessor : public ParallelProcessor<int*, double*> {
+struct MultByTwoArrow : public JPipelineArrow<MultByTwoArrow> {
 
-    double* process(int* x) override {
-        return new double(*x * 2.0);
-    }
-};
-
-
-struct SubOneProcessor : public JPipelineArrow<SubOneProcessor, double> {
-
-    SubOneProcessor(std::string name, JMailbox<double*>* input_queue, JMailbox<double*>* output_queue) 
-        : JPipelineArrow<SubOneProcessor, double>(name, true, false, false) {
+    MultByTwoArrow(std::string name, JMailbox<EventT*>* input_queue, JMailbox<EventT*>* output_queue) 
+        : JPipelineArrow(name, true, false, false) {
         this->set_input(input_queue);
         this->set_output(output_queue);
     }
 
-    void process(double* item, bool&, JArrowMetrics::Status&) {
-        *item -= 1;
+    void process(EventT* event, bool& success, JArrowMetrics::Status& status) {
+        auto prev = (*event)->Get<EventData>("first");
+        auto x = prev.at(0)->x;
+        auto next = new EventData { .x=x, .y=x*2.0 };
+        (*event)->Insert(next, "second");
+        success = true;
+        status = JArrowMetrics::Status::KeepGoing;
     }
 };
 
+struct SubOneArrow : public JPipelineArrow<SubOneArrow> {
 
-template<typename T>
-struct SumSink : public JPipelineArrow<SumSink<T>, T> {
+    SubOneArrow(std::string name, JMailbox<EventT*>* input_queue, JMailbox<EventT*>* output_queue) 
+        : JPipelineArrow(name, true, false, false) {
+        this->set_input(input_queue);
+        this->set_output(output_queue);
+    }
 
-    T sum = 0;
+    void process(EventT* event, bool& success, JArrowMetrics::Status& status) {
+        auto prev = (*event)->Get<EventData>("second");
+        auto x = prev.at(0)->x;
+        auto y = prev.at(0)->y;
+        auto z = y - 1;
+        auto next = new EventData { .x=x, .y=y, .z=z };
+        (*event)->Insert(next, "third");
+        success = true;
+        status = JArrowMetrics::Status::KeepGoing;
+    }
+};
 
-    SumSink(std::string name, JMailbox<T*>* input_queue, JPool<T>* pool) 
-        : JPipelineArrow<SumSink<T>,T>(name, false, false, true) {
+struct SumArrow : public JPipelineArrow<SumArrow> {
+
+    double sum = 0;
+
+    SumArrow(std::string name, JMailbox<EventT*>* input_queue, JPool<EventT>* pool) 
+        : JPipelineArrow(name, false, false, true) {
         this->set_input(input_queue);
         this->set_output(pool);
     }
 
-    void process(T* item, bool&, JArrowMetrics::Status&) {
-        sum += *item;
-        LOG_DEBUG(JArrow::m_logger) << "SumSink.outprocess() called!" << LOG_END;
+    void process(EventT* event, bool& success, JArrowMetrics::Status& status) {
+        auto prev = (*event)->Get<EventData>("third");
+        auto z = prev.at(0)->z;
+        sum += z;
+        success = true;
+        status = JArrowMetrics::Status::KeepGoing;
     }
-
-    void initialize() override {
-        LOG_INFO(JArrow::m_logger) << "SumSink.initialize() called!" << LOG_END;
-    };
-
-    void finalize() override {
-        LOG_INFO(JArrow::m_logger) << "SumSink.finalize() called!" << LOG_END;
-    };
 };
 
 
