@@ -17,9 +17,9 @@ private:
     JEventLevel m_parent_level;
     JEventLevel m_child_level;
 
-    PlaceRef<EventT> m_child_in;
-    PlaceRef<EventT> m_child_out;
-    PlaceRef<EventT> m_parent_out;
+    Place m_child_in;
+    Place m_child_out;
+    Place m_parent_out;
 
 public:
     JFoldArrow(
@@ -86,7 +86,7 @@ public:
         LOG_INFO(m_logger) << "Finalized JEventFolder (trivial)" << LOG_END;
     }
 
-    bool try_pull_all(Data<EventT>& ci, Data<EventT>& co, Data<EventT>& po) {
+    bool try_pull_all(Data& ci, Data& co, Data& po) {
         bool success;
         success = m_child_in.pull(ci);
         if (! success) {
@@ -103,7 +103,7 @@ public:
         return true;
     }
 
-    size_t push_all(Data<EventT>& ci, Data<EventT>& co, Data<EventT>& po) {
+    size_t push_all(Data& ci, Data& co, Data& po) {
         size_t message_count = co.item_count;
         m_child_in.push(ci);
         m_child_out.push(co);
@@ -115,9 +115,9 @@ public:
 
         auto start_total_time = std::chrono::steady_clock::now();
         
-        Data<EventT> child_in_data {location_id};
-        Data<EventT> child_out_data {location_id};
-        Data<EventT> parent_out_data {location_id};
+        Data child_in_data {location_id};
+        Data child_out_data {location_id};
+        Data parent_out_data {location_id};
 
         bool success = try_pull_all(child_in_data, child_out_data, parent_out_data);
         if (success) {

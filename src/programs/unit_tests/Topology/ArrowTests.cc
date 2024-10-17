@@ -14,7 +14,7 @@ struct ArrowTestData {
 };
 
 using EventT = std::shared_ptr<JEvent>;
-struct TestJunctionArrow : public JJunctionArrow<TestJunctionArrow, EventT, EventT> {
+struct TestJunctionArrow : public JJunctionArrow<TestJunctionArrow> {
 
     TestJunctionArrow(JMailbox<EventT*>* qi,
                  JPool<EventT>* pi,
@@ -28,10 +28,10 @@ struct TestJunctionArrow : public JJunctionArrow<TestJunctionArrow, EventT, Even
         second_output.set_queue(qd);
     }
 
-    Status process(Data<EventT>& input_int, 
-                   Data<EventT>& output_int, 
-                   Data<EventT>& input_double, 
-                   Data<EventT>& output_double) {
+    Status process(Data& input_int, 
+                   Data& output_int, 
+                   Data& input_double, 
+                   Data& output_double) {
         std::cout << "Hello from process" << std::endl;
 
         REQUIRE(input_int.item_count == 1);

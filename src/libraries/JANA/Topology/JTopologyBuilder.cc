@@ -63,7 +63,7 @@ std::string JTopologyBuilder::print_topology() {
     for (JArrow* arrow : arrows) {
 
         show_row = true;
-        for (PlaceRefBase* place : arrow->m_places) {
+        for (Place* place : arrow->m_places) {
             if (show_row) {
                 t | arrow->get_name();
                 t | arrow->is_parallel();
@@ -162,7 +162,7 @@ void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downst
     queues.push_back(queue);
 
     size_t i = 0;
-    for (PlaceRefBase* place : upstream->m_places) {
+    for (Place* place : upstream->m_places) {
         if (!place->is_input) {
             if (i++ == up_index) {
                 // Found the correct output
@@ -172,7 +172,7 @@ void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downst
         }
     }
     i = 0;
-    for (PlaceRefBase* place : downstream->m_places) {
+    for (Place* place : downstream->m_places) {
         if (place->is_input) {
             if (i++ == down_index) {
                 // Found the correct input

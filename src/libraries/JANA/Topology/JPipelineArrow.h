@@ -13,8 +13,8 @@ using EventT = std::shared_ptr<JEvent>;
 template <typename DerivedT, typename MessageT=EventT>
 class JPipelineArrow : public JArrow {
 private:
-    PlaceRef<MessageT> m_input {this, true, 1, 1};
-    PlaceRef<MessageT> m_output {this, false, 1, 1};
+    Place m_input {this, true, 1, 1};
+    Place m_output {this, false, 1, 1};
 
 public:
     JPipelineArrow(std::string name,
@@ -41,8 +41,8 @@ public:
 
         auto start_total_time = std::chrono::steady_clock::now();
 
-        Data<MessageT> in_data {location_id};
-        Data<MessageT> out_data {location_id};
+        Data in_data {location_id};
+        Data out_data {location_id};
 
         bool success = m_input.pull(in_data) && m_output.pull(out_data);
         if (!success) {

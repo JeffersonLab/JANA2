@@ -19,8 +19,8 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     auto start_total_time = std::chrono::steady_clock::now();
 
-    Data<Event> in_data {location_id};
-    Data<Event> out_data {location_id};
+    Data in_data {location_id};
+    Data out_data {location_id};
 
     bool success = m_input.pull(in_data) && m_output.pull(out_data);
     if (!success) {

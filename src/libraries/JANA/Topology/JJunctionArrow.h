@@ -9,14 +9,14 @@
 
 
 
-template <typename DerivedT, typename FirstT, typename SecondT>
+template <typename DerivedT>
 class JJunctionArrow : public JArrow {
 
 protected:    
-    PlaceRef<FirstT> first_input {this, true, 1, 1};
-    PlaceRef<FirstT> first_output {this, false, 1, 1};
-    PlaceRef<SecondT> second_input {this, true, 1, 1};
-    PlaceRef<SecondT> second_output {this, false, 1, 1};
+    Place first_input {this, true, 1, 1};
+    Place first_output {this, false, 1, 1};
+    Place second_input {this, true, 1, 1};
+    Place second_output {this, false, 1, 1};
 
 public:
     using Status = JArrowMetrics::Status;
@@ -30,7 +30,7 @@ public:
     {
     }
 
-    bool try_pull_all(Data<FirstT>& fi, Data<FirstT>& fo, Data<SecondT>& si, Data<SecondT>& so) {
+    bool try_pull_all(Data& fi, Data& fo, Data& si, Data& so) {
 
         bool success;
         success = first_input.pull(fi);
@@ -58,7 +58,7 @@ public:
         return true;
     }
 
-    size_t push_all(Data<FirstT>& fi, Data<FirstT>& fo, Data<SecondT>& si, Data<SecondT>& so) {
+    size_t push_all(Data& fi, Data& fo, Data& si, Data& so) {
         size_t message_count = 0;
         message_count += first_input.push(fi);
         message_count += first_output.push(fo);
@@ -71,10 +71,10 @@ public:
 
         auto start_total_time = std::chrono::steady_clock::now();
 
-        Data<FirstT> first_input_data {location_id};
-        Data<FirstT> first_output_data {location_id};
-        Data<SecondT> second_input_data {location_id};
-        Data<SecondT> second_output_data {location_id};
+        Data first_input_data {location_id};
+        Data first_output_data {location_id};
+        Data second_input_data {location_id};
+        Data second_output_data {location_id};
 
         bool success = try_pull_all(first_input_data, first_output_data, second_input_data, second_output_data);
         if (success) {

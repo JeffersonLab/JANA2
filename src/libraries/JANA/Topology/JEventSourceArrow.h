@@ -6,8 +6,6 @@
 #include <JANA/Topology/JPipelineArrow.h>
 
 using Event = std::shared_ptr<JEvent>;
-using EventQueue = JMailbox<Event*>;
-class JEventPool;
 
 class JEventSourceArrow : public JArrow {
 private:
@@ -16,8 +14,8 @@ private:
     bool m_barrier_active = false;
     std::shared_ptr<JEvent>* m_pending_barrier_event = nullptr;
 
-    PlaceRef<Event> m_input {this, true, 1, 1};
-    PlaceRef<Event> m_output {this, false, 1, 1};
+    Place m_input {this, true, 1, 1};
+    Place m_output {this, false, 1, 1};
 
 public:
     JEventSourceArrow(std::string name, std::vector<JEventSource*> sources);
