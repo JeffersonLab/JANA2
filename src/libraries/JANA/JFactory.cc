@@ -18,8 +18,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
     }
 
     if (mStatus == Status::Uninitialized) {
-        CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
-        mStatus = Status::Unprocessed;
+        DoInit();
     }
 
     auto src = event->GetJEventSource();
@@ -66,10 +65,17 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 }
 
 void JFactory::DoInit() {
-    if (mStatus == Status::Uninitialized) {
-        CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
-        mStatus = Status::Unprocessed;
+    if (mStatus != Status::Uninitialized) {
+        throw JException("Attempted to initialize a JFactory that has already been initialized!");
     }
+    for (auto* parameter : m_parameters) {
+        parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+    }
+    for (auto* service : m_services) {
+        service->Fetch(m_app);
+    }
+    CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
+    mStatus = Status::Unprocessed;
 }
 
 void JFactory::Summarize(JComponentSummary& summary) const {
