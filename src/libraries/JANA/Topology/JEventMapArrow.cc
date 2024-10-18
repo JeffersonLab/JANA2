@@ -25,7 +25,7 @@ void JEventMapArrow::add_processor(JEventProcessor* processor) {
     m_procs.push_back(processor);
 }
 
-void JEventMapArrow::process(Event* event, bool& success, JArrowMetrics::Status& status) {
+void JEventMapArrow::process(std::shared_ptr<JEvent>* event, bool& success, JArrowMetrics::Status& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << (*event)->GetEventNumber() << LOG_END;
     for (JEventSource* source : m_sources) {

@@ -2,6 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
+#include "JANA/Services/JComponentManager.h"
 #include "catch.hpp"
 
 #include "JANA/Topology/JTopologyBuilder.h"
@@ -24,22 +25,21 @@ JArrowMetrics::Status step(JArrow* arrow) {
 
 
 TEST_CASE("JTopology: Basic functionality") {
+    JApplication app;
+    app.Initialize();
+    auto jcm = app.GetService<JComponentManager>();
 
-    auto q1 = new JMailbox<int*>();
-    auto q2 = new JMailbox<double*>();
-    auto q3 = new JMailbox<double*>();
+    auto q1 = new JMailbox<EventT*>();
+    auto q2 = new JMailbox<EventT*>();
+    auto q3 = new JMailbox<EventT*>();
 
-    auto p1 = new JPool<int>(0,1,false);
-    auto p2 = new JPool<double>(0,1,false);
-    p1->init();
-    p2->init();
+    auto p1 = new JEventPool(jcm, 0,1,false);
+    auto p2 = new JEventPool(jcm, 0,1,false);
 
-    MultByTwoProcessor processor;
-
-    auto emit_rand_ints = new RandIntSource("emit_rand_ints", p1, q1);
-    auto multiply_by_two = new MapArrow<int*,double*>("multiply_by_two", processor, q1, q2);
-    auto subtract_one = new SubOneProcessor("subtract_one", q2, q3);
-    auto sum_everything = new SumSink<double>("sum_everything", q3, p2);
+    auto emit_rand_ints = new RandIntArrow("emit_rand_ints", p1, q1);
+    auto multiply_by_two = new MultByTwoArrow("multiply_by_two", q1, q2);
+    auto subtract_one = new SubOneArrow("subtract_one", q2, q3);
+    auto sum_everything = new SumArrow("sum_everything", q3, p2);
 
     auto topology = std::make_shared<JTopologyBuilder>();
 

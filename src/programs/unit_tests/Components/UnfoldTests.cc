@@ -51,9 +51,6 @@ TEST_CASE("UnfoldTests_Basic") {
     JMailbox<EventT*> parent_queue {3}; // size
     JMailbox<EventT*> child_queue {3};
 
-    parent_pool.init();
-    child_pool.init();
-
     auto ts1 = parent_pool.get();
     (*ts1)->SetEventNumber(17);
 
@@ -94,9 +91,6 @@ TEST_CASE("FoldArrowTests") {
     // We only use these to obtain preconfigured JEvents
     JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
     JEventPool child_pool {jcm, 5, 1, true, JEventLevel::PhysicsEvent};
-    parent_pool.init();
-    child_pool.init();
-
 
     // We set up our test cases by putting events on these queues
     JMailbox<std::shared_ptr<JEvent>*> child_in;

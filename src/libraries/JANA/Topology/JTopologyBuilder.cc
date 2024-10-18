@@ -6,11 +6,11 @@
 #include "JTopologyBuilder.h"
 
 #include "JEventSourceArrow.h"
-#include "JEventProcessorArrow.h"
 #include "JEventMapArrow.h"
 #include "JEventTapArrow.h"
 #include "JUnfoldArrow.h"
 #include "JFoldArrow.h"
+#include <JANA/JEventProcessor.h>
 #include <JANA/Utils/JTablePrinter.h>
 
 
@@ -52,7 +52,7 @@ std::string JTopologyBuilder::print_topology() {
         i += 1;
     }
     // Build index lookup for pools
-    for (JPoolBase* pool : pools) {
+    for (JEventPool* pool : pools) {
         lookup[pool] = i;
         i += 1;
     }
@@ -63,7 +63,7 @@ std::string JTopologyBuilder::print_topology() {
     for (JArrow* arrow : arrows) {
 
         show_row = true;
-        for (PlaceRefBase* place : arrow->m_places) {
+        for (Place* place : arrow->m_places) {
             if (show_row) {
                 t | arrow->get_name();
                 t | arrow->is_parallel();
@@ -98,7 +98,6 @@ void JTopologyBuilder::create_topology() {
                                 m_pool_capacity,
                                 m_location_count,
                                 m_limit_total_events_in_flight);
-    event_pool->init();
 
     if (m_configure_topology) {
         m_configure_topology(*this);
@@ -162,7 +161,7 @@ void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downst
     queues.push_back(queue);
 
     size_t i = 0;
-    for (PlaceRefBase* place : upstream->m_places) {
+    for (Place* place : upstream->m_places) {
         if (!place->is_input) {
             if (i++ == up_index) {
                 // Found the correct output
@@ -172,7 +171,7 @@ void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downst
         }
     }
     i = 0;
-    for (PlaceRefBase* place : downstream->m_places) {
+    for (Place* place : downstream->m_places) {
         if (place->is_input) {
             if (i++ == down_index) {
                 // Found the correct input
@@ -262,7 +261,6 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // 0. Pool
     // --------------------------
     JEventPool* pool_at_level = new JEventPool(m_components, m_pool_capacity, m_location_count, m_limit_total_events_in_flight, current_level);
-    pool_at_level->init();
     pools.push_back(pool_at_level); // Hand over ownership of the pool to the topology
 
     // --------------------------

@@ -5,19 +5,17 @@
 
 #include <JANA/Topology/JArrow.h>
 #include <JANA/JEventUnfolder.h>
-#include <JANA/Utils/JEventPool.h>
 
 class JUnfoldArrow : public JArrow {
 private:
-    using EventT = std::shared_ptr<JEvent>;
 
     JEventUnfolder* m_unfolder = nullptr;
     EventT* m_parent_event = nullptr;
     bool m_ready_to_fetch_parent = true;
 
-    PlaceRef<EventT> m_parent_in;
-    PlaceRef<EventT> m_child_in;
-    PlaceRef<EventT> m_child_out;
+    Place m_parent_in;
+    Place m_child_in;
+    Place m_child_out;
 
 public:
 
@@ -65,7 +63,7 @@ public:
         LOG_INFO(m_logger) << "Finalized JEventUnfolder '" << m_unfolder->GetTypeName() << "'" << LOG_END;
     }
 
-    bool try_pull_all(Data<EventT>& pi, Data<EventT>& ci, Data<EventT>& co) {
+    bool try_pull_all(Data& pi, Data& ci, Data& co) {
         bool success;
         success = m_parent_in.pull(pi);
         if (! success) {
@@ -85,7 +83,7 @@ public:
         return true;
     }
 
-    size_t push_all(Data<EventT>& parent_in, Data<EventT>& child_in, Data<EventT>& child_out) {
+    size_t push_all(Data& parent_in, Data& child_in, Data& child_out) {
         size_t message_count = 0;
         message_count += m_parent_in.push(parent_in);
         message_count += m_child_in.push(child_in);
@@ -96,7 +94,7 @@ public:
 
     size_t get_pending() final {
         size_t sum = 0;
-        for (PlaceRefBase* place : m_places) {
+        for (Place* place : m_places) {
             sum += place->get_pending();
         }
         if (m_parent_event != nullptr) {
@@ -111,9 +109,9 @@ public:
 
         auto start_total_time = std::chrono::steady_clock::now();
 
-        Data<EventT> parent_in_data {location_id};
-        Data<EventT> child_in_data {location_id};
-        Data<EventT> child_out_data {location_id};
+        Data parent_in_data {location_id};
+        Data child_in_data {location_id};
+        Data child_out_data {location_id};
 
         bool success = try_pull_all(parent_in_data, child_in_data, child_out_data);
         if (success) {
