@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include <vector>
 #include <JANA/JFactorySet.h>
+#include <JANA/Utils/JTypeInfo.h>
+
 
 class JApplication;
 
