@@ -3,8 +3,10 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <iterator>
-#include <iostream>
+#include <typeindex>
+#include <vector>
 
+#include <JANA/Components/JDataBundle.h>
 #include "JFactorySet.h"
 #include "JFactory.h"
 #include "JMultifactory.h"
@@ -38,10 +40,49 @@ JFactorySet::~JFactorySet()
     /// The only time mIsFactoryOwner should/can be set false is when a JMultifactory is using a JFactorySet internally
     /// to manage its JMultifactoryHelpers.
     if (mIsFactoryOwner) {
-        for (auto& f : mFactories) delete f.second;
+        for (auto& s : mDataBundlesFromName) {
+            // Only delete _inserted_ collections. Collections are otherwise owned by their factories
+            if (s.second->GetFactory() == nullptr) {
+                delete s.second;
+            }
+        }
+        for (auto f : mAllFactories) delete f;
+        // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
+
+        for (auto* mf : mMultifactories) { delete mf; }
     }
-    // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
-    for (auto* mf : mMultifactories) { delete mf; }
+}
+
+//---------------------------------
+// Add
+//---------------------------------
+void JFactorySet::Add(JDataBundle* databundle) {
+
+    if (databundle->GetUniqueName().empty()) {
+        throw JException("Attempted to add a databundle with no unique_name");
+    }
+    auto named_result = mDataBundlesFromName.find(databundle->GetUniqueName());
+    if (named_result != std::end(mDataBundlesFromName)) {
+        // Collection is duplicate. Since this almost certainly indicates a user error, and
+        // the caller will not be able to do anything about it anyway, throw an exception.
+        // We show the user which factory is causing this problem, including both plugin names
+
+        auto ex = JException("Attempted to add duplicate databundles");
+        ex.function_name = "JFactorySet::Add";
+        ex.instance_name = databundle->GetUniqueName();
+
+        auto fac = databundle->GetFactory();
+        if (fac != nullptr) {
+            ex.type_name = fac->GetTypeName();
+            ex.plugin_name = fac->GetPluginName();
+            if (named_result->second->GetFactory() != nullptr) {
+                ex.plugin_name += ", " + named_result->second->GetFactory()->GetPluginName();
+            }
+        }
+        throw ex;
+    }
+    // Note that this is agnostic to event level. We may decide to change this.
+    mDataBundlesFromName[databundle->GetUniqueName()] = databundle;
 }
 
 //---------------------------------
@@ -54,34 +95,56 @@ bool JFactorySet::Add(JFactory* aFactory)
     /// throw an exception and let the user figure out what to do.
     /// This scenario occurs when the user has multiple JFactory<T> producing the
     /// same T JObject, and is not distinguishing between them via tags.
+    
+    // There are two different ways JFactories can work now. In the old way, JFactory must be
+    // a JFactoryT, and have exactly one output collection. In the new way (which includes JFactoryPodioT), 
+    // JFactory has an arbitrary number of output collections which are explicitly
+    // represented, similar to but better than JMultifactory. We distinguish between
+    // these two cases by checking whether JFactory::GetObjectType returns an object type vs nullopt.
 
-    auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
-    auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
 
-    auto typed_result = mFactories.find(typed_key);
-    auto untyped_result = mFactoriesFromString.find(untyped_key);
+    mAllFactories.push_back(aFactory);
 
-    if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
-        // Factory is duplicate. Since this almost certainly indicates a user error, and
-        // the caller will not be able to do anything about it anyway, throw an exception.
-        // We show the user which factory is causing this problem, including both plugin names
-        std::string other_plugin_name;
-        if (typed_result != std::end(mFactories)) {
-            other_plugin_name = typed_result->second->GetPluginName();
+    if (aFactory->GetOutputs().empty()) {
+        // We have an old-style JFactory!
+
+        auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
+        auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
+
+        auto typed_result = mFactories.find(typed_key);
+        auto untyped_result = mFactoriesFromString.find(untyped_key);
+
+        if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
+            // Factory is duplicate. Since this almost certainly indicates a user error, and
+            // the caller will not be able to do anything about it anyway, throw an exception.
+            // We show the user which factory is causing this problem, including both plugin names
+            std::string other_plugin_name;
+            if (typed_result != std::end(mFactories)) {
+                other_plugin_name = typed_result->second->GetPluginName();
+            }
+            else {
+                other_plugin_name = untyped_result->second->GetPluginName();
+            }
+            auto ex = JException("Attempted to add duplicate factories");
+            ex.function_name = "JFactorySet::Add";
+            ex.instance_name = aFactory->GetPrefix();
+            ex.type_name = aFactory->GetTypeName();
+            ex.plugin_name = aFactory->GetPluginName() + ", " + other_plugin_name;
+            throw ex;
         }
-        else {
-            other_plugin_name = untyped_result->second->GetPluginName();
-        }
-        auto ex = JException("Attempted to add duplicate factories");
-        ex.function_name = "JFactorySet::Add";
-        ex.instance_name = aFactory->GetPrefix();
-        ex.type_name = aFactory->GetTypeName();
-        ex.plugin_name = aFactory->GetPluginName() + ", " + other_plugin_name;
-        throw ex;
+
+        mFactories[typed_key] = aFactory;
+        mFactoriesFromString[untyped_key] = aFactory;
     }
-
-    mFactories[typed_key] = aFactory;
-    mFactoriesFromString[untyped_key] = aFactory;
+    else {
+        // We have a new-style JFactory!
+        for (const auto* output : aFactory->GetOutputs()) {
+            for (const auto& bundle : output->GetDataBundles()) {
+                bundle->SetFactory(aFactory);
+                Add(bundle.get());
+            }
+        }
+    }
     return true;
 }
 
@@ -104,6 +167,22 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
 }
 
 //---------------------------------
+// GetDataBundle
+//---------------------------------
+JDataBundle* JFactorySet::GetDataBundle(const std::string& name) const {
+    auto it = mDataBundlesFromName.find(name);
+    if (it != std::end(mDataBundlesFromName)) {
+        auto fac = it->second->GetFactory();
+        if (fac != nullptr && fac->GetLevel() != mLevel) {
+            throw JException("Data bundle belongs to a different level on the event hierarchy!");
+        }
+        return it->second;
+    }
+    return nullptr;
+}
+
+
+//---------------------------------
 // GetFactory
 //---------------------------------
 JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::string& tag) const
@@ -120,12 +199,49 @@ JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::str
 }
 
 //---------------------------------
+// GetFactory
+//---------------------------------
+JFactory* JFactorySet::GetFactory(std::type_index object_type, const std::string& object_name, const std::string& tag) const {
+
+    auto typed_key = std::make_pair(object_type, tag);
+    auto typed_iter = mFactories.find(typed_key);
+    if (typed_iter != std::end(mFactories)) {
+        JEventLevel found_level = typed_iter->second->GetLevel();
+        if (found_level != mLevel) {
+            throw JException("Factory belongs to a different level on the event hierarchy. Expected: %s, Found: %s", toString(mLevel).c_str(), toString(found_level).c_str());
+        }
+        return typed_iter->second;
+    }
+    return GetFactory(object_name, tag);
+}
+
+//---------------------------------
 // GetAllFactories
 //---------------------------------
 std::vector<JFactory*> JFactorySet::GetAllFactories() const {
+
+    // This returns both old-style (JFactoryT) and new-style (JFactory+JStorage) factories, unlike 
+    // GetAllFactories(object_type, object_name) below. This is because we use this method in 
+    // JEventProcessors to activate factories in a generic way, particularly when working with Podio data.
+
+    return mAllFactories;
+}
+
+//---------------------------------
+// GetAllFactories
+//---------------------------------
+std::vector<JFactory*> JFactorySet::GetAllFactories(std::type_index object_type, const std::string& object_name) const {
+
+    // This returns all factories which _directly_ produce objects of type object_type, i.e. they don't use a JStorage.
+    // This is what all of its callers already expect anyhow. Obviously we'd like to migrate everything over to JStorage
+    // eventually. Rather than updating this to also check mDataBundlesFromName, it probably makes more sense to create 
+    // a JFactorySet::GetAllStorages(type_index, object_name) instead, and migrate all callers to use that.
+
     std::vector<JFactory*> results;
-    for (auto p : mFactories) {
-        results.push_back(p.second);
+    for (auto& it : mFactories) {
+        if (it.second->GetObjectType() == object_type || it.second->GetObjectName() == object_name) {
+            results.push_back(it.second);
+        }
     }
     return results;
 }
@@ -134,9 +250,16 @@ std::vector<JFactory*> JFactorySet::GetAllFactories() const {
 // GetAllMultifactories
 //---------------------------------
 std::vector<JMultifactory*> JFactorySet::GetAllMultifactories() const {
-    std::vector<JMultifactory*> results;
-    for (auto f : mMultifactories) {
-        results.push_back(f);
+    return mMultifactories;
+}
+
+//---------------------------------
+// GetAllDataBundleNames
+//---------------------------------
+std::vector<std::string> JFactorySet::GetAllDataBundleNames() const {
+    std::vector<std::string> results;
+    for (const auto& it : mDataBundlesFromName) {
+        results.push_back(it.first);
     }
     return results;
 }
@@ -167,10 +290,15 @@ void JFactorySet::Print() const
 
 /// Release() loops over all contained factories, clearing their data
 void JFactorySet::Release() {
-
-    for (const auto& sFactoryPair : mFactories) {
-        auto sFactory = sFactoryPair.second;
-        sFactory->ClearData();
+    for (auto* fac : mAllFactories) {
+        fac->ClearData();
+    }
+    for (auto& it : mDataBundlesFromName) {
+        // fac->ClearData() only clears JFactoryT's, because that's how it always worked.
+        // Clearing is fundamentally an operation on the data bundle, not on the factory itself.
+        // Furthermore, "clearing" the factory is misleading because factories can cache arbitrary
+        // state inside member variables, and there's no way to clear that.
+        it.second->ClearData();
     }
 }
 

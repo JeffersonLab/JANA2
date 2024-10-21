@@ -45,7 +45,7 @@ set(TEST_SOURCES
     )
 
 if (${USE_PODIO})
-    list(APPEND TEST_SOURCES Components/PodioTests.cc)
+    list(APPEND TEST_SOURCES Components/PodioTests.cc Components/JStorageTests.cc)
 endif()
 
 add_jana_test(jana-unit-tests SOURCES ${TEST_SOURCES})

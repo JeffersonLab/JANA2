@@ -10,11 +10,6 @@
 void JMultifactory::Execute(const std::shared_ptr<const JEvent>& event) {
 
     std::lock_guard<std::mutex> lock(m_mutex);
-#if JANA2_HAVE_PODIO
-    if (mNeedPodio) {
-        mPodioFrame = GetOrCreateFrame(event);
-    }
-#endif
 
     if (m_status == Status::Uninitialized) {
         CallWithJExceptionWrapper("JMultifactory::Init", [&](){

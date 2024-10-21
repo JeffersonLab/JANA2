@@ -10,9 +10,10 @@
 #include <JANA/Components/JComponent.h>
 #include <JANA/Components/JHasRunCallbacks.h>
 #include <JANA/JVersion.h>
+#include <typeindex>
 
 #if JANA2_HAVE_PODIO
-#include "JANA/Podio/JFactoryPodioT.h"
+#include <JANA/Components/JPodioOutput.h>
 #endif
 
 class JMultifactory;
@@ -40,14 +41,18 @@ public:
 
 
 #if JANA2_HAVE_PODIO
-// TODO: This redundancy goes away if we merge JFactoryPodioT with JFactoryT
 template <typename T>
-class JMultifactoryHelperPodio : public JFactoryPodioT<T>{
+class JMultifactoryHelperPodio : public JFactory {
 
+    jana::components::PodioOutput<T> m_output {this};
     JMultifactory* mMultiFactory;
 
 public:
-    JMultifactoryHelperPodio(JMultifactory* parent) : mMultiFactory(parent) {}
+    JMultifactoryHelperPodio(JMultifactory* parent, std::string collection_name) : mMultiFactory(parent) {
+        mObjectName = JTypeInfo::demangle<T>();
+        mTag = collection_name;
+        m_output.GetDataBundle()->SetUniqueName(collection_name);
+    }
 
     virtual ~JMultifactoryHelperPodio() = default;
     // This does NOT own mMultiFactory; the enclosing JFactorySet does
@@ -61,6 +66,13 @@ public:
 
     // Helpers do not produce any summary information
     void Summarize(JComponentSummary&) const override { }
+    
+    void SetCollection(typename T::collection_type&& collection) {
+        m_output() = std::make_unique<typename T::collection_type>(std::move(collection));
+    }
+    void SetCollection(std::unique_ptr<typename T::collection_type> collection) {
+        m_output() = std::move(collection);
+    }
 };
 #endif // JANA2_HAVE_PODIO
 
@@ -74,10 +86,6 @@ class JMultifactory : public jana::components::JComponent,
     // However, don't worry about a Status variable. Every time Execute() gets called, so does Process().
     // The JMultifactoryHelpers will control calls to Execute().
 
-#if JANA2_HAVE_PODIO
-    bool mNeedPodio = false;      // Whether we need to retrieve the podio::Frame
-    podio::Frame* mPodioFrame = nullptr;  // To provide the podio::Frame to SetPodioData, SetCollection
-#endif
 
 public:
     JMultifactory() = default;
@@ -107,10 +115,10 @@ public:
     void DeclarePodioOutput(std::string tag, bool owns_data=true);
 
     template <typename T>
-    void SetCollection(std::string tag, typename JFactoryPodioT<T>::CollectionT&& collection);
+    void SetCollection(std::string tag, typename T::collection_type&& collection);
 
     template <typename T>
-    void SetCollection(std::string tag, std::unique_ptr<typename JFactoryPodioT<T>::CollectionT> collection);
+    void SetCollection(std::string tag, std::unique_ptr<typename T::collection_type> collection);
 
 #endif
 
@@ -156,8 +164,8 @@ void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
 
 template <typename T>
 void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
-    if (helper == nullptr) {
+    JFactory* helper_untyped = mHelpers.GetFactory(std::type_index(typeid(T)), JTypeInfo::demangle<T>(), tag);
+    if (helper_untyped == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
         ex.function_name = "JMultifactory::SetData";
         ex.type_name = m_type_name;
@@ -165,13 +173,8 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
-#if JANA2_HAVE_PODIO
-    // This may or may not be a Podio factory. We find out if it is, and if so, set the frame before calling Set().
-    auto* typed = dynamic_cast<JFactoryPodio*>(helper);
-    if (typed != nullptr) {
-        typed->SetFrame(mPodioFrame); // Needs to be called before helper->Set(), otherwise Set() excepts
-    }
-#endif
+    JFactoryT<T>* helper = static_cast<JFactoryT<T>*>(helper_untyped);
+    // This will except if helper is a JMultifactoryHelperPodio. User should use SetPodioData() instead for PODIO data.
     helper->Set(data);
 }
 
@@ -179,23 +182,19 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
 #if JANA2_HAVE_PODIO
 
 template <typename T>
-void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
-    // TODO: Decouple tag name from collection name
-    auto* helper = new JMultifactoryHelperPodio<T>(this);
-    if (!owns_data) helper->SetSubsetCollection(true);
-
-    helper->SetTag(std::move(tag));
+void JMultifactory::DeclarePodioOutput(std::string coll_name, bool) {
+    auto* helper = new JMultifactoryHelperPodio<T>(this, coll_name);
+    helper->SetTag(std::move(coll_name));
     helper->SetPluginName(m_plugin_name);
     helper->SetFactoryName(GetTypeName() + "::Helper<" + JTypeInfo::demangle<T>() + ">");
     helper->SetLevel(GetLevel());
     mHelpers.SetLevel(GetLevel());
     mHelpers.Add(helper);
-    mNeedPodio = true;
 }
 
 template <typename T>
-void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::CollectionT&& collection) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
+void JMultifactory::SetCollection(std::string name, typename T::collection_type&& collection) {
+    JFactory* helper = mHelpers.GetDataBundle(name)->GetFactory();
     if (helper == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
         ex.function_name = "JMultifactory::SetCollection";
@@ -204,9 +203,9 @@ void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::C
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
-    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
+    auto* typed = dynamic_cast<JMultifactoryHelperPodio<T>*>(helper);
     if (typed == nullptr) {
-        auto ex = JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
+        auto ex = JException("JMultifactory: Helper needs to be a JMultifactoryHelperPodio (this shouldn't be reachable)");
         ex.function_name = "JMultifactory::SetCollection";
         ex.type_name = m_type_name;
         ex.instance_name = m_prefix;
@@ -214,13 +213,12 @@ void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::C
         throw ex;
     }
 
-    typed->SetFrame(mPodioFrame);
     typed->SetCollection(std::move(collection));
 }
 
 template <typename T>
-void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFactoryPodioT<T>::CollectionT> collection) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
+void JMultifactory::SetCollection(std::string name, std::unique_ptr<typename T::collection_type> collection) {
+    JFactory* helper = mHelpers.GetDataBundle(name)->GetFactory();
     if (helper == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
         ex.function_name = "JMultifactory::SetCollection";
@@ -229,9 +227,9 @@ void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFac
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
-    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
+    auto* typed = dynamic_cast<JMultifactoryHelperPodio<T>*>(helper);
     if (typed == nullptr) {
-        auto ex = JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
+        auto ex = JException("JMultifactory: Helper needs to be a JMultifactoryHelperPodio (this shouldn't be reachable)");
         ex.function_name = "JMultifactory::SetCollection";
         ex.type_name = m_type_name;
         ex.instance_name = m_prefix;
@@ -239,7 +237,6 @@ void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFac
         throw ex;
     }
 
-    typed->SetFrame(mPodioFrame);
     typed->SetCollection(std::move(collection));
 }
 
