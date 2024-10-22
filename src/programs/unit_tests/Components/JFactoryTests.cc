@@ -9,7 +9,6 @@
 
 #include <JANA/JEvent.h>
 #include <JANA/JFactoryT.h>
-#include <JANA/Services/JComponentManager.h>
 
 TEST_CASE("JFactoryTests") {
 
@@ -318,4 +317,68 @@ TEST_CASE("JFactory_Logger") {
     app.SetParameterValue("autoactivate", "JFactoryTestDummyObject");
     app.Run();
 }
+
+struct FactoryWithFinish : public JFactoryT<JFactoryTestDummyObject> {
+    std::vector<std::string> log;
+    Parameter<bool> except_on_endrun {this, "except_on_endrun", false, "Except on endrun"};
+    Parameter<bool> except_on_finish {this, "except_on_finish", false, "Except on finish"};
+
+    void BeginRun(const std::shared_ptr<const JEvent>&) override {
+        log.push_back("beginrun");
+    }
+    void EndRun() override {
+        log.push_back("endrun");
+        if (*except_on_endrun) throw std::runtime_error("Mystery");
+    }
+    void Finish() override {
+        log.push_back("finish");
+        if (*except_on_finish) throw std::runtime_error("Mystery");
+    }
+    void Process(const std::shared_ptr<const JEvent>&) override {
+        log.push_back("process");
+    }
+};
+TEST_CASE("JFactory_Finish") {
+    JApplication app;
+    app.Add(new JEventSource);
+    app.Add(new JFactoryGeneratorT<FactoryWithFinish>());
+    app.SetParameterValue("autoactivate", "JFactoryTestDummyObject");
+    app.SetParameterValue("jana:nevents", 2);
+
+    SECTION("ExceptInEndRun") {
+        app.SetParameterValue("JFactoryTestDummyObject:except_on_endrun", true);
+        bool found_throw = false;
+        try {
+            app.Run();
+        }
+        catch(JException& ex) {
+            LOG << ex << LOG_END;
+            REQUIRE(ex.function_name == "JFactory::EndRun");
+            REQUIRE(ex.message == "Mystery");
+            REQUIRE(ex.exception_type == "std::runtime_error");
+            REQUIRE(ex.type_name == "FactoryWithFinish");
+            REQUIRE(ex.instance_name == "JFactoryTestDummyObject");
+            found_throw = true;
+        }
+        REQUIRE(found_throw == true);
+    }
+    SECTION("ExceptInFinish") {
+        app.SetParameterValue("JFactoryTestDummyObject:except_on_finish", true);
+        bool found_throw = false;
+        try {
+            app.Run();
+        }
+        catch(JException& ex) {
+            LOG << ex << LOG_END;
+            REQUIRE(ex.function_name == "JFactory::Finish");
+            REQUIRE(ex.message == "Mystery");
+            REQUIRE(ex.exception_type == "std::runtime_error");
+            REQUIRE(ex.type_name == "FactoryWithFinish");
+            REQUIRE(ex.instance_name == "JFactoryTestDummyObject");
+            found_throw = true;
+        }
+        REQUIRE(found_throw == true);
+    }
+}
+
 
