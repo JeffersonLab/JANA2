@@ -78,6 +78,14 @@ void JFactory::DoInit() {
     mStatus = Status::Unprocessed;
 }
 
+void JFactory::DoFinish() {
+    if (mStatus == Status::Unprocessed || mStatus == Status::Processed) {
+        mStatus = Status::Finished;
+        CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
+        CallWithJExceptionWrapper("JFactory::Finish", [&](){ Finish(); });
+    }
+}
+
 void JFactory::Summarize(JComponentSummary& summary) const {
 
     auto fs = new JComponentSummary::Component(

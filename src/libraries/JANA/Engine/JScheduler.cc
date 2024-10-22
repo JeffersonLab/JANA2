@@ -284,6 +284,15 @@ void JScheduler::finish_topology() {
     std::lock_guard<std::mutex> lock(m_mutex);
     // This finalizes all arrows. Once this happens, we cannot restart the topology.
     // assert(m_topology_state.current_topology_status == TopologyStatus::Inactive);
+
+    // We ensure that JFactory::EndRun() and JFactory::Finish() are called _before_ 
+    // JApplication::Run() exits. This leaves the topology in an unrunnable state, 
+    // but it won't be resumable anyway once it reaches Status::Finished.
+    for (JEventPool* pool : m_topology->pools) {
+        pool->finalize();
+    }
+
+    // Next we finalize all remaining components (particularly JEventProcessors)
     for (ArrowState& as : m_topology_state.arrow_states) {
 
         if (as.status != ArrowStatus::Finalized) {

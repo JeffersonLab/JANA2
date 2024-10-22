@@ -7,7 +7,7 @@
 
 #include <JANA/JEvent.h>
 #include <JANA/Services/JComponentManager.h>
-#include <JANA/JEvent.h>
+#include <JANA/JMultifactory.h>
 #include <mutex>
 #include <vector>
 
@@ -73,6 +73,18 @@ public:
         (*item)->Reset();
     }
 
+    void finalize() {
+        for (size_t pool_idx = 0; pool_idx < m_location_count; ++pool_idx) {
+            for (auto& event : m_pools[pool_idx].items) {
+                for (auto* fac : event->GetFactorySet()->GetAllFactories()) {
+                    fac->DoFinish();
+                }
+                for (auto* multifac : event->GetFactorySet()->GetAllMultifactories()) {
+                    multifac->DoFinish();
+                }
+            }
+        }
+    }
 
     std::shared_ptr<JEvent>* get(size_t location=0) {
 

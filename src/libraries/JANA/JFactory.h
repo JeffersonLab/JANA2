@@ -25,7 +25,7 @@ class JApplication;
 class JFactory : public jana::components::JComponent {
 public:
 
-    enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
+    enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Finished};
     enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
 
     enum JFactory_Flags_t {
@@ -171,6 +171,7 @@ public:
     /// type of object contained. In order to access these objects when all you have is a JFactory*, use JFactory::GetAs().
     virtual void Create(const std::shared_ptr<const JEvent>& event);
     void DoInit();
+    void DoFinish();
     void Summarize(JComponentSummary& summary) const override;
 
 
