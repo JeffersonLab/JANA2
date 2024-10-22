@@ -110,7 +110,7 @@ void JEvent::Release() {
 
 void JEvent::Clear() {
     if (mEventSource != nullptr) {
-        mEventSource->DoFinish(*this);
+        mEventSource->DoFinishEvent(*this);
     }
     mFactorySet->Clear();
     mInspector.Reset();
