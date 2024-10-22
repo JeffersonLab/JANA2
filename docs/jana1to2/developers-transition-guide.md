@@ -686,6 +686,26 @@ for (auto hit: results){
 Set(results)
 ```
 
+### Forcing Factory to Regenerate Objects
+
+##### **JANA1**
+In JANA1, adding `use_factory` in the constructor forces the factory to regenerate objects, regardless of whether they already exist in the input file. This prevents JANA from searching the input file for those objects. For example:
+
+```cpp
+DEventWriterROOT_factory_ReactionEfficiency() {
+    use_factory = 1;  // prevents JANA from searching the input file for these objects
+};
+```
+
+##### **JANA2**
+In JANA2, the `use_factory` flag is no longer used. To achieve the same functionality, the `SetRegenerateFlag` function must be called with `true` as the parameter. This will prevent JANA from searching the input file for these objects, similar to the behavior in JANA1. For example:
+
+```cpp
+DEventWriterROOT_factory_ReactionEfficiency() {
+    SetRegenerateFlag(true);  // prevents JANA from searching the input file for these objects
+};
+```
+
 ## JEvent
 ### Transition from JEventLoop to JEvent
 ##### **JANA1**
