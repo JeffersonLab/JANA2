@@ -65,23 +65,11 @@ public:
         item->get()->SetLevel(m_level); // This needs to happen _after_ configure_event
     }
 
-    void release_item(std::shared_ptr<JEvent>* item) {
-        if (auto source = (*item)->GetJEventSource()) source->DoFinish(**item);
-        (*item)->mFactorySet->Release();
-        (*item)->mInspector.Reset();
-        (*item)->GetJCallGraphRecorder()->Reset();
-        (*item)->Reset();
-    }
 
     void finalize() {
         for (size_t pool_idx = 0; pool_idx < m_location_count; ++pool_idx) {
             for (auto& event : m_pools[pool_idx].items) {
-                for (auto* fac : event->GetFactorySet()->GetAllFactories()) {
-                    fac->DoFinish();
-                }
-                for (auto* multifac : event->GetFactorySet()->GetAllMultifactories()) {
-                    multifac->DoFinish();
-                }
+                event->Finish();
             }
         }
     }
@@ -110,13 +98,13 @@ public:
     }
 
 
-    void put(std::shared_ptr<JEvent>* item, bool release, size_t location) {
+    void put(std::shared_ptr<JEvent>* item, bool clear_event, size_t location) {
 
         assert(m_pools != nullptr); // If you hit this, you forgot to call init().
         
-        if (release) {
+        if (clear_event) {
             // Do any necessary teardown within the item itself
-            release_item(item);
+            (*item)->Clear();
         }
 
         // Consider each location starting with current one
@@ -179,9 +167,9 @@ public:
         }
     }
 
-    void push(std::shared_ptr<JEvent>** source, size_t count, bool release, size_t location) {
+    void push(std::shared_ptr<JEvent>** source, size_t count, bool clear_event, size_t location) {
         for (size_t i=0; i<count; ++i) {
-            put(source[i], release, location);
+            put(source[i], clear_event, location);
             source[i] = nullptr;
         }
     }

@@ -14,7 +14,11 @@ JEvent::JEvent(JApplication* app) : mInspector(this) {
 }
 
 JEvent::~JEvent() {
-    if (mFactorySet != nullptr) mFactorySet->Release();
+    if (mFactorySet != nullptr) {
+        // Prevent memory leaks of factory contents
+        mFactorySet->Clear();
+        // We mustn't call EndRun() or Finish() here because that would give us an excepting destructor
+    }
     delete mFactorySet;
 }
 
@@ -104,8 +108,18 @@ void JEvent::Release() {
     }
 }
 
-void JEvent::Reset() {
+void JEvent::Clear() {
+    if (mEventSource != nullptr) {
+        mEventSource->DoFinish(*this);
+    }
+    mFactorySet->Clear();
+    mInspector.Reset();
+    mCallGraph.Reset();
     mReferenceCount = 1;
+}
+
+void JEvent::Finish() {
+    mFactorySet->Finish();
 }
 
 

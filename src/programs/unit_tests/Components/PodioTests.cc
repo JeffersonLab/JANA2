@@ -153,8 +153,7 @@ TEST_CASE("JFactoryPodioT::Init gets called") {
     JApplication app;
     app.Add(new JFactoryGeneratorT<jana2_tests_podiotests_init::TestFac>());
     auto event = std::make_shared<JEvent>(&app);
-
-    event->GetFactorySet()->Release();  // Simulate a trip to the JEventPool
+    event->Clear();  // Simulate a trip to the JEventPool
 
     auto r = event->GetCollectionBase("clusters");
     REQUIRE(r != nullptr);

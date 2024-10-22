@@ -92,7 +92,10 @@ public:
     void SetParent(std::shared_ptr<JEvent>* parent);
     std::shared_ptr<JEvent>* ReleaseParent(JEventLevel level);
     void Release();
-    void Reset();
+
+    // Lifecycle
+    void Clear();
+    void Finish();
 
     JFactory* GetFactory(const std::string& object_name, const std::string& tag) const;
     std::vector<JFactory*> GetAllFactories() const;

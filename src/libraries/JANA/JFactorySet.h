@@ -26,8 +26,9 @@ class JFactorySet {
 
         bool Add(JFactory* aFactory);
         bool Add(JMultifactory* multifactory);
-        void Print(void) const;
-        void Release(void);
+        void Print() const;
+        void Clear();
+        void Finish();
 
         JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
         template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;

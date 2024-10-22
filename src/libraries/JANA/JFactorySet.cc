@@ -165,12 +165,27 @@ void JFactorySet::Print() const
     }
 }
 
-/// Release() loops over all contained factories, clearing their data
-void JFactorySet::Release() {
+//---------------------------------
+// Clear
+//---------------------------------
+void JFactorySet::Clear() {
 
     for (const auto& sFactoryPair : mFactories) {
         auto sFactory = sFactoryPair.second;
         sFactory->ClearData();
+        // This automatically clears multifactories because their data is stored in helper factories!
+    }
+}
+
+//---------------------------------
+// Finish
+//---------------------------------
+void JFactorySet::Finish() {
+    for (auto& p : mFactories) {
+        p.second->DoFinish();
+    }
+    for (auto& multifac : mMultifactories) {
+        multifac->DoFinish();
     }
 }
 
