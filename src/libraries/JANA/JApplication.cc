@@ -149,6 +149,7 @@ void JApplication::Initialize() {
         m_desired_nthreads = JCpuInfo::GetNumCpus();
     }
 
+    m_params->SetDefaultParameter("jana:show_ticker", m_ticker_on, "Controls whether the ticker is visible");
     m_params->SetDefaultParameter("jana:ticker_interval", m_ticker_interval_ms, "Controls the ticker interval (in ms)");
     m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
 
