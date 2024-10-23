@@ -111,15 +111,9 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
         return;
     }
 
-    bool warnings_present = false;
     bool strictness_violation = false;
 
-    // We don't need to show "Advanced" as a warning unless we are using full verbosity
-    if (verbosity == 3) {
-        warnings_present = true;
-    }
-
-    // Check for warnings and unused parameters first 
+    // Unused parameters first 
     // The former might change the table columns and the latter might change the filter verbosity
     for (auto& pair : m_parameters) {
         const auto& key = pair.first;
@@ -127,12 +121,10 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
         
         if ((strictness > 0) && (!param->IsDefault()) && (!param->IsUsed())) {
             strictness_violation = true;
-            warnings_present = true;
             LOG_ERROR(m_logger) << "Parameter '" << key << "' appears to be unused. Possible typo?" << LOG_END;
         }
         if ((!param->IsDefault()) && (param->IsDeprecated())) {
             LOG_ERROR(m_logger) << "Parameter '" << key << "' has been deprecated and may no longer be supported in future releases." << LOG_END;
-            warnings_present = true;
         }
     }
 
@@ -165,25 +157,17 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
         return;
     }
 
-    // Print table
-    JTablePrinter table;
-    table.AddColumn("Name", JTablePrinter::Justify::Left, 20);
-    if (warnings_present) {
-        table.AddColumn("Warnings");  // IsDeprecated column
-    }
-    table.AddColumn("Value", JTablePrinter::Justify::Left, 25);
-    table.AddColumn("Default", JTablePrinter::Justify::Left, 25);
-    table.AddColumn("Description", JTablePrinter::Justify::Left, 50);
-
     std::ostringstream ss;
     for (JParameter* p: params_to_print) {
 
         ss << std::endl;
         ss << " - key:         \"" << p->GetKey() << "\"" << std::endl;
-        ss << "   value:       \"" << p->GetValue() << "\"" << std::endl;
+        if (!p->IsDefault()) {
+            ss << "   value:       \"" << p->GetValue() << "\"" << std::endl;
+        }
         ss << "   default:     \"" << p->GetDefault() << "\"" << std::endl;
         if (!p->GetDescription().empty()) {
-            ss << "   description: \"";
+            ss << "   description: ";
             std::istringstream iss(p->GetDescription());
             std::string line;
             bool is_first_line =  true;
@@ -196,19 +180,22 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
                 }
                 is_first_line = false;
             }
-            ss << "\"" << std::endl;
+            ss << std::endl;
+        }
+        if (p->IsConflicted()) {
+            ss << "   warning:     Conflicting defaults" << std::endl;
         }
         if (p->IsDeprecated()) {
-            ss << "   warning:      \"Deprecated\"" << std::endl;
+            ss << "   warning:     Deprecated" << std::endl;
             // If deprecated, it no longer matters whether it is advanced or not. If unused, won't show up here anyway.
         }
-        else if (!p->IsUsed()) {
+        if (!p->IsUsed()) {
             // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
             // Can't be both advanced and unused, since JANA only finds out that it is advanced by trying to use it
-            ss << "   warning:     \"Unused\"" << std::endl;
+            ss << "   warning:     Unused" << std::endl;
         }
-        else if (p->IsAdvanced()) {
-            ss << "   warning:     \"Advanced\"" << std::endl;
+        if (p->IsAdvanced()) {
+            ss << "   warning:     Advanced" << std::endl;
         }
     }
     LOG_WARN(m_logger) << "Configuration Parameters\n"  << ss.str() << LOG_END;
