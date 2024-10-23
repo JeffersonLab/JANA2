@@ -71,13 +71,15 @@ The following configuration options are used most commonly:
 | nthreads                  | int     | Size of thread team (Defaults to the number of cores on your machine) |
 | plugins                   | string  | Comma-separated list of plugin filenames. JANA will look for these on the `$JANA_PLUGIN_PATH` |
 | plugins_to_ignore         | string  | This removes plugins which had been specified in `plugins`. |
-| event_source_type         | string  | Manually override JANA's decision about which JEventSource to use |
+| event_source_type         | string  | Manually specify which JEventSource to use |
 | jana:nevents              | int     | Limit the number of events each source may emit |
 | jana:nskip                | int     | Skip processing the first n events from each event source |
-| jana:extended_report      | bool    | The amount of status information to show while running |
 | jana:status_fname         | string  | Named pipe for retrieving status information remotely |
 | jana:loglevel | string | Set the log level (trace,debug,info,warn,error,fatal,off) for loggers internal to JANA |
 | jana:global_loglevel | string | Set the default log level (trace,debug,info,warn,error,fatal,off) for all loggers |
+| jana:show_ticker          | bool    | Controls whether the status ticker is shown |
+| jana:ticker_interval          | int     | Controls how often the status ticker updates (in ms)  |
+| jana:extended_report       | bool    | Controls whether to show extra details in the status ticker and final report |
 
 JANA automatically provides each component with its own logger. You can control the logging verbosity of individual components
 just like any other parameter. For instance, if your component prefixes its parameters with `BCAL:tracking`,
