@@ -46,14 +46,14 @@ void JMultifactory::Execute(const std::shared_ptr<const JEvent>& event) {
     });
 }
 
-void JMultifactory::Release() {
+void JMultifactory::DoFinish() {
     std::lock_guard<std::mutex> lock(m_mutex);
     // Only call Finish() if we actually initialized
     // Only call Finish() once
+    
     if (m_status == Status::Initialized) {
-        CallWithJExceptionWrapper("JMultifactory::Finish", [&](){
-            Finish();
-        });
+        CallWithJExceptionWrapper("JMultifactory::EndRun", [&](){ EndRun(); });
+        CallWithJExceptionWrapper("JMultifactory::Finish", [&](){ Finish(); });
         m_status = Status::Finalized;
     }
 }

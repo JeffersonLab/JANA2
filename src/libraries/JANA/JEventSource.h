@@ -188,7 +188,7 @@ public:
 
     Result DoNextCompatibility(std::shared_ptr<JEvent> event);
 
-    void DoFinish(JEvent& event);
+    void DoFinishEvent(JEvent& event);
 
     void Summarize(JComponentSummary& summary) const override;
 

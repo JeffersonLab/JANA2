@@ -34,6 +34,7 @@ class JParameter {
                                     //   We want to differentiate these from the parameters that users are meant to control and understand.
     bool m_is_used = false;         // If a parameter hasn't been used, it probably contains a typo, and we should warn the user.
 
+    bool m_is_conflicted = false;   // Whether or not this parameter has been registered with inconsistent default values
 
 public:
 
@@ -55,6 +56,7 @@ public:
     inline bool IsAdvanced() const { return m_is_advanced; }
     inline bool IsUsed() const { return m_is_used; }
     inline bool IsDeprecated() const { return m_is_deprecated; }
+    inline bool IsConflicted() const { return m_is_conflicted; }
 
     inline void SetKey(std::string key) { m_name = std::move(key); }
     inline void SetValue(std::string val) { m_value = std::move(val); }
@@ -65,6 +67,7 @@ public:
     inline void SetIsAdvanced(bool isHidden) { m_is_advanced = isHidden; }
     inline void SetIsUsed(bool isUsed) { m_is_used = isUsed; }
     inline void SetIsDeprecated(bool isDeprecated) { m_is_deprecated = isDeprecated; }
+    inline void SetIsConflicted(bool isConflicted) { m_is_conflicted = isConflicted; }
 
 };
 
@@ -261,15 +264,20 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
             // However, we still want to warn the user if the same parameter was declared with different values.
             Parse(param->GetDefault(),t);
             if (!Equals(val, t)) {
-                LOG_WARN(m_logger) << "Parameter '" << name << "' has conflicting defaults: '"
-                                   << Stringify(val) << "' vs '" << param->GetDefault() << "'"
-                                   << LOG_END;
-                if (param->IsDefault()) {
-                    // If we tried to set the same default parameter twice with different values, and there is no
-                    // existing non-default value, we remember the _latest_ default value. This way, we return the
-                    // default provided by the caller, instead of the default provided by the mysterious interloper.
-                    param->SetValue(Stringify(val));
+                if (!param->IsConflicted()) {
+                    // Only show this warning once per parameter
+                    LOG_WARN(m_logger) << "Parameter '" << name << "' has conflicting defaults: '"
+                                    << Stringify(val) << "' vs '" << param->GetDefault() << "'"
+                                    << LOG_END;
+                    param->SetIsConflicted(true);
                 }
+                // If we tried to set the same default parameter twice with different values, and there is no
+                // existing non-default value, we remember the _latest_ default value. This way, we return the
+                // default provided by the caller, instead of the default provided by the mysterious interloper.
+                param->SetDefault(Stringify(val));
+            }
+            if (param->IsDefault()) {
+                param->SetValue(Stringify(val)); // Use _latest_ default value
             }
         }
     }

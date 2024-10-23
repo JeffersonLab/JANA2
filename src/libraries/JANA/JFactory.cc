@@ -45,15 +45,10 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 
     if (mStatus == Status::Unprocessed) {
         auto run_number = event->GetRunNumber();
-        if (mPreviousRunNumber == -1) {
-            // This is the very first run
-            CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
-            CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event); });
-            mPreviousRunNumber = run_number;
-        }
-        else if (mPreviousRunNumber != run_number) {
-            // This is a later run, and it has changed
-            CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
+        if (mPreviousRunNumber != run_number) {
+            if (mPreviousRunNumber != -1) {
+                CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
+            }
             CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
             CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event); });
             mPreviousRunNumber = run_number;
@@ -76,6 +71,16 @@ void JFactory::DoInit() {
     }
     CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
     mStatus = Status::Unprocessed;
+}
+
+void JFactory::DoFinish() {
+    if (mStatus == Status::Unprocessed || mStatus == Status::Processed) {
+        if (mPreviousRunNumber != -1) {
+            CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
+        }
+        CallWithJExceptionWrapper("JFactory::Finish", [&](){ Finish(); });
+        mStatus = Status::Finished;
+    }
 }
 
 void JFactory::Summarize(JComponentSummary& summary) const {

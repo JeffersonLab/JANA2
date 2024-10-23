@@ -34,9 +34,7 @@ class MyFacGen : public JFactoryGenerator {
 TEST_CASE("JFactoryGeneratorTests_UserDefined") {
     JApplication app;
     app.Add(new MyFacGen());
-    app.Initialize();
-    auto event = std::make_shared<JEvent>();
-    app.GetService<JComponentManager>()->configure_event(*event);
+    auto event = std::make_shared<JEvent>(&app);
 
     auto data = event->Get<MyData>();
     REQUIRE(data.at(0)->x == 22);

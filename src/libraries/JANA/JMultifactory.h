@@ -118,12 +118,9 @@ public:
     
     void DoInit();
 
-    void Execute(const std::shared_ptr<const JEvent>&);
-    // Should this be execute or create? Who is tracking that this is called at most once per event?
-    // Do we need something like JFactory::Status? Also, how do we ensure that CreationStatus is correct as well?
+    void DoFinish();
 
-    void Release();
-    // Release makes sure Finish() is called exactly once
+    void Execute(const std::shared_ptr<const JEvent>&);
 
     JFactorySet* GetHelpers();
     // This exposes the mHelpers JFactorySet, which contains a JFactoryT<T> for each declared output of the multifactory.

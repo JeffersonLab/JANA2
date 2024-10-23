@@ -93,10 +93,7 @@ TEST_CASE("MediumDefTags") {
     app.Add(new JFactoryGeneratorT<Fac1>);
     app.Add(new JFactoryGeneratorT<Fac2>);
     app.SetParameterValue("DEFTAG:deftagstest::Obj", "tagB");
-    app.Initialize();
-    auto event = std::make_shared<JEvent>();
-    auto jcm = app.GetService<JComponentManager>();
-    jcm->configure_event(*event);
+    auto event = std::make_shared<JEvent>(&app);
     auto objs = event->Get<Obj>();
     REQUIRE(objs[0]->E == 33.3);
 }

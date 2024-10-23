@@ -13,7 +13,6 @@ TEST_CASE("JEventInsertTests") {
 
 
     auto event = std::make_shared<JEvent>();
-    event->SetFactorySet(new JFactorySet);
 
     SECTION("Single-item JEvent::Insert() can be retrieved via JEvent::Get()") {
         auto input = new FakeJObject(22);
@@ -85,7 +84,6 @@ TEST_CASE("JEventInsertTests") {
         bool deleted = false;
         obj->deleted = &deleted;
         JEvent* event_ptr = new JEvent();
-        event_ptr->SetFactorySet(new JFactorySet);
         event_ptr->Insert(obj, "tag");
         REQUIRE(deleted == false);
         delete event_ptr;

@@ -10,12 +10,13 @@ struct MyEventSource : public JEventSource {
     size_t events_in_file = 5;
 
     void Open() override {
+        REQUIRE(GetApplication() != nullptr);
         LOG_INFO(GetLogger()) << "Open() called" << LOG_END;
         open_count++;
     }
     Result Emit(JEvent&) override {
         emit_count++;
-
+        REQUIRE(GetApplication() != nullptr);
         if (GetEmittedEventCount() >= events_in_file) {
             LOG_INFO(GetLogger()) << "Emit() called, returning FailureFinished" << LOG_END;
             return Result::FailureFinished;
@@ -24,6 +25,7 @@ struct MyEventSource : public JEventSource {
         return Result::Success;
     }
     void Close() override {
+        REQUIRE(GetApplication() != nullptr);
         LOG_INFO(GetLogger()) << "Close() called" << LOG_END;
         close_count++;
     }

@@ -249,7 +249,7 @@ JEventSource::Result JEventSource::DoNextCompatibility(std::shared_ptr<JEvent> e
 }
 
 
-void JEventSource::DoFinish(JEvent& event) {
+void JEventSource::DoFinishEvent(JEvent& event) {
 
     m_events_finished.fetch_add(1);
     if (m_enable_finish_event) {

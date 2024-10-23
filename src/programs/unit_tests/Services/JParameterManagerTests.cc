@@ -432,6 +432,49 @@ TEST_CASE("JParameterManager_Strictness") {
 
 
 
+TEST_CASE("JParameterManager_ConflictingDefaults") {
+
+    int x1 = 3;
+    int x2 = 4;
+    int x3 = 3;
+    int x4 = 4;
+
+    JParameterManager sut;
+    sut.SetLogger(JLogger());
+
+    // Simulate a FactorySet containing two JFactories, each of which declares the same parameter with different default values
+    auto p1 = sut.SetDefaultParameter("my_param_name", x1, "Tests how conflicting defaults are handled");
+    REQUIRE(p1->HasDefault() == true);
+    REQUIRE(p1->IsDefault() == true);
+    REQUIRE(p1->GetDefault() == "3"); // Should be the _latest_ default found
+    REQUIRE(p1->GetValue() == "3"); // Should be the _latest_ default value
+    REQUIRE(x1 == 3);
+    auto p2 = sut.SetDefaultParameter("my_param_name", x2, "Tests how conflicting defaults are handled");
+    REQUIRE(p2->HasDefault() == true);
+    REQUIRE(p2->IsDefault() == true);
+    REQUIRE(p2->GetDefault() == "4"); // Should be the _latest_ default found
+    REQUIRE(p2->GetValue() == "4"); // Should be the _latest_ default value
+    REQUIRE(x2 == 4);
+    
+    // Simulate a _second_ FactorySet containing fresh instances of the same two JFactories, 
+    auto p3 = sut.SetDefaultParameter("my_param_name", x3, "Tests how conflicting defaults are handled");
+    REQUIRE(p3->HasDefault() == true);
+    REQUIRE(p3->IsDefault() == true);
+    REQUIRE(p3->GetDefault() == "3"); // Should be the _latest_ default found
+    REQUIRE(p3->GetValue() == "3"); // Should be the _latest_ default value
+    REQUIRE(x3 == 3);
+    auto p4 = sut.SetDefaultParameter("my_param_name", x4, "Tests how conflicting defaults are handled");
+    REQUIRE(p4->HasDefault() == true);
+    REQUIRE(p4->IsDefault() == true);
+    REQUIRE(p4->GetDefault() == "4"); // Should be the _latest_ default value found
+    REQUIRE(p4->GetValue() == "4"); // Should be the _latest_ default value
+    REQUIRE(x4 == 4);
+
+    sut.PrintParameters(2,1);
+}
+
+
+
 
 
 
