@@ -47,8 +47,8 @@ TEST_CASE("Create subevent processor") {
 TEST_CASE("Basic subevent arrow functionality") {
 
     MyProcessor processor;
-    JMailbox<std::shared_ptr<JEvent>*> events_in;
-    JMailbox<std::shared_ptr<JEvent>*> events_out;
+    JMailbox<JEvent*> events_in;
+    JMailbox<JEvent*> events_out;
     JMailbox<SubeventWrapper<MyInput>> subevents_in;
     JMailbox<SubeventWrapper<MyOutput>> subevents_out;
 

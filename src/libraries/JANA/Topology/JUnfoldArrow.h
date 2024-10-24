@@ -10,7 +10,7 @@ class JUnfoldArrow : public JArrow {
 private:
 
     JEventUnfolder* m_unfolder = nullptr;
-    EventT* m_parent_event = nullptr;
+    JEvent* m_parent_event = nullptr;
     bool m_ready_to_fetch_parent = true;
 
     Place m_parent_in;
@@ -32,7 +32,7 @@ public:
     }
 
 
-    void attach_parent_in(JMailbox<EventT*>* parent_in) {
+    void attach_parent_in(JMailbox<JEvent*>* parent_in) {
         m_parent_in.place_ref = parent_in;
         m_parent_in.is_queue = true;
     }
@@ -42,12 +42,12 @@ public:
         m_child_in.is_queue = false;
     }
 
-    void attach_child_in(JMailbox<EventT*>* child_in) {
+    void attach_child_in(JMailbox<JEvent*>* child_in) {
         m_child_in.place_ref = child_in;
         m_child_in.is_queue = true;
     }
 
-    void attach_child_out(JMailbox<EventT*>* child_out) {
+    void attach_child_out(JMailbox<JEvent*>* child_out) {
         m_child_out.place_ref = child_out;
         m_child_out.is_queue = true;
     }
@@ -131,26 +131,26 @@ public:
             if (m_parent_event == nullptr) {
                 throw JException("Attempting to unfold without a valid parent event");
             }
-            if (m_parent_event->get()->GetLevel() != m_unfolder->GetLevel()) {
-                throw JException("JUnfolder: Expected parent with level %d, got %d", m_unfolder->GetLevel(), m_parent_event->get()->GetLevel());
+            if (m_parent_event->GetLevel() != m_unfolder->GetLevel()) {
+                throw JException("JUnfolder: Expected parent with level %d, got %d", m_unfolder->GetLevel(), m_parent_event->GetLevel());
             }
-            if (child->get()->GetLevel() != m_unfolder->GetChildLevel()) {
-                throw JException("JUnfolder: Expected child with level %d, got %d", m_unfolder->GetChildLevel(), child->get()->GetLevel());
+            if (child->GetLevel() != m_unfolder->GetChildLevel()) {
+                throw JException("JUnfolder: Expected child with level %d, got %d", m_unfolder->GetChildLevel(), child->GetLevel());
             }
             
-            auto status = m_unfolder->DoUnfold(*(m_parent_event->get()), *(child->get()));
+            auto status = m_unfolder->DoUnfold(*m_parent_event, *child);
 
 
             // Join always succeeds (for now)
-            child->get()->SetParent(m_parent_event);
+            child->SetParent(m_parent_event);
 
-            LOG_DEBUG(m_logger) << "Unfold succeeded: Parent event = " << m_parent_event->get()->GetEventNumber() << ", child event = " << child->get()->GetEventNumber() << LOG_END;
+            LOG_DEBUG(m_logger) << "Unfold succeeded: Parent event = " << m_parent_event->GetEventNumber() << ", child event = " << child->GetEventNumber() << LOG_END;
             // TODO: We'll need something more complicated for the streaming join case
 
             if (status == JEventUnfolder::Result::NextChildNextParent || status == JEventUnfolder::Result::KeepChildNextParent) {
-                LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->get()->GetEventNumber() << LOG_END;
+                LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
                 m_ready_to_fetch_parent = true;
-                m_parent_event->get()->Release();
+                m_parent_event->Release();
                 m_parent_event = nullptr;
                 m_parent_in.min_item_count = 1;
                 m_parent_in.max_item_count = 1;

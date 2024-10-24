@@ -15,16 +15,16 @@ void JEventTapArrow::add_processor(JEventProcessor* proc) {
     m_procs.push_back(proc);
 }
 
-void JEventTapArrow::process(std::shared_ptr<JEvent>* event, bool& success, JArrowMetrics::Status& status) {
+void JEventTapArrow::process(JEvent* event, bool& success, JArrowMetrics::Status& status) {
 
-    LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << (*event)->GetEventNumber() << LOG_END;
+    LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventProcessor* proc : m_procs) {
-        JCallGraphEntryMaker cg_entry(*(*event)->GetJCallGraphRecorder(), proc->GetTypeName()); // times execution until this goes out of scope
+        JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), proc->GetTypeName()); // times execution until this goes out of scope
         if (proc->GetCallbackStyle() != JEventProcessor::CallbackStyle::LegacyMode) {
             proc->DoTap(*event);
         }
     }
-    LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << (*event)->GetEventNumber() << LOG_END;
+    LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     success = true;
     status = JArrowMetrics::Status::KeepGoing;
 }

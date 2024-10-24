@@ -8,8 +8,6 @@
 
 class JFoldArrow : public JArrow {
 private:
-    using EventT = std::shared_ptr<JEvent>;
-
     // TODO: Support user-provided folders
     // JEventFolder* m_folder = nullptr;
     
@@ -36,12 +34,12 @@ public:
     {
     }
 
-    void attach_child_in(JMailbox<EventT*>* child_in) {
+    void attach_child_in(JMailbox<JEvent*>* child_in) {
         m_child_in.place_ref = child_in;
         m_child_in.is_queue = true;
     }
 
-    void attach_child_out(JMailbox<EventT*>* child_out) {
+    void attach_child_out(JMailbox<JEvent*>* child_out) {
         m_child_out.place_ref = child_out;
         m_child_out.is_queue = true;
     }
@@ -57,7 +55,7 @@ public:
     }
 
 
-    void attach_parent_out(JMailbox<EventT*>* parent_out) {
+    void attach_parent_out(JMailbox<JEvent*>* parent_out) {
         m_parent_out.place_ref = parent_out;
         m_parent_out.is_queue = true;
     }
@@ -125,12 +123,12 @@ public:
             auto child = child_in_data.items[0];
             child_in_data.items[0] = nullptr;
             child_in_data.item_count = 0;
-            if (child->get()->GetLevel() != m_child_level) {
+            if (child->GetLevel() != m_child_level) {
                 throw JException("JFoldArrow received a child with the wrong event level");
             }
 
             // TODO: Call folders here
-            auto* parent = child->get()->ReleaseParent(m_parent_level);
+            auto* parent = child->ReleaseParent(m_parent_level);
 
             // Put child on the output queue
             child_out_data.items[0] = child;

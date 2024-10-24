@@ -20,13 +20,13 @@ struct RandIntArrow : public JPipelineArrow<RandIntArrow> {
     size_t emit_count = 0;   // How many emitted so far
     int emit_sum = 0;        // Sum of all ints emitted so far
 
-    RandIntArrow(std::string name, JEventPool* pool, JMailbox<EventT*>* output_queue)
+    RandIntArrow(std::string name, JEventPool* pool, JMailbox<JEvent*>* output_queue)
         : JPipelineArrow(name, false, true, false) {
         this->set_input(pool);
         this->set_output(output_queue);
     }
 
-    void process(EventT* event, bool& success, JArrowMetrics::Status& status) {
+    void process(JEvent* event, bool& success, JArrowMetrics::Status& status) {
 
         if (emit_count >= emit_limit) {
             success = false;
@@ -36,7 +36,7 @@ struct RandIntArrow : public JPipelineArrow<RandIntArrow> {
 
         auto data = new EventData {7};
 
-        (*event)->Insert(data, "first");
+        event->Insert(data, "first");
 
         emit_sum += data->x;
         emit_count += 1;
@@ -50,17 +50,17 @@ struct RandIntArrow : public JPipelineArrow<RandIntArrow> {
 
 struct MultByTwoArrow : public JPipelineArrow<MultByTwoArrow> {
 
-    MultByTwoArrow(std::string name, JMailbox<EventT*>* input_queue, JMailbox<EventT*>* output_queue) 
+    MultByTwoArrow(std::string name, JMailbox<JEvent*>* input_queue, JMailbox<JEvent*>* output_queue) 
         : JPipelineArrow(name, true, false, false) {
         this->set_input(input_queue);
         this->set_output(output_queue);
     }
 
-    void process(EventT* event, bool& success, JArrowMetrics::Status& status) {
-        auto prev = (*event)->Get<EventData>("first");
+    void process(JEvent* event, bool& success, JArrowMetrics::Status& status) {
+        auto prev = event->Get<EventData>("first");
         auto x = prev.at(0)->x;
         auto next = new EventData { .x=x, .y=x*2.0 };
-        (*event)->Insert(next, "second");
+        event->Insert(next, "second");
         success = true;
         status = JArrowMetrics::Status::KeepGoing;
     }
@@ -68,19 +68,19 @@ struct MultByTwoArrow : public JPipelineArrow<MultByTwoArrow> {
 
 struct SubOneArrow : public JPipelineArrow<SubOneArrow> {
 
-    SubOneArrow(std::string name, JMailbox<EventT*>* input_queue, JMailbox<EventT*>* output_queue) 
+    SubOneArrow(std::string name, JMailbox<JEvent*>* input_queue, JMailbox<JEvent*>* output_queue) 
         : JPipelineArrow(name, true, false, false) {
         this->set_input(input_queue);
         this->set_output(output_queue);
     }
 
-    void process(EventT* event, bool& success, JArrowMetrics::Status& status) {
-        auto prev = (*event)->Get<EventData>("second");
+    void process(JEvent* event, bool& success, JArrowMetrics::Status& status) {
+        auto prev = event->Get<EventData>("second");
         auto x = prev.at(0)->x;
         auto y = prev.at(0)->y;
         auto z = y - 1;
         auto next = new EventData { .x=x, .y=y, .z=z };
-        (*event)->Insert(next, "third");
+        event->Insert(next, "third");
         success = true;
         status = JArrowMetrics::Status::KeepGoing;
     }
@@ -90,14 +90,14 @@ struct SumArrow : public JPipelineArrow<SumArrow> {
 
     double sum = 0;
 
-    SumArrow(std::string name, JMailbox<EventT*>* input_queue, JEventPool* pool) 
+    SumArrow(std::string name, JMailbox<JEvent*>* input_queue, JEventPool* pool) 
         : JPipelineArrow(name, false, false, true) {
         this->set_input(input_queue);
         this->set_output(pool);
     }
 
-    void process(EventT* event, bool& success, JArrowMetrics::Status& status) {
-        auto prev = (*event)->Get<EventData>("third");
+    void process(JEvent* event, bool& success, JArrowMetrics::Status& status) {
+        auto prev = event->Get<EventData>("third");
         auto z = prev.at(0)->z;
         sum += z;
         success = true;

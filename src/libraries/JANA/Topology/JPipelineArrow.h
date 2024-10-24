@@ -8,7 +8,6 @@
 #include <JANA/Topology/JMailbox.h>
 #include <JANA/Topology/JEventPool.h>
 
-using MessageT = std::shared_ptr<JEvent>;
 
 template <typename DerivedT>
 class JPipelineArrow : public JArrow {
@@ -24,13 +23,13 @@ public:
         : JArrow(std::move(name), is_parallel, is_source, is_sink) {
     }
 
-    void set_input(JMailbox<MessageT*>* queue) {
+    void set_input(JMailbox<JEvent*>* queue) {
         m_input.set_queue(queue);
     }
     void set_input(JEventPool* pool) {
         m_input.set_pool(pool);
     }
-    void set_output(JMailbox<MessageT*>* queue) {
+    void set_output(JMailbox<JEvent*>* queue) {
         m_output.set_queue(queue);
     }
     void set_output(JEventPool* pool) {
@@ -48,8 +47,7 @@ public:
         if (!success) {
             m_input.revert(in_data);
             m_output.revert(out_data);
-            // TODO: Test that revert works properly
-            
+
             auto end_total_time = std::chrono::steady_clock::now();
             result.update(JArrowMetrics::Status::ComeBackLater, 0, 1, std::chrono::milliseconds(0), end_total_time - start_total_time);
             return;
@@ -58,7 +56,7 @@ public:
         bool process_succeeded = true;
         JArrowMetrics::Status process_status = JArrowMetrics::Status::KeepGoing;
         assert(in_data.item_count == 1);
-        MessageT* event = in_data.items[0];
+        JEvent* event = in_data.items[0];
 
         auto start_processing_time = std::chrono::steady_clock::now();
         static_cast<DerivedT*>(this)->process(event, process_succeeded, process_status);

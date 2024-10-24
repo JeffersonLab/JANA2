@@ -17,25 +17,25 @@ TEST_CASE("JPoolTests_SingleLocationLimitEvents") {
 
     auto* e = pool.get(0);
     REQUIRE(e != nullptr);
-    REQUIRE((*e)->GetEventNumber() == 0); // Will segfault if not initialized
+    REQUIRE(e->GetEventNumber() == 0); // Will segfault if not initialized
 
     auto* f = pool.get(0);
     REQUIRE(f != nullptr);
-    REQUIRE((*f)->GetEventNumber() == 0);
+    REQUIRE(f->GetEventNumber() == 0);
 
     auto* g = pool.get(0);
     REQUIRE(g != nullptr);
-    REQUIRE((*g)->GetEventNumber() == 0);
+    REQUIRE(g->GetEventNumber() == 0);
 
     auto* h = pool.get(0);
     REQUIRE(h == nullptr);
 
-    (*f)->SetEventNumber(5);
+    f->SetEventNumber(5);
     pool.put(f, true, 0);
 
     h = pool.get(0);
     REQUIRE(h != nullptr);
-    REQUIRE((*h)->GetEventNumber() == 5);
+    REQUIRE(h->GetEventNumber() == 5);
 }
 
 

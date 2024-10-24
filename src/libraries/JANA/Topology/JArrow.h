@@ -19,9 +19,10 @@
 
 struct Place;
 
-using EventT = std::shared_ptr<JEvent>;
-
 class JArrow {
+    friend class JScheduler;
+    friend class JTopologyBuilder;
+
 private:
     std::string m_name;        // Used for human understanding
     bool m_is_parallel;        // Whether or not it is safe to parallelize
@@ -29,13 +30,11 @@ private:
     bool m_is_sink;            // Whether or not tnis arrow contributes to the final event count
     JArrowMetrics m_metrics;   // Performance information accumulated over all workers
 
-    friend class JScheduler;
     std::vector<JArrow *> m_listeners;    // Downstream Arrows
 
 protected:
     // This is usable by subclasses.
     JLogger m_logger;
-    friend class JTopologyBuilder;
     std::vector<Place*> m_places;  // Will eventually supplant m_listeners
 
 public:
@@ -82,7 +81,7 @@ public:
 };
 
 struct Data {
-    std::array<EventT*, JANA2_ARROWDATA_MAX_SIZE> items;
+    std::array<JEvent*, JANA2_ARROWDATA_MAX_SIZE> items;
     size_t item_count = 0;
     size_t reserve_count = 0;
     size_t location_id;
@@ -107,7 +106,7 @@ struct Place {
         this->max_item_count = max_item_count;
     }
 
-    void set_queue(JMailbox<EventT*>* queue) {
+    void set_queue(JMailbox<JEvent*>* queue) {
         assert(queue != nullptr);
         this->place_ref = queue;
         this->is_queue = true;
@@ -122,7 +121,7 @@ struct Place {
     size_t get_pending() {
         assert(place_ref != nullptr);
         if (is_input && is_queue) {
-            auto queue = static_cast<JMailbox<EventT*>*>(place_ref);
+            auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
             return queue->size();
         }
         return 0;
@@ -132,7 +131,7 @@ struct Place {
         assert(place_ref != nullptr);
         if (is_input) { // Actually pull the data
             if (is_queue) {
-                auto queue = static_cast<JMailbox<EventT*>*>(place_ref);
+                auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
                 data.item_count = queue->pop_and_reserve(data.items.data(), min_item_count, max_item_count, data.location_id);
                 data.reserve_count = data.item_count;
                 return (data.item_count >= min_item_count);
@@ -148,7 +147,7 @@ struct Place {
             if (is_queue) {
                 // Reserve a space on the output queue
                 data.item_count = 0;
-                auto queue = static_cast<JMailbox<EventT*>*>(place_ref);
+                auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
                 data.reserve_count = queue->reserve(min_item_count, max_item_count, data.location_id);
                 return (data.reserve_count >= min_item_count);
             }
@@ -164,7 +163,7 @@ struct Place {
     void revert(Data& data) {
         assert(place_ref != nullptr);
         if (is_queue) {
-            auto queue = static_cast<JMailbox<EventT*>*>(place_ref);
+            auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
             queue->push_and_unreserve(data.items.data(), data.item_count, data.reserve_count, data.location_id);
         }
         else {
@@ -178,7 +177,7 @@ struct Place {
     size_t push(Data& data) {
         assert(place_ref != nullptr);
         if (is_queue) {
-            auto queue = static_cast<JMailbox<EventT*>*>(place_ref);
+            auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
             queue->push_and_unreserve(data.items.data(), data.item_count, data.reserve_count, data.location_id);
             data.item_count = 0;
             data.reserve_count = 0;

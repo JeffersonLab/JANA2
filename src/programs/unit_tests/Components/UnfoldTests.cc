@@ -6,8 +6,6 @@
 namespace jana {
 namespace unfoldtests {
 
-using EventT = std::shared_ptr<JEvent>;
-
 
 struct TestUnfolder : public JEventUnfolder {
     mutable std::vector<int> preprocessed_event_nrs;
@@ -46,16 +44,16 @@ TEST_CASE("UnfoldTests_Basic") {
     app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
 
-    JEventPool parent_pool {jcm, 5, 1, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
+    JEventPool parent_pool {jcm, 5, 1, JEventLevel::Timeslice};
     JEventPool child_pool {jcm, 5, 1, JEventLevel::PhysicsEvent};
-    JMailbox<EventT*> parent_queue {3}; // size
-    JMailbox<EventT*> child_queue {3};
+    JMailbox<JEvent*> parent_queue {3}; // size
+    JMailbox<JEvent*> child_queue {3};
 
     auto ts1 = parent_pool.get();
-    (*ts1)->SetEventNumber(17);
+    ts1->SetEventNumber(17);
 
     auto ts2 = parent_pool.get();
-    (*ts2)->SetEventNumber(28);
+    ts2->SetEventNumber(28);
 
     parent_queue.try_push(&ts1, 1);
     parent_queue.try_push(&ts2, 1);
@@ -89,13 +87,13 @@ TEST_CASE("FoldArrowTests") {
     
 
     // We only use these to obtain preconfigured JEvents
-    JEventPool parent_pool {jcm, 5, 1, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
+    JEventPool parent_pool {jcm, 5, 1, JEventLevel::Timeslice};
     JEventPool child_pool {jcm, 5, 1, JEventLevel::PhysicsEvent};
 
     // We set up our test cases by putting events on these queues
-    JMailbox<std::shared_ptr<JEvent>*> child_in;
-    JMailbox<std::shared_ptr<JEvent>*> child_out;
-    JMailbox<std::shared_ptr<JEvent>*> parent_out;
+    JMailbox<JEvent*> child_in;
+    JMailbox<JEvent*> child_out;
+    JMailbox<JEvent*> parent_out;
 
     JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::PhysicsEvent);
     arrow.attach_child_in(&child_in);
@@ -107,25 +105,25 @@ TEST_CASE("FoldArrowTests") {
     SECTION("One-to-one relationship between timeslices and events") {
 
         auto ts1 = parent_pool.get();
-        (*ts1)->SetEventNumber(17);
-        REQUIRE(ts1->get()->GetLevel() == JEventLevel::Timeslice);
+        ts1->SetEventNumber(17);
+        REQUIRE(ts1->GetLevel() == JEventLevel::Timeslice);
 
         auto ts2 = parent_pool.get();
-        (*ts2)->SetEventNumber(28);
+        ts2->SetEventNumber(28);
 
         auto evt1 = child_pool.get();
-        (*evt1)->SetEventNumber(111);
+        evt1->SetEventNumber(111);
 
         auto evt2 = child_pool.get();
-        (*evt2)->SetEventNumber(112);
+        evt2->SetEventNumber(112);
 
 
-        evt1->get()->SetParent(ts1);
-        ts1->get()->Release(); // One-to-one
+        evt1->SetParent(ts1);
+        ts1->Release(); // One-to-one
         child_in.try_push(&evt1, 1, 0);
 
-        evt2->get()->SetParent(ts2);
-        ts2->get()->Release(); // One-to-one
+        evt2->SetParent(ts2);
+        ts2->Release(); // One-to-one
         child_in.try_push(&evt2, 1, 0);
     
         arrow.execute(metrics, 0);
@@ -140,32 +138,32 @@ TEST_CASE("FoldArrowTests") {
     SECTION("One-to-two relationship between timeslices and events") {
 
         auto ts1 = parent_pool.get();
-        (*ts1)->SetEventNumber(17);
-        REQUIRE(ts1->get()->GetLevel() == JEventLevel::Timeslice);
+        ts1->SetEventNumber(17);
+        REQUIRE(ts1->GetLevel() == JEventLevel::Timeslice);
 
         auto ts2 = parent_pool.get();
-        (*ts2)->SetEventNumber(28);
+        ts2->SetEventNumber(28);
 
         auto evt1 = child_pool.get();
-        (*evt1)->SetEventNumber(111);
+        evt1->SetEventNumber(111);
 
         auto evt2 = child_pool.get();
-        (*evt2)->SetEventNumber(112);
+        evt2->SetEventNumber(112);
 
         auto evt3 = child_pool.get();
-        (*evt3)->SetEventNumber(113);
+        evt3->SetEventNumber(113);
 
         auto evt4 = child_pool.get();
-        (*evt4)->SetEventNumber(114);
+        evt4->SetEventNumber(114);
 
 
-        evt1->get()->SetParent(ts1);
-        evt2->get()->SetParent(ts1);
-        ts1->get()->Release(); // One-to-two
+        evt1->SetParent(ts1);
+        evt2->SetParent(ts1);
+        ts1->Release(); // One-to-two
         
-        evt3->get()->SetParent(ts2);
-        evt4->get()->SetParent(ts2);
-        ts2->get()->Release(); // One-to-two
+        evt3->SetParent(ts2);
+        evt4->SetParent(ts2);
+        ts2->Release(); // One-to-two
    
         child_in.try_push(&evt1, 1, 0);
         child_in.try_push(&evt2, 1, 0);

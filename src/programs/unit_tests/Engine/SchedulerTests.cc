@@ -16,9 +16,9 @@ TEST_CASE("SchedulerTests") {
     app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
 
-    auto q1 = new JMailbox<EventT*>();
-    auto q2 = new JMailbox<EventT*>();
-    auto q3 = new JMailbox<EventT*>();
+    auto q1 = new JMailbox<JEvent*>();
+    auto q2 = new JMailbox<JEvent*>();
+    auto q3 = new JMailbox<JEvent*>();
 
     auto p1 = new JEventPool(jcm, 10, 1);
 
@@ -100,9 +100,9 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
 
-    auto q1 = new JMailbox<EventT*>();
-    auto q2 = new JMailbox<EventT*>();
-    auto q3 = new JMailbox<EventT*>();
+    auto q1 = new JMailbox<JEvent*>();
+    auto q2 = new JMailbox<JEvent*>();
+    auto q3 = new JMailbox<JEvent*>();
 
     auto p1 = new JEventPool(jcm, 10,1);
     auto p2 = new JEventPool(jcm, 10,1);

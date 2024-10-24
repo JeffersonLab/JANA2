@@ -36,10 +36,10 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     JArrowMetrics::Status process_status = JArrowMetrics::Status::KeepGoing;
 
     // If we have a pending barrier event, the input event will just be nullptr
-    Event* event_in = (in_data.item_count == 1) ? in_data.items[0] : nullptr;
+    JEvent* event_in = (in_data.item_count == 1) ? in_data.items[0] : nullptr;
 
     auto start_processing_time = std::chrono::steady_clock::now();
-    Event* event_out = process(event_in, process_succeeded, process_status);
+    JEvent* event_out = process(event_in, process_succeeded, process_status);
     auto end_processing_time = std::chrono::steady_clock::now();
 
     if (process_succeeded) {
@@ -70,7 +70,7 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 }
 
 
-Event* JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::Status& arrow_status) {
+JEvent* JEventSourceArrow::process(JEvent* event, bool& success, JArrowMetrics::Status& arrow_status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << LOG_END;
 
@@ -85,7 +85,7 @@ Event* JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::St
 
                 // Topology has drained; only remaining in-flight event is the barrier event itself,
                 // which we have held on to until now
-                Event* barrier_event = m_pending_barrier_event;
+                JEvent* barrier_event = m_pending_barrier_event;
                 m_pending_barrier_event = nullptr;
                 return barrier_event;
             }
@@ -123,7 +123,7 @@ Event* JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::St
 
     while (m_current_source < m_sources.size()) {
 
-        auto source_status = m_sources[m_current_source]->DoNext(*event);
+        auto source_status = m_sources[m_current_source]->DoNext(event->shared_from_this());
 
         if (source_status == JEventSource::Result::FailureFinished) {
             LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result FailureFinished"<< LOG_END;
@@ -137,16 +137,16 @@ Event* JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::St
             arrow_status = JArrowMetrics::Status::ComeBackLater;
             return event;
         }
-        else if ((*event)->GetSequential()){
+        else if (event->GetSequential()){
             // Source succeeded, but returned a barrier event
-            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result Success, holding back barrier event# " << (*event)->GetEventNumber() << LOG_END;
+            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result Success, holding back barrier event# " << event->GetEventNumber() << LOG_END;
             m_pending_barrier_event = event;
             m_barrier_active = true;
             return nullptr;
         }
         else {
             // Source succeeded, did NOT return a barrier event
-            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result Success, emitting event# " << (*event)->GetEventNumber() << LOG_END;
+            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result Success, emitting event# " << event->GetEventNumber() << LOG_END;
             success = true;
             arrow_status = JArrowMetrics::Status::KeepGoing;
             return event;

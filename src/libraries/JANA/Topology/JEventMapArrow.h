@@ -26,7 +26,7 @@ public:
     void add_unfolder(JEventUnfolder* unfolder);
     void add_processor(JEventProcessor* proc);
 
-    void process(std::shared_ptr<JEvent>* event, bool& success, JArrowMetrics::Status& status);
+    void process(JEvent* event, bool& success, JArrowMetrics::Status& status);
 
     void initialize() final;
     void finalize() final;

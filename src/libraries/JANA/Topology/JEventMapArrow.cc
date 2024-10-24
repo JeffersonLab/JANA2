@@ -25,27 +25,27 @@ void JEventMapArrow::add_processor(JEventProcessor* processor) {
     m_procs.push_back(processor);
 }
 
-void JEventMapArrow::process(std::shared_ptr<JEvent>* event, bool& success, JArrowMetrics::Status& status) {
+void JEventMapArrow::process(JEvent* event, bool& success, JArrowMetrics::Status& status) {
 
-    LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << (*event)->GetEventNumber() << LOG_END;
+    LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventSource* source : m_sources) {
-        JCallGraphEntryMaker cg_entry(*(*event)->GetJCallGraphRecorder(), source->GetTypeName()); // times execution until this goes out of scope
-        source->Preprocess(**event);
+        JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), source->GetTypeName()); // times execution until this goes out of scope
+        source->Preprocess(*event);
     }
     for (JEventUnfolder* unfolder : m_unfolders) {
-        JCallGraphEntryMaker cg_entry(*(*event)->GetJCallGraphRecorder(), unfolder->GetTypeName()); // times execution until this goes out of scope
-        unfolder->Preprocess(**event);
+        JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), unfolder->GetTypeName()); // times execution until this goes out of scope
+        unfolder->Preprocess(*event);
     }
     for (JEventProcessor* processor : m_procs) {
-        JCallGraphEntryMaker cg_entry(*(*event)->GetJCallGraphRecorder(), processor->GetTypeName()); // times execution until this goes out of scope
+        JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), processor->GetTypeName()); // times execution until this goes out of scope
         if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {
-            processor->DoLegacyProcess(*event);
+            processor->DoLegacyProcess(event->shared_from_this());
         }
         else {
             processor->DoMap(*event);
         }
     }
-    LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << (*event)->GetEventNumber() << LOG_END;
+    LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     success = true;
     status = JArrowMetrics::Status::KeepGoing;
 }

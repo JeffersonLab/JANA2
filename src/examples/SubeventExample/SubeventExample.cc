@@ -98,8 +98,8 @@ int main() {
     auto topology = app.GetService<JTopologyBuilder>();
     topology->set_configure_fn([&](JTopologyBuilder& builder) {
 
-        JMailbox<std::shared_ptr<JEvent>*> events_in;
-        JMailbox<std::shared_ptr<JEvent>*> events_out;
+        JMailbox<JEvent*> events_in;
+        JMailbox<JEvent*> events_out;
         JMailbox<SubeventWrapper<MyInput>> subevents_in;
         JMailbox<SubeventWrapper<MyOutput>> subevents_out;
 

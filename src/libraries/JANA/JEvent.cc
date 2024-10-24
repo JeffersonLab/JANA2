@@ -62,23 +62,23 @@ bool JEvent::HasParent(JEventLevel level) const {
 
 const JEvent& JEvent::GetParent(JEventLevel level) const {
     for (const auto& pair : mParents) {
-        if (pair.first == level) return *(*(pair.second));
+        if (pair.first == level) return *pair.second;
     }
     throw JException("Unable to find parent at level %s", 
                         toString(level).c_str());
 }
 
-void JEvent::SetParent(std::shared_ptr<JEvent>* parent) {
-    JEventLevel level = parent->get()->GetLevel();
+void JEvent::SetParent(JEvent* parent) {
+    JEventLevel level = parent->GetLevel();
     for (const auto& pair : mParents) {
         if (pair.first == level) throw JException("Event already has a parent at level %s", 
-                                                    toString(parent->get()->GetLevel()).c_str());
+                                                    toString(parent->GetLevel()).c_str());
     }
     mParents.push_back({level, parent});
-    parent->get()->mReferenceCount.fetch_add(1);
+    parent->mReferenceCount.fetch_add(1);
 }
 
-std::shared_ptr<JEvent>* JEvent::ReleaseParent(JEventLevel level) {
+JEvent* JEvent::ReleaseParent(JEventLevel level) {
     if (mParents.size() == 0) {
         throw JException("ReleaseParent failed: child has no parents!");
     }
@@ -88,7 +88,7 @@ std::shared_ptr<JEvent>* JEvent::ReleaseParent(JEventLevel level) {
                 toString(level).c_str(), toString(pair.first).c_str());
     }
     mParents.pop_back();
-    auto remaining_refs = pair.second->get()->mReferenceCount.fetch_sub(1);
+    auto remaining_refs = pair.second->mReferenceCount.fetch_sub(1);
     if (remaining_refs < 1) { // Remember, this was fetched _before_ the last subtraction
         throw JException("Parent refcount has gone negative!");
     }

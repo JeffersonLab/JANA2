@@ -26,9 +26,9 @@ TEST_CASE("JTopology: Basic functionality") {
     app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
 
-    auto q1 = new JMailbox<EventT*>();
-    auto q2 = new JMailbox<EventT*>();
-    auto q3 = new JMailbox<EventT*>();
+    auto q1 = new JMailbox<JEvent*>();
+    auto q2 = new JMailbox<JEvent*>();
+    auto q3 = new JMailbox<JEvent*>();
 
     auto p1 = new JEventPool(jcm, 20, 1);
 

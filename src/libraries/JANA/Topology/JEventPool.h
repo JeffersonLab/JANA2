@@ -16,7 +16,7 @@ class JEventPool {
 private:
     struct alignas(JANA2_CACHE_LINE_BYTES) LocalPool {
         std::mutex mutex;
-        std::vector<std::shared_ptr<JEvent>*> available_items;
+        std::vector<JEvent*> available_items;
     };
 
     std::vector<std::unique_ptr<LocalPool>> m_pools;
@@ -27,6 +27,7 @@ private:
 
     std::shared_ptr<JComponentManager> m_component_manager;
     JEventLevel m_level;
+    JLogger m_logger;
 
 
 public:
@@ -57,8 +58,7 @@ public:
             auto evt = &m_owned_events.back(); 
             m_component_manager->configure_event(**evt);
             (*evt)->SetLevel(m_level);
-            m_pools[evt_idx % m_location_count]->available_items.push_back(evt);
-            // This only works if vector _never_ resizes
+            m_pools[evt_idx % m_location_count]->available_items.push_back(evt->get());
         }
     }
 
@@ -70,7 +70,7 @@ public:
     }
 
 
-    std::shared_ptr<JEvent>* get(size_t location=0) {
+    JEvent* get(size_t location=0) {
 
         // Note: For now this doesn't steal from another pool. In principle this means that
         // all of the JEvents could end up in a single location's pool and there would be no way for
@@ -85,24 +85,29 @@ public:
             return nullptr;
         }
         else {
-            std::shared_ptr<JEvent>* item = pool.available_items.back();
+            JEvent* item = pool.available_items.back();
             pool.available_items.pop_back();
             return item;
         }
     }
 
 
-    void put(std::shared_ptr<JEvent>* item, bool clear_event, size_t location) {
+    void put(JEvent* item, bool clear_event, size_t location) {
 
         if (clear_event) {
             // Do any necessary teardown within the item itself
-            (*item)->Clear();
+            item->Clear();
+        }
+        auto use_count = item->shared_from_this().use_count();
+        if (use_count > 2) {
+            // Use count should be 2 because there's the shared_ptr in `m_owned_events`, and there's the temporary shared_ptr created just now
+            throw JException("Attempted to return a JEvent to the pool while it is still being used! use_count=%d", use_count);
         }
 
         LocalPool& pool = *(m_pools[location]);
 
         if (pool.available_items.size() > m_max_inflight_events) {
-            throw JException("Event returned to already-full pool");
+            throw JException("Attempted to return a JEvent to an already-full pool");
         }
 
         std::lock_guard<std::mutex> lock(pool.mutex);
@@ -110,7 +115,7 @@ public:
     }
 
 
-    size_t pop(std::shared_ptr<JEvent>** dest, size_t min_count, size_t max_count, size_t location) {
+    size_t pop(JEvent** dest, size_t min_count, size_t max_count, size_t location) {
 
         LocalPool& pool = *(m_pools[location % m_location_count]);
         std::lock_guard<std::mutex> lock(pool.mutex);
@@ -124,14 +129,14 @@ public:
         // Return as many as we can. We aren't allowed to create any more
         size_t count = std::min(available_count, max_count);
         for (size_t i=0; i<count; ++i) {
-            std::shared_ptr<JEvent>* t = pool.available_items.back();
+            JEvent* t = pool.available_items.back();
             pool.available_items.pop_back();
             dest[i] = t;
         }
         return count;
     }
 
-    void push(std::shared_ptr<JEvent>** source, size_t count, bool clear_event, size_t location) {
+    void push(JEvent** source, size_t count, bool clear_event, size_t location) {
         for (size_t i=0; i<count; ++i) {
             put(source[i], clear_event, location);
             source[i] = nullptr;
