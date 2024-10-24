@@ -77,8 +77,7 @@ void InitPlugin(JApplication* app) {
 
     app->SetParameterValue("nthreads", 4);
     app->SetParameterValue("jana:extended_report", true);
-    app->SetParameterValue("jana:limit_total_events_in_flight", true);
-    app->SetParameterValue("jana:event_pool_size", 16);
+    app->SetParameterValue("jana:max_inflight_events", 16);
 
     // TODO: Consider making streamDet:sub_socket be the 'source_name', and use JESG to switch between JSES and DecodeDASSource
     // TODO: Improve parametermanager interface

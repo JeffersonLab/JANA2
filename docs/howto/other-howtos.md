@@ -91,22 +91,22 @@ The `JTest` plugin lets you test JANA's performance for different workloads. It 
  
 | Name | Type | Default | Description |
 |:-----|:-----|:------------|:--------|
-jtest:parser:cputime_ms | int | 0 | Time spent during parsing
-jtest:parser:cputime_spread | int | 0.25 | Spread of time spent during parsing
-jtest:parser:bytes | int | 2000000 | Bytes written during parsing
-jtest:parser:bytes_spread | double | 0.25 | Spread of bytes written during parsing
-jtest:disentangler:cputime_ms | int | 20 | Time spent during disentangling
-jtest:disentangler:cputime_spread | double | 0.25 | Spread of time spent during disentangling
-jtest:disentangler:bytes | int | 500000 | Bytes written during disentangling
-jtest:disentangler:bytes_spread | double | 0.25 | Spread of bytes written during disentangling
-jtest:tracker:cputime_ms | int | 200 | Time spent during tracking
-jtest:tracker:cputime_spread | double | 0.25 | Spread of time spent during tracking
-jtest:tracker:bytes | int | 1000 | Bytes written during tracking
-jtest:tracker:bytes_spread | double | 0.25 | Spread of bytes written during tracking
-jtest:plotter:cputime_ms | int | 0 | Time spent during plotting
-jtest:plotter:cputime_spread | double | 0.25 | Spread of time spent during plotting
-jtest:plotter:bytes | int | 1000 | Bytes written during plotting
-jtest:plotter:bytes_spread | double | 0.25 | Spread of bytes written during plotting
+| jtest:parser:cputime_ms | int | 0 | Time spent during parsing |
+| jtest:parser:cputime_spread | int | 0.25 | Spread of time spent during parsing |
+| jtest:parser:bytes | int | 2000000 | Bytes written during parsing |
+| jtest:parser:bytes_spread | double | 0.25 | Spread of bytes written during parsing |
+| jtest:disentangler:cputime_ms | int | 20 | Time spent during disentangling |
+| jtest:disentangler:cputime_spread | double | 0.25 | Spread of time spent during disentangling |
+| jtest:disentangler:bytes | int | 500000 | Bytes written during disentangling |
+| jtest:disentangler:bytes_spread | double | 0.25 | Spread of bytes written during disentangling |
+| jtest:tracker:cputime_ms | int | 200 | Time spent during tracking |
+| jtest:tracker:cputime_spread | double | 0.25 | Spread of time spent during tracking |
+| jtest:tracker:bytes | int | 1000 | Bytes written during tracking |
+| jtest:tracker:bytes_spread | double | 0.25 | Spread of bytes written during tracking |
+| jtest:plotter:cputime_ms | int | 0 | Time spent during plotting |
+| jtest:plotter:cputime_spread | double | 0.25 | Spread of time spent during plotting |
+| jtest:plotter:bytes | int | 1000 | Bytes written during plotting |
+| jtest:plotter:bytes_spread | double | 0.25 | Spread of bytes written during plotting |
 
 
 
@@ -114,23 +114,21 @@ The following parameters are used for benchmarking:
 
 | Name | Type | Default | Description |
 |:-----|:-----|:------------|:--------|
-benchmark:nsamples    | int    | 15 | Number of measurements made for each thread count
-benchmark:minthreads  | int    | 1  | Minimum thread count
-benchmark:maxthreads  | int    | ncores | Maximum thread count
-benchmark:threadstep  | int    | 1  | Thread count increment
-benchmark:resultsdir  | string | JANA_Test_Results | Directory name for benchmark test results
+| benchmark:nsamples    | int    | 15 | Number of measurements made for each thread count |
+| benchmark:minthreads  | int    | 1  | Minimum thread count |
+| benchmark:maxthreads  | int    | ncores | Maximum thread count |
+| benchmark:threadstep  | int    | 1  | Thread count increment |
+| benchmark:resultsdir  | string | JANA_Test_Results | Directory name for benchmark test results |
 
 
 The following parameters are more advanced, but may come in handy when doing performance tuning:
 
 | Name | Type | Default | Description |
 |:-----|:-----|:------------|:--------|
-jana:event_pool_size              | int  | nthreads | The number of events which may be in-flight at once
-jana:limit_total_events_in_flight | bool | 1        | Whether the number of in-flight events should be limited
-jana:affinity                     | int  | 0        | Thread pinning strategy. 0: None. 1: Minimize number of memory localities. 2: Minimize number of hyperthreads.
-jana:locality                     | int  | 0        | Memory locality strategy. 0: Global. 1: Socket-local. 2: Numa-domain-local. 3. Core-local. 4. Cpu-local
-jana:enable_stealing              | bool | 0        | Allow threads to pick up work from a different memory location if their local mailbox is empty.
-jana:event_queue_threshold        | int  | 80       | Mailbox buffer size
+| jana:max_inflight_events          | int  | nthreads  | The number of events which may be in-flight at once. Should be at least `nthreads`, more gives better load balancing. |
+| jana:affinity                     | int  | 0         | Thread pinning strategy. 0: None. 1: Minimize number of memory localities. 2: Minimize number of hyperthreads. |
+| jana:locality                     | int  | 0         | Memory locality strategy. 0: Global. 1: Socket-local. 2: Numa-domain-local. 3. Core-local. 4. Cpu-local |
+| jana:enable_stealing              | bool | 0         | Allow threads to pick up work from a different memory location if their local mailbox is empty. |
 
 
 Creating code skeletons

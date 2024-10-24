@@ -46,8 +46,8 @@ TEST_CASE("UnfoldTests_Basic") {
     app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
 
-    JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
-    JEventPool child_pool {jcm, 5, 1, true, JEventLevel::PhysicsEvent};
+    JEventPool parent_pool {jcm, 5, 1, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
+    JEventPool child_pool {jcm, 5, 1, JEventLevel::PhysicsEvent};
     JMailbox<EventT*> parent_queue {3}; // size
     JMailbox<EventT*> child_queue {3};
 
@@ -89,8 +89,8 @@ TEST_CASE("FoldArrowTests") {
     
 
     // We only use these to obtain preconfigured JEvents
-    JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
-    JEventPool child_pool {jcm, 5, 1, true, JEventLevel::PhysicsEvent};
+    JEventPool parent_pool {jcm, 5, 1, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
+    JEventPool child_pool {jcm, 5, 1, JEventLevel::PhysicsEvent};
 
     // We set up our test cases by putting events on these queues
     JMailbox<std::shared_ptr<JEvent>*> child_in;

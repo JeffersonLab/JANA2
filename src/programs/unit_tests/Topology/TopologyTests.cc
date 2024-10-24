@@ -14,14 +14,11 @@
 
 
 JArrowMetrics::Status step(JArrow* arrow) {
-
-        JArrowMetrics metrics;
-        arrow->execute(metrics, 0);
-        auto status = metrics.get_last_status();
-        return status;
+    JArrowMetrics metrics;
+    arrow->execute(metrics, 0);
+    auto status = metrics.get_last_status();
+    return status;
 }
-
-
 
 
 TEST_CASE("JTopology: Basic functionality") {
@@ -33,13 +30,12 @@ TEST_CASE("JTopology: Basic functionality") {
     auto q2 = new JMailbox<EventT*>();
     auto q3 = new JMailbox<EventT*>();
 
-    auto p1 = new JEventPool(jcm, 0,1,false);
-    auto p2 = new JEventPool(jcm, 0,1,false);
+    auto p1 = new JEventPool(jcm, 20, 1);
 
     auto emit_rand_ints = new RandIntArrow("emit_rand_ints", p1, q1);
     auto multiply_by_two = new MultByTwoArrow("multiply_by_two", q1, q2);
     auto subtract_one = new SubOneArrow("subtract_one", q2, q3);
-    auto sum_everything = new SumArrow("sum_everything", q3, p2);
+    auto sum_everything = new SumArrow("sum_everything", q3, p1);
 
     auto topology = std::make_shared<JTopologyBuilder>();
 

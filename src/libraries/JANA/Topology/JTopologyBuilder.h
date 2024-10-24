@@ -34,11 +34,9 @@ public:
     std::vector<JEventPool*> pools;          // Pools shared between arrows
     
     // Topology configuration
-    size_t m_pool_capacity = 4;
-    size_t m_queue_capacity = 4;
+    size_t m_max_inflight_events = 4;
     size_t m_location_count = 1;
     bool m_enable_stealing = false;
-    bool m_limit_total_events_in_flight = true;
     int m_affinity = 0;
     int m_locality = 0;
 

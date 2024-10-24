@@ -77,8 +77,8 @@ TEST_CASE("ArrowTests_Basic") {
     auto jcm = app.GetService<JComponentManager>();
 
     JMailbox<EventT*> qi {2, 1, false};
-    JEventPool pi {jcm, 5, 1, true};
-    JEventPool pd {jcm, 5, 1, true};
+    JEventPool pi {jcm, 5, 1};
+    JEventPool pd {jcm, 5, 1};
     JMailbox<EventT*> qd {2, 1, false};
 
     TestJunctionArrow a {&qi, &pi, &pd, &qd};

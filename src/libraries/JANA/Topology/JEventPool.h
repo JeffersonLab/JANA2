@@ -24,7 +24,6 @@ private:
 
     size_t m_pool_size;
     size_t m_location_count;
-    bool m_limit_total_events_in_flight;
 
     std::shared_ptr<JComponentManager> m_component_manager;
     JEventLevel m_level;
@@ -34,17 +33,14 @@ public:
     inline JEventPool(std::shared_ptr<JComponentManager> component_manager,
                       size_t pool_size,
                       size_t location_count,
-                      bool limit_total_events_in_flight,
                       JEventLevel level = JEventLevel::PhysicsEvent)
 
             : m_pool_size(pool_size)
             , m_location_count(location_count)
-            , m_limit_total_events_in_flight(limit_total_events_in_flight)
             , m_component_manager(component_manager)
             , m_level(level) {
 
         assert(m_location_count >= 1);
-        assert(m_pool_size > 0 || !m_limit_total_events_in_flight);
 
         m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[m_location_count]());
 
@@ -81,14 +77,7 @@ public:
         std::lock_guard<std::mutex> lock(pool.mutex);
 
         if (pool.available_items.empty()) {
-            if (m_limit_total_events_in_flight) {
-                return nullptr;
-            }
-            else {
-                auto t = new std::shared_ptr<JEvent>();
-                configure_item(t);
-                return t;
-            }
+            return nullptr;
         }
         else {
             std::shared_ptr<JEvent>* item = pool.available_items.back();
@@ -112,15 +101,13 @@ public:
             LocalPool& pool = m_pools[l % m_location_count];
 
             // Check if item came from this location
-            if ((item >= &(pool.items[0])) && (item <= &(pool.items[m_pool_size-1]))) {
+            if (pool.available_items.size() < m_pool_size) {
                 std::lock_guard<std::mutex> lock(pool.mutex);
                 pool.available_items.push_back(item);
                 return;
             }
-
         }
-        // Otherwise it was allocated on the heap
-        delete item;
+        throw JException("Event returned to already-full pool");
     }
 
 
@@ -133,38 +120,18 @@ public:
 
         size_t available_count = pool.available_items.size();
 
-        if (m_limit_total_events_in_flight && available_count < min_count) {
+        if (available_count < min_count) {
             // Exit immmediately if we can't reach the minimum
             return 0;
         }
-        if (m_limit_total_events_in_flight) {
-            // Return as many as we can. We aren't allowed to create any more
-            size_t count = std::min(available_count, max_count);
-            for (size_t i=0; i<count; ++i) {
-                std::shared_ptr<JEvent>* t = pool.available_items.back();
-                pool.available_items.pop_back();
-                dest[i] = t;
-            }
-            return count;
+        // Return as many as we can. We aren't allowed to create any more
+        size_t count = std::min(available_count, max_count);
+        for (size_t i=0; i<count; ++i) {
+            std::shared_ptr<JEvent>* t = pool.available_items.back();
+            pool.available_items.pop_back();
+            dest[i] = t;
         }
-        else {
-            // Try to minimize number of allocations, as long as we meet min_count
-            size_t count = std::min(available_count, max_count);
-            size_t i=0;
-            for (i=0; i<count; ++i) {
-                // Pop the items already in the pool
-                std::shared_ptr<JEvent>* t = pool.available_items.back();
-                pool.available_items.pop_back();
-                dest[i] = t;
-            }
-            for (; i<min_count; ++i) {
-                // If we haven't reached our min count yet, allocate just enough to reach it
-                auto t = new std::shared_ptr<JEvent>;
-                configure_item(t);
-                dest[i] = t;
-            }
-            return i;
-        }
+        return count;
     }
 
     void push(std::shared_ptr<JEvent>** source, size_t count, bool clear_event, size_t location) {

@@ -94,10 +94,7 @@ void JTopologyBuilder::create_topology() {
     mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(m_affinity),
                        static_cast<JProcessorMapping::LocalityStrategy>(m_locality));
 
-    event_pool = new JEventPool(m_components,
-                                m_pool_capacity,
-                                m_location_count,
-                                m_limit_total_events_in_flight);
+    event_pool = new JEventPool(m_components, m_max_inflight_events, m_location_count);
 
     if (m_configure_topology) {
         m_configure_topology(*this);
@@ -127,22 +124,16 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
     // We parse the 'nthreads' parameter two different ways for backwards compatibility.
     if (m_params->Exists("nthreads")) {
         if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
-            m_pool_capacity = JCpuInfo::GetNumCpus();
+            m_max_inflight_events = JCpuInfo::GetNumCpus();
         } else {
-            m_pool_capacity = m_params->GetParameterValue<int>("nthreads");
+            m_max_inflight_events = m_params->GetParameterValue<int>("nthreads");
         }
-        m_queue_capacity = m_pool_capacity;
     }
 
-    m_params->SetDefaultParameter("jana:event_pool_size", m_pool_capacity,
-                                    "Sets the initial size of the event pool. Having too few events starves the workers; having too many consumes memory and introduces overhead from extra factory initializations")
+    m_params->SetDefaultParameter("jana:max_inflight_events", m_max_inflight_events,
+                                    "The number of events which may be in-flight at once. Should be at least `nthreads` to prevent starvation; more gives better load balancing.")
             ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("jana:limit_total_events_in_flight", m_limit_total_events_in_flight,
-                                    "Controls whether the event pool is allowed to automatically grow beyond jana:event_pool_size")
-            ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("jana:event_queue_threshold", m_queue_capacity,
-                                    "Max number of events allowed on the main event queue. Higher => Better load balancing; Lower => Fewer events in flight")
-            ->SetIsAdvanced(true);
+
     m_params->SetDefaultParameter("jana:enable_stealing", m_enable_stealing,
                                     "Enable work stealing. Improves load balancing when jana:locality != 0; otherwise does nothing.")
             ->SetIsAdvanced(true);
@@ -157,7 +148,7 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
 
 void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downstream, size_t down_index) {
 
-    auto queue = new EventQueue(m_queue_capacity, mapping.get_loc_count(), m_enable_stealing);
+    auto queue = new EventQueue(m_max_inflight_events, mapping.get_loc_count(), m_enable_stealing);
     queues.push_back(queue);
 
     size_t i = 0;
@@ -260,7 +251,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // --------------------------
     // 0. Pool
     // --------------------------
-    JEventPool* pool_at_level = new JEventPool(m_components, m_pool_capacity, m_location_count, m_limit_total_events_in_flight, current_level);
+    JEventPool* pool_at_level = new JEventPool(m_components, m_max_inflight_events, m_location_count, current_level);
     pools.push_back(pool_at_level); // Hand over ownership of the pool to the topology
 
     // --------------------------

@@ -25,8 +25,8 @@ TEST_CASE("ArrowActivationTests") {
     auto q2 = new JMailbox<EventT*>();
     auto q3 = new JMailbox<EventT*>();
 
-    auto p1 = new JEventPool(jcm, 0,1,false);
-    auto p2 = new JEventPool(jcm, 0,1,false);
+    auto p1 = new JEventPool(jcm, 10,1);
+    auto p2 = new JEventPool(jcm, 10,1);
 
     auto emit_rand_ints = new RandIntArrow("emit_rand_ints", p1, q1);
     auto multiply_by_two = new MultByTwoArrow("multiply_by_two", q1, q2);
