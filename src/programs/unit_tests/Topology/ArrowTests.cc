@@ -33,13 +33,13 @@ struct TestJunctionArrow : public JJunctionArrow<TestJunctionArrow> {
         std::cout << "Hello from process" << std::endl;
 
         REQUIRE(input_int.item_count == 1);
-        REQUIRE(input_int.reserve_count == 1);
+        REQUIRE(input_int.reserve_count == 0); // Would be 1
         REQUIRE(output_int.item_count == 0);
         REQUIRE(output_int.reserve_count == 0);
         REQUIRE(input_double.item_count == 1);
         REQUIRE(input_double.reserve_count == 0);
         REQUIRE(output_double.item_count == 0);
-        REQUIRE(output_double.reserve_count == 1);
+        REQUIRE(output_double.reserve_count == 0); // Would be 1
         
         JEvent* x_event = input_int.items[0];
         input_int.items[0] = nullptr;

@@ -132,8 +132,8 @@ struct Place {
         if (is_input) { // Actually pull the data
             if (is_queue) {
                 auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
-                data.item_count = queue->pop_and_reserve(data.items.data(), min_item_count, max_item_count, data.location_id);
-                data.reserve_count = data.item_count;
+                data.item_count = queue->pop(data.items.data(), min_item_count, max_item_count, data.location_id);
+                //data.item_count = queue->pop_and_reserve(data.items.data(), min_item_count, max_item_count, data.location_id);
                 return (data.item_count >= min_item_count);
             }
             else {
@@ -147,9 +147,9 @@ struct Place {
             if (is_queue) {
                 // Reserve a space on the output queue
                 data.item_count = 0;
-                auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
-                data.reserve_count = queue->reserve(min_item_count, max_item_count, data.location_id);
-                return (data.reserve_count >= min_item_count);
+                //auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
+                data.reserve_count = 0; //queue->reserve(min_item_count, max_item_count, data.location_id);
+                return true; //(data.reserve_count >= min_item_count);
             }
             else {
                 // No need to reserve on pool -- either there is space or limit_events_in_flight=false
@@ -164,6 +164,7 @@ struct Place {
         assert(place_ref != nullptr);
         if (is_queue) {
             auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
+            assert(data.reserve_count == 0);
             queue->push_and_unreserve(data.items.data(), data.item_count, data.reserve_count, data.location_id);
         }
         else {
@@ -178,6 +179,7 @@ struct Place {
         assert(place_ref != nullptr);
         if (is_queue) {
             auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
+            assert(data.reserve_count == 0);
             queue->push_and_unreserve(data.items.data(), data.item_count, data.reserve_count, data.location_id);
             data.item_count = 0;
             data.reserve_count = 0;
