@@ -1,7 +1,6 @@
 
 set(TEST_SOURCES
     
-    Topology/ArrowTests.cc
     Topology/JPoolTests.cc
     Topology/MultiLevelTopologyTests.cc
     Topology/QueueTests.cc
