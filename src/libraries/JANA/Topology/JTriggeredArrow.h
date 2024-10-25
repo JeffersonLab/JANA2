@@ -39,7 +39,7 @@ struct JTriggeredArrow : public JArrow {
 
             auto latency = (end_processing_time - start_processing_time);
             auto overhead = (end_total_time - start_total_time) - latency;
-            result.update(process_status, true, 1, latency, overhead);
+            result.update(process_status, 1, 1, latency, overhead);
         }
     }
 };

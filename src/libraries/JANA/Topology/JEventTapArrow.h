@@ -3,22 +3,25 @@
 
 #pragma once
 
-#include <JANA/Topology/JPipelineArrow.h>
+#include "JANA/Topology/JTriggeredArrow.h"
 
 class JEventProcessor;
 class JEvent;
 
 
-class JEventTapArrow : public JPipelineArrow<JEventTapArrow> {
+class JEventTapArrow : public JTriggeredArrow<JEventTapArrow> {
 
 private:
     std::vector<JEventProcessor*> m_procs;
+    Place m_input {this, true };
+    Place m_output {this, false };
 
 public:
     JEventTapArrow(std::string name);
 
     void add_processor(JEventProcessor* proc);
-    void process(JEvent* event, bool& success, JArrowMetrics::Status& status);
+
+    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status);
     void initialize() final;
     void finalize() final;
 };

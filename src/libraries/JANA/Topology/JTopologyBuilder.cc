@@ -337,8 +337,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         tap_arrow = new JEventTapArrow(level_str+"Tap");
         for (JEventProcessor* proc : tappable_procs_at_level) {
             tap_arrow->add_processor(proc);
-            tap_arrow->set_input(pool_at_level);
-            tap_arrow->set_output(pool_at_level);
+            tap_arrow->attach(pool_at_level, 0);
+            tap_arrow->attach(pool_at_level, 1);
         }
         arrows.push_back(tap_arrow);
     }

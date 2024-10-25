@@ -17,20 +17,15 @@ private:
     mutable std::mutex m_mutex;
     // Mutex is mutable so that we can lock before reading from a const ref
 
-    Status m_last_status;
-    size_t m_total_message_count;
-    size_t m_last_message_count;
-    size_t m_total_queue_visits;
-    size_t m_last_queue_visits;
-    duration_t m_total_latency;
-    duration_t m_last_latency;
-    duration_t m_total_queue_latency;
-    duration_t m_last_queue_latency;
-
-
-    // TODO: We might want to add a timestamp, so that
-    // the 'last_*' measurements can reflect the most recent value,
-    // rather than the last-to-be-accumulated value.
+    Status m_last_status = Status::NotRunYet;
+    size_t m_total_message_count = 0;
+    size_t m_last_message_count = 0;
+    size_t m_total_queue_visits = 0;
+    size_t m_last_queue_visits = 0;
+    duration_t m_total_latency = duration_t::zero();
+    duration_t m_last_latency = duration_t::zero();
+    duration_t m_total_queue_latency = duration_t::zero();
+    duration_t m_last_queue_latency = duration_t::zero();
 
 public:
     void clear() {

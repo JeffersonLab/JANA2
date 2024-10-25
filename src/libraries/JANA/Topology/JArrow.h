@@ -65,8 +65,6 @@ public:
 
     JArrow(std::string name, bool is_parallel, bool is_source, bool is_sink) :
             m_name(std::move(name)), m_is_parallel(is_parallel), m_is_source(is_source), m_is_sink(is_sink) {
-
-        m_metrics.clear();
     };
 
     virtual ~JArrow() = default;

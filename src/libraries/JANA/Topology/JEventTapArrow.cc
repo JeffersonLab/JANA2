@@ -8,14 +8,15 @@
 #include <JANA/JEvent.h>
 
 
-JEventTapArrow::JEventTapArrow(std::string name)
-        : JPipelineArrow(std::move(name), false, false, false) {}
+JEventTapArrow::JEventTapArrow(std::string name) {
+    set_name(name);
+}
 
 void JEventTapArrow::add_processor(JEventProcessor* proc) {
     m_procs.push_back(proc);
 }
 
-void JEventTapArrow::process(JEvent* event, bool& success, JArrowMetrics::Status& status) {
+void JEventTapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventProcessor* proc : m_procs) {
@@ -24,9 +25,10 @@ void JEventTapArrow::process(JEvent* event, bool& success, JArrowMetrics::Status
             proc->DoTap(*event);
         }
     }
-    LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
-    success = true;
+    outputs[0] = {event, 1};
+    output_count = 1;
     status = JArrowMetrics::Status::KeepGoing;
+    LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
 }
 
 void JEventTapArrow::initialize() {
