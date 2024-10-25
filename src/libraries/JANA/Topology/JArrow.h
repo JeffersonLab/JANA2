@@ -18,6 +18,8 @@
 #endif
 
 struct Place;
+using JEventQueue = JMailbox<JEvent*>;
+
 
 class JArrow {
     friend class JScheduler;
@@ -29,6 +31,7 @@ private:
     bool m_is_source;          // Whether or not this arrow should activate/drain the topology
     bool m_is_sink;            // Whether or not tnis arrow contributes to the final event count
     JArrowMetrics m_metrics;   // Performance information accumulated over all workers
+    int m_next_place_index=0;
 
     std::vector<JArrow *> m_listeners;    // Downstream Arrows
 
@@ -63,6 +66,9 @@ public:
     virtual void initialize() { };
 
     virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
+/*
+    virtual void execute(JEvent* input_event, int input_place_index, size_t* output_event_count, JEvent** output_events, int* output_place_indices, int* next_input_place_index) const;
+    */
 
     virtual void finalize() {};
 

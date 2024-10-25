@@ -73,4 +73,13 @@ void JEventMapArrow::finalize() {
     }
     LOG_DEBUG(m_logger) << "Finalized arrow " << get_name() << LOG_END;
 }
-
+    
+/*
+void JEventMapArrow::execute(JEvent* input_event, int input_place_index, size_t* output_event_count, JEvent** output_events, int* output_place_indices, int* next_input_place_index) const {
+    assert(input_place_index == 0);
+    *output_event_count = 1;
+    output_events[0] = input_event;
+    output_place_indices[0] = 1;
+    *next_input_place_index = 0;
+}
+*/
