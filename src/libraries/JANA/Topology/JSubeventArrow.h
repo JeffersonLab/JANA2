@@ -111,9 +111,7 @@ void JSplitArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
 
     JEvent* event = nullptr;
     bool success;
-    size_t reserved_size = m_outbox->reserve(1);
-    size_t actual_size = reserved_size;
-    // TODO: Exit early if we don't have enough space on output queue
+    size_t actual_size = 1;
 
     auto in_status = m_inbox->pop(event, success, location_id);
     auto start_latency_time = std::chrono::steady_clock::now();
@@ -137,7 +135,7 @@ void JSplitArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
     size_t output_size = wrapped.size();
     if (success) {
         assert(m_outbox != nullptr);
-        out_status = m_outbox->push(wrapped, reserved_size, location_id);
+        out_status = m_outbox->push(wrapped, location_id);
     }
     auto end_queue_time = std::chrono::steady_clock::now();
 
@@ -160,8 +158,7 @@ void JSubeventArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t loca
 
     // TODO: Think more carefully about subevent bucket size
     std::vector<SubeventWrapper<InputT>> inputs;
-    size_t downstream_accepts = m_outbox->reserve(1, location_id);
-    auto in_status = m_inbox->pop(inputs, downstream_accepts, location_id);
+    auto in_status = m_inbox->pop(inputs, 1, location_id);
     auto start_latency_time = std::chrono::steady_clock::now();
 
     std::vector<SubeventWrapper<OutputT>> outputs;
@@ -176,7 +173,7 @@ void JSubeventArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t loca
 
     if (outputs_size > 0) {
         assert(m_outbox != nullptr);
-        out_status = m_outbox->push(outputs, downstream_accepts, location_id);
+        out_status = m_outbox->push(outputs, location_id);
     }
     auto end_queue_time = std::chrono::steady_clock::now();
 
@@ -201,7 +198,7 @@ void JMergeArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
 
     // TODO: Think more carefully about subevent bucket size
     std::vector<SubeventWrapper<OutputT>> inputs;
-    size_t downstream_accepts = m_outbox->reserve(1, location_id);
+    size_t downstream_accepts = true;
     auto in_status = m_inbox->pop(inputs, downstream_accepts, location_id);
     auto start_latency_time = std::chrono::steady_clock::now();
 
@@ -240,7 +237,7 @@ void JMergeArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
     auto end_latency_time = std::chrono::steady_clock::now();
 
     auto outputs_size = outputs.size();
-    auto out_status = m_outbox->push(outputs, downstream_accepts, location_id);
+    auto out_status = m_outbox->push(outputs, location_id);
 
     auto end_queue_time = std::chrono::steady_clock::now();
 

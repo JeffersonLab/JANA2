@@ -66,9 +66,8 @@ public:
     virtual void initialize() { };
 
     virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
-/*
-    virtual void execute(JEvent* input_event, int input_place_index, size_t* output_event_count, JEvent** output_events, int* output_place_indices, int* next_input_place_index) const;
-    */
+    
+    virtual void execute(JEvent* /*input_event*/, int /*current_input_port*/, int& /*next_input_port*/, std::vector<std::pair<JEvent*, int>>& /*outputs*/) {};
 
     virtual void finalize() {};
 
@@ -89,7 +88,6 @@ public:
 struct Data {
     std::array<JEvent*, JANA2_ARROWDATA_MAX_SIZE> items;
     size_t item_count = 0;
-    size_t reserve_count = 0;
     size_t location_id;
 
     Data(size_t location_id = 0) : location_id(location_id) {
@@ -139,30 +137,17 @@ struct Place {
             if (is_queue) {
                 auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
                 data.item_count = queue->pop(data.items.data(), min_item_count, max_item_count, data.location_id);
-                //data.item_count = queue->pop_and_reserve(data.items.data(), min_item_count, max_item_count, data.location_id);
                 return (data.item_count >= min_item_count);
             }
             else {
                 auto pool = static_cast<JEventPool*>(place_ref);
                 data.item_count = pool->pop(data.items.data(), min_item_count, max_item_count, data.location_id);
-                data.reserve_count = 0;
                 return (data.item_count >= min_item_count);
             }
         }
         else {
-            if (is_queue) {
-                // Reserve a space on the output queue
-                data.item_count = 0;
-                //auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
-                data.reserve_count = 0; //queue->reserve(min_item_count, max_item_count, data.location_id);
-                return true; //(data.reserve_count >= min_item_count);
-            }
-            else {
-                // No need to reserve on pool -- either there is space or limit_events_in_flight=false
-                data.item_count = 0;
-                data.reserve_count = 0;
-                return true;
-            }
+            data.item_count = 0;
+            return true;
         }
     }
 
@@ -170,8 +155,7 @@ struct Place {
         assert(place_ref != nullptr);
         if (is_queue) {
             auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
-            assert(data.reserve_count == 0);
-            queue->push_and_unreserve(data.items.data(), data.item_count, data.reserve_count, data.location_id);
+            queue->push(data.items.data(), data.item_count, data.location_id);
         }
         else {
             if (is_input) {
@@ -185,17 +169,14 @@ struct Place {
         assert(place_ref != nullptr);
         if (is_queue) {
             auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
-            assert(data.reserve_count == 0);
-            queue->push_and_unreserve(data.items.data(), data.item_count, data.reserve_count, data.location_id);
+            queue->push(data.items.data(), data.item_count, data.location_id);
             data.item_count = 0;
-            data.reserve_count = 0;
             return is_input ? 0 : data.item_count;
         }
         else {
             auto pool = static_cast<JEventPool*>(place_ref);
             pool->push(data.items.data(), data.item_count, !is_input, data.location_id);
             data.item_count = 0;
-            data.reserve_count = 0;
             return 1;
         }
     }
