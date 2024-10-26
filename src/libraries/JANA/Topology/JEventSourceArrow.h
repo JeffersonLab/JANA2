@@ -3,18 +3,18 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
-#include <JANA/Topology/JArrow.h>
+#include <JANA/Topology/JTriggeredArrow.h>
 
 
-class JEventSourceArrow : public JArrow {
+class JEventSourceArrow : public JTriggeredArrow<JEventSourceArrow> {
 private:
     std::vector<JEventSource*> m_sources;
     size_t m_current_source = 0;
     bool m_barrier_active = false;
     JEvent* m_pending_barrier_event = nullptr;
 
-    Place m_input {this, true, 1, 1};
-    Place m_output {this, false, 1, 1};
+    Place m_input {this, true};
+    Place m_output {this, false};
 
 public:
     JEventSourceArrow(std::string name, std::vector<JEventSource*> sources);
@@ -34,7 +34,6 @@ public:
 
     void initialize() final;
     void finalize() final;
-    void execute(JArrowMetrics& result, size_t location_id) final;
-    JEvent* process(JEvent* event, bool& success, JArrowMetrics::Status& status);
+    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status);
 };
 
