@@ -3,7 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
-#include <JANA/Topology/JPipelineArrow.h>
+#include <JANA/Topology/JArrow.h>
 
 
 class JEventSourceArrow : public JArrow {

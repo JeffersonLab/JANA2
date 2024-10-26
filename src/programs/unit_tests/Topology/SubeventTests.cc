@@ -107,8 +107,8 @@ TEST_CASE("Basic subevent arrow functionality") {
             source_arrow->set_output(&events_in);
 
             auto proc_arrow = new JEventMapArrow("simpleProcessor");
-            proc_arrow->set_input(&events_out);
-            proc_arrow->set_output(topology.event_pool);
+            proc_arrow->attach(&events_out, 0);
+            proc_arrow->attach(topology.event_pool, 1);
             proc_arrow->add_processor(new SimpleProcessor);
 
             topology.arrows.push_back(source_arrow);

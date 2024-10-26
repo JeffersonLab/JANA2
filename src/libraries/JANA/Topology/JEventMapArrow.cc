@@ -10,8 +10,10 @@
 #include <JANA/JEvent.h>
 
 
-JEventMapArrow::JEventMapArrow(std::string name)
-        : JPipelineArrow(std::move(name), true, false, false) {}
+JEventMapArrow::JEventMapArrow(std::string name) {
+    set_name(name);
+    set_is_parallel(true);
+}
 
 void JEventMapArrow::add_source(JEventSource* source) {
     m_sources.push_back(source);
@@ -25,7 +27,7 @@ void JEventMapArrow::add_processor(JEventProcessor* processor) {
     m_procs.push_back(processor);
 }
 
-void JEventMapArrow::process(JEvent* event, bool& success, JArrowMetrics::Status& status) {
+void JEventMapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventSource* source : m_sources) {
@@ -46,7 +48,8 @@ void JEventMapArrow::process(JEvent* event, bool& success, JArrowMetrics::Status
         }
     }
     LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
-    success = true;
+    outputs[0] = {event, 1};
+    output_count = 1;
     status = JArrowMetrics::Status::KeepGoing;
 }
 
@@ -73,13 +76,4 @@ void JEventMapArrow::finalize() {
     }
     LOG_DEBUG(m_logger) << "Finalized arrow " << get_name() << LOG_END;
 }
-    
-/*
-void JEventMapArrow::execute(JEvent* input_event, int input_place_index, size_t* output_event_count, JEvent** output_events, int* output_place_indices, int* next_input_place_index) const {
-    assert(input_place_index == 0);
-    *output_event_count = 1;
-    output_events[0] = input_event;
-    output_place_indices[0] = 1;
-    *next_input_place_index = 0;
-}
-*/
+

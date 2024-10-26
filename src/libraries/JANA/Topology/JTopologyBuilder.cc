@@ -287,8 +287,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         for (JEventUnfolder* unf: unfolders_at_level) {
             map1_arrow->add_unfolder(unf);
         }
-        map1_arrow->set_input(pool_at_level);
-        map1_arrow->set_output(pool_at_level);
+        map1_arrow->attach(pool_at_level, 0);
+        map1_arrow->attach(pool_at_level, 1);
         arrows.push_back(map1_arrow);
     }
 
@@ -322,8 +322,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         map2_arrow = new JEventMapArrow(level_str+"Map2");
         for (JEventProcessor* proc : mappable_procs_at_level) {
             map2_arrow->add_processor(proc);
-            map2_arrow->set_input(pool_at_level);
-            map2_arrow->set_output(pool_at_level);
+            map2_arrow->attach(pool_at_level, 0);
+            map2_arrow->attach(pool_at_level, 1);
         }
         arrows.push_back(map2_arrow);
     }
