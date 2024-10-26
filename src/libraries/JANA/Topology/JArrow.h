@@ -40,7 +40,6 @@ private:
 protected:
     JLogger m_logger;
     std::vector<Place*> m_places;  // Will eventually supplant m_listeners
-    int m_next_input_port=0;
 
 public:
     std::string get_name() { return m_name; }
