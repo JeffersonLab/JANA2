@@ -29,10 +29,7 @@ public:
         JEventLevel child_level)
 
       : m_parent_level(parent_level),
-        m_child_level(child_level),
-        m_child_in(this, true, 1, 1),
-        m_child_out(this, false, 1, 1),
-        m_parent_out(this, false, 1, 1)
+        m_child_level(child_level)
     {
         set_name(name);
         m_next_input_port = CHILD_IN;

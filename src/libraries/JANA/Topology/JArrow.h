@@ -13,10 +13,6 @@
 #include <JANA/Topology/JEventPool.h>
 
 
-#ifndef JANA2_ARROWDATA_MAX_SIZE
-#define JANA2_ARROWDATA_MAX_SIZE 10
-#endif
-
 struct Place;
 using JEventQueue = JMailbox<JEvent*>;
 
@@ -94,114 +90,26 @@ public:
     void push(OutputData& outputs, size_t output_count, size_t location_id);
 };
 
-struct Data {
-    std::array<JEvent*, JANA2_ARROWDATA_MAX_SIZE> items;
-    size_t item_count = 0;
-    size_t location_id;
-
-    Data(size_t location_id = 0) : location_id(location_id) {
-        items = {nullptr};
-    }
-};
-
 
 struct Place {
     void* place_ref = nullptr;
     bool is_queue = true;
     bool is_input = false;
-    size_t min_item_count = 1;
-    size_t max_item_count = 1;
 
     Place(JArrow* parent, bool is_input) {
         assert(parent != nullptr);
         parent->attach(this);
         this->is_input = is_input;
     }
-
-    Place(JArrow* parent, bool is_input, size_t min_item_count, size_t max_item_count) {
-        assert(parent != nullptr);
-        parent->attach(this);
-        this->is_input = is_input;
-        this->min_item_count = min_item_count;
-        this->max_item_count = max_item_count;
-    }
-
-    void set_queue(JMailbox<JEvent*>* queue) {
-        assert(queue != nullptr);
-        this->place_ref = queue;
-        this->is_queue = true;
-    }
-
-    void set_pool(JEventPool* pool) {
-        assert(pool != nullptr);
-        this->place_ref = pool;
-        this->is_queue = false;
-    }
-
-    size_t get_pending() {
-        assert(place_ref != nullptr);
-        if (is_input && is_queue) {
-            auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
-            return queue->size();
-        }
-        return 0;
-    }
-
-    bool pull(Data& data) {
-        assert(place_ref != nullptr);
-        if (is_input) { // Actually pull the data
-            if (is_queue) {
-                auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
-                data.item_count = queue->pop(data.items.data(), min_item_count, max_item_count, data.location_id);
-                return (data.item_count >= min_item_count);
-            }
-            else {
-                auto pool = static_cast<JEventPool*>(place_ref);
-                data.item_count = pool->pop(data.items.data(), min_item_count, max_item_count, data.location_id);
-                return (data.item_count >= min_item_count);
-            }
-        }
-        else {
-            data.item_count = 0;
-            return true;
-        }
-    }
-
-    void revert(Data& data) {
-        assert(place_ref != nullptr);
-        if (is_queue) {
-            auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
-            queue->push(data.items.data(), data.item_count, data.location_id);
-        }
-        else {
-            if (is_input) {
-                auto pool = static_cast<JEventPool*>(place_ref);
-                pool->push(data.items.data(), data.item_count, false, data.location_id);
-            }
-        }
-    }
-
-    size_t push(Data& data) {
-        assert(place_ref != nullptr);
-        if (is_queue) {
-            auto queue = static_cast<JMailbox<JEvent*>*>(place_ref);
-            queue->push(data.items.data(), data.item_count, data.location_id);
-            data.item_count = 0;
-            return is_input ? 0 : data.item_count;
-        }
-        else {
-            auto pool = static_cast<JEventPool*>(place_ref);
-            pool->push(data.items.data(), data.item_count, !is_input, data.location_id);
-            data.item_count = 0;
-            return 1;
-        }
-    }
 };
 
 inline size_t JArrow::get_pending() { 
     size_t sum = 0;
     for (Place* place : m_places) {
-        sum += place->get_pending();
+        if (place->is_input && place->is_queue) {
+            auto queue = static_cast<JMailbox<JEvent*>*>(place->place_ref);
+            sum += queue->size();
+        }
     }
     return sum;
 }

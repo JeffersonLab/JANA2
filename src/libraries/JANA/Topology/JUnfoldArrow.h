@@ -62,7 +62,10 @@ public:
     size_t get_pending() final {
         size_t sum = 0;
         for (Place* place : m_places) {
-            sum += place->get_pending();
+            if (place->is_input && place->is_queue) {
+                auto queue = static_cast<JMailbox<JEvent*>*>(place->place_ref);
+                sum += queue->size();
+            }
         }
         if (m_parent_event != nullptr) {
             sum += 1; 
