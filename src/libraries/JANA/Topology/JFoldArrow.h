@@ -3,20 +3,25 @@
 
 #pragma once
 
-#include <JANA/Topology/JArrow.h>
-#include <JANA/Utils/JEventLevel.h>
+#include "JANA/Topology/JArrowMetrics.h"
+#include <JANA/Topology/JTriggeredArrow.h>
 
-class JFoldArrow : public JArrow {
+class JFoldArrow : public JTriggeredArrow<JFoldArrow> {
+public:
+    const int CHILD_IN = 0;
+    const int CHILD_OUT = 1;
+    const int PARENT_OUT = 2;
+
 private:
     // TODO: Support user-provided folders
     // JEventFolder* m_folder = nullptr;
-    
+
     JEventLevel m_parent_level;
     JEventLevel m_child_level;
 
-    Place m_child_in;
-    Place m_child_out;
-    Place m_parent_out;
+    Place m_child_in {this, true};
+    Place m_child_out {this, false};
+    Place m_parent_out {this, false};
 
 public:
     JFoldArrow(
@@ -24,14 +29,15 @@ public:
         JEventLevel parent_level,
         JEventLevel child_level)
 
-      : JArrow(std::move(name), false, false, false), 
-        // m_folder(folder),
+      : // m_folder(folder),
         m_parent_level(parent_level),
         m_child_level(child_level),
         m_child_in(this, true, 1, 1),
         m_child_out(this, false, 1, 1),
         m_parent_out(this, false, 1, 1)
     {
+        set_name(name);
+        m_next_input_port = CHILD_IN;
     }
 
     void attach_child_in(JMailbox<JEvent*>* child_in) {
@@ -54,12 +60,10 @@ public:
         m_parent_out.is_queue = false;
     }
 
-
     void attach_parent_out(JMailbox<JEvent*>* parent_out) {
         m_parent_out.place_ref = parent_out;
         m_parent_out.is_queue = true;
     }
-
 
     void initialize() final {
         /*
@@ -83,81 +87,33 @@ public:
         LOG_INFO(m_logger) << "Finalized JEventFolder (trivial)" << LOG_END;
     }
 
-    bool try_pull_all(Data& ci, Data& co, Data& po) {
-        bool success;
-        success = m_child_in.pull(ci);
-        if (! success) {
-            return false;
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+
+        assert(m_next_input_port == CHILD_IN);
+
+        // Check that child is at the correct event level
+        if (event->GetLevel() != m_child_level) {
+            throw JException("JFoldArrow received a child with the wrong event level");
         }
-        success = m_child_out.pull(co);
-        if (! success) {
-            return false;
-        }
-        success = m_parent_out.pull(po);
-        if (! success) {
-            return false;
-        }
-        return true;
-    }
 
-    size_t push_all(Data& ci, Data& co, Data& po) {
-        size_t message_count = co.item_count;
-        m_child_in.push(ci);
-        m_child_out.push(co);
-        m_parent_out.push(po);
-        return message_count;
-    }
+        // TODO: Call folders here
+        // auto parent = child->GetParent(m_parent_level);
+        // m_folder->Fold(*child, *parent);
 
-    void execute(JArrowMetrics& metrics, size_t location_id) final {
+        status = JArrowMetrics::Status::KeepGoing;
+        outputs[0] = {event, CHILD_OUT};
+        output_count = 1;
 
-        auto start_total_time = std::chrono::steady_clock::now();
-        
-        Data child_in_data {location_id};
-        Data child_out_data {location_id};
-        Data parent_out_data {location_id};
+        auto* parent = event->ReleaseParent(m_parent_level);
+        if (parent != nullptr) {
+            // JEvent::ReleaseParent() returns nullptr if there are remaining references
+            // to the parent event. If non-null, we are completely done with the parent
+            // and are free to return it to the pool. In the future we could have the pool
+            // itself handle the logic for releasing parents, in which case we could avoid
+            // trivial JEventFolders.
 
-        bool success = try_pull_all(child_in_data, child_out_data, parent_out_data);
-        if (success) {
-
-            auto start_processing_time = std::chrono::steady_clock::now();
-            auto child = child_in_data.items[0];
-            child_in_data.items[0] = nullptr;
-            child_in_data.item_count = 0;
-            if (child->GetLevel() != m_child_level) {
-                throw JException("JFoldArrow received a child with the wrong event level");
-            }
-
-            // TODO: Call folders here
-            auto* parent = child->ReleaseParent(m_parent_level);
-
-            // Put child on the output queue
-            child_out_data.items[0] = child;
-            child_out_data.item_count = 1;
-
-            // Only recycle the parent once the reference count hits zero
-            if (parent != nullptr) {
-                parent_out_data.items[0] = parent;
-                parent_out_data.item_count = 1;
-            }
-            else {
-                parent_out_data.items[0] = nullptr;
-                parent_out_data.item_count = 0;
-            }
-
-            auto end_processing_time = std::chrono::steady_clock::now();
-            size_t events_processed = push_all(child_in_data, child_out_data, parent_out_data);
-
-            auto end_total_time = std::chrono::steady_clock::now();
-            auto latency = (end_processing_time - start_processing_time);
-            auto overhead = (end_total_time - start_total_time) - latency;
-
-            metrics.update(JArrowMetrics::Status::KeepGoing, events_processed, 1, latency, overhead);
-            return;
-        }
-        else {
-            auto end_total_time = std::chrono::steady_clock::now();
-            metrics.update(JArrowMetrics::Status::ComeBackLater, 0, 1, std::chrono::milliseconds(0), end_total_time - start_total_time);
-            return;
+            outputs[1] = {parent, PARENT_OUT};
+            output_count = 2;
         }
     }
 
