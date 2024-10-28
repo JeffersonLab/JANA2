@@ -93,8 +93,10 @@ public:
             throw JException("JFoldArrow received a child with the wrong event level");
         }
 
-        auto parent = const_cast<JEvent*>(&event->GetParent(m_parent_level));
-        m_folder->DoFold(*event, *parent);
+        if (m_folder != nullptr) {
+            auto parent = const_cast<JEvent*>(&event->GetParent(m_parent_level));
+            m_folder->DoFold(*event, *parent);
+        }
 
         status = JArrowMetrics::Status::KeepGoing;
         outputs[0] = {event, CHILD_OUT};
