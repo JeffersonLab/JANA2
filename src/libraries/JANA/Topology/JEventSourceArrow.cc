@@ -14,6 +14,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name, std::vector<JEventSource*
     : m_sources(sources) {
     set_name(name);
     set_is_source(true);
+    create_ports(1, 1);
 }
 
 

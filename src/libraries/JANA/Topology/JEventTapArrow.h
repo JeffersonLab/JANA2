@@ -13,8 +13,6 @@ class JEventTapArrow : public JTriggeredArrow<JEventTapArrow> {
 
 private:
     std::vector<JEventProcessor*> m_procs;
-    Place m_input {this, true };
-    Place m_output {this, false };
 
 public:
     JEventTapArrow(std::string name);

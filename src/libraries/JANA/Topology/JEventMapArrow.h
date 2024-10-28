@@ -15,9 +15,6 @@ class JEvent;
 class JEventMapArrow : public JTriggeredArrow<JEventMapArrow> {
 
 private:
-    Place m_input {this, true };
-    Place m_output {this, false };
-
     std::vector<JEventSource*> m_sources;
     std::vector<JEventUnfolder*> m_unfolders;
     std::vector<JEventProcessor*> m_procs;

@@ -13,16 +13,18 @@
 #include <JANA/Topology/JEventPool.h>
 
 
-struct Place;
-using JEventQueue = JMailbox<JEvent*>;
-
-
 class JArrow {
     friend class JScheduler;
     friend class JTopologyBuilder;
 
 public:
     using OutputData = std::array<std::pair<JEvent*, int>, 2>;
+
+    struct Port {
+        JMailbox<JEvent*>* queue = nullptr;
+        JEventPool* pool = nullptr;
+        bool is_input = false;
+    };
 
 private:
     std::string m_name;        // Used for human understanding
@@ -31,11 +33,10 @@ private:
     bool m_is_sink;            // Whether or not tnis arrow contributes to the final event count
     JArrowMetrics m_metrics;   // Performance information accumulated over all workers
 
-    std::vector<JArrow *> m_listeners;    // Downstream Arrows
-
 protected:
+    std::vector<Port> m_ports;  // Will eventually supplant m_listeners
+    std::vector<JArrow *> m_listeners;    // Downstream Arrows
     JLogger m_logger;
-    std::vector<Place*> m_places;  // Will eventually supplant m_listeners
 
 public:
     std::string get_name() { return m_name; }
@@ -77,11 +78,7 @@ public:
         m_listeners.push_back(downstream);
     };
 
-    void attach(Place* place) {
-        if (std::find(m_places.begin(), m_places.end(), place) == m_places.end()) {
-            m_places.push_back(place);
-        }
-    };
+    void create_ports(size_t inputs, size_t outputs);
 
     void attach(JMailbox<JEvent*>* queue, size_t port);
     void attach(JEventPool* pool, size_t port);
@@ -91,27 +88,6 @@ public:
 };
 
 
-struct Place {
-    void* place_ref = nullptr;
-    bool is_queue = true;
-    bool is_input = false;
 
-    Place(JArrow* parent, bool is_input) {
-        assert(parent != nullptr);
-        parent->attach(this);
-        this->is_input = is_input;
-    }
-};
-
-inline size_t JArrow::get_pending() { 
-    size_t sum = 0;
-    for (Place* place : m_places) {
-        if (place->is_input && place->is_queue) {
-            auto queue = static_cast<JMailbox<JEvent*>*>(place->place_ref);
-            sum += queue->size();
-        }
-    }
-    return sum;
-}
 
 

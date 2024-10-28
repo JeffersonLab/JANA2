@@ -10,6 +10,7 @@
 
 JEventTapArrow::JEventTapArrow(std::string name) {
     set_name(name);
+    create_ports(1,1);
 }
 
 void JEventTapArrow::add_processor(JEventProcessor* proc) {

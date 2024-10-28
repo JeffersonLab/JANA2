@@ -8,10 +8,8 @@ struct TestData { int x; };
 
 struct BasicParallelArrow : public JTriggeredArrow<BasicParallelArrow> {
 
-    Place m_input {this, true };
-    Place m_output {this, false };
-
     BasicParallelArrow() {
+        create_ports(1, 1);
         set_is_parallel(true);
     }
 

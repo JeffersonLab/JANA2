@@ -14,9 +14,6 @@
 #include <JANA/Utils/JTablePrinter.h>
 
 
-using Event = std::shared_ptr<JEvent>;
-using EventQueue = JMailbox<Event*>;
-
 JTopologyBuilder::JTopologyBuilder() {
     SetPrefix("jana");
 }
@@ -63,7 +60,7 @@ std::string JTopologyBuilder::print_topology() {
     for (JArrow* arrow : arrows) {
 
         show_row = true;
-        for (Place* place : arrow->m_places) {
+        for (JArrow::Port& port : arrow->m_ports) {
             if (show_row) {
                 t | arrow->get_name();
                 t | arrow->is_parallel();
@@ -72,10 +69,11 @@ std::string JTopologyBuilder::print_topology() {
             else {
                 t | "" | "" ;
             }
+            auto place_index = lookup[(port.queue!=nullptr) ? (void*) port.queue : (void*) port.pool];
 
-            t | ((place->is_input) ? "Input ": "Output");
-            t | ((place->is_queue) ? "Queue ": "Pool");
-            t | lookup[place->place_ref];
+            t | ((port.is_input) ? "Input ": "Output");
+            t | ((port.queue != nullptr) ? "Queue ": "Pool");
+            t | place_index;
         }
     }
     return t.Render();
@@ -148,26 +146,26 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
 
 void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downstream, size_t down_index) {
 
-    auto queue = new EventQueue(m_max_inflight_events, mapping.get_loc_count(), m_enable_stealing);
+    auto queue = new JMailbox<JEvent*>(m_max_inflight_events, mapping.get_loc_count(), m_enable_stealing);
     queues.push_back(queue);
 
     size_t i = 0;
-    for (Place* place : upstream->m_places) {
-        if (!place->is_input) {
+    for (JArrow::Port& port : upstream->m_ports) {
+        if (!port.is_input) {
             if (i++ == up_index) {
                 // Found the correct output
-                place->is_queue = true;
-                place->place_ref = queue;
+                port.queue = queue;
+                port.pool = nullptr;
             }
         }
     }
     i = 0;
-    for (Place* place : downstream->m_places) {
-        if (place->is_input) {
+    for (JArrow::Port& port : downstream->m_ports) {
+        if (port.is_input) {
             if (i++ == down_index) {
                 // Found the correct input
-                place->is_queue = true;
-                place->place_ref = queue;
+                port.queue = queue;
+                port.pool = nullptr;
             }
         }
     }

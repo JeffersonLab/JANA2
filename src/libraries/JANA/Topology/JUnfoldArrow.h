@@ -18,36 +18,32 @@ private:
     JEvent* m_parent_event = nullptr;
     JEvent* m_child_event = nullptr;
 
-    Place m_parent_in {this, true};
-    Place m_child_in {this, true};
-    Place m_child_out {this, false};
-
 public:
     JUnfoldArrow(std::string name, JEventUnfolder* unfolder) : m_unfolder(unfolder) {
         set_name(name);
+        create_ports(2, 1);
         m_next_input_port = PARENT_IN;
     }
 
     void attach_parent_in(JMailbox<JEvent*>* parent_in) {
-        m_parent_in.place_ref = parent_in;
-        m_parent_in.is_queue = true;
+        m_ports[PARENT_IN].queue = parent_in;
+        m_ports[PARENT_IN].pool = nullptr;
     }
 
     void attach_child_in(JEventPool* child_in) {
-        m_child_in.place_ref = child_in;
-        m_child_in.is_queue = false;
+        m_ports[CHILD_IN].queue = nullptr;
+        m_ports[CHILD_IN].pool = child_in;
     }
 
     void attach_child_in(JMailbox<JEvent*>* child_in) {
-        m_child_in.place_ref = child_in;
-        m_child_in.is_queue = true;
+        m_ports[CHILD_IN].queue = child_in;
+        m_ports[CHILD_IN].pool = nullptr;
     }
 
     void attach_child_out(JMailbox<JEvent*>* child_out) {
-        m_child_out.place_ref = child_out;
-        m_child_out.is_queue = true;
+        m_ports[CHILD_OUT].queue = child_out;
+        m_ports[CHILD_OUT].pool = nullptr;
     }
-
 
     void initialize() final {
         m_unfolder->DoInit();
@@ -61,10 +57,9 @@ public:
 
     size_t get_pending() final {
         size_t sum = 0;
-        for (Place* place : m_places) {
-            if (place->is_input && place->is_queue) {
-                auto queue = static_cast<JMailbox<JEvent*>*>(place->place_ref);
-                sum += queue->size();
+        for (Port& port : m_ports) {
+            if (port.is_input && port.queue!=nullptr) {
+                sum += port.queue->size();
             }
         }
         if (m_parent_event != nullptr) {

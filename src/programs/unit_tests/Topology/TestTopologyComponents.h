@@ -16,9 +16,6 @@ struct EventData {
 
 struct RandIntArrow : public JTriggeredArrow<RandIntArrow> {
 
-    Place m_input {this, true };
-    Place m_output {this, false };
-
     size_t emit_limit = 20;  // How many to emit
     size_t emit_count = 0;   // How many emitted so far
     int emit_sum = 0;        // Sum of all ints emitted so far
@@ -26,6 +23,7 @@ struct RandIntArrow : public JTriggeredArrow<RandIntArrow> {
     RandIntArrow(std::string name, JEventPool* pool, JMailbox<JEvent*>* output_queue) {
         set_name(name);
         set_is_source(true);
+        create_ports(1, 1);
         attach(pool, 0);
         attach(output_queue, 1);
     }
@@ -57,12 +55,10 @@ struct RandIntArrow : public JTriggeredArrow<RandIntArrow> {
 
 struct MultByTwoArrow : public JTriggeredArrow<MultByTwoArrow> {
 
-    Place m_input {this, true };
-    Place m_output {this, false };
-
     MultByTwoArrow(std::string name, JMailbox<JEvent*>* input_queue, JMailbox<JEvent*>* output_queue) {
         set_name(name);
         set_is_parallel(true);
+        create_ports(1, 1);
         attach(input_queue, 0);
         attach(output_queue, 1);
     }
@@ -81,12 +77,10 @@ struct MultByTwoArrow : public JTriggeredArrow<MultByTwoArrow> {
 
 struct SubOneArrow : public JTriggeredArrow<SubOneArrow> {
     
-    Place m_input {this, true };
-    Place m_output {this, false };
-
     SubOneArrow(std::string name, JMailbox<JEvent*>* input_queue, JMailbox<JEvent*>* output_queue) {
         set_name(name);
         set_is_parallel(true);
+        create_ports(1, 1);
         attach(input_queue, 0);
         attach(output_queue, 1);
     }
@@ -107,14 +101,12 @@ struct SubOneArrow : public JTriggeredArrow<SubOneArrow> {
 
 struct SumArrow : public JTriggeredArrow<SumArrow> {
 
-    Place m_input {this, true };
-    Place m_output {this, false };
-
     double sum = 0;
 
     SumArrow(std::string name, JMailbox<JEvent*>* input_queue, JEventPool* pool) {
         set_name(name);
         set_is_sink(true);
+        create_ports(1, 1);
         attach(input_queue, 0);
         attach(pool, 1);
     }

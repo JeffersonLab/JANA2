@@ -18,10 +18,6 @@ private:
     JEventLevel m_parent_level;
     JEventLevel m_child_level;
 
-    Place m_child_in {this, true};
-    Place m_child_out {this, false};
-    Place m_parent_out {this, false};
-
 public:
     JFoldArrow(
         std::string name,
@@ -32,6 +28,7 @@ public:
         m_child_level(child_level)
     {
         set_name(name);
+        create_ports(1, 2);
         m_next_input_port = CHILD_IN;
     }
 
@@ -40,28 +37,28 @@ public:
     }
 
     void attach_child_in(JMailbox<JEvent*>* child_in) {
-        m_child_in.place_ref = child_in;
-        m_child_in.is_queue = true;
+        m_ports[CHILD_IN].queue = child_in;
+        m_ports[CHILD_IN].pool = nullptr;
     }
 
     void attach_child_out(JMailbox<JEvent*>* child_out) {
-        m_child_out.place_ref = child_out;
-        m_child_out.is_queue = true;
+        m_ports[CHILD_OUT].queue = child_out;
+        m_ports[CHILD_OUT].pool = nullptr;
     }
 
     void attach_child_out(JEventPool* child_out) {
-        m_child_out.place_ref = child_out;
-        m_child_out.is_queue = false;
+        m_ports[CHILD_OUT].queue = nullptr;
+        m_ports[CHILD_OUT].pool = child_out;
     }
 
     void attach_parent_out(JEventPool* parent_out) {
-        m_parent_out.place_ref = parent_out;
-        m_parent_out.is_queue = false;
+        m_ports[PARENT_OUT].queue = nullptr;
+        m_ports[PARENT_OUT].pool = parent_out;
     }
 
     void attach_parent_out(JMailbox<JEvent*>* parent_out) {
-        m_parent_out.place_ref = parent_out;
-        m_parent_out.is_queue = true;
+        m_ports[PARENT_OUT].queue = parent_out;
+        m_ports[PARENT_OUT].pool = nullptr;
     }
 
     void initialize() final {

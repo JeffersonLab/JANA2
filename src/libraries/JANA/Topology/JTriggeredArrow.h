@@ -54,7 +54,7 @@ struct JTriggeredArrow : public JArrow {
         // their input pool. These mustn't be counted as "processed" in the metrics.
         size_t processed_count = 0;
         for (size_t output=0; output<output_count; ++output) {
-            if (!m_places[outputs[output].second]->is_input) {
+            if (!m_ports[outputs[output].second].is_input) {
                 processed_count++;
             }
         }
