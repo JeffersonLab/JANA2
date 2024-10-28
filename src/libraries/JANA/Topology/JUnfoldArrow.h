@@ -9,9 +9,7 @@
 
 class JUnfoldArrow : public JTriggeredArrow<JUnfoldArrow> {
 public:
-    const int PARENT_IN = 0;
-    const int CHILD_IN = 1;
-    const int CHILD_OUT = 2;
+    enum PortIndex {PARENT_IN=0, CHILD_IN=1, CHILD_OUT=2};
 
 private:
     JEventUnfolder* m_unfolder = nullptr;
@@ -23,26 +21,6 @@ public:
         set_name(name);
         create_ports(2, 1);
         m_next_input_port = PARENT_IN;
-    }
-
-    void attach_parent_in(JMailbox<JEvent*>* parent_in) {
-        m_ports[PARENT_IN].queue = parent_in;
-        m_ports[PARENT_IN].pool = nullptr;
-    }
-
-    void attach_child_in(JEventPool* child_in) {
-        m_ports[CHILD_IN].queue = nullptr;
-        m_ports[CHILD_IN].pool = child_in;
-    }
-
-    void attach_child_in(JMailbox<JEvent*>* child_in) {
-        m_ports[CHILD_IN].queue = child_in;
-        m_ports[CHILD_IN].pool = nullptr;
-    }
-
-    void attach_child_out(JMailbox<JEvent*>* child_out) {
-        m_ports[CHILD_OUT].queue = child_out;
-        m_ports[CHILD_OUT].pool = nullptr;
     }
 
     void initialize() final {

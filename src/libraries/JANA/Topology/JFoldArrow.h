@@ -8,9 +8,7 @@
 
 class JFoldArrow : public JTriggeredArrow<JFoldArrow> {
 public:
-    const int CHILD_IN = 0;
-    const int CHILD_OUT = 1;
-    const int PARENT_OUT = 2;
+    enum PortIndex {CHILD_IN=0, CHILD_OUT=1, PARENT_OUT=2};
 
 private:
     JEventFolder* m_folder = nullptr;
@@ -34,31 +32,6 @@ public:
 
     void set_folder(JEventFolder* folder) {
         m_folder = folder;
-    }
-
-    void attach_child_in(JMailbox<JEvent*>* child_in) {
-        m_ports[CHILD_IN].queue = child_in;
-        m_ports[CHILD_IN].pool = nullptr;
-    }
-
-    void attach_child_out(JMailbox<JEvent*>* child_out) {
-        m_ports[CHILD_OUT].queue = child_out;
-        m_ports[CHILD_OUT].pool = nullptr;
-    }
-
-    void attach_child_out(JEventPool* child_out) {
-        m_ports[CHILD_OUT].queue = nullptr;
-        m_ports[CHILD_OUT].pool = child_out;
-    }
-
-    void attach_parent_out(JEventPool* parent_out) {
-        m_ports[PARENT_OUT].queue = nullptr;
-        m_ports[PARENT_OUT].pool = parent_out;
-    }
-
-    void attach_parent_out(JMailbox<JEvent*>* parent_out) {
-        m_ports[PARENT_OUT].queue = parent_out;
-        m_ports[PARENT_OUT].pool = nullptr;
     }
 
     void initialize() final {

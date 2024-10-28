@@ -10,6 +10,8 @@ class JEvent;
 
 
 class JEventTapArrow : public JTriggeredArrow<JEventTapArrow> {
+public:
+    enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
 
 private:
     std::vector<JEventProcessor*> m_procs;

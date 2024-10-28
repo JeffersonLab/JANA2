@@ -14,6 +14,9 @@ class JEvent;
 
 class JEventMapArrow : public JTriggeredArrow<JEventMapArrow> {
 
+public:
+    enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
+
 private:
     std::vector<JEventSource*> m_sources;
     std::vector<JEventUnfolder*> m_unfolders;

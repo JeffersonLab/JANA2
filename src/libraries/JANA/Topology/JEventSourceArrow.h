@@ -8,8 +8,7 @@
 
 class JEventSourceArrow : public JTriggeredArrow<JEventSourceArrow> {
 public:
-    const size_t EVENT_IN = 0;
-    const size_t EVENT_OUT = 1;
+    enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
 
 private:
     std::vector<JEventSource*> m_sources;
@@ -19,23 +18,6 @@ private:
 
 public:
     JEventSourceArrow(std::string name, std::vector<JEventSource*> sources);
-
-    void set_input(JMailbox<JEvent*>* queue) {
-        m_ports[EVENT_IN].queue = queue;
-        m_ports[EVENT_IN].pool = nullptr;
-    }
-    void set_input(JEventPool* pool) {
-        m_ports[EVENT_IN].queue = nullptr;
-        m_ports[EVENT_IN].pool = pool;
-    }
-    void set_output(JMailbox<JEvent*>* queue) {
-        m_ports[EVENT_OUT].queue = queue;
-        m_ports[EVENT_OUT].pool = nullptr;
-    }
-    void set_output(JEventPool* pool) {
-        m_ports[EVENT_OUT].queue = nullptr;
-        m_ports[EVENT_OUT].pool = pool;
-    }
 
     void initialize() final;
     void finalize() final;

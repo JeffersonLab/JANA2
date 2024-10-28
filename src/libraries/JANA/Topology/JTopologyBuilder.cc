@@ -259,8 +259,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     bool need_source = !sources_at_level.empty();
     if (need_source) {
         src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level);
-        src_arrow->set_input(pool_at_level);
-        src_arrow->set_output(pool_at_level);
+        src_arrow->attach(pool_at_level, JEventSourceArrow::EVENT_IN);
+        src_arrow->attach(pool_at_level, JEventSourceArrow::EVENT_OUT);
         arrows.push_back(src_arrow);
     }
 
@@ -285,8 +285,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         for (JEventUnfolder* unf: unfolders_at_level) {
             map1_arrow->add_unfolder(unf);
         }
-        map1_arrow->attach(pool_at_level, 0);
-        map1_arrow->attach(pool_at_level, 1);
+        map1_arrow->attach(pool_at_level, JEventMapArrow::EVENT_IN);
+        map1_arrow->attach(pool_at_level, JEventMapArrow::EVENT_OUT);
         arrows.push_back(map1_arrow);
     }
 
@@ -308,7 +308,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     if(need_fold) {
         fold_arrow = new JFoldArrow(level_str+"Fold", current_level, unfolders_at_level[0]->GetChildLevel());
         arrows.push_back(fold_arrow);
-        fold_arrow->attach_parent_out(pool_at_level);
+        fold_arrow->attach(pool_at_level, JFoldArrow::PARENT_OUT); 
     }
 
     // --------------------------
@@ -320,8 +320,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         map2_arrow = new JEventMapArrow(level_str+"Map2");
         for (JEventProcessor* proc : mappable_procs_at_level) {
             map2_arrow->add_processor(proc);
-            map2_arrow->attach(pool_at_level, 0);
-            map2_arrow->attach(pool_at_level, 1);
+            map2_arrow->attach(pool_at_level, JEventMapArrow::EVENT_IN);
+            map2_arrow->attach(pool_at_level, JEventMapArrow::EVENT_OUT);
         }
         arrows.push_back(map2_arrow);
     }
@@ -335,8 +335,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         tap_arrow = new JEventTapArrow(level_str+"Tap");
         for (JEventProcessor* proc : tappable_procs_at_level) {
             tap_arrow->add_processor(proc);
-            tap_arrow->attach(pool_at_level, 0);
-            tap_arrow->attach(pool_at_level, 1);
+            tap_arrow->attach(pool_at_level, JEventTapArrow::EVENT_IN);
+            tap_arrow->attach(pool_at_level, JEventTapArrow::EVENT_OUT);
         }
         arrows.push_back(tap_arrow);
     }
@@ -347,7 +347,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // 1. Source
     // --------------------------
     if (parent_unfolder != nullptr) {
-        parent_unfolder->attach_child_in(pool_at_level);
+        parent_unfolder->attach(pool_at_level, JUnfoldArrow::CHILD_IN);
         connect_to_first_available(parent_unfolder, {map1_arrow, unfold_arrow, map2_arrow, tap_arrow, parent_folder});
     }
     if (src_arrow != nullptr) {
@@ -366,7 +366,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         connect_to_first_available(tap_arrow, {parent_folder});
     }
     if (parent_folder != nullptr) {
-        parent_folder->attach_child_out(pool_at_level);
+        parent_folder->attach(pool_at_level, JFoldArrow::CHILD_OUT);
     }
 
     // Finally, we recur over lower levels!

@@ -103,8 +103,8 @@ TEST_CASE("Basic subevent arrow functionality") {
         topology->set_configure_fn([&](JTopologyBuilder& topology) {
 
             auto source_arrow = new JEventSourceArrow("simpleSource", {new SimpleSource});
-            source_arrow->set_input(topology.event_pool);
-            source_arrow->set_output(&events_in);
+            source_arrow->attach(topology.event_pool, JEventSourceArrow::EVENT_IN);
+            source_arrow->attach(&events_in, JEventSourceArrow::EVENT_OUT);
 
             auto proc_arrow = new JEventMapArrow("simpleProcessor");
             proc_arrow->attach(&events_out, 0);
