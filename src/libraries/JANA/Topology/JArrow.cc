@@ -67,7 +67,7 @@ void JArrow::push(OutputData& outputs, size_t output_count, size_t location_id) 
     }
 }
 
-inline size_t JArrow::get_pending() { 
+size_t JArrow::get_pending() {
     size_t sum = 0;
     for (Port& port : m_ports) {
         if (port.is_input && port.queue != nullptr) {
