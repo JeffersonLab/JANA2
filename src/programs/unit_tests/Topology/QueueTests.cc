@@ -27,13 +27,11 @@ TEST_CASE("QueueTests_Basic") {
     items[1] = new int {44};
     items[2] = new int {55};
 
-    size_t reserve_count = q.reserve(3, 5, 0);
-    REQUIRE(reserve_count == 5);
 
-    q.push_and_unreserve(items, 3, reserve_count, 0);
+    q.push(items, 3, 0);
     REQUIRE(q.size() == 3);
 
-    count = q.pop_and_reserve(items, 2, 2, 0);
+    count = q.pop(items, 2, 2, 0);
     REQUIRE(count == 2);
     REQUIRE(q.size() == 1);
 }

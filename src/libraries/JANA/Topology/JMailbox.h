@@ -14,7 +14,6 @@
 ///   - pushes and pops return a Status enum, handling the problem of .size() always being stale
 ///   - pops may fail but pushes may not
 ///   - pushes and pops are chunked, reducing contention and handling the failure case cleanly
-///   - when the .reserve() method is used, the queue size is bounded
 ///   - the underlying queue may be shared by all threads, NUMA-domain-local, or thread-local
 ///   - the Arrow doesn't have to know anything about locality.
 ///
@@ -58,7 +57,6 @@ class JMailbox : public JQueue {
     struct LocalQueue {
         std::mutex mutex;
         std::deque<T> queue;
-        size_t reserved_count = 0;
     };
 
     // TODO: Copy these params into DLMB for better locality
@@ -114,35 +112,11 @@ public:
         return m_queues[location_id].queue.size();
     }
 
-    /// reserve(requested_count) keeps our queues bounded in size. The caller should
-    /// reserve their desired chunk size on the output queue first. The output
-    /// queue will return a reservation which is less than or equal to requested_count.
-    /// The caller may then request as many items from the input queue as have been
-    /// reserved on the output queue. Note that because the input queue may return
-    /// fewer items than requested, the caller must push their original reserved_count
-    /// alongside the items, to avoid a "reservation leak".
-    size_t reserve(size_t requested_count, size_t location_id = 0) {
-
-        LocalQueue& mb = m_queues[location_id];
-        std::lock_guard<std::mutex> lock(mb.mutex);
-        size_t doable_count = m_capacity - mb.queue.size() - mb.reserved_count;
-        if (doable_count > 0) {
-            size_t reservation = std::min(doable_count, requested_count);
-            mb.reserved_count += reservation;
-            return reservation;
-        }
-        return 0;
-    };
-
-    /// push(items, reserved_count, location_id) This function will always
-    /// succeed, although it may exceed the threshold if the caller didn't reserve
-    /// space, and it may take a long time because it will wait on a mutex.
-    /// Note that if the caller had called reserve(), they must pass in the reserved_count here.
-    Status push(std::vector<T>& buffer, size_t reserved_count = 0, size_t location_id = 0) {
+    /// push(items, location_id) This function will always succeed.
+    Status push(std::vector<T>& buffer, size_t location_id = 0) {
 
         auto& mb = m_queues[location_id];
         std::lock_guard<std::mutex> lock(mb.mutex);
-        mb.reserved_count -= reserved_count;
         for (const T& t : buffer) {
              mb.queue.push_back(std::move(t));
         }
@@ -207,9 +181,6 @@ public:
         return Status::Empty;
     }
 
-
-
-
     bool try_push(T* buffer, size_t count, size_t location_id = 0) {
         auto& mb = m_queues[location_id];
         std::lock_guard<std::mutex> lock(mb.mutex);
@@ -221,13 +192,11 @@ public:
         return true;
     }
 
-    void push_and_unreserve(T* buffer, size_t count, size_t reserved_count = 0, size_t location_id = 0) {
+    void push(T* buffer, size_t count, size_t location_id = 0) {
 
         auto& mb = m_queues[location_id];
         std::lock_guard<std::mutex> lock(mb.mutex);
-        assert(reserved_count <= mb.reserved_count);
         assert(mb.queue.size() + count <= m_capacity);
-        mb.reserved_count -= reserved_count;
         for (size_t i=0; i<count; ++i) {
              mb.queue.push_back(buffer[i]);
              buffer[i] = nullptr;
@@ -250,63 +219,23 @@ public:
         return nitems;
     }
 
-    size_t pop_and_reserve(T* buffer, size_t min_requested_count, size_t max_requested_count, size_t location_id = 0) {
-
-        auto& mb = m_queues[location_id];
-        std::lock_guard<std::mutex> lock(mb.mutex);
-
-        if (mb.queue.size() < min_requested_count) return 0;
-
-        auto nitems = std::min(max_requested_count, mb.queue.size());
-        mb.reserved_count += nitems;
-
-        for (size_t i=0; i<nitems; ++i) {
-            buffer[i] = mb.queue.front();
-            mb.queue.pop_front();
-        }
-        return nitems;
-    }
-
-    size_t reserve(size_t min_requested_count, size_t max_requested_count, size_t location_id) {
-
-        LocalQueue& mb = m_queues[location_id];
-        std::lock_guard<std::mutex> lock(mb.mutex);
-        size_t available_count = m_capacity - mb.queue.size() - mb.reserved_count;
-        size_t count = std::min(available_count, max_requested_count);
-        if (count < min_requested_count) {
-            return 0;
-        }
-        mb.reserved_count += count;
-        return count;
-    };
-
-    void unreserve(size_t reserved_count, size_t location_id) {
-
-        LocalQueue& mb = m_queues[location_id];
-        std::lock_guard<std::mutex> lock(mb.mutex);
-        assert(reserved_count <= mb.reserved_count);
-        mb.reserved_count -= reserved_count;
-    };
-
 };
 
 template <>
-inline void JMailbox<std::shared_ptr<JEvent>*>::push_and_unreserve(std::shared_ptr<JEvent>** buffer, size_t count, size_t reserved_count, size_t location_id) {
+inline void JMailbox<JEvent*>::push(JEvent** buffer, size_t count, size_t location_id) {
 
     auto& mb = m_queues[location_id];
     std::lock_guard<std::mutex> lock(mb.mutex);
-    assert(reserved_count <= mb.reserved_count);
     assert(mb.queue.size() + count <= m_capacity);
-    mb.reserved_count -= reserved_count;
     for (size_t i=0; i<count; ++i) {
-        LOG_TRACE(m_logger) << "JMailbox: push_and_unreserve(): queue #" << m_id << ", event #" << buffer[i]->get()->GetEventNumber() << LOG_END;
+        LOG_TRACE(m_logger) << "JMailbox: push_and_unreserve(): queue #" << m_id << ", event #" << buffer[i]->GetEventNumber() << LOG_END;
         mb.queue.push_back(buffer[i]);
         buffer[i] = nullptr;
     }
 } 
 
 template <>
-inline size_t JMailbox<std::shared_ptr<JEvent>*>::pop_and_reserve(std::shared_ptr<JEvent>** buffer, size_t min_requested_count, size_t max_requested_count, size_t location_id) {
+inline size_t JMailbox<JEvent*>::pop(JEvent** buffer, size_t min_requested_count, size_t max_requested_count, size_t location_id) {
 
     auto& mb = m_queues[location_id];
     std::lock_guard<std::mutex> lock(mb.mutex);
@@ -314,11 +243,10 @@ inline size_t JMailbox<std::shared_ptr<JEvent>*>::pop_and_reserve(std::shared_pt
     if (mb.queue.size() < min_requested_count) return 0;
 
     auto nitems = std::min(max_requested_count, mb.queue.size());
-    mb.reserved_count += nitems;
 
     for (size_t i=0; i<nitems; ++i) {
         buffer[i] = mb.queue.front();
-        LOG_TRACE(m_logger) << "JMailbox: pop_and_reserve(): queue #" << m_id << ", event #" << buffer[i]->get()->GetEventNumber() << LOG_END;
+        LOG_TRACE(m_logger) << "JMailbox: pop(): queue #" << m_id << ", event #" << buffer[i]->GetEventNumber() << LOG_END;
         mb.queue.pop_front();
     }
     return nitems;

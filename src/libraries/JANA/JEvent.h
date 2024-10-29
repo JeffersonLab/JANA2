@@ -49,7 +49,7 @@ private:
     bool mIsBarrierEvent = false;
 
     // Hierarchical event memory management
-    std::vector<std::pair<JEventLevel, std::shared_ptr<JEvent>*>> mParents;
+    std::vector<std::pair<JEventLevel, JEvent*>> mParents;
     std::atomic_int mReferenceCount {1};
     int64_t mEventIndex = -1;
 
@@ -89,8 +89,8 @@ public:
 
     bool HasParent(JEventLevel level) const;
     const JEvent& GetParent(JEventLevel level) const;
-    void SetParent(std::shared_ptr<JEvent>* parent);
-    std::shared_ptr<JEvent>* ReleaseParent(JEventLevel level);
+    void SetParent(JEvent* parent);
+    JEvent* ReleaseParent(JEventLevel level);
     void Release();
 
     // Lifecycle

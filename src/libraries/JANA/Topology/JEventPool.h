@@ -16,158 +16,127 @@ class JEventPool {
 private:
     struct alignas(JANA2_CACHE_LINE_BYTES) LocalPool {
         std::mutex mutex;
-        std::vector<std::shared_ptr<JEvent>*> available_items;
-        std::vector<std::shared_ptr<JEvent>> items;
+        std::vector<JEvent*> available_items;
     };
 
-    std::unique_ptr<LocalPool[]> m_pools;
+    std::vector<std::unique_ptr<LocalPool>> m_pools;
+    std::vector<std::shared_ptr<JEvent>> m_owned_events;
 
-    size_t m_pool_size;
+    size_t m_max_inflight_events;
     size_t m_location_count;
-    bool m_limit_total_events_in_flight;
 
     std::shared_ptr<JComponentManager> m_component_manager;
     JEventLevel m_level;
+    JLogger m_logger;
 
 
 public:
     inline JEventPool(std::shared_ptr<JComponentManager> component_manager,
-                      size_t pool_size,
+                      size_t max_inflight_events,
                       size_t location_count,
-                      bool limit_total_events_in_flight,
                       JEventLevel level = JEventLevel::PhysicsEvent)
 
-            : m_pool_size(pool_size)
+            : m_max_inflight_events(max_inflight_events)
             , m_location_count(location_count)
-            , m_limit_total_events_in_flight(limit_total_events_in_flight)
             , m_component_manager(component_manager)
             , m_level(level) {
 
         assert(m_location_count >= 1);
-        assert(m_pool_size > 0 || !m_limit_total_events_in_flight);
 
-        m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[m_location_count]());
-
-        for (size_t j=0; j<m_location_count; ++j) {
-
-            m_pools[j].items = std::vector<std::shared_ptr<JEvent>>(m_pool_size); // Default-construct everything in place
-
-            for (auto& item : m_pools[j].items) {
-                configure_item(&item);
-                m_pools[j].available_items.push_back(&item);
-            }
+        // Create LocalPools for each location
+        for (size_t loc=0; loc<m_location_count; ++loc) {
+            auto pool = std::make_unique<LocalPool>();
+            pool->available_items.reserve(max_inflight_events);
+            m_pools.push_back(std::move(pool));
         }
-    }
 
-    void configure_item(std::shared_ptr<JEvent>* item) {
-        (*item) = std::make_shared<JEvent>();
-        m_component_manager->configure_event(**item);
-        item->get()->SetLevel(m_level); // This needs to happen _after_ configure_event
+        // Create JEvents and distribute them among the pools
+        m_owned_events.reserve(max_inflight_events);
+        for (size_t evt_idx=0; evt_idx<max_inflight_events; evt_idx++) {
+
+            m_owned_events.push_back(std::make_shared<JEvent>());
+            auto evt = &m_owned_events.back(); 
+            m_component_manager->configure_event(**evt);
+            (*evt)->SetLevel(m_level);
+            m_pools[evt_idx % m_location_count]->available_items.push_back(evt->get());
+        }
     }
 
 
     void finalize() {
-        for (size_t pool_idx = 0; pool_idx < m_location_count; ++pool_idx) {
-            for (auto& event : m_pools[pool_idx].items) {
-                event->Finish();
-            }
+        for (auto& evt : m_owned_events) {
+            evt->Finish();
         }
     }
 
-    std::shared_ptr<JEvent>* get(size_t location=0) {
 
-        assert(m_pools != nullptr); // If you hit this, you forgot to call init().
-        LocalPool& pool = m_pools[location % m_location_count];
+    JEvent* get(size_t location=0) {
+
+        // Note: For now this doesn't steal from another pool. In principle this means that
+        // all of the JEvents could end up in a single location's pool and there would be no way for
+        // the JEventSource in other locations to obtain fresh events. I don't think this is a problem
+        // in practice because the arrows always push and pull to pool's location 0, but we should 
+        // revisit this when the time is right.
+
+        LocalPool& pool = *(m_pools[location % m_location_count]);
         std::lock_guard<std::mutex> lock(pool.mutex);
 
         if (pool.available_items.empty()) {
-            if (m_limit_total_events_in_flight) {
-                return nullptr;
-            }
-            else {
-                auto t = new std::shared_ptr<JEvent>();
-                configure_item(t);
-                return t;
-            }
+            return nullptr;
         }
         else {
-            std::shared_ptr<JEvent>* item = pool.available_items.back();
+            JEvent* item = pool.available_items.back();
             pool.available_items.pop_back();
             return item;
         }
     }
 
 
-    void put(std::shared_ptr<JEvent>* item, bool clear_event, size_t location) {
+    void put(JEvent* item, bool clear_event, size_t location) {
 
-        assert(m_pools != nullptr); // If you hit this, you forgot to call init().
-        
         if (clear_event) {
             // Do any necessary teardown within the item itself
-            (*item)->Clear();
+            item->Clear();
+        }
+        auto use_count = item->shared_from_this().use_count();
+        if (use_count > 2) {
+            // Use count should be 2 because there's the shared_ptr in `m_owned_events`, and there's the temporary shared_ptr created just now
+            throw JException("Attempted to return a JEvent to the pool while it is still being used! use_count=%d", use_count);
         }
 
-        // Consider each location starting with current one
-        for (size_t l = location; l<location+m_location_count; ++l) {
-            LocalPool& pool = m_pools[l % m_location_count];
+        LocalPool& pool = *(m_pools[location]);
 
-            // Check if item came from this location
-            if ((item >= &(pool.items[0])) && (item <= &(pool.items[m_pool_size-1]))) {
-                std::lock_guard<std::mutex> lock(pool.mutex);
-                pool.available_items.push_back(item);
-                return;
-            }
-
+        if (pool.available_items.size() > m_max_inflight_events) {
+            throw JException("Attempted to return a JEvent to an already-full pool");
         }
-        // Otherwise it was allocated on the heap
-        delete item;
+
+        std::lock_guard<std::mutex> lock(pool.mutex);
+        pool.available_items.push_back(item);
     }
 
 
-    size_t pop(std::shared_ptr<JEvent>** dest, size_t min_count, size_t max_count, size_t location) {
+    size_t pop(JEvent** dest, size_t min_count, size_t max_count, size_t location) {
 
-        assert(m_pools != nullptr); // If you hit this, you forgot to call init().
-
-        LocalPool& pool = m_pools[location % m_location_count];
+        LocalPool& pool = *(m_pools[location % m_location_count]);
         std::lock_guard<std::mutex> lock(pool.mutex);
 
         size_t available_count = pool.available_items.size();
 
-        if (m_limit_total_events_in_flight && available_count < min_count) {
+        if (available_count < min_count) {
             // Exit immmediately if we can't reach the minimum
             return 0;
         }
-        if (m_limit_total_events_in_flight) {
-            // Return as many as we can. We aren't allowed to create any more
-            size_t count = std::min(available_count, max_count);
-            for (size_t i=0; i<count; ++i) {
-                std::shared_ptr<JEvent>* t = pool.available_items.back();
-                pool.available_items.pop_back();
-                dest[i] = t;
-            }
-            return count;
+        // Return as many as we can. We aren't allowed to create any more
+        size_t count = std::min(available_count, max_count);
+        for (size_t i=0; i<count; ++i) {
+            JEvent* t = pool.available_items.back();
+            pool.available_items.pop_back();
+            dest[i] = t;
         }
-        else {
-            // Try to minimize number of allocations, as long as we meet min_count
-            size_t count = std::min(available_count, max_count);
-            size_t i=0;
-            for (i=0; i<count; ++i) {
-                // Pop the items already in the pool
-                std::shared_ptr<JEvent>* t = pool.available_items.back();
-                pool.available_items.pop_back();
-                dest[i] = t;
-            }
-            for (; i<min_count; ++i) {
-                // If we haven't reached our min count yet, allocate just enough to reach it
-                auto t = new std::shared_ptr<JEvent>;
-                configure_item(t);
-                dest[i] = t;
-            }
-            return i;
-        }
+        return count;
     }
 
-    void push(std::shared_ptr<JEvent>** source, size_t count, bool clear_event, size_t location) {
+    void push(JEvent** source, size_t count, bool clear_event, size_t location) {
         for (size_t i=0; i<count; ++i) {
             put(source[i], clear_event, location);
             source[i] = nullptr;

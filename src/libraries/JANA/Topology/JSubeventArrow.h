@@ -36,12 +36,12 @@ struct JSubeventProcessor {
 template <typename SubeventT>
 struct SubeventWrapper {
 
-    std::shared_ptr<JEvent>* parent;
+    JEvent* parent;
     SubeventT* data;
     size_t id;
     size_t total;
 
-    SubeventWrapper(std::shared_ptr<JEvent>* parent, SubeventT* data, size_t id, size_t total)
+    SubeventWrapper(JEvent* parent, SubeventT* data, size_t id, size_t total)
     : parent(std::move(parent))
     , data(data)
     , id(id)
@@ -69,12 +69,12 @@ public:
 template <typename InputT, typename OutputT>
 class JSplitArrow : public JArrow {
     JSubeventProcessor<InputT, OutputT>* m_processor;
-    JMailbox<std::shared_ptr<JEvent>*>* m_inbox;
+    JMailbox<JEvent*>* m_inbox;
     JMailbox<SubeventWrapper<InputT>>* m_outbox;
 public:
     JSplitArrow(std::string name,
                 JSubeventProcessor<InputT,OutputT>* processor,
-                JMailbox<std::shared_ptr<JEvent>*>* inbox,
+                JMailbox<JEvent*>* inbox,
                 JMailbox<SubeventWrapper<InputT>>* outbox)
         : JArrow(name, true, false, false), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
     }
@@ -87,13 +87,13 @@ template <typename InputT, typename OutputT>
 class JMergeArrow : public JArrow {
     JSubeventProcessor<InputT,OutputT>* m_processor;
     JMailbox<SubeventWrapper<OutputT>>* m_inbox;
-    JMailbox<std::shared_ptr<JEvent>*>* m_outbox;
-    std::map<std::shared_ptr<JEvent>*, size_t> m_in_progress;
+    JMailbox<JEvent*>* m_outbox;
+    std::map<JEvent*, size_t> m_in_progress;
 public:
     JMergeArrow(std::string name,
                 JSubeventProcessor<InputT,OutputT>* processor,
                 JMailbox<SubeventWrapper<OutputT>>* inbox,
-                JMailbox<std::shared_ptr<JEvent>*>* outbox)
+                JMailbox<JEvent*>* outbox)
         : JArrow(name, false, false, false), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
     }
 
@@ -105,15 +105,13 @@ public:
 
 template <typename InputT, typename OutputT>
 void JSplitArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t location_id) {
-    using InQueue = JMailbox<std::shared_ptr<JEvent>*>;
+    using InQueue = JMailbox<JEvent*>;
     using OutQueue = JMailbox<SubeventWrapper<InputT>>;
     auto start_total_time = std::chrono::steady_clock::now();
 
-    std::shared_ptr<JEvent>* event = nullptr;
+    JEvent* event = nullptr;
     bool success;
-    size_t reserved_size = m_outbox->reserve(1);
-    size_t actual_size = reserved_size;
-    // TODO: Exit early if we don't have enough space on output queue
+    size_t actual_size = 1;
 
     auto in_status = m_inbox->pop(event, success, location_id);
     auto start_latency_time = std::chrono::steady_clock::now();
@@ -122,7 +120,7 @@ void JSplitArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
     if (success) {
 
         // Construct prereqs
-        std::vector<const InputT*> originals = (*event)->Get<InputT>(m_processor->inputTag);
+        std::vector<const InputT*> originals = event->Get<InputT>(m_processor->inputTag);
         size_t i = 1;
         actual_size = originals.size();
 
@@ -137,7 +135,7 @@ void JSplitArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
     size_t output_size = wrapped.size();
     if (success) {
         assert(m_outbox != nullptr);
-        out_status = m_outbox->push(wrapped, reserved_size, location_id);
+        out_status = m_outbox->push(wrapped, location_id);
     }
     auto end_queue_time = std::chrono::steady_clock::now();
 
@@ -160,8 +158,7 @@ void JSubeventArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t loca
 
     // TODO: Think more carefully about subevent bucket size
     std::vector<SubeventWrapper<InputT>> inputs;
-    size_t downstream_accepts = m_outbox->reserve(1, location_id);
-    auto in_status = m_inbox->pop(inputs, downstream_accepts, location_id);
+    auto in_status = m_inbox->pop(inputs, 1, location_id);
     auto start_latency_time = std::chrono::steady_clock::now();
 
     std::vector<SubeventWrapper<OutputT>> outputs;
@@ -176,7 +173,7 @@ void JSubeventArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t loca
 
     if (outputs_size > 0) {
         assert(m_outbox != nullptr);
-        out_status = m_outbox->push(outputs, downstream_accepts, location_id);
+        out_status = m_outbox->push(outputs, location_id);
     }
     auto end_queue_time = std::chrono::steady_clock::now();
 
@@ -195,26 +192,26 @@ void JSubeventArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t loca
 template <typename InputT, typename OutputT>
 void JMergeArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t location_id) {
     using InQueue = JMailbox<SubeventWrapper<OutputT>>;
-    using OutQueue = JMailbox<std::shared_ptr<JEvent>*>;
+    using OutQueue = JMailbox<JEvent*>;
 
     auto start_total_time = std::chrono::steady_clock::now();
 
     // TODO: Think more carefully about subevent bucket size
     std::vector<SubeventWrapper<OutputT>> inputs;
-    size_t downstream_accepts = m_outbox->reserve(1, location_id);
+    size_t downstream_accepts = true;
     auto in_status = m_inbox->pop(inputs, downstream_accepts, location_id);
     auto start_latency_time = std::chrono::steady_clock::now();
 
-    std::vector<std::shared_ptr<JEvent>*> outputs;
+    std::vector<JEvent*> outputs;
     for (const auto& input : inputs) {
-        LOG_TRACE(m_logger) << "JMergeArrow: Processing input with parent=" << input.parent << ", evt=" << (*(input.parent))->GetEventNumber() << ", sub=" << input.id << " and total=" << input.total << LOG_END;
+        LOG_TRACE(m_logger) << "JMergeArrow: Processing input with parent=" << input.parent << ", evt=" << input.parent->GetEventNumber() << ", sub=" << input.id << " and total=" << input.total << LOG_END;
         // Problem: Are we sure we are updating the event in a way which is effectively thread-safe?
         // Should we be doing this insert, or should the caller?
-        (*(input.parent))->template Insert<OutputT>(input.data);
+        input.parent->template Insert<OutputT>(input.data);
         if (input.total == 1) {
             // Goes straight into "ready"
             outputs.push_back(input.parent);
-            LOG_TRACE(m_logger) << "JMergeArrow: Finished parent=" << input.parent << ", evt=" << (*(input.parent))->GetEventNumber() << LOG_END;
+            LOG_TRACE(m_logger) << "JMergeArrow: Finished parent=" << input.parent << ", evt=" << input.parent->GetEventNumber() << LOG_END;
         }
         else {
             auto pair = m_in_progress.find(input.parent);
@@ -228,7 +225,7 @@ void JMergeArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
                 else if (pair->second == 1) {
                     pair->second -= 1;
                     outputs.push_back(input.parent);
-                    LOG_TRACE(m_logger) << "JMergeArrow: Finished parent=" << input.parent << ", evt=" << (*(input.parent))->GetEventNumber() << LOG_END;
+                    LOG_TRACE(m_logger) << "JMergeArrow: Finished parent=" << input.parent << ", evt=" << input.parent->GetEventNumber() << LOG_END;
                 }
                 else {
                     pair->second -= 1;
@@ -240,7 +237,7 @@ void JMergeArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
     auto end_latency_time = std::chrono::steady_clock::now();
 
     auto outputs_size = outputs.size();
-    auto out_status = m_outbox->push(outputs, downstream_accepts, location_id);
+    auto out_status = m_outbox->push(outputs, location_id);
 
     auto end_queue_time = std::chrono::steady_clock::now();
 

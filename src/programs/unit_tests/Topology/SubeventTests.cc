@@ -47,8 +47,8 @@ TEST_CASE("Create subevent processor") {
 TEST_CASE("Basic subevent arrow functionality") {
 
     MyProcessor processor;
-    JMailbox<std::shared_ptr<JEvent>*> events_in;
-    JMailbox<std::shared_ptr<JEvent>*> events_out;
+    JMailbox<JEvent*> events_in;
+    JMailbox<JEvent*> events_out;
     JMailbox<SubeventWrapper<MyInput>> subevents_in;
     JMailbox<SubeventWrapper<MyOutput>> subevents_out;
 
@@ -103,12 +103,12 @@ TEST_CASE("Basic subevent arrow functionality") {
         topology->set_configure_fn([&](JTopologyBuilder& topology) {
 
             auto source_arrow = new JEventSourceArrow("simpleSource", {new SimpleSource});
-            source_arrow->set_input(topology.event_pool);
-            source_arrow->set_output(&events_in);
+            source_arrow->attach(topology.event_pool, JEventSourceArrow::EVENT_IN);
+            source_arrow->attach(&events_in, JEventSourceArrow::EVENT_OUT);
 
             auto proc_arrow = new JEventMapArrow("simpleProcessor");
-            proc_arrow->set_input(&events_out);
-            proc_arrow->set_output(topology.event_pool);
+            proc_arrow->attach(&events_out, 0);
+            proc_arrow->attach(topology.event_pool, 1);
             proc_arrow->add_processor(new SimpleProcessor);
 
             topology.arrows.push_back(source_arrow);

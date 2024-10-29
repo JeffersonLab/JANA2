@@ -374,7 +374,7 @@ TEST_CASE("JFactory_CallbackSequence") {
     JApplication app;
     app.Add(new JFactoryGeneratorT<FactoryWithFinish>());
     app.SetParameterValue("autoactivate", "JFactoryTestDummyObject");
-    app.SetParameterValue("jana:event_pool_size", 1);
+    app.SetParameterValue("jana:max_inflight_events", 1);
     
     SECTION("NoRunNumber") {
         app.Add(new JEventSource);
@@ -429,7 +429,7 @@ TEST_CASE("JFactory_ExceptionHandling") {
     JApplication app;
     app.Add(new JFactoryGeneratorT<FactoryWithFinish>());
     app.SetParameterValue("autoactivate", "JFactoryTestDummyObject");
-    app.SetParameterValue("jana:event_pool_size", 1);
+    app.SetParameterValue("jana:max_inflight_events", 1);
 
     SECTION("ExceptOnInit") {
         app.Add(new SourceWithRunNumberChange);

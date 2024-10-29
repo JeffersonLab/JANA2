@@ -14,9 +14,6 @@
 #include <JANA/Utils/JTablePrinter.h>
 
 
-using Event = std::shared_ptr<JEvent>;
-using EventQueue = JMailbox<Event*>;
-
 JTopologyBuilder::JTopologyBuilder() {
     SetPrefix("jana");
 }
@@ -63,7 +60,7 @@ std::string JTopologyBuilder::print_topology() {
     for (JArrow* arrow : arrows) {
 
         show_row = true;
-        for (Place* place : arrow->m_places) {
+        for (JArrow::Port& port : arrow->m_ports) {
             if (show_row) {
                 t | arrow->get_name();
                 t | arrow->is_parallel();
@@ -72,10 +69,11 @@ std::string JTopologyBuilder::print_topology() {
             else {
                 t | "" | "" ;
             }
+            auto place_index = lookup[(port.queue!=nullptr) ? (void*) port.queue : (void*) port.pool];
 
-            t | ((place->is_input) ? "Input ": "Output");
-            t | ((place->is_queue) ? "Queue ": "Pool");
-            t | lookup[place->place_ref];
+            t | ((port.is_input) ? "Input ": "Output");
+            t | ((port.queue != nullptr) ? "Queue ": "Pool");
+            t | place_index;
         }
     }
     return t.Render();
@@ -94,10 +92,7 @@ void JTopologyBuilder::create_topology() {
     mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(m_affinity),
                        static_cast<JProcessorMapping::LocalityStrategy>(m_locality));
 
-    event_pool = new JEventPool(m_components,
-                                m_pool_capacity,
-                                m_location_count,
-                                m_limit_total_events_in_flight);
+    event_pool = new JEventPool(m_components, m_max_inflight_events, m_location_count);
 
     if (m_configure_topology) {
         m_configure_topology(*this);
@@ -127,22 +122,16 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
     // We parse the 'nthreads' parameter two different ways for backwards compatibility.
     if (m_params->Exists("nthreads")) {
         if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
-            m_pool_capacity = JCpuInfo::GetNumCpus();
+            m_max_inflight_events = JCpuInfo::GetNumCpus();
         } else {
-            m_pool_capacity = m_params->GetParameterValue<int>("nthreads");
+            m_max_inflight_events = m_params->GetParameterValue<int>("nthreads");
         }
-        m_queue_capacity = m_pool_capacity;
     }
 
-    m_params->SetDefaultParameter("jana:event_pool_size", m_pool_capacity,
-                                    "Sets the initial size of the event pool. Having too few events starves the workers; having too many consumes memory and introduces overhead from extra factory initializations")
+    m_params->SetDefaultParameter("jana:max_inflight_events", m_max_inflight_events,
+                                    "The number of events which may be in-flight at once. Should be at least `nthreads` to prevent starvation; more gives better load balancing.")
             ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("jana:limit_total_events_in_flight", m_limit_total_events_in_flight,
-                                    "Controls whether the event pool is allowed to automatically grow beyond jana:event_pool_size")
-            ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("jana:event_queue_threshold", m_queue_capacity,
-                                    "Max number of events allowed on the main event queue. Higher => Better load balancing; Lower => Fewer events in flight")
-            ->SetIsAdvanced(true);
+
     m_params->SetDefaultParameter("jana:enable_stealing", m_enable_stealing,
                                     "Enable work stealing. Improves load balancing when jana:locality != 0; otherwise does nothing.")
             ->SetIsAdvanced(true);
@@ -157,26 +146,26 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
 
 void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downstream, size_t down_index) {
 
-    auto queue = new EventQueue(m_queue_capacity, mapping.get_loc_count(), m_enable_stealing);
+    auto queue = new JMailbox<JEvent*>(m_max_inflight_events, mapping.get_loc_count(), m_enable_stealing);
     queues.push_back(queue);
 
     size_t i = 0;
-    for (Place* place : upstream->m_places) {
-        if (!place->is_input) {
+    for (JArrow::Port& port : upstream->m_ports) {
+        if (!port.is_input) {
             if (i++ == up_index) {
                 // Found the correct output
-                place->is_queue = true;
-                place->place_ref = queue;
+                port.queue = queue;
+                port.pool = nullptr;
             }
         }
     }
     i = 0;
-    for (Place* place : downstream->m_places) {
-        if (place->is_input) {
+    for (JArrow::Port& port : downstream->m_ports) {
+        if (port.is_input) {
             if (i++ == down_index) {
                 // Found the correct input
-                place->is_queue = true;
-                place->place_ref = queue;
+                port.queue = queue;
+                port.pool = nullptr;
             }
         }
     }
@@ -260,7 +249,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // --------------------------
     // 0. Pool
     // --------------------------
-    JEventPool* pool_at_level = new JEventPool(m_components, m_pool_capacity, m_location_count, m_limit_total_events_in_flight, current_level);
+    JEventPool* pool_at_level = new JEventPool(m_components, m_max_inflight_events, m_location_count, current_level);
     pools.push_back(pool_at_level); // Hand over ownership of the pool to the topology
 
     // --------------------------
@@ -270,8 +259,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     bool need_source = !sources_at_level.empty();
     if (need_source) {
         src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level);
-        src_arrow->set_input(pool_at_level);
-        src_arrow->set_output(pool_at_level);
+        src_arrow->attach(pool_at_level, JEventSourceArrow::EVENT_IN);
+        src_arrow->attach(pool_at_level, JEventSourceArrow::EVENT_OUT);
         arrows.push_back(src_arrow);
     }
 
@@ -296,8 +285,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         for (JEventUnfolder* unf: unfolders_at_level) {
             map1_arrow->add_unfolder(unf);
         }
-        map1_arrow->set_input(pool_at_level);
-        map1_arrow->set_output(pool_at_level);
+        map1_arrow->attach(pool_at_level, JEventMapArrow::EVENT_IN);
+        map1_arrow->attach(pool_at_level, JEventMapArrow::EVENT_OUT);
         arrows.push_back(map1_arrow);
     }
 
@@ -319,7 +308,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     if(need_fold) {
         fold_arrow = new JFoldArrow(level_str+"Fold", current_level, unfolders_at_level[0]->GetChildLevel());
         arrows.push_back(fold_arrow);
-        fold_arrow->attach_parent_out(pool_at_level);
+        fold_arrow->attach(pool_at_level, JFoldArrow::PARENT_OUT); 
     }
 
     // --------------------------
@@ -331,8 +320,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         map2_arrow = new JEventMapArrow(level_str+"Map2");
         for (JEventProcessor* proc : mappable_procs_at_level) {
             map2_arrow->add_processor(proc);
-            map2_arrow->set_input(pool_at_level);
-            map2_arrow->set_output(pool_at_level);
+            map2_arrow->attach(pool_at_level, JEventMapArrow::EVENT_IN);
+            map2_arrow->attach(pool_at_level, JEventMapArrow::EVENT_OUT);
         }
         arrows.push_back(map2_arrow);
     }
@@ -346,8 +335,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         tap_arrow = new JEventTapArrow(level_str+"Tap");
         for (JEventProcessor* proc : tappable_procs_at_level) {
             tap_arrow->add_processor(proc);
-            tap_arrow->set_input(pool_at_level);
-            tap_arrow->set_output(pool_at_level);
+            tap_arrow->attach(pool_at_level, JEventTapArrow::EVENT_IN);
+            tap_arrow->attach(pool_at_level, JEventTapArrow::EVENT_OUT);
         }
         arrows.push_back(tap_arrow);
     }
@@ -358,7 +347,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // 1. Source
     // --------------------------
     if (parent_unfolder != nullptr) {
-        parent_unfolder->attach_child_in(pool_at_level);
+        parent_unfolder->attach(pool_at_level, JUnfoldArrow::CHILD_IN);
         connect_to_first_available(parent_unfolder, {map1_arrow, unfold_arrow, map2_arrow, tap_arrow, parent_folder});
     }
     if (src_arrow != nullptr) {
@@ -377,7 +366,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         connect_to_first_available(tap_arrow, {parent_folder});
     }
     if (parent_folder != nullptr) {
-        parent_folder->attach_child_out(pool_at_level);
+        parent_folder->attach(pool_at_level, JFoldArrow::CHILD_OUT);
     }
 
     // Finally, we recur over lower levels!

@@ -45,24 +45,24 @@ public:
     }
 
 
-    virtual void DoMap(const std::shared_ptr<const JEvent>& e) {
+    virtual void DoMap(const JEvent& event) {
 
         if (m_callback_style == CallbackStyle::LegacyMode) {
             throw JException("Called DoMap() on a legacy-mode JEventProcessor");
         }
         for (auto* input : m_inputs) {
-            input->PrefetchCollection(*e);
+            input->PrefetchCollection(event);
         }
         if (m_callback_style == CallbackStyle::ExpertMode) {
-            ProcessParallel(*e);
+            ProcessParallel(event);
         }
         else {
-            ProcessParallel(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
+            ProcessParallel(event.GetRunNumber(), event.GetEventNumber(), event.GetEventIndex());
         }
     }
 
 
-    virtual void DoTap(const std::shared_ptr<const JEvent>& e) {
+    virtual void DoTap(const JEvent& event) {
 
         if (m_callback_style == CallbackStyle::LegacyMode) {
             throw JException("Called DoReduce() on a legacy-mode JEventProcessor");
@@ -82,26 +82,23 @@ public:
             // This collection should have already been computed during DoMap()
             // We do this before ChangeRun() just in case we will need to pull data out of
             // a begin-of-run event.
-            input->GetCollection(*e);
+            input->GetCollection(event);
         }
-        auto run_number = e->GetRunNumber();
+        auto run_number = event.GetRunNumber();
         if (m_last_run_number != run_number) {
-            if (m_last_run_number != -1) {
-                CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
-            }
             for (auto* resource : m_resources) {
-                resource->ChangeRun(e->GetRunNumber(), m_app);
+                resource->ChangeRun(event.GetRunNumber(), m_app);
             }
             m_last_run_number = run_number;
-            CallWithJExceptionWrapper("JEventProcessor::BeginRun", [&](){ BeginRun(e); });
+            CallWithJExceptionWrapper("JEventProcessor::ChangeRun", [&](){ ChangeRun(event); });
         }
         if (m_callback_style == CallbackStyle::DeclarativeMode) {
             CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ 
-                Process(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
+                Process(event.GetRunNumber(), event.GetEventNumber(), event.GetEventIndex());
             });
         }
         else if (m_callback_style == CallbackStyle::ExpertMode) {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(*e); });
+            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(event); });
         }
         m_event_count += 1;
     }

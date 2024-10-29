@@ -19,6 +19,7 @@ set(JANA2_SOURCES
     Engine/JPerfMetrics.cc
     Engine/JPerfSummary.cc
 
+    Topology/JArrow.cc
     Topology/JEventSourceArrow.cc
     Topology/JEventMapArrow.cc
     Topology/JEventTapArrow.cc

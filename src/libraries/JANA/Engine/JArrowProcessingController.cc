@@ -159,12 +159,8 @@ bool JArrowProcessingController::is_timed_out() {
     auto metrics = measure_performance();
 
     int timeout_s;
-    if (metrics->total_uptime_s < (m_warmup_timeout_s * m_topology->m_pool_capacity * 1.0) / metrics->thread_count) {
+    if (metrics->total_uptime_s < (m_warmup_timeout_s * m_topology->m_max_inflight_events * 1.0) / metrics->thread_count) {
         // We are at the beginning and not all events have necessarily had a chance to warm up
-        timeout_s = m_warmup_timeout_s;
-    }
-    else if (!m_topology->m_limit_total_events_in_flight) {
-        // New events are constantly emitted, each of which may contain jfactorysets which need to be warmed up
         timeout_s = m_warmup_timeout_s;
     }
     else {
