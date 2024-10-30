@@ -21,10 +21,6 @@ class JWorker {
 public:
     enum class RunState { Running, Stopping, Stopped, TimedOut, Excepted };
 
-    enum class BackoffStrategy { Constant, Linear, Exponential };
-
-    using duration_t = std::chrono::steady_clock::duration;
-
     /// The logger is made public so that somebody else may set it
     JLogger logger;
 
@@ -44,11 +40,6 @@ private:
     JArrowMetrics m_arrow_metrics;
     std::mutex m_assignment_mutex;
     JException m_exception;
-
-    BackoffStrategy m_backoff_strategy = BackoffStrategy::Exponential;
-    duration_t m_initial_backoff_time = std::chrono::microseconds(1);
-    duration_t m_checkin_time = std::chrono::milliseconds(500);
-    unsigned m_backoff_tries = 4;
 
 public:
     JWorker(JArrowProcessingController* japc, JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned domain_id, bool pin_to_cpu);
@@ -75,22 +66,6 @@ public:
     /// Summarize what/how this Worker is doing. This is meant to be called from
     /// JProcessingController::measure_perf()
     void measure_perf(WorkerSummary& result);
-
-    inline void set_backoff_tries(unsigned backoff_tries) { m_backoff_tries = backoff_tries; }
-
-    inline unsigned get_backoff_tries() const { return m_backoff_tries; }
-
-    inline BackoffStrategy get_backoff_strategy() const { return m_backoff_strategy; }
-
-    inline void set_backoff_strategy(BackoffStrategy backoff_strategy) { m_backoff_strategy = backoff_strategy; }
-
-    inline duration_t get_initial_backoff_time() const { return m_initial_backoff_time; }
-
-    inline void set_initial_backoff_time(duration_t initial_backoff_time) { m_initial_backoff_time = initial_backoff_time; }
-
-    inline duration_t get_checkin_time() const { return m_checkin_time; }
-
-    inline void set_checkin_time(duration_t checkin_time) { m_checkin_time = checkin_time; }
 
 };
 

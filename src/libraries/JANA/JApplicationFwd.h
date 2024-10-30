@@ -75,7 +75,6 @@ public:
     void Run(bool wait_until_finished = true);
     void Scale(int nthreads);
     void Stop(bool wait_until_idle = false);
-    void Resume() {};  // TODO: Do we need this?
     void Inspect();
     void Quit(bool skip_join = false);
     void SetExitCode(int exitCode);

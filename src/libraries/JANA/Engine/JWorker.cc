@@ -178,80 +178,37 @@ void JWorker::loop() {
         while (m_run_state == RunState::Running) {
 
             auto start_time = jclock_t::now();
-
             {
                 std::lock_guard<std::mutex> lock(m_assignment_mutex);
                 m_assignment = m_scheduler->next_assignment(m_worker_id, m_assignment, last_result);
             }
-            last_result = JArrowMetrics::Status::NotRunYet;
-
             auto scheduler_time = jclock_t::now();
-
-            auto scheduler_duration = scheduler_time - start_time;
-            auto idle_duration = jclock_t::duration::zero();
-            auto retry_duration = jclock_t::duration::zero();
-            auto useful_duration = jclock_t::duration::zero();
 
             if (m_assignment == nullptr) {
                 LOG_TRACE(logger) << "Worker " << m_worker_id << " shutdown driven by topology pause" << LOG_END;
                 m_run_state = RunState::Stopped;
                 return;
-
-                // LOG_DEBUG(logger) << "Worker " << m_worker_id << " idling due to lack of assignments" << LOG_END;
-                // std::this_thread::sleep_for(std::chrono::microseconds(1));
-                // idle_duration = jclock_t::now() - scheduler_time;
             }
-            else {
 
-                uint32_t current_tries = 0;
-                auto backoff_duration = m_initial_backoff_time;
+            LOG_TRACE(logger) << "Worker " << m_worker_id << ": Executing "
+                                << m_assignment->get_name() << LOG_END;
+            auto before_execute_time = jclock_t::now();
+            m_assignment->execute(m_arrow_metrics, m_location_id);
+            last_result = m_arrow_metrics.get_last_status();
+            auto useful_duration = (jclock_t::now() - before_execute_time);
+            LOG_TRACE(logger) << "Worker " << m_worker_id << ": Executed "
+                                << m_assignment->get_name() << " with result " << to_string(last_result) << LOG_END;
 
-                while (current_tries <= m_backoff_tries &&
-                       (last_result == JArrowMetrics::Status::KeepGoing || last_result == JArrowMetrics::Status::ComeBackLater || last_result == JArrowMetrics::Status::NotRunYet) &&
-                       (m_run_state == RunState::Running) &&
-                       (jclock_t::now() - start_time) < m_checkin_time) {
+            m_worker_metrics.update(start_time, 1, 
+                                    useful_duration, 
+                                    jclock_t::duration::zero(), 
+                                    scheduler_time-start_time, 
+                                    jclock_t::duration::zero());
 
-                    LOG_TRACE(logger) << "Worker " << m_worker_id << ": Executing "
-                                      << m_assignment->get_name() << LOG_END;
-                    auto before_execute_time = jclock_t::now();
-                    m_assignment->execute(m_arrow_metrics, m_location_id);
-                    last_result = m_arrow_metrics.get_last_status();
-                    useful_duration += (jclock_t::now() - before_execute_time);
-
-
-                    if (last_result == JArrowMetrics::Status::KeepGoing) {
-                        LOG_TRACE(logger) << "Worker " << m_worker_id << ": Executed "
-                                          << m_assignment->get_name() << " with result KeepGoing" << LOG_END;
-                        current_tries = 0;
-                        backoff_duration = m_initial_backoff_time;
-                    }
-                    else {
-                        current_tries++;
-                        if (m_backoff_tries > 0) {
-                            if (m_backoff_strategy == BackoffStrategy::Linear) {
-                                backoff_duration += m_initial_backoff_time;
-                            }
-                            else if (m_backoff_strategy == BackoffStrategy::Exponential) {
-                                backoff_duration *= 2;
-                            }
-                            LOG_TRACE(logger) << "Worker " << m_worker_id << ": Executed "
-                                              << m_assignment->get_name() << " with result " << to_string(last_result)
-                                              << "; backoff try = " << current_tries
-                                              << LOG_END;
-
-                            std::this_thread::sleep_for(backoff_duration);
-                            retry_duration += backoff_duration;
-                        }
-                    }
-                }
-            }
-            m_worker_metrics.update(start_time, 1, useful_duration, retry_duration, scheduler_duration, idle_duration);
-            if (m_assignment != nullptr) {
-                JArrowMetrics latest_arrow_metrics;
-                latest_arrow_metrics.clear();
-                latest_arrow_metrics.take(m_arrow_metrics); // move local arrow metrics onto stack
-                m_assignment->get_metrics().update(latest_arrow_metrics); // propagate to global arrow context
-            }
+            JArrowMetrics latest_arrow_metrics;
+            latest_arrow_metrics.clear();
+            latest_arrow_metrics.take(m_arrow_metrics); // move local arrow metrics onto stack
+            m_assignment->get_metrics().update(latest_arrow_metrics); // propagate to global arrow context
         }
 
         m_scheduler->last_assignment(m_worker_id, m_assignment, last_result);
