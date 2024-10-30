@@ -34,7 +34,11 @@ private:
     JArrowMetrics m_metrics;   // Performance information accumulated over all workers
 
 protected:
-    std::vector<Port> m_ports;  // Will eventually supplant m_listeners
+    using clock_t = std::chrono::steady_clock;
+
+    int m_next_input_port=0; // -1 denotes "no input necessary", e.g. for barrier events
+    clock_t::time_point m_next_visit_time=clock_t::now();
+    std::vector<Port> m_ports;
     std::vector<JArrow *> m_listeners;    // Downstream Arrows
     JLogger m_logger;
 
@@ -67,11 +71,12 @@ public:
 
     virtual void initialize() { };
 
-    virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
+    virtual void execute(JArrowMetrics& result, size_t location_id);
+
+    virtual void fire(JEvent*, OutputData&, size_t&, JArrowMetrics::Status&) {};
 
     virtual void finalize() {};
 
-    // TODO: Make no longer virtual
     virtual size_t get_pending();
 
     void attach(JArrow* downstream) {

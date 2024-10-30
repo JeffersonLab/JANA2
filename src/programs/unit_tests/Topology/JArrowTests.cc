@@ -1,12 +1,12 @@
 
 #include <catch.hpp>
-#include <JANA/Topology/JTriggeredArrow.h>
+#include <JANA/Topology/JArrow.h>
 
 namespace jana::topology::jarrowtests {
 
 struct TestData { int x; };
 
-struct BasicParallelArrow : public JTriggeredArrow<BasicParallelArrow> {
+struct BasicParallelArrow : public JArrow {
 
     BasicParallelArrow() {
         create_ports(1, 1);

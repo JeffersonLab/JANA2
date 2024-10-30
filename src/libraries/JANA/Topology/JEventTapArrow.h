@@ -3,13 +3,13 @@
 
 #pragma once
 
-#include "JANA/Topology/JTriggeredArrow.h"
+#include <JANA/Topology/JArrow.h>
 
 class JEventProcessor;
 class JEvent;
 
 
-class JEventTapArrow : public JTriggeredArrow<JEventTapArrow> {
+class JEventTapArrow : public JArrow {
 public:
     enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
 
@@ -21,7 +21,7 @@ public:
 
     void add_processor(JEventProcessor* proc);
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status);
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) final;
     void initialize() final;
     void finalize() final;
 };

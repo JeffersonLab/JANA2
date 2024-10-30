@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "JANA/Topology/JArrowMetrics.h"
-#include "JANA/Topology/JTriggeredArrow.h"
+#include <JANA/Topology/JArrowMetrics.h>
+#include <JANA/Topology/JArrow.h>
 #include <JANA/JEvent.h>
 
 struct EventData {
@@ -14,7 +14,7 @@ struct EventData {
     double z = 0.0;
 };
 
-struct RandIntArrow : public JTriggeredArrow<RandIntArrow> {
+struct RandIntArrow : public JArrow {
 
     size_t emit_limit = 20;  // How many to emit
     size_t emit_count = 0;   // How many emitted so far
@@ -53,7 +53,7 @@ struct RandIntArrow : public JTriggeredArrow<RandIntArrow> {
 };
 
 
-struct MultByTwoArrow : public JTriggeredArrow<MultByTwoArrow> {
+struct MultByTwoArrow : public JArrow {
 
     MultByTwoArrow(std::string name, JMailbox<JEvent*>* input_queue, JMailbox<JEvent*>* output_queue) {
         set_name(name);
@@ -75,7 +75,7 @@ struct MultByTwoArrow : public JTriggeredArrow<MultByTwoArrow> {
     }
 };
 
-struct SubOneArrow : public JTriggeredArrow<SubOneArrow> {
+struct SubOneArrow : public JArrow {
     
     SubOneArrow(std::string name, JMailbox<JEvent*>* input_queue, JMailbox<JEvent*>* output_queue) {
         set_name(name);
@@ -99,7 +99,7 @@ struct SubOneArrow : public JTriggeredArrow<SubOneArrow> {
     }
 };
 
-struct SumArrow : public JTriggeredArrow<SumArrow> {
+struct SumArrow : public JArrow {
 
     double sum = 0;
 

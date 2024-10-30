@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <JANA/Topology/JTriggeredArrow.h>
+#include <JANA/Topology/JArrow.h>
 
 class JEventPool;
 class JEventSource;
@@ -12,7 +12,7 @@ class JEventProcessor;
 class JEvent;
 
 
-class JEventMapArrow : public JTriggeredArrow<JEventMapArrow> {
+class JEventMapArrow : public JArrow {
 
 public:
     enum PortIndex {EVENT_IN=0, EVENT_OUT=1};

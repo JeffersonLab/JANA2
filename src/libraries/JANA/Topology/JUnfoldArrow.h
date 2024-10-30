@@ -4,10 +4,10 @@
 #pragma once
 
 #include "JANA/Topology/JArrowMetrics.h"
-#include <JANA/Topology/JTriggeredArrow.h>
+#include <JANA/Topology/JArrow.h>
 #include <JANA/JEventUnfolder.h>
 
-class JUnfoldArrow : public JTriggeredArrow<JUnfoldArrow> {
+class JUnfoldArrow : public JArrow {
 public:
     enum PortIndex {PARENT_IN=0, CHILD_IN=1, CHILD_OUT=2};
 
@@ -47,7 +47,7 @@ public:
         return sum;
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) final {
 
         // Take whatever we were given
         if (this->m_next_input_port == PARENT_IN) {
