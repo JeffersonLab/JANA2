@@ -7,15 +7,19 @@
 
 void JExecutionEngine::Init() {
     auto params = GetApplication()->GetJParameterManager();
+
     params->SetDefaultParameter("jana:timeout", m_timeout_s, 
         "Max time (in seconds) JANA will wait for a thread to update its heartbeat before hard-exiting. 0 to disable timeout completely.");
+
     params->SetDefaultParameter("jana:warmup_timeout", m_warmup_timeout_s, 
         "Max time (in seconds) JANA will wait for 'initial' events to complete before hard-exiting.");
-    
-    params->SetDefaultParameter("jana:source_poll_rate", m_warmup_timeout_s, 
+
+    params->SetDefaultParameter("jana:poll_ms", m_poll_ms, 
         "Max time (in seconds) JANA will wait for 'initial' events to complete before hard-exiting.");
+
     bool m_pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
 }
+
 
 void JExecutionEngine::Run() {
     std::unique_lock<std::mutex> lock(m_mutex);
@@ -23,6 +27,23 @@ void JExecutionEngine::Run() {
 
     // Set start time and event count
 
+    m_runstatus = RunStatus::Running;
+    // Put some initial tasks in the active task queue?
+}
+
+void JExecutionEngine::Scale(size_t nthreads) {
+    // We create the pool of workers here. They all sleep until they receive work from the scheduler,
+    // which won't happen until the runstatus <- {Running, Pausing, Draining} and there is
+    // a task ready to execute.
+
+    // Eventually we might want to 
+
+    // If we scale to zero, no workers will run. This is useful for testing, and also for using
+    // an external thread team, should the need arise.
+
+    std::unique_lock<std::mutex> lock(m_mutex);
+    assert(m_runstatus == RunStatus::Paused);
+    m_nthreads = nthreads;
     for (size_t worker_id = 0; worker_id < m_nthreads; ++worker_id) {
         Worker worker;
         worker.worker_id = worker_id;
@@ -30,13 +51,6 @@ void JExecutionEngine::Run() {
         worker.location_id = m_topology->mapping.get_loc_id(worker_id);
         // Create thread, possibly pin it
     }
-    // Put some initial tasks in the active task queue?
-}
-
-void JExecutionEngine::Scale(size_t nthreads) {
-    std::unique_lock<std::mutex> lock(m_mutex);
-    assert(m_runstatus == RunStatus::Paused);
-    m_nthreads = nthreads;
 }
 
 void JExecutionEngine::RequestPause() {
@@ -51,14 +65,20 @@ void JExecutionEngine::RequestDrain() {
     m_runstatus = RunStatus::Draining;
 }
 
-void JExecutionEngine::Wait() {
+void JExecutionEngine::Wait(bool finish) {
+    assert(m_runstatus == RunStatus::Running | m_runstatus == RunStatus::Pausing || m_runstatus == RunStatus::Draining);
     // RunSupervisor until runstatus is either Paused or Failed
     // Who sets runstatus to paused or failed?
     // - Supervisor presumably sets failed
     // - ExchangeTask presumably sets paused
+
     for (Worker& worker: m_workers) {
         // If worker is excepted or timed out, detach instead
         worker.thread->join();
+    }
+    m_runstatus = RunStatus::Paused;
+    if (finish) {
+        Finish();
     }
 }
 

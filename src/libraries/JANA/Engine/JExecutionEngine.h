@@ -5,11 +5,12 @@
 #pragma once
 
 #include <JANA/JService.h>
+#include <JANA/Topology/JArrow.h>
 #include <JANA/Topology/JTopologyBuilder.h>
 
-#include <map>
 #include <chrono>
 #include <condition_variable>
+#include <map>
 
 
 class JExecutionEngine : public JService {
@@ -20,12 +21,6 @@ public:
 
     enum class RunStatus { Paused, Running, Pausing, Draining, Failed, Finished };
 
-    struct Perf {
-        double throughput_hz;
-        duration_t uptime;
-        size_t event_count;
-        JEventLevel event_level;
-    };
 
     struct Worker {
         std::thread* thread;
@@ -36,18 +31,17 @@ public:
         JException stored_exception;
     };
 
-    struct FakeArrow {
-        std::string name;
-        bool is_parallel;
-        bool is_source;
-        bool is_finished;
-        size_t next_input = 0;
+    struct Perf {
+        double throughput_hz;
+        duration_t uptime;
+        size_t event_count;
+        JEventLevel event_level;
     };
 
     struct Task {
-        FakeArrow* arrow;
-        size_t input_index;
-        size_t event_nr;
+        JArrow* arrow;
+        JEvent* input_event;
+        size_t input_port;
     };
 
     struct SchedulerState {
@@ -56,16 +50,19 @@ public:
         bool is_finished = false;
         size_t next_input = 0;
         size_t active_tasks = 0;
+        size_t active_or_draining_upstream_tasks = 0;
+        clock_t::duration total_useful_time;
+        size_t events_processed;
     };
 
 
 private:
-    
     // Services
     Service<JTopologyBuilder> m_topology {this};
 
     // Parameters
     size_t m_nthreads = 1;
+    int m_poll_ms = 10;
     int m_timeout_s = 8;
     int m_warmup_timeout_s = 30;
     bool m_pin_worker_to_cpu = true;
@@ -75,11 +72,12 @@ private:
     std::condition_variable m_condvar;
     std::vector<Worker> m_workers;
     std::map<std::string, SchedulerState> m_scheduler_state;
-    RunStatus m_runstatus;
+    RunStatus m_runstatus = RunStatus::Paused;
+    bool m_finish_automatically = false;
 
     // Metrics
-    size_t m_event_count_at_start;
-    size_t m_event_count_at_finish;
+    size_t m_event_count_at_start = 0;
+    size_t m_event_count_at_finish = 0;
     clock_t::time_point m_time_at_start;
     clock_t::time_point m_time_at_finish;
 
@@ -92,7 +90,7 @@ public:
     void Scale(size_t nthreads);
     void RequestPause();
     void RequestDrain();
-    void Wait();
+    void Wait(bool finish=false);
     void Finish();
 
     RunStatus GetRunStatus();
