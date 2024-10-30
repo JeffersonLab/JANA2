@@ -1,5 +1,6 @@
 
 #include "JExecutionEngine.h"
+#include "JANA/Topology/JArrowMetrics.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <chrono>
 #include <cstddef>
@@ -26,6 +27,7 @@ void JExecutionEngine::Run() {
     assert(m_runstatus == RunStatus::Paused);
 
     // Set start time and event count
+    // m_event_count_at_start = m_topology->GetProcessedEventCount();
 
     m_runstatus = RunStatus::Running;
     // Put some initial tasks in the active task queue?
@@ -66,7 +68,6 @@ void JExecutionEngine::RequestDrain() {
 }
 
 void JExecutionEngine::Wait(bool finish) {
-    assert(m_runstatus == RunStatus::Running | m_runstatus == RunStatus::Pausing || m_runstatus == RunStatus::Draining);
     // RunSupervisor until runstatus is either Paused or Failed
     // Who sets runstatus to paused or failed?
     // - Supervisor presumably sets failed
@@ -108,6 +109,7 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
         result.uptime = clock_t::now() - m_time_at_start;
 
     }
+    result.thread_count = m_nthreads;
     result.throughput_hz = (result.event_count * 1000.0) / result.uptime.count();
     result.event_level = JEventLevel::PhysicsEvent;
     return result;
@@ -123,13 +125,13 @@ void JExecutionEngine::RunSupervisor() {
 }
 
 void JExecutionEngine::RunWorker(Worker& worker) {
-    std::optional<Task> task;
+    Task task;
     try {
         do {
-            task = ExchangeTask(task);
+            ExchangeTask(task);
             worker.last_checkin_time = clock_t::now();
             // Do the work
-        } while (task != std::nullopt);
+        } while (task.arrow != nullptr);
     }
     catch (JException& e) {
         std::unique_lock<std::mutex> lock(m_mutex);
@@ -140,24 +142,19 @@ void JExecutionEngine::RunWorker(Worker& worker) {
 }
 
 
-std::optional<JExecutionEngine::Task> JExecutionEngine::ExchangeTask(std::optional<Task> completed_task) {
+void JExecutionEngine::ExchangeTask(Task& task) {
 
     std::unique_lock<std::mutex> lock(m_mutex);
-    if (completed_task != std::nullopt) {
-        FinishTaskUnsafe(*completed_task);
-    }
 
-    std::optional<Task> task = FindNextReadyTaskUnsafe();
-    bool done = m_runstatus == RunStatus::Running || m_runstatus == RunStatus::Draining;
+    IngestCompletedTask_Unsafe(task);
 
-    while (task == std::nullopt && !done) {
+    bool found_task = false;
+    bool found_termination = false;
+    FindNextReadyTask_Unsafe(task, found_task, found_termination);
+
+    while (!found_task && !found_termination) {
         m_condvar.wait(lock);
-        task = FindNextReadyTaskUnsafe();
-        done = m_runstatus != RunStatus::Running && m_runstatus != RunStatus::Draining;
-    }
-
-    if (done) {
-        return std::nullopt; // Tells worker to shut down
+        FindNextReadyTask_Unsafe(task, found_task, found_termination);
     }
 
     lock.unlock();
@@ -165,21 +162,96 @@ std::optional<JExecutionEngine::Task> JExecutionEngine::ExchangeTask(std::option
     // After FindNextReadyTaskUnsafe fails, all threads block until the next returning worker reactivates the
     // notification chain.
     m_condvar.notify_one();
-    return task;
-}
-
-void JExecutionEngine::FinishTaskUnsafe(Task finished_task) {
-    // Check if this is a source which has finished
-    // If so, deactivate it
-    // Check if this changes the run status to Paused
-}
-
-std::optional<JExecutionEngine::Task> JExecutionEngine::FindNextReadyTaskUnsafe() {
-    // Iterate over each arrow
-    // Find active input index
-    // Check corresponding place
-    // If present, 
-    return Task{};
 }
 
 
+void JExecutionEngine::IngestCompletedTask_Unsafe(Task& task) {
+    // IngestCompletedTask_Unsafe() handles all bookkeeping
+
+    auto ingest_time = std::chrono::steady_clock::now();
+
+    // For now we use the arrow name, but let's make this a lot more efficient
+    SchedulerState& arrow_state = m_scheduler_state[task.arrow->get_name()];
+
+    arrow_state.active_tasks -= 1;
+
+    for (size_t output=0; output<task.output_count; ++output) {
+
+        // Update arrow's processed count. We _could_ also track the arrow latency (and the other arrow metrics) this way, but
+        // we would need worker-level information, specifically the start time.
+        if (!task.arrow->get_port(task.outputs[output].second).is_input) {
+            arrow_state.events_processed++;
+        }
+
+        // Put each output in its correct queue or pool
+        // We also need (worker-level) location ID
+        task.arrow->push(task.outputs, task.output_count, 0);
+    }
+
+    if (task.status == JArrowMetrics::Status::Finished) {
+        // If this is an eventsource self-terminating (the only thing that returns Status::Finished right now) it will
+        // have already called DoClose(). I'm tempted to always call DoClose() as part of JExecutionEngine::Finish() instead, however.
+
+        // Mark arrow as finished
+        arrow_state.is_active = false;
+    }
+};
+
+
+void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, bool& found_task, bool& found_termination) {
+
+    // First check to see if the topology itself has shut down
+    if (m_runstatus != RunStatus::Running && m_runstatus != RunStatus::Draining) {
+
+        // Because the topology is not running, there's nothing to do
+        found_task = false;
+        found_termination = false; 
+        // This doesn't mean we should terminate, though, because we create our thread team _before_ we call Run().
+        // Worker termination is handled through Scale() and needs a per-worker flag. We will have to add this later.
+
+        task.arrow = nullptr;
+        task.input_event = nullptr;
+        task.input_port = -1;
+        return;
+    }
+
+    // Because we reached this point, we know that the topology is running, 
+    // so we look for work we can do
+    for (auto& [arrow_name, state] : m_scheduler_state) {
+        if (!state.is_parallel && (state.active_tasks != 0)) {
+            // We've found a sequential arrow that is already running. Nothing we can do here.
+            continue;
+        }
+        // TODO: Support next_visit_time so that we don't hammer blocked event sources
+
+        // See if we can obtain an input event (this is silly)
+        //JArrow* arrow = 
+    }
+
+    // Because we reached this point, we know that there aren't any tasks ready,
+    // so we check whether more are potentially coming. If not, we can pause the topology.
+    // Note that our worker threads will still wait at ExchangeTask() until they get
+    // shut down separately during Scale().
+
+    bool any_active_source_found = false;
+    bool any_active_task_found = false;
+
+    for (auto& [arrow_name, state] : m_scheduler_state) {
+        bool active_source_found = (state.is_active && state.is_source);
+        bool active_task_found = (state.active_tasks != 0);
+        if (!active_source_found) {
+            // Sanity check: no active tasks for inactive sources
+            assert(!active_task_found);
+        }
+        any_active_source_found |= active_source_found;
+        any_active_task_found |= active_task_found;
+    }
+
+    if (!any_active_source_found && !any_active_task_found) {
+        // Pause the topology
+        m_runstatus = RunStatus::Paused;
+    }
+
+    found_task = false;
+    found_termination = false;
+}

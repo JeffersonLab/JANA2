@@ -49,6 +49,7 @@ public:
     bool is_source() { return m_is_source; }
     bool is_sink() { return m_is_sink; }
     JArrowMetrics& get_metrics() { return m_metrics; }
+    Port& get_port(size_t port_index) { return m_ports.at(port_index); }
 
     void set_name(std::string name) { m_name = name; }
     void set_logger(JLogger logger) { m_logger = logger; }

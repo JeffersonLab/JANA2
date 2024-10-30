@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "JANA/Topology/JArrowMetrics.h"
 #include <JANA/JService.h>
 #include <JANA/Topology/JArrow.h>
 #include <JANA/Topology/JTopologyBuilder.h>
@@ -32,27 +33,30 @@ public:
     };
 
     struct Perf {
-        double throughput_hz;
-        duration_t uptime;
+        size_t thread_count;
         size_t event_count;
+        duration_t uptime;
+        double throughput_hz;
         JEventLevel event_level;
     };
 
     struct Task {
-        JArrow* arrow;
-        JEvent* input_event;
-        size_t input_port;
+        JArrow* arrow = nullptr;
+        JEvent* input_event = nullptr;
+        int input_port = -1;
+        JArrow::OutputData outputs;
+        size_t output_count = 0;
+        JArrowMetrics::Status status = JArrowMetrics::Status::NotRunYet;
     };
 
     struct SchedulerState {
         bool is_parallel = false;
         bool is_source = false;
-        bool is_finished = false;
+        bool is_active = true;
         size_t next_input = 0;
         size_t active_tasks = 0;
-        size_t active_or_draining_upstream_tasks = 0;
-        clock_t::duration total_useful_time;
         size_t events_processed;
+        clock_t::duration total_useful_time;
     };
 
 
@@ -73,7 +77,6 @@ private:
     std::vector<Worker> m_workers;
     std::map<std::string, SchedulerState> m_scheduler_state;
     RunStatus m_runstatus = RunStatus::Paused;
-    bool m_finish_automatically = false;
 
     // Metrics
     size_t m_event_count_at_start = 0;
@@ -98,10 +101,9 @@ public:
 
     void RunSupervisor();
     void RunWorker(Worker& worker);
-
-    std::optional<Task> ExchangeTask(std::optional<Task> completed_task);
-    void FinishTaskUnsafe(Task finished_task);
-    std::optional<Task> FindNextReadyTaskUnsafe();
+    void ExchangeTask(Task& task);
+    void IngestCompletedTask_Unsafe(Task& task);
+    void FindNextReadyTask_Unsafe(Task& task, bool& found_task, bool& found_termination);
 
 };
 
