@@ -73,11 +73,78 @@ TEST_CASE("JExecutionEngine_NoWorkers") {
     }
 }
 
-TEST_CASE("JExecutionEngine_NoWorkers_Autofinish") {
 
+TEST_CASE("JExecutionEngine_ExternalWorkers") {
+    JApplication app;
+    app.SetParameterValue("jana:nevents", 1);
+    app.Add(new TestSource());
+    app.Add(new TestProc());
+    app.ProvideService(std::make_shared<JExecutionEngine>());
+    app.Initialize();
+    auto sut = app.GetService<JExecutionEngine>();
 
+    SECTION("SelfTermination") {
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
+        sut->Scale(0);
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().thread_count == 0);
+        sut->Run();
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
+
+        JExecutionEngine::Task task;
+        sut->ExchangeTask(task);
+        REQUIRE(task.arrow != nullptr);
+        REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // Only task available at this point!
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
+        REQUIRE(sut->GetPerf().event_count == 0);
+
+        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        REQUIRE(task.output_count == 1);
+        REQUIRE(task.status == JArrowMetrics::Status::KeepGoing);
+
+        sut->ExchangeTask(task);
+        REQUIRE(task.arrow != nullptr);
+        REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // This will fail due to jana:nevents
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
+        REQUIRE(sut->GetPerf().event_count == 0);
+
+        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        REQUIRE(task.output_count == 1);
+        REQUIRE(task.outputs[0].second == 0); // Failure => return to pool
+        REQUIRE(task.status == JArrowMetrics::Status::Finished);
+
+        sut->ExchangeTask(task);
+        REQUIRE(task.arrow != nullptr);
+        REQUIRE(task.arrow->get_name() == "PhysicsEventMap2");
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
+        REQUIRE(sut->GetPerf().event_count == 0);
+
+        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        REQUIRE(task.output_count == 1);
+        REQUIRE(task.status == JArrowMetrics::Status::KeepGoing);
+
+        sut->ExchangeTask(task);
+        REQUIRE(task.arrow != nullptr);
+        REQUIRE(task.arrow->get_name() == "PhysicsEventTap");
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
+        REQUIRE(sut->GetPerf().event_count == 0);
+
+        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        REQUIRE(task.output_count == 1);
+        REQUIRE(task.status == JArrowMetrics::Status::KeepGoing);
+
+        sut->ExchangeTask(task, true);
+        REQUIRE(task.arrow == nullptr);
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->Wait(true);
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Finished);
+    }
 }
 
 
-
 } // jana::engine::tests
+
+
+

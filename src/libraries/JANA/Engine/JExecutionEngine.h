@@ -22,7 +22,6 @@ public:
 
     enum class RunStatus { Paused, Running, Pausing, Draining, Failed, Finished };
 
-
     struct Worker {
         std::thread* thread;
         size_t worker_id;
@@ -41,6 +40,8 @@ public:
     };
 
     struct Task {
+        int arrow_id = -1;
+        int worker_id = -1;
         JArrow* arrow = nullptr;
         JEvent* input_event = nullptr;
         int input_port = -1;
@@ -52,6 +53,7 @@ public:
     struct SchedulerState {
         bool is_parallel = false;
         bool is_source = false;
+        bool is_sink = false;
         bool is_active = true;
         size_t next_input = 0;
         size_t active_tasks = 0;
@@ -75,7 +77,7 @@ private:
     std::mutex m_mutex;
     std::condition_variable m_condvar;
     std::vector<Worker> m_workers;
-    std::map<std::string, SchedulerState> m_scheduler_state;
+    std::vector<SchedulerState> m_scheduler_state;
     RunStatus m_runstatus = RunStatus::Paused;
 
     // Metrics
@@ -101,7 +103,7 @@ public:
 
     void RunSupervisor();
     void RunWorker(Worker& worker);
-    void ExchangeTask(Task& task);
+    void ExchangeTask(Task& task, bool nonblocking=false);
     void IngestCompletedTask_Unsafe(Task& task);
     void FindNextReadyTask_Unsafe(Task& task, bool& found_task, bool& found_termination);
 

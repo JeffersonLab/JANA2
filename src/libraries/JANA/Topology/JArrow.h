@@ -50,6 +50,7 @@ public:
     bool is_sink() { return m_is_sink; }
     JArrowMetrics& get_metrics() { return m_metrics; }
     Port& get_port(size_t port_index) { return m_ports.at(port_index); }
+    int get_next_port_index() { return m_next_input_port; }
 
     void set_name(std::string name) { m_name = name; }
     void set_logger(JLogger logger) { m_logger = logger; }
