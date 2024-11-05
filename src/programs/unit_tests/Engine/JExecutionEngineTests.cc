@@ -83,15 +83,20 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
     app.Initialize();
     auto sut = app.GetService<JExecutionEngine>();
 
+
     SECTION("SelfTermination") {
+
+        auto worker_id = sut->RegisterExternalWorker();
+        REQUIRE(worker_id == 0); // Not threadsafe doing this
+
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
-        sut->Scale(0);
-        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
-        REQUIRE(sut->GetPerf().thread_count == 0);
+        REQUIRE(sut->GetPerf().thread_count == 1);
         sut->Run();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
 
         JExecutionEngine::Task task;
+        task.worker_id = worker_id;
+
         sut->ExchangeTask(task);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // Only task available at this point!
@@ -140,6 +145,26 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
         sut->Wait(true);
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Finished);
+    }
+}
+
+
+TEST_CASE("JExecutionEngine_ScaleWorkers") {
+    JApplication app;
+    app.SetParameterValue("jana:nevents", 10);
+    app.SetParameterValue("jana:loglevel", "debug");
+    app.Add(new TestSource());
+    app.Add(new TestProc());
+    app.ProvideService(std::make_shared<JExecutionEngine>());
+    app.Initialize();
+    auto sut = app.GetService<JExecutionEngine>();
+
+    SECTION("SingleWorker") {
+        REQUIRE(sut->GetPerf().thread_count == 0);
+        sut->Scale(1);
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        sut->Scale(0);
+        REQUIRE(sut->GetPerf().thread_count == 0);
     }
 }
 

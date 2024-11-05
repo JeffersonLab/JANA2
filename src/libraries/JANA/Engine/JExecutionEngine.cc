@@ -1,10 +1,12 @@
 
 #include "JExecutionEngine.h"
 #include "JANA/Topology/JArrowMetrics.h"
-#include "JANA/Utils/JEventLevel.h"
+
 #include <chrono>
 #include <cstddef>
 #include <ctime>
+#include <exception>
+#include <mutex>
 
 
 void JExecutionEngine::Init() {
@@ -18,8 +20,6 @@ void JExecutionEngine::Init() {
 
     params->SetDefaultParameter("jana:poll_ms", m_poll_ms, 
         "Max time (in seconds) JANA will wait for 'initial' events to complete before hard-exiting.");
-
-    bool m_pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
 
 
     // Not sure how I feel about putting this here yet, but I think it will at least work in both cases it needs to.
@@ -49,33 +49,70 @@ void JExecutionEngine::Run() {
 }
 
 void JExecutionEngine::Scale(size_t nthreads) {
-    // We create the pool of workers here. They all sleep until they receive work from the scheduler,
-    // which won't happen until the runstatus <- {Running, Pausing, Draining} and there is
-    // a task ready to execute.
-
-    // Eventually we might want to 
+    // We both create and destroy the pool of workers here. They all sleep until they 
+    // receive work from the scheduler, which won't happen until the runstatus <- {Running, 
+    // Pausing, Draining} and there is a task ready to execute. This way worker creation/destruction
+    // is decoupled from topology execution.
 
     // If we scale to zero, no workers will run. This is useful for testing, and also for using
     // an external thread team, should the need arise.
 
     std::unique_lock<std::mutex> lock(m_mutex);
-    assert(m_runstatus == RunStatus::Paused);
-    m_nthreads = nthreads;
-    for (size_t worker_id = 0; worker_id < m_nthreads; ++worker_id) {
-        Worker worker;
-        worker.worker_id = worker_id;
-        worker.cpu_id = m_topology->mapping.get_cpu_id(worker_id);
-        worker.location_id = m_topology->mapping.get_loc_id(worker_id);
-        // Create thread, possibly pin it
-    }
-    // Signal workers to shut down. 
 
-    /*
-    for (Worker& worker: m_workers) {
-        // If worker is excepted or timed out, detach instead
-        worker.thread->join();
+    assert(m_runstatus == RunStatus::Paused);
+
+    auto prev_nthreads = m_workers.size();
+
+    if (prev_nthreads < nthreads) {
+        // We are launching additional worker threads
+        LOG_DEBUG(GetLogger()) << "Scaling up to " << nthreads << " worker threads" << LOG_END;
+        
+        for (size_t worker_id=prev_nthreads; worker_id < nthreads; ++worker_id) {
+            auto worker = std::make_unique<Worker>();
+            worker->worker_id = worker_id;
+            worker->is_stop_requested = false;
+            worker->cpu_id = m_topology->mapping.get_cpu_id(worker_id);
+            worker->location_id = m_topology->mapping.get_loc_id(worker_id);
+            worker->thread = new std::thread(&JExecutionEngine::RunWorker, this, std::ref(*worker));
+            m_workers.push_back(std::move(worker));
+
+            bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
+            if (pin_to_cpu) {
+                JCpuInfo::PinThreadToCpu(worker->thread, worker->cpu_id);
+            }
+        }
     }
-    */
+
+    else if (prev_nthreads > nthreads) {
+        // We are destroying existing worker threads
+        LOG_DEBUG(GetLogger()) << "Scaling down to " << nthreads << " worker threads" << LOG_END;
+
+        // Signal to threads that they need to terminate.
+        for (size_t worker_id=prev_nthreads-1; worker_id <= nthreads; --worker_id) {
+            m_workers[worker_id]->is_stop_requested = true;
+        }
+        lock.unlock();
+
+        for (size_t worker_id=prev_nthreads-1; worker_id <= nthreads; --worker_id) {
+            if (m_workers[worker_id]->thread == nullptr) {
+                // Release external workers without joining any threads
+                m_workers.pop_back();
+                continue;
+            }
+            if (m_workers[worker_id]->is_timed_out) {
+                // Thread has timed out. Rather than non-cooperatively killing it,
+                // we relinquish ownership of it but remember that it was ours once and
+                // is still out there, somewhere, biding its time
+                m_workers[worker_id]->thread->detach();
+            }
+            else {
+                m_workers[worker_id]->thread->join();
+            }
+            delete m_workers[worker_id]->thread;
+            m_workers[worker_id]->thread = nullptr;
+            m_workers.pop_back();
+        }
+    }
 }
 
 void JExecutionEngine::RequestPause() {
@@ -139,10 +176,30 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
         result.uptime = clock_t::now() - m_time_at_start;
 
     }
-    result.thread_count = m_nthreads;
+    result.runstatus = m_runstatus;
+    result.thread_count = m_workers.size();
     result.throughput_hz = (result.event_count * 1000.0) / result.uptime.count();
     result.event_level = JEventLevel::PhysicsEvent;
     return result;
+}
+
+int JExecutionEngine::RegisterExternalWorker() {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    auto worker_id = m_workers.size();
+    auto worker = std::make_unique<Worker>();
+    worker->worker_id = worker_id;
+    worker->is_stop_requested = false;
+    worker->cpu_id = m_topology->mapping.get_cpu_id(worker_id);
+    worker->location_id = m_topology->mapping.get_loc_id(worker_id);
+    worker->thread = nullptr;
+    m_workers.push_back(std::move(worker));
+
+    bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
+    if (pin_to_cpu) {
+        JCpuInfo::PinThreadToCpu(worker->thread, worker->cpu_id);
+    }
+    return worker_id;
+
 }
 
 void JExecutionEngine::RunSupervisor() {
@@ -156,18 +213,24 @@ void JExecutionEngine::RunSupervisor() {
 
 void JExecutionEngine::RunWorker(Worker& worker) {
     Task task;
-    try {
-        do {
-            ExchangeTask(task, true);
-            worker.last_checkin_time = clock_t::now();
-            // Do the work
-        } while (task.arrow != nullptr);
-    }
-    catch (JException& e) {
-        std::unique_lock<std::mutex> lock(m_mutex);
+    task.worker_id = worker.worker_id;
 
+    LOG_DEBUG(GetLogger()) << "Launched worker thread " << worker.worker_id << ". cpu=" << worker.cpu_id << ", location=" << worker.location_id << LOG_END;
+    try {
+        while (true) {
+            ExchangeTask(task);
+            if (task.arrow == nullptr) break;
+
+            worker.last_checkin_time = clock_t::now();
+            task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        }
+        LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker.worker_id << LOG_END;
+    }
+    catch (...) {
+        LOG_ERROR(GetLogger()) << "Exception on worker thread " << worker.worker_id << LOG_END;
+        std::unique_lock<std::mutex> lock(m_mutex);
         m_runstatus = RunStatus::Failed;
-        worker.stored_exception = e;
+        worker.stored_exception = std::current_exception();
     }
 }
 
@@ -180,17 +243,18 @@ void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
         IngestCompletedTask_Unsafe(task);
     }
 
-    bool found_task = false;
-    bool found_termination = false;
-    FindNextReadyTask_Unsafe(task, found_task, found_termination);
-
-    if (nonblocking) {
+    auto& worker = m_workers[task.worker_id];
+    if (worker->is_stop_requested) {
         return;
     }
 
-    while (!found_task && !found_termination) {
+    FindNextReadyTask_Unsafe(task);
+
+    if (nonblocking) { return; }
+
+    while (task.arrow == nullptr && !worker->is_stop_requested) {
         m_condvar.wait(lock);
-        FindNextReadyTask_Unsafe(task, found_task, found_termination);
+        FindNextReadyTask_Unsafe(task);
     }
 
     lock.unlock();
@@ -230,20 +294,20 @@ void JExecutionEngine::IngestCompletedTask_Unsafe(Task& task) {
         // Mark arrow as finished
         arrow_state.is_active = false;
     }
+    task.arrow = nullptr;
+    task.arrow_id = -1;
+    task.input_event = nullptr;
+    task.output_count = 0;
+    task.status = JArrowMetrics::Status::NotRunYet;
 };
 
 
-void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, bool& found_task, bool& found_termination) {
-
-    // Check to see if the worker shutdown flag has been set
-    // TODO: set found_termination=true
+void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
 
     // Check to see if the topology itself has shut down
     if (m_runstatus != RunStatus::Running && m_runstatus != RunStatus::Draining) {
 
         // Because the topology is not running, there's nothing to do
-        found_task = false;
-        found_termination = false; 
         // This doesn't mean we should terminate, though, because we create our thread team _before_ we call Run().
         // Worker termination is handled through Scale() and needs a per-worker flag. We will have to add this later.
 
@@ -284,8 +348,6 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, bool& found_task, bo
             task.input_event = event;
             task.output_count = 0;
             task.status = JArrowMetrics::Status::NotRunYet;
-            found_task = true;
-            found_termination = false;
             return;
         }
     }
@@ -327,6 +389,4 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, bool& found_task, bo
     task.input_event = nullptr;
     task.output_count = 0;
     task.status = JArrowMetrics::Status::NotRunYet;
-    found_task = false;
-    found_termination = false;
 }

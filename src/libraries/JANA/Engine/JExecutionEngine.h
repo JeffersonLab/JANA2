@@ -11,7 +11,9 @@
 
 #include <chrono>
 #include <condition_variable>
-#include <map>
+#include <ctime>
+#include <exception>
+#include <memory>
 
 
 class JExecutionEngine : public JService {
@@ -23,15 +25,18 @@ public:
     enum class RunStatus { Paused, Running, Pausing, Draining, Failed, Finished };
 
     struct Worker {
-        std::thread* thread;
-        size_t worker_id;
-        size_t cpu_id;
-        size_t location_id;
-        clock_t::time_point last_checkin_time;
-        JException stored_exception;
+        std::thread* thread = nullptr;
+        size_t worker_id = 0;
+        size_t cpu_id = 0;
+        size_t location_id = 0;
+        clock_t::time_point last_checkin_time = clock_t::now();
+        std::exception_ptr stored_exception = nullptr;
+        bool is_stop_requested = false;
+        bool is_timed_out = false;
     };
 
     struct Perf {
+        RunStatus runstatus;
         size_t thread_count;
         size_t event_count;
         duration_t uptime;
@@ -67,16 +72,14 @@ private:
     Service<JTopologyBuilder> m_topology {this};
 
     // Parameters
-    size_t m_nthreads = 1;
     int m_poll_ms = 10;
     int m_timeout_s = 8;
     int m_warmup_timeout_s = 30;
-    bool m_pin_worker_to_cpu = true;
 
     // Concurrency
     std::mutex m_mutex;
     std::condition_variable m_condvar;
-    std::vector<Worker> m_workers;
+    std::vector<std::unique_ptr<Worker>> m_workers;
     std::vector<SchedulerState> m_scheduler_state;
     RunStatus m_runstatus = RunStatus::Paused;
 
@@ -89,6 +92,9 @@ private:
 
 public:
 
+    JExecutionEngine() {
+        SetLoggerName("jana");
+    }
     void Init() override;
 
     void Run();
@@ -101,11 +107,12 @@ public:
     RunStatus GetRunStatus();
     Perf GetPerf();
 
+    int RegisterExternalWorker();
     void RunSupervisor();
     void RunWorker(Worker& worker);
     void ExchangeTask(Task& task, bool nonblocking=false);
     void IngestCompletedTask_Unsafe(Task& task);
-    void FindNextReadyTask_Unsafe(Task& task, bool& found_task, bool& found_termination);
+    void FindNextReadyTask_Unsafe(Task& task);
 
 };
 
