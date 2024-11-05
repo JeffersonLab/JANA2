@@ -59,14 +59,13 @@ void JExecutionEngine::Scale(size_t nthreads) {
 
     std::unique_lock<std::mutex> lock(m_mutex);
 
-    assert(m_runstatus == RunStatus::Paused);
+    assert(m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Finished);
 
     auto prev_nthreads = m_workers.size();
 
     if (prev_nthreads < nthreads) {
         // We are launching additional worker threads
         LOG_DEBUG(GetLogger()) << "Scaling up to " << nthreads << " worker threads" << LOG_END;
-        
         for (size_t worker_id=prev_nthreads; worker_id < nthreads; ++worker_id) {
             auto worker = std::make_unique<Worker>();
             worker->worker_id = worker_id;
@@ -93,23 +92,29 @@ void JExecutionEngine::Scale(size_t nthreads) {
         }
         lock.unlock();
 
+        m_condvar.notify_all(); // Wake up all threads so that they can exit the condvar wait loop
+
+        // We join all (eligible) threads _outside_ of the mutex
         for (size_t worker_id=prev_nthreads-1; worker_id <= nthreads; --worker_id) {
-            if (m_workers[worker_id]->thread == nullptr) {
-                // Release external workers without joining any threads
-                m_workers.pop_back();
-                continue;
+            if (m_workers[worker_id]->thread != nullptr) {
+                if (m_workers[worker_id]->is_timed_out) {
+                    // Thread has timed out. Rather than non-cooperatively killing it,
+                    // we relinquish ownership of it but remember that it was ours once and
+                    // is still out there, somewhere, biding its time
+                    m_workers[worker_id]->thread->detach();
+                }
+                else {
+                    m_workers[worker_id]->thread->join();
+                }
             }
-            if (m_workers[worker_id]->is_timed_out) {
-                // Thread has timed out. Rather than non-cooperatively killing it,
-                // we relinquish ownership of it but remember that it was ours once and
-                // is still out there, somewhere, biding its time
-                m_workers[worker_id]->thread->detach();
+        }
+
+        lock.lock();
+        // We retake the mutex so we can safely modify m_workers
+        for (size_t worker_id=prev_nthreads-1; worker_id <= nthreads; --worker_id) {
+            if (m_workers.back()->thread != nullptr) {
+                delete m_workers.back()->thread;
             }
-            else {
-                m_workers[worker_id]->thread->join();
-            }
-            delete m_workers[worker_id]->thread;
-            m_workers[worker_id]->thread = nullptr;
             m_workers.pop_back();
         }
     }
@@ -130,11 +135,11 @@ void JExecutionEngine::RequestDrain() {
 void JExecutionEngine::Wait(bool finish) {
 
     while (true) {
-        std::unique_lock<std::mutex> lock(m_mutex);
-        if (m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Failed) {
+        auto perf = GetPerf();
+        if (perf.runstatus == RunStatus::Paused || perf.runstatus == RunStatus::Finished) {
             break;
         }
-        LOG_INFO(GetLogger()) << "Processing ..." << LOG_END;
+        LOG_INFO(GetLogger()) << "Processing ... " << perf.event_count << " events completed" << LOG_END;
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
     LOG_INFO(GetLogger()) << "... Processing paused" << LOG_END;
@@ -243,6 +248,10 @@ void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
         IngestCompletedTask_Unsafe(task);
     }
 
+    if (task.worker_id == -1 || task.worker_id >= (int) m_workers.size()) {
+        // This happens if we are an external worker and someone called Scale() to deactivate us
+        return;
+    }
     auto& worker = m_workers[task.worker_id];
     if (worker->is_stop_requested) {
         return;
@@ -359,9 +368,11 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
 
     bool any_active_source_found = false;
     bool any_active_task_found = false;
+    
+    LOG_DEBUG(GetLogger()) << "Scheduler: No tasks ready. Checking for pause..." << LOG_END;
 
     for (auto& state : m_scheduler_state) {
-        LOG_INFO(GetLogger()) << "Scheduler: src=" << state.is_source << ", active_tasks=" << state.active_tasks << ", parallel=" << state.is_parallel << LOG_END;
+        LOG_DEBUG(GetLogger()) << "Scheduler: src=" << state.is_source << ", active_tasks=" << state.active_tasks << ", parallel=" << state.is_parallel << LOG_END;
         any_active_source_found |= (state.is_active && state.is_source);
         any_active_task_found |= (state.active_tasks != 0);
         if (state.is_source && !state.is_active) {
@@ -379,6 +390,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
                 m_event_count_at_finish += state.events_processed;
             }
         }
+        LOG_DEBUG(GetLogger()) << "Scheduler: Processing paused" << LOG_END;
         m_runstatus = RunStatus::Paused;
         // I think this is the ONLY site where the topology gets paused. Verify this?
     }

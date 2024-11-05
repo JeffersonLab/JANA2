@@ -169,6 +169,35 @@ TEST_CASE("JExecutionEngine_ScaleWorkers") {
 }
 
 
+TEST_CASE("JExecutionEngine_RunSingleEvent") {
+    JApplication app;
+    app.SetParameterValue("jana:nevents", 3);
+    app.SetParameterValue("jana:loglevel", "debug");
+    app.Add(new TestSource());
+    app.Add(new TestProc());
+    app.ProvideService(std::make_shared<JExecutionEngine>());
+    app.Initialize();
+    auto sut = app.GetService<JExecutionEngine>();
+
+    SECTION("SingleWorker") {
+        REQUIRE(sut->GetPerf().thread_count == 0);
+        sut->Scale(1);
+        sut->Run();
+
+        sut->Wait();
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+
+        sut->Finish();
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Finished);
+        REQUIRE(sut->GetPerf().event_count == 3);
+
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        sut->Scale(0);
+        REQUIRE(sut->GetPerf().thread_count == 0);
+    }
+}
+
 } // jana::engine::tests
 
 
