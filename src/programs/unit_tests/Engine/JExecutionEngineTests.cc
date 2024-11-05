@@ -27,7 +27,8 @@ struct TestProc : public JEventProcessor {
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
     void ProcessParallel(const JEvent& event) override {
-        bench.consume_cpu_ms(300);
+        JBenchUtils local_bench;
+        local_bench.consume_cpu_ms(300);
         auto src_x = event.Get<TestData>("src").at(0)->x;
         event.Insert<TestData>(new TestData {.x=src_x + 1}, "map");
     }
@@ -193,6 +194,26 @@ TEST_CASE("JExecutionEngine_RunSingleEvent") {
         REQUIRE(sut->GetPerf().event_count == 3);
 
         REQUIRE(sut->GetPerf().thread_count == 1);
+        sut->Scale(0);
+        REQUIRE(sut->GetPerf().thread_count == 0);
+    }
+    
+    SECTION("MultipleWorker") {
+        REQUIRE(sut->GetPerf().thread_count == 0);
+        sut->Scale(4);
+        REQUIRE(sut->GetPerf().thread_count == 4);
+
+        sut->Run();
+
+        sut->Wait();
+        REQUIRE(sut->GetPerf().thread_count == 4);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+
+        sut->Finish();
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Finished);
+        REQUIRE(sut->GetPerf().event_count == 3);
+
+        REQUIRE(sut->GetPerf().thread_count == 4);
         sut->Scale(0);
         REQUIRE(sut->GetPerf().thread_count == 0);
     }

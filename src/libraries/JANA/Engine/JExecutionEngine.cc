@@ -46,6 +46,9 @@ void JExecutionEngine::Run() {
 
     m_runstatus = RunStatus::Running;
     // Put some initial tasks in the active task queue?
+
+    lock.unlock();
+    m_condvar.notify_one();
 }
 
 void JExecutionEngine::Scale(size_t nthreads) {
@@ -87,7 +90,8 @@ void JExecutionEngine::Scale(size_t nthreads) {
         LOG_DEBUG(GetLogger()) << "Scaling down to " << nthreads << " worker threads" << LOG_END;
 
         // Signal to threads that they need to terminate.
-        for (size_t worker_id=prev_nthreads-1; worker_id <= nthreads; --worker_id) {
+        for (int worker_id=prev_nthreads-1; worker_id >= (int)nthreads; --worker_id) {
+            LOG_DEBUG(GetLogger()) << "Stopping worker " << worker_id << LOG_END;
             m_workers[worker_id]->is_stop_requested = true;
         }
         lock.unlock();
@@ -95,23 +99,29 @@ void JExecutionEngine::Scale(size_t nthreads) {
         m_condvar.notify_all(); // Wake up all threads so that they can exit the condvar wait loop
 
         // We join all (eligible) threads _outside_ of the mutex
-        for (size_t worker_id=prev_nthreads-1; worker_id <= nthreads; --worker_id) {
+        for (int worker_id=prev_nthreads-1; worker_id >= (int) nthreads; --worker_id) {
             if (m_workers[worker_id]->thread != nullptr) {
                 if (m_workers[worker_id]->is_timed_out) {
                     // Thread has timed out. Rather than non-cooperatively killing it,
                     // we relinquish ownership of it but remember that it was ours once and
                     // is still out there, somewhere, biding its time
                     m_workers[worker_id]->thread->detach();
+                    LOG_DEBUG(GetLogger()) << "Detached worker " << worker_id << LOG_END;
                 }
                 else {
+                    LOG_DEBUG(GetLogger()) << "Joining worker " << worker_id << LOG_END;
                     m_workers[worker_id]->thread->join();
+                    LOG_DEBUG(GetLogger()) << "Joined worker " << worker_id << LOG_END;
                 }
+            }
+            else {
+                LOG_DEBUG(GetLogger()) << "Skipping worker " << worker_id << LOG_END;
             }
         }
 
         lock.lock();
         // We retake the mutex so we can safely modify m_workers
-        for (size_t worker_id=prev_nthreads-1; worker_id <= nthreads; --worker_id) {
+        for (int worker_id=prev_nthreads-1; worker_id >= (int)nthreads; --worker_id) {
             if (m_workers.back()->thread != nullptr) {
                 delete m_workers.back()->thread;
             }
