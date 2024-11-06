@@ -6,6 +6,8 @@
 #include <JANA/JApplication.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
+#include <chrono>
+#include <thread>
 
 namespace jana::engine::tests {
 
@@ -40,7 +42,7 @@ struct TestProc : public JEventProcessor {
 };
 
 
-TEST_CASE("JExecutionEngine_NoWorkers") {
+TEST_CASE("JExecutionEngine_StateMachine") {
 
     JApplication app;
     app.Add(new TestSource());
@@ -49,26 +51,40 @@ TEST_CASE("JExecutionEngine_NoWorkers") {
     app.Initialize();
     auto sut = app.GetService<JExecutionEngine>();
 
-    SECTION("StateMachine_ManualFinish") {
+    SECTION("ManualFinish") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
         sut->Scale(0);
         sut->Run();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
         sut->RequestPause();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Pausing);
+        
+        // Need to trigger the Pause since there are no workers to do so
+        auto worker_id = sut->RegisterExternalWorker();
+        JExecutionEngine::Task task;
+        task.worker_id = worker_id;
+        sut->ExchangeTask(task, true);
+
         sut->Wait();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
         sut->Finish();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Finished);
     }
 
-    SECTION("StateMachine_AutoFinish") {
+    SECTION("AutoFinish") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
         sut->Scale(0);
         sut->Run();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
         sut->RequestPause();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Pausing);
+
+        // Need to trigger the Pause since there are no workers to do so
+        auto worker_id = sut->RegisterExternalWorker();
+        JExecutionEngine::Task task;
+        task.worker_id = worker_id;
+        sut->ExchangeTask(task, true);
+
         sut->Wait(true);
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Finished);
     }
@@ -214,6 +230,61 @@ TEST_CASE("JExecutionEngine_RunSingleEvent") {
         REQUIRE(sut->GetPerf().event_count == 3);
 
         REQUIRE(sut->GetPerf().thread_count == 4);
+        sut->Scale(0);
+        REQUIRE(sut->GetPerf().thread_count == 0);
+    }
+}
+
+TEST_CASE("JExecutionEngine_ExternalPause") {
+    JApplication app;
+    app.SetParameterValue("jana:loglevel", "info");
+    app.Add(new TestSource());
+    app.Add(new TestProc());
+    app.ProvideService(std::make_shared<JExecutionEngine>());
+    app.Initialize();
+    auto sut = app.GetService<JExecutionEngine>();
+
+    REQUIRE(sut->GetPerf().thread_count == 0);
+    sut->Scale(4);
+    REQUIRE(sut->GetPerf().thread_count == 4);
+
+    SECTION("PauseImmediately") {
+        sut->Run();
+        sut->RequestPause();
+        sut->Wait();
+
+        auto perf = sut->GetPerf();
+        REQUIRE(perf.thread_count == 4);
+        REQUIRE(perf.runstatus == JExecutionEngine::RunStatus::Paused);
+
+        sut->Finish();
+
+        perf = sut->GetPerf();
+        REQUIRE(perf.runstatus == JExecutionEngine::RunStatus::Finished);
+        REQUIRE(perf.event_count == 0);
+        REQUIRE(perf.thread_count == 4);
+
+        sut->Scale(0);
+
+        perf = sut->GetPerf();
+        REQUIRE(perf.thread_count == 0);
+    }
+
+    SECTION("RunForABit") {
+        sut->Run();
+        std::thread t([&](){ 
+            std::this_thread::sleep_for(std::chrono::seconds(3)); 
+            sut->RequestPause();
+        });
+
+        sut->Wait();
+        t.join();
+
+        auto perf = sut->GetPerf();
+        REQUIRE(perf.thread_count == 4);
+        REQUIRE(perf.runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(perf.event_count > 5);
+
         sut->Scale(0);
         REQUIRE(sut->GetPerf().thread_count == 0);
     }
