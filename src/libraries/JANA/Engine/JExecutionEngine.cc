@@ -18,8 +18,12 @@ void JExecutionEngine::Init() {
     params->SetDefaultParameter("jana:warmup_timeout", m_warmup_timeout_s, 
         "Max time (in seconds) JANA will wait for 'initial' events to complete before hard-exiting.");
 
-    params->SetDefaultParameter("jana:poll_ms", m_poll_ms, 
+    params->SetDefaultParameter("jana:backoff_interval", m_backoff_ms, 
         "Max time (in seconds) JANA will wait for 'initial' events to complete before hard-exiting.");
+
+    params->SetDefaultParameter("jana:show_ticker", m_show_ticker, "Controls whether the ticker is visible");
+
+    params->SetDefaultParameter("jana:ticker_interval", m_ticker_ms, "Controls the ticker interval (in ms)");
 
 
     // Not sure how I feel about putting this here yet, but I think it will at least work in both cases it needs to.
@@ -144,20 +148,50 @@ void JExecutionEngine::RequestDrain() {
 
 void JExecutionEngine::Wait(bool finish) {
 
+    size_t last_event_count = 0;
+    clock_t::time_point last_measurement_time = clock_t::now();
+
     while (true) {
         auto perf = GetPerf();
         if (perf.runstatus == RunStatus::Paused || perf.runstatus == RunStatus::Finished) {
             break;
         }
-        LOG_INFO(GetLogger()) << "Processing ... " << perf.event_count << " events completed" << LOG_END;
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+        if (m_show_ticker) {
+            auto last_measurement_duration = std::chrono::duration_cast<std::chrono::milliseconds>(clock_t::now() - last_measurement_time);
+            float latest_throughput_hz = (perf.event_count - last_event_count) * 1000.0 / last_measurement_duration.count();
+            last_measurement_time = clock_t::now();
+            last_event_count = perf.event_count;
+
+            // Print rates
+            LOG_WARN(m_logger) << "Status: " << perf.event_count << " events processed at "
+                            << JTypeInfo::to_string_with_si_prefix(latest_throughput_hz) << "Hz ("
+                            << JTypeInfo::to_string_with_si_prefix(perf.throughput_hz) << "Hz avg)" << LOG_END;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(m_ticker_ms));
     }
-    LOG_INFO(GetLogger()) << "... Processing paused" << LOG_END;
+    LOG_INFO(GetLogger()) << "Processing paused." << LOG_END;
 
     if (finish) {
         Finish();
-        LOG_INFO(GetLogger()) << "... Processing finished" << LOG_END;
+        LOG_INFO(GetLogger()) << "Processing finished." << LOG_END;
     }
+
+    auto perf = GetPerf();
+    LOG_INFO(GetLogger()) << "Detailed report:" << LOG_END;
+    LOG_INFO(GetLogger()) << LOG_END;
+    LOG_INFO(GetLogger()) << "  Thread team size [count]:    " << perf.thread_count << LOG_END;
+    LOG_INFO(GetLogger()) << "  Total uptime [s]:            " << std::setprecision(4) << perf.uptime_ms/1000 << LOG_END;
+    LOG_INFO(GetLogger()) << "  Completed events [count]:    " << perf.event_count << LOG_END;
+    LOG_INFO(GetLogger()) << "  Avg throughput [Hz]:         " << std::setprecision(3) << perf.throughput_hz << LOG_END;
+    LOG_INFO(GetLogger()) << LOG_END;
+    //LOG_INFO(GetLogger()) << "  Sequential bottleneck [Hz]:  " << std::setprecision(3) << metrics->avg_seq_bottleneck_hz << LOG_END;
+    //LOG_INFO(GetLogger()) << "  Parallel bottleneck [Hz]:    " << std::setprecision(3) << metrics->avg_par_bottleneck_hz << LOG_END;
+    //LOG_INFO(GetLogger()) << "  Efficiency [0..1]:           " << std::setprecision(3) << metrics->avg_efficiency_frac << LOG_END;
+    
+    LOG_WARN(GetLogger()) << "Final report: " << perf.event_count << " events processed at "
+                       << JTypeInfo::to_string_with_si_prefix(perf.throughput_hz) << "Hz" << LOG_END;
 }
 
 void JExecutionEngine::Finish() {
@@ -177,7 +211,7 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
     Perf result;
     if (m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Failed) {
         result.event_count = m_event_count_at_finish - m_event_count_at_start;
-        result.uptime = m_time_at_finish - m_time_at_start;
+        result.uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_time_at_finish - m_time_at_start).count();
     }
     else {
         // Obtain current event count
@@ -188,12 +222,11 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
             }
         }
         result.event_count = current_event_count - m_event_count_at_start;
-        result.uptime = clock_t::now() - m_time_at_start;
-
+        result.uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(clock_t::now() - m_time_at_start).count();
     }
     result.runstatus = m_runstatus;
     result.thread_count = m_workers.size();
-    result.throughput_hz = (result.event_count * 1000.0) / result.uptime.count();
+    result.throughput_hz = (result.event_count * 1000.0) / result.uptime_ms;
     result.event_level = JEventLevel::PhysicsEvent;
     return result;
 }
@@ -217,14 +250,6 @@ int JExecutionEngine::RegisterExternalWorker() {
 
 }
 
-void JExecutionEngine::RunSupervisor() {
-    // Test for timeout
-    // Test for stored exceptions
-    // Print runstatus ticker
-    auto perf = GetPerf();
-    std::cout << perf.event_count << std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-}
 
 void JExecutionEngine::RunWorker(Worker& worker) {
     Task task;
@@ -287,11 +312,14 @@ void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
 void JExecutionEngine::IngestCompletedTask_Unsafe(Task& task) {
 
     auto ingest_time = std::chrono::steady_clock::now();
+    auto& worker = *m_workers.at(task.worker_id);
+    auto processing_duration = ingest_time - worker.last_checkin_time;
     // TODO: Warn about slow events that didn't timeout but came close
 
     SchedulerState& arrow_state = m_scheduler_state.at(task.arrow_id);
 
     arrow_state.active_tasks -= 1;
+    arrow_state.total_processing_duration += processing_duration;
 
     for (size_t output=0; output<task.output_count; ++output) {
 
@@ -379,10 +407,12 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
     bool any_active_source_found = false;
     bool any_active_task_found = false;
     
-    LOG_DEBUG(GetLogger()) << "Scheduler: No tasks ready. Checking for pause..." << LOG_END;
+    LOG_DEBUG(GetLogger()) << "Scheduler: No tasks ready" << LOG_END;
 
-    for (auto& state : m_scheduler_state) {
-        LOG_DEBUG(GetLogger()) << "Scheduler: src=" << state.is_source << ", active_tasks=" << state.active_tasks << ", parallel=" << state.is_parallel << LOG_END;
+    for (size_t arrow_id = 0; arrow_id < m_scheduler_state.size(); ++arrow_id) {
+        auto& state = m_scheduler_state[arrow_id];
+        auto* arrow = m_topology->arrows[arrow_id];
+        LOG_TRACE(GetLogger()) << "Scheduler: arrow=" << arrow->get_name() << ", is_source=" << state.is_source << ", active_tasks=" << state.active_tasks << ", is_parallel=" << state.is_parallel << LOG_END;
         any_active_source_found |= (state.is_active && state.is_source);
         any_active_task_found |= (state.active_tasks != 0);
         if (state.is_source && !state.is_active) {
@@ -400,7 +430,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
                 m_event_count_at_finish += state.events_processed;
             }
         }
-        LOG_DEBUG(GetLogger()) << "Scheduler: Processing paused" << LOG_END;
+        LOG_DEBUG(GetLogger()) << "Processing paused" << LOG_END;
         m_runstatus = RunStatus::Paused;
         // I think this is the ONLY site where the topology gets paused. Verify this?
     }

@@ -19,8 +19,7 @@
 class JExecutionEngine : public JService {
 
 public:
-    using clock_t = std::chrono::high_resolution_clock;
-    using duration_t = std::chrono::duration<float, std::milli>;
+    using clock_t = std::chrono::steady_clock;
 
     enum class RunStatus { Paused, Running, Pausing, Draining, Failed, Finished };
 
@@ -39,7 +38,7 @@ public:
         RunStatus runstatus;
         size_t thread_count;
         size_t event_count;
-        duration_t uptime;
+        size_t uptime_ms;
         double throughput_hz;
         JEventLevel event_level;
     };
@@ -63,7 +62,7 @@ public:
         size_t next_input = 0;
         size_t active_tasks = 0;
         size_t events_processed;
-        clock_t::duration total_useful_time;
+        clock_t::duration total_processing_duration;
     };
 
 
@@ -72,7 +71,9 @@ private:
     Service<JTopologyBuilder> m_topology {this};
 
     // Parameters
-    int m_poll_ms = 10;
+    bool m_show_ticker = true;
+    int m_backoff_ms = 10;
+    int m_ticker_ms = 500;
     int m_timeout_s = 8;
     int m_warmup_timeout_s = 30;
 
@@ -108,7 +109,6 @@ public:
     Perf GetPerf();
 
     int RegisterExternalWorker();
-    void RunSupervisor();
     void RunWorker(Worker& worker);
     void ExchangeTask(Task& task, bool nonblocking=false);
     void IngestCompletedTask_Unsafe(Task& task);
