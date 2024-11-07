@@ -98,11 +98,6 @@ public:
             // Do any necessary teardown within the item itself
             item->Clear();
         }
-        auto use_count = item->shared_from_this().use_count();
-        if (use_count > 2) {
-            // Use count should be 2 because there's the shared_ptr in `m_owned_events`, and there's the temporary shared_ptr created just now
-            throw JException("Attempted to return a JEvent to the pool while it is still being used! use_count=%d", use_count);
-        }
 
         LocalPool& pool = *(m_pools[location]);
 
