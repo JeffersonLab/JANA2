@@ -13,7 +13,6 @@
 #include <condition_variable>
 #include <ctime>
 #include <exception>
-#include <memory>
 
 
 class JExecutionEngine : public JService {
@@ -23,16 +22,6 @@ public:
 
     enum class RunStatus { Paused, Running, Pausing, Draining, Failed, Finished };
 
-    struct Worker {
-        std::thread* thread = nullptr;
-        size_t worker_id = 0;
-        size_t cpu_id = 0;
-        size_t location_id = 0;
-        clock_t::time_point last_checkout_time = clock_t::now();
-        std::exception_ptr stored_exception = nullptr;
-        bool is_stop_requested = false;
-        bool is_timed_out = false;
-    };
 
     struct Perf {
         RunStatus runstatus;
@@ -42,6 +31,10 @@ public:
         double throughput_hz;
         JEventLevel event_level;
     };
+
+#ifndef JANA2_TEST_JEXECUTIONENGINE
+private:
+#endif
 
     struct Task {
         int arrow_id = -1;
@@ -54,7 +47,7 @@ public:
         JArrowMetrics::Status status = JArrowMetrics::Status::NotRunYet;
     };
 
-    struct SchedulerState {
+    struct ArrowState {
         bool is_parallel = false;
         bool is_source = false;
         bool is_sink = false;
@@ -65,8 +58,21 @@ public:
         clock_t::duration total_processing_duration;
     };
 
+    struct WorkerState {
+        std::thread* thread = nullptr;
+        size_t worker_id = 0;
+        size_t cpu_id = 0;
+        size_t location_id = 0;
+        clock_t::time_point last_checkout_time = clock_t::now();
+        std::exception_ptr stored_exception = nullptr;
+        bool is_stop_requested = false;
+        bool is_timed_out = false;
+    };
 
+
+#ifndef JANA2_TEST_JEXECUTIONENGINE
 private:
+#endif
     // Services
     Service<JTopologyBuilder> m_topology {this};
 
@@ -81,8 +87,8 @@ private:
     // Concurrency
     std::mutex m_mutex;
     std::condition_variable m_condvar;
-    std::vector<std::unique_ptr<Worker>> m_workers;
-    std::vector<SchedulerState> m_scheduler_state;
+    std::vector<std::unique_ptr<WorkerState>> m_worker_states;
+    std::vector<ArrowState> m_arrow_states;
     RunStatus m_runstatus = RunStatus::Paused;
 
     // Metrics
@@ -115,11 +121,15 @@ public:
     void SetTimeoutEnabled(bool timeout_on);
     bool IsTimeoutEnabled() const;
 
+#ifndef JANA2_TEST_JEXECUTIONENGINE
+private:
+#endif
+
     int RegisterExternalWorker();
     void PrintFinalReport();
     bool CheckTimeout();
     void HandleFailures();
-    void RunWorker(Worker& worker);
+    void RunWorker(WorkerState& worker);
     void ExchangeTask(Task& task, bool nonblocking=false);
     void CheckinCompletedTask_Unsafe(Task& task, clock_t::time_point checkin_time);
     void FindNextReadyTask_Unsafe(Task& task);

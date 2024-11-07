@@ -33,12 +33,12 @@ void JExecutionEngine::Init() {
 
         arrow->initialize();
 
-        m_scheduler_state.emplace_back();
-        auto& state = m_scheduler_state.back();
-        state.is_source = arrow->is_source();
-        state.is_sink = arrow->is_sink();
-        state.is_parallel = arrow->is_parallel();
-        state.next_input = arrow->get_next_port_index();
+        m_arrow_states.emplace_back();
+        auto& arrow_state = m_arrow_states.back();
+        arrow_state.is_source = arrow->is_source();
+        arrow_state.is_sink = arrow->is_sink();
+        arrow_state.is_parallel = arrow->is_parallel();
+        arrow_state.next_input = arrow->get_next_port_index();
 
     }
 }
@@ -72,19 +72,19 @@ void JExecutionEngine::Scale(size_t nthreads) {
 
     assert(m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Finished);
 
-    auto prev_nthreads = m_workers.size();
+    auto prev_nthreads = m_worker_states.size();
 
     if (prev_nthreads < nthreads) {
         // We are launching additional worker threads
         LOG_DEBUG(GetLogger()) << "Scaling up to " << nthreads << " worker threads" << LOG_END;
         for (size_t worker_id=prev_nthreads; worker_id < nthreads; ++worker_id) {
-            auto worker = std::make_unique<Worker>();
+            auto worker = std::make_unique<WorkerState>();
             worker->worker_id = worker_id;
             worker->is_stop_requested = false;
             worker->cpu_id = m_topology->mapping.get_cpu_id(worker_id);
             worker->location_id = m_topology->mapping.get_loc_id(worker_id);
             worker->thread = new std::thread(&JExecutionEngine::RunWorker, this, std::ref(*worker));
-            m_workers.push_back(std::move(worker));
+            m_worker_states.push_back(std::move(worker));
 
             bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
             if (pin_to_cpu) {
@@ -100,7 +100,7 @@ void JExecutionEngine::Scale(size_t nthreads) {
         // Signal to threads that they need to terminate.
         for (int worker_id=prev_nthreads-1; worker_id >= (int)nthreads; --worker_id) {
             LOG_DEBUG(GetLogger()) << "Stopping worker " << worker_id << LOG_END;
-            m_workers[worker_id]->is_stop_requested = true;
+            m_worker_states[worker_id]->is_stop_requested = true;
         }
         lock.unlock();
 
@@ -108,17 +108,17 @@ void JExecutionEngine::Scale(size_t nthreads) {
 
         // We join all (eligible) threads _outside_ of the mutex
         for (int worker_id=prev_nthreads-1; worker_id >= (int) nthreads; --worker_id) {
-            if (m_workers[worker_id]->thread != nullptr) {
-                if (m_workers[worker_id]->is_timed_out) {
+            if (m_worker_states[worker_id]->thread != nullptr) {
+                if (m_worker_states[worker_id]->is_timed_out) {
                     // Thread has timed out. Rather than non-cooperatively killing it,
                     // we relinquish ownership of it but remember that it was ours once and
                     // is still out there, somewhere, biding its time
-                    m_workers[worker_id]->thread->detach();
+                    m_worker_states[worker_id]->thread->detach();
                     LOG_DEBUG(GetLogger()) << "Detached worker " << worker_id << LOG_END;
                 }
                 else {
                     LOG_DEBUG(GetLogger()) << "Joining worker " << worker_id << LOG_END;
-                    m_workers[worker_id]->thread->join();
+                    m_worker_states[worker_id]->thread->join();
                     LOG_DEBUG(GetLogger()) << "Joined worker " << worker_id << LOG_END;
                 }
             }
@@ -128,12 +128,12 @@ void JExecutionEngine::Scale(size_t nthreads) {
         }
 
         lock.lock();
-        // We retake the mutex so we can safely modify m_workers
+        // We retake the mutex so we can safely modify m_worker_states
         for (int worker_id=prev_nthreads-1; worker_id >= (int)nthreads; --worker_id) {
-            if (m_workers.back()->thread != nullptr) {
-                delete m_workers.back()->thread;
+            if (m_worker_states.back()->thread != nullptr) {
+                delete m_worker_states.back()->thread;
             }
-            m_workers.pop_back();
+            m_worker_states.pop_back();
         }
     }
 }
@@ -142,7 +142,7 @@ void JExecutionEngine::RequestPause() {
     std::unique_lock<std::mutex> lock(m_mutex);
     assert(m_runstatus == RunStatus::Running);
     m_runstatus = RunStatus::Pausing;
-    for (auto& arrow: m_scheduler_state) {
+    for (auto& arrow: m_arrow_states) {
         arrow.is_active = false;
     }
     LOG_WARN(GetLogger()) << "Requested pause" << LOG_END;
@@ -154,7 +154,7 @@ void JExecutionEngine::RequestDrain() {
     std::unique_lock<std::mutex> lock(m_mutex);
     assert(m_runstatus == RunStatus::Running);
     m_runstatus = RunStatus::Draining;
-    for (auto& arrow: m_scheduler_state) {
+    for (auto& arrow: m_arrow_states) {
         if (arrow.is_source) {
             arrow.is_active = false;
         }
@@ -210,7 +210,7 @@ bool JExecutionEngine::CheckTimeout() {
     std::unique_lock<std::mutex> lock(m_mutex);
     auto now = clock_t::now();
     bool timeout_detected = false;
-    for (auto& worker: m_workers) {
+    for (auto& worker: m_worker_states) {
         auto duration_s = std::chrono::duration_cast<std::chrono::seconds>(now - worker->last_checkout_time).count();
         if (duration_s > m_timeout_s) {
             worker->is_timed_out = true;
@@ -227,7 +227,7 @@ void JExecutionEngine::HandleFailures() {
 
     // First, we log all of the failures we've found
     bool timeout_found = false;
-    for (auto& worker: m_workers) {
+    for (auto& worker: m_worker_states) {
         if (worker->is_timed_out) {
             LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << LOG_END;
             timeout_found = true;
@@ -239,7 +239,7 @@ void JExecutionEngine::HandleFailures() {
 
     // Now we throw each of these exceptions in order, in case the caller is going to attempt to catch them.
     // In reality all callers are going to print everything they can about the exception and exit.
-    for (auto& worker: m_workers) {
+    for (auto& worker: m_worker_states) {
         if (worker->stored_exception != nullptr) {
             throw worker->stored_exception;
         }
@@ -276,7 +276,7 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
     else {
         // Obtain current event count
         size_t current_event_count = 0;
-        for (auto& state : m_scheduler_state) {
+        for (auto& state : m_arrow_states) {
             if (state.is_sink) {
                 current_event_count += state.events_processed;
             }
@@ -285,7 +285,7 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
         result.uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(clock_t::now() - m_time_at_start).count();
     }
     result.runstatus = m_runstatus;
-    result.thread_count = m_workers.size();
+    result.thread_count = m_worker_states.size();
     result.throughput_hz = (result.uptime_ms == 0) ? 0 : (result.event_count * 1000.0) / result.uptime_ms;
     result.event_level = JEventLevel::PhysicsEvent;
     return result;
@@ -293,14 +293,14 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
 
 int JExecutionEngine::RegisterExternalWorker() {
     std::unique_lock<std::mutex> lock(m_mutex);
-    auto worker_id = m_workers.size();
-    auto worker = std::make_unique<Worker>();
+    auto worker_id = m_worker_states.size();
+    auto worker = std::make_unique<WorkerState>();
     worker->worker_id = worker_id;
     worker->is_stop_requested = false;
     worker->cpu_id = m_topology->mapping.get_cpu_id(worker_id);
     worker->location_id = m_topology->mapping.get_loc_id(worker_id);
     worker->thread = nullptr;
-    m_workers.push_back(std::move(worker));
+    m_worker_states.push_back(std::move(worker));
 
     bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
     if (pin_to_cpu) {
@@ -311,7 +311,7 @@ int JExecutionEngine::RegisterExternalWorker() {
 }
 
 
-void JExecutionEngine::RunWorker(Worker& worker) {
+void JExecutionEngine::RunWorker(WorkerState& worker) {
     Task task;
     task.worker_id = worker.worker_id;
 
@@ -345,11 +345,11 @@ void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
         CheckinCompletedTask_Unsafe(task, checkin_time);
     }
 
-    if (task.worker_id == -1 || task.worker_id >= (int) m_workers.size()) {
+    if (task.worker_id == -1 || task.worker_id >= (int) m_worker_states.size()) {
         // This happens if we are an external worker and someone called Scale() to deactivate us
         return;
     }
-    auto& worker = *m_workers[task.worker_id];
+    auto& worker = *m_worker_states[task.worker_id];
     if (worker.is_stop_requested) {
         return;
     }
@@ -377,10 +377,10 @@ void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
 
 void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_point checkin_time) {
 
-    auto& worker = *m_workers.at(task.worker_id);
+    auto& worker = *m_worker_states.at(task.worker_id);
     auto processing_duration = checkin_time - worker.last_checkout_time;
 
-    SchedulerState& arrow_state = m_scheduler_state.at(task.arrow_id);
+    ArrowState& arrow_state = m_arrow_states.at(task.arrow_id);
 
     arrow_state.active_tasks -= 1;
     arrow_state.total_processing_duration += processing_duration;
@@ -404,7 +404,7 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_poi
         // Check if this switches the topology to Draining()
         if (m_runstatus == RunStatus::Running) {
             bool draining = true;
-            for (auto& arrow: m_scheduler_state) {
+            for (auto& arrow: m_arrow_states) {
                 if (arrow.is_source && arrow.is_active) {
                     draining = false;
                 }
@@ -424,14 +424,14 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_poi
 
 void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
 
-    auto& worker = *m_workers.at(task.worker_id);
+    auto& worker = *m_worker_states.at(task.worker_id);
 
     if (m_runstatus == RunStatus::Running || m_runstatus == RunStatus::Draining) {
         // We only pick up a new task if the topology is running or draining.
 
-        for (size_t arrow_id=0; arrow_id<m_scheduler_state.size(); ++arrow_id) {
+        for (size_t arrow_id=0; arrow_id<m_arrow_states.size(); ++arrow_id) {
 
-            auto& state = m_scheduler_state[arrow_id];
+            auto& state = m_arrow_states[arrow_id];
             if (!state.is_parallel && (state.active_tasks != 0)) {
                 // We've found a sequential arrow that is already running. Nothing we can do here.
                 continue;
@@ -472,8 +472,8 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
     
     LOG_DEBUG(GetLogger()) << "Scheduler: No tasks ready" << LOG_END;
 
-    for (size_t arrow_id = 0; arrow_id < m_scheduler_state.size(); ++arrow_id) {
-        auto& state = m_scheduler_state[arrow_id];
+    for (size_t arrow_id = 0; arrow_id < m_arrow_states.size(); ++arrow_id) {
+        auto& state = m_arrow_states[arrow_id];
         auto* arrow = m_topology->arrows[arrow_id];
         LOG_TRACE(GetLogger()) << "Scheduler: arrow=" << arrow->get_name() << ", is_source=" << state.is_source << ", active_tasks=" << state.active_tasks << ", is_parallel=" << state.is_parallel << LOG_END;
         any_active_source_found |= (state.is_active && state.is_source);
@@ -485,9 +485,9 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
         // Pause the topology
         m_time_at_finish = clock_t::now();
         m_event_count_at_finish = 0;
-        for (auto& state : m_scheduler_state) {
-            if (state.is_sink) {
-                m_event_count_at_finish += state.events_processed;
+        for (auto& arrow_state : m_arrow_states) {
+            if (arrow_state.is_sink) {
+                m_event_count_at_finish += arrow_state.events_processed;
             }
         }
         LOG_DEBUG(GetLogger()) << "Processing paused" << LOG_END;
@@ -509,7 +509,7 @@ void JExecutionEngine::PrintFinalReport() {
     std::unique_lock<std::mutex> lock(m_mutex);
     auto event_count = m_event_count_at_finish - m_event_count_at_start;
     auto uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_time_at_finish - m_time_at_start).count();
-    auto thread_count = m_workers.size();
+    auto thread_count = m_worker_states.size();
     auto throughput_hz = (event_count * 1000.0) / uptime_ms;
 
     LOG_INFO(GetLogger()) << "Detailed report:" << LOG_END;
@@ -524,9 +524,9 @@ void JExecutionEngine::PrintFinalReport() {
 
     size_t total_useful_ms = 0;
 
-    for (size_t arrow_id=0; arrow_id < m_scheduler_state.size(); ++arrow_id) {
+    for (size_t arrow_id=0; arrow_id < m_arrow_states.size(); ++arrow_id) {
         auto* arrow = m_topology->arrows[arrow_id];
-        auto& arrow_state = m_scheduler_state[arrow_id];
+        auto& arrow_state = m_arrow_states[arrow_id];
         auto useful_ms = std::chrono::duration_cast<std::chrono::milliseconds>(arrow_state.total_processing_duration).count();
         total_useful_ms += useful_ms;
         auto avg_latency = useful_ms*1.0/arrow_state.events_processed;

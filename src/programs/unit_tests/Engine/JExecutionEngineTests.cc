@@ -1,4 +1,6 @@
 
+#define JANA2_TEST_JEXECUTIONENGINE
+
 #include "JANA/Engine/JExecutionEngine.h"
 #include "JANA/Utils/JBenchUtils.h"
 #include <catch.hpp>
