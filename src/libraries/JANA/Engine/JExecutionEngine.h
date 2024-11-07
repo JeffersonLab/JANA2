@@ -28,7 +28,7 @@ public:
         size_t worker_id = 0;
         size_t cpu_id = 0;
         size_t location_id = 0;
-        clock_t::time_point last_checkin_time = clock_t::now();
+        clock_t::time_point last_checkout_time = clock_t::now();
         std::exception_ptr stored_exception = nullptr;
         bool is_stop_requested = false;
         bool is_timed_out = false;
@@ -89,6 +89,8 @@ private:
     size_t m_event_count_at_finish = 0;
     clock_t::time_point m_time_at_start;
     clock_t::time_point m_time_at_finish;
+    clock_t::duration m_total_idle_duration = clock_t::duration::zero();
+    clock_t::duration m_total_scheduler_duration = clock_t::duration::zero();
 
 
 public:
@@ -109,9 +111,10 @@ public:
     Perf GetPerf();
 
     int RegisterExternalWorker();
+    void PrintFinalReport();
     void RunWorker(Worker& worker);
     void ExchangeTask(Task& task, bool nonblocking=false);
-    void IngestCompletedTask_Unsafe(Task& task);
+    void CheckinCompletedTask_Unsafe(Task& task, clock_t::time_point checkin_time);
     void FindNextReadyTask_Unsafe(Task& task);
 
 };

@@ -172,8 +172,8 @@ void JExecutionEngine::Wait(bool finish) {
         }
 
         if (m_show_ticker) {
-            auto last_measurement_duration = std::chrono::duration_cast<std::chrono::milliseconds>(clock_t::now() - last_measurement_time);
-            float latest_throughput_hz = (perf.event_count - last_event_count) * 1000.0 / last_measurement_duration.count();
+            auto last_measurement_duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(clock_t::now() - last_measurement_time).count();
+            float latest_throughput_hz = (last_measurement_duration_ms == 0) ? 0 : (perf.event_count - last_event_count) * 1000.0 / last_measurement_duration_ms;
             last_measurement_time = clock_t::now();
             last_event_count = perf.event_count;
 
@@ -189,30 +189,20 @@ void JExecutionEngine::Wait(bool finish) {
 
     if (finish) {
         Finish();
-        LOG_INFO(GetLogger()) << "Processing finished." << LOG_END;
     }
-
-    auto perf = GetPerf();
-    LOG_INFO(GetLogger()) << "Detailed report:" << LOG_END;
-    LOG_INFO(GetLogger()) << LOG_END;
-    LOG_INFO(GetLogger()) << "  Thread team size [count]:    " << perf.thread_count << LOG_END;
-    LOG_INFO(GetLogger()) << "  Total uptime [s]:            " << std::setprecision(4) << perf.uptime_ms/1000 << LOG_END;
-    LOG_INFO(GetLogger()) << "  Completed events [count]:    " << perf.event_count << LOG_END;
-    LOG_INFO(GetLogger()) << "  Avg throughput [Hz]:         " << std::setprecision(3) << perf.throughput_hz << LOG_END;
-    LOG_INFO(GetLogger()) << LOG_END;
-    //LOG_INFO(GetLogger()) << "  Sequential bottleneck [Hz]:  " << std::setprecision(3) << metrics->avg_seq_bottleneck_hz << LOG_END;
-    //LOG_INFO(GetLogger()) << "  Parallel bottleneck [Hz]:    " << std::setprecision(3) << metrics->avg_par_bottleneck_hz << LOG_END;
-    //LOG_INFO(GetLogger()) << "  Efficiency [0..1]:           " << std::setprecision(3) << metrics->avg_efficiency_frac << LOG_END;
-    
-    LOG_WARN(GetLogger()) << "Final report: " << perf.event_count << " events processed at "
-                       << JTypeInfo::to_string_with_si_prefix(perf.throughput_hz) << "Hz" << LOG_END;
+    PrintFinalReport();
 }
 
 void JExecutionEngine::Finish() {
     std::unique_lock<std::mutex> lock(m_mutex);
     assert(m_runstatus == RunStatus::Paused);
+
+    LOG_DEBUG(GetLogger()) << "Finishing processing..." << LOG_END;
+    for (auto* arrow : m_topology->arrows) {
+        arrow->finalize();
+    }
     m_runstatus = RunStatus::Finished;
-    // Close everything _outside_ the mutex?
+    LOG_INFO(GetLogger()) << "Finished processing." << LOG_END;
 }
 
 JExecutionEngine::RunStatus JExecutionEngine::GetRunStatus() {
@@ -240,7 +230,7 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
     }
     result.runstatus = m_runstatus;
     result.thread_count = m_workers.size();
-    result.throughput_hz = (result.event_count * 1000.0) / result.uptime_ms;
+    result.throughput_hz = (result.uptime_ms == 0) ? 0 : (result.event_count * 1000.0) / result.uptime_ms;
     result.event_level = JEventLevel::PhysicsEvent;
     return result;
 }
@@ -273,9 +263,7 @@ void JExecutionEngine::RunWorker(Worker& worker) {
     try {
         while (true) {
             ExchangeTask(task);
-            if (task.arrow == nullptr) break;
-
-            worker.last_checkin_time = clock_t::now();
+            if (task.arrow == nullptr) break; // Exit as soon as ExchangeTask() stops blocking
             task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
         }
         LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker.worker_id << LOG_END;
@@ -291,29 +279,37 @@ void JExecutionEngine::RunWorker(Worker& worker) {
 
 void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
 
+    auto checkin_time = std::chrono::steady_clock::now();
+    // It's important to start measuring this _before_ acquiring the lock because acquiring the lock
+    // may be a big part of the scheduler overhead
+
     std::unique_lock<std::mutex> lock(m_mutex);
 
     if (task.arrow != nullptr) {
-        IngestCompletedTask_Unsafe(task);
+        CheckinCompletedTask_Unsafe(task, checkin_time);
     }
 
     if (task.worker_id == -1 || task.worker_id >= (int) m_workers.size()) {
         // This happens if we are an external worker and someone called Scale() to deactivate us
         return;
     }
-    auto& worker = m_workers[task.worker_id];
-    if (worker->is_stop_requested) {
+    auto& worker = *m_workers[task.worker_id];
+    if (worker.is_stop_requested) {
         return;
     }
 
     FindNextReadyTask_Unsafe(task);
 
     if (nonblocking) { return; }
+    auto idle_time_start = clock_t::now();
+    m_total_scheduler_duration += (idle_time_start - checkin_time);
 
-    while (task.arrow == nullptr && !worker->is_stop_requested) {
+    while (task.arrow == nullptr && !worker.is_stop_requested) {
         m_condvar.wait(lock);
         FindNextReadyTask_Unsafe(task);
     }
+    worker.last_checkout_time = clock_t::now();
+    m_total_idle_duration += (worker.last_checkout_time - idle_time_start);
 
     lock.unlock();
     // Notify one worker, who will notify the next, etc, as long as FindNextReadyTaskUnsafe() succeeds.
@@ -323,12 +319,10 @@ void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
 }
 
 
-void JExecutionEngine::IngestCompletedTask_Unsafe(Task& task) {
+void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_point checkin_time) {
 
-    auto ingest_time = std::chrono::steady_clock::now();
     auto& worker = *m_workers.at(task.worker_id);
-    auto processing_duration = ingest_time - worker.last_checkin_time;
-    // TODO: Warn about slow events that didn't timeout but came close
+    auto processing_duration = checkin_time - worker.last_checkout_time;
 
     SchedulerState& arrow_state = m_scheduler_state.at(task.arrow_id);
 
@@ -441,4 +435,58 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
     task.input_event = nullptr;
     task.output_count = 0;
     task.status = JArrowMetrics::Status::NotRunYet;
+}
+
+
+void JExecutionEngine::PrintFinalReport() {
+
+    std::unique_lock<std::mutex> lock(m_mutex);
+    auto event_count = m_event_count_at_finish - m_event_count_at_start;
+    auto uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_time_at_finish - m_time_at_start).count();
+    auto thread_count = m_workers.size();
+    auto throughput_hz = (event_count * 1000.0) / uptime_ms;
+
+    LOG_INFO(GetLogger()) << "Detailed report:" << LOG_END;
+    LOG_INFO(GetLogger()) << LOG_END;
+    LOG_INFO(GetLogger()) << "  Avg throughput [Hz]:         " << std::setprecision(3) << throughput_hz << LOG_END;
+    LOG_INFO(GetLogger()) << "  Completed events [count]:    " << event_count << LOG_END;
+    LOG_INFO(GetLogger()) << "  Total uptime [s]:            " << std::setprecision(4) << uptime_ms/1000.0 << LOG_END;
+    LOG_INFO(GetLogger()) << "  Thread team size [count]:    " << thread_count << LOG_END;
+    LOG_INFO(GetLogger()) << LOG_END;
+    LOG_INFO(GetLogger()) << "  Arrow-level metrics:" << LOG_END;
+    LOG_INFO(GetLogger()) << LOG_END;
+
+    size_t total_useful_ms = 0;
+
+    for (size_t arrow_id=0; arrow_id < m_scheduler_state.size(); ++arrow_id) {
+        auto* arrow = m_topology->arrows[arrow_id];
+        auto& arrow_state = m_scheduler_state[arrow_id];
+        auto useful_ms = std::chrono::duration_cast<std::chrono::milliseconds>(arrow_state.total_processing_duration).count();
+        total_useful_ms += useful_ms;
+        auto avg_latency = useful_ms*1.0/arrow_state.events_processed;
+        auto throughput_bottleneck = 1000.0 / avg_latency;
+        if (arrow->is_parallel()) {
+            throughput_bottleneck *= thread_count;
+        }
+
+        LOG_INFO(GetLogger()) << "  - Arrow name:                 " << arrow->get_name() << LOG_END;
+        LOG_INFO(GetLogger()) << "    Parallel:                   " << arrow->is_parallel() << LOG_END;
+        LOG_INFO(GetLogger()) << "    Events completed:           " << arrow_state.events_processed << LOG_END;
+        LOG_INFO(GetLogger()) << "    Avg latency [ms/event]:     " << avg_latency << LOG_END;
+        LOG_INFO(GetLogger()) << "    Throughput bottleneck [Hz]: " << throughput_bottleneck << LOG_END;
+        LOG_INFO(GetLogger()) << LOG_END;
+    }
+
+    auto total_scheduler_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_scheduler_duration).count();
+    auto total_idle_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_scheduler_duration).count();
+
+    LOG_INFO(GetLogger()) << "  Total useful time [s]:     " << std::setprecision(4) << total_useful_ms/1000.0 << LOG_END;
+    LOG_INFO(GetLogger()) << "  Total scheduler time [s]:  " << std::setprecision(4) << total_scheduler_ms/1000.0 << LOG_END;
+    LOG_INFO(GetLogger()) << "  Total idle time [s]:       " << std::setprecision(4) << total_idle_ms/1000.0 << LOG_END;
+
+    LOG_INFO(GetLogger()) << LOG_END;
+
+    LOG_WARN(GetLogger()) << "Final report: " << event_count << " events processed at "
+                          << JTypeInfo::to_string_with_si_prefix(throughput_hz) << "Hz" << LOG_END;
+
 }
