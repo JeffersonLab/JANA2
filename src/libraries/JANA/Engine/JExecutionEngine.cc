@@ -382,16 +382,12 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_poi
     arrow_state.total_processing_duration += processing_duration;
 
     for (size_t output=0; output<task.output_count; ++output) {
-
-        // Update arrow's processed count. We _could_ also track the arrow latency (and the other arrow metrics) this way, but
-        // we would need worker-level information, specifically the start time.
         if (!task.arrow->get_port(task.outputs[output].second).is_input) {
             arrow_state.events_processed++;
         }
 
         // Put each output in its correct queue or pool
-        // We also need (worker-level) location ID
-        task.arrow->push(task.outputs, task.output_count, 0);
+        task.arrow->push(task.outputs, task.output_count, worker.location_id);
     }
 
     if (task.status == JArrowMetrics::Status::Finished) {
@@ -400,6 +396,19 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_poi
 
         // Mark arrow as finished
         arrow_state.is_active = false;
+
+        // Check if this switches the topology to Draining()
+        if (m_runstatus == RunStatus::Running) {
+            bool draining = true;
+            for (auto& arrow: m_scheduler_state) {
+                if (arrow.is_source && arrow.is_active) {
+                    draining = false;
+                }
+            }
+            if (draining) {
+                m_runstatus = RunStatus::Draining;
+            }
+        }
     }
     task.arrow = nullptr;
     task.arrow_id = -1;
@@ -410,6 +419,8 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_poi
 
 
 void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
+
+    auto& worker = *m_workers.at(task.worker_id);
 
     if (m_runstatus == RunStatus::Running || m_runstatus == RunStatus::Draining) {
         // We only pick up a new task if the topology is running or draining.
@@ -431,10 +442,9 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
             JArrow* arrow = m_topology->arrows[arrow_id];
             // TODO: consider setting state.next_input, retrieving via fire()
             auto port = arrow->get_next_port_index();
-            JEvent* event = arrow->pull(port, 0); // TODO: Need worker location_id
+            JEvent* event = arrow->pull(port, worker.location_id);
             if (event != nullptr) {
                 // We've found a task that is ready!
-                // Start timer // TODO: This requires worker
                 state.active_tasks += 1;
 
                 task.arrow_id = arrow_id;
