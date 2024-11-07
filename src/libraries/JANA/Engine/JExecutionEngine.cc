@@ -165,8 +165,13 @@ void JExecutionEngine::Wait(bool finish) {
     size_t last_event_count = 0;
     clock_t::time_point last_measurement_time = clock_t::now();
 
+    Perf perf;
     while (true) {
-        auto perf = GetPerf();
+
+        if (m_enable_timeout) {
+            CheckTimeout();
+        }
+        perf = GetPerf();
         if (perf.runstatus == RunStatus::Paused || perf.runstatus == RunStatus::Finished) {
             break;
         }
@@ -187,10 +192,57 @@ void JExecutionEngine::Wait(bool finish) {
     }
     LOG_INFO(GetLogger()) << "Processing paused." << LOG_END;
 
+    if (perf.runstatus == RunStatus::Failed) {
+        HandleFailures();
+    }
+
     if (finish) {
         Finish();
     }
     PrintFinalReport();
+}
+
+bool JExecutionEngine::CheckTimeout() {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    auto now = clock_t::now();
+    bool timeout_detected = false;
+    for (auto& worker: m_workers) {
+        auto duration_s = std::chrono::duration_cast<std::chrono::seconds>(now - worker->last_checkout_time).count();
+        if (duration_s > m_timeout_s) {
+            worker->is_timed_out = true;
+            timeout_detected = true;
+            m_runstatus = RunStatus::Failed;
+        }
+    }
+    return timeout_detected;
+}
+
+void JExecutionEngine::HandleFailures() {
+
+    std::unique_lock<std::mutex> lock(m_mutex);
+
+    // First, we log all of the failures we've found
+    bool timeout_found = false;
+    for (auto& worker: m_workers) {
+        if (worker->is_timed_out) {
+            LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << LOG_END;
+            timeout_found = true;
+        }
+        if (worker->stored_exception != nullptr) {
+            LOG_FATAL(GetLogger()) << "Exception in worker thread " << worker->worker_id << LOG_END;
+        }
+    }
+
+    // Now we throw each of these exceptions in order, in case the caller is going to attempt to catch them.
+    // In reality all callers are going to print everything they can about the exception and exit.
+    for (auto& worker: m_workers) {
+        if (worker->stored_exception != nullptr) {
+            throw worker->stored_exception;
+        }
+    }
+    if (timeout_found) {
+        throw JException("Worker timeout!");
+    }
 }
 
 void JExecutionEngine::Finish() {
@@ -490,3 +542,21 @@ void JExecutionEngine::PrintFinalReport() {
                           << JTypeInfo::to_string_with_si_prefix(throughput_hz) << "Hz" << LOG_END;
 
 }
+
+void JExecutionEngine::SetTickerEnabled(bool show_ticker) {
+    m_show_ticker = show_ticker;
+}
+
+bool JExecutionEngine::IsTickerEnabled() const {
+    return m_show_ticker;
+}
+
+void JExecutionEngine::SetTimeoutEnabled(bool timeout_enabled) {
+    m_enable_timeout = timeout_enabled;
+}
+
+bool JExecutionEngine::IsTimeoutEnabled() const {
+    return m_enable_timeout;
+}
+
+

@@ -72,6 +72,7 @@ private:
 
     // Parameters
     bool m_show_ticker = true;
+    bool m_enable_timeout = true;
     int m_backoff_ms = 10;
     int m_ticker_ms = 500;
     int m_timeout_s = 8;
@@ -107,11 +108,17 @@ public:
     void Wait(bool finish=false);
     void Finish();
 
-    RunStatus GetRunStatus();
     Perf GetPerf();
+    RunStatus GetRunStatus();
+    void SetTickerEnabled(bool ticker_on);
+    bool IsTickerEnabled() const;
+    void SetTimeoutEnabled(bool timeout_on);
+    bool IsTimeoutEnabled() const;
 
     int RegisterExternalWorker();
     void PrintFinalReport();
+    bool CheckTimeout();
+    void HandleFailures();
     void RunWorker(Worker& worker);
     void ExchangeTask(Task& task, bool nonblocking=false);
     void CheckinCompletedTask_Unsafe(Task& task, clock_t::time_point checkin_time);
