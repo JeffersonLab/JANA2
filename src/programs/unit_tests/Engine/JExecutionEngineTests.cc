@@ -47,7 +47,6 @@ TEST_CASE("JExecutionEngine_StateMachine") {
     JApplication app;
     app.Add(new TestSource());
     app.Add(new TestProc());
-    app.ProvideService(std::make_shared<JExecutionEngine>());
     app.Initialize();
     auto sut = app.GetService<JExecutionEngine>();
 
@@ -96,7 +95,6 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
     app.SetParameterValue("jana:nevents", 1);
     app.Add(new TestSource());
     app.Add(new TestProc());
-    app.ProvideService(std::make_shared<JExecutionEngine>());
     app.Initialize();
     auto sut = app.GetService<JExecutionEngine>();
 
@@ -172,7 +170,6 @@ TEST_CASE("JExecutionEngine_ScaleWorkers") {
     app.SetParameterValue("jana:loglevel", "debug");
     app.Add(new TestSource());
     app.Add(new TestProc());
-    app.ProvideService(std::make_shared<JExecutionEngine>());
     app.Initialize();
     auto sut = app.GetService<JExecutionEngine>();
 
@@ -192,7 +189,6 @@ TEST_CASE("JExecutionEngine_RunSingleEvent") {
     app.SetParameterValue("jana:loglevel", "debug");
     app.Add(new TestSource());
     app.Add(new TestProc());
-    app.ProvideService(std::make_shared<JExecutionEngine>());
     app.Initialize();
     auto sut = app.GetService<JExecutionEngine>();
 
@@ -240,7 +236,6 @@ TEST_CASE("JExecutionEngine_ExternalPause") {
     app.SetParameterValue("jana:loglevel", "info");
     app.Add(new TestSource());
     app.Add(new TestProc());
-    app.ProvideService(std::make_shared<JExecutionEngine>());
     app.Initialize();
     auto sut = app.GetService<JExecutionEngine>();
 

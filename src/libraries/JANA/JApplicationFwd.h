@@ -17,7 +17,7 @@ class JFactoryGenerator;
 class JFactorySet;
 class JComponentManager;
 class JPluginLoader;
-class JArrowProcessingController;
+class JExecutionEngine;
 class JEventUnfolder;
 class JServiceLocator;
 class JParameter;
@@ -86,14 +86,12 @@ public:
 
     bool IsInitialized(void){return m_initialized;}
     bool IsQuitting(void) { return m_quitting; }
-    bool IsDrainingQueues(void) { return m_draining_queues; }
+    bool IsDrainingQueues();
 
     void SetTicker(bool ticker_on = true);
     bool IsTickerEnabled();
     void SetTimeoutEnabled(bool enabled = true);
     bool IsTimeoutEnabled();
-    void PrintStatus();
-    void PrintFinalReport();
     uint64_t GetNThreads();
     uint64_t GetNEventsProcessed();
     float GetIntegratedRate();
@@ -142,27 +140,21 @@ private:
     std::shared_ptr<JParameterManager> m_params;
     std::shared_ptr<JPluginLoader> m_plugin_loader;
     std::shared_ptr<JComponentManager> m_component_manager;
-    std::shared_ptr<JArrowProcessingController> m_processing_controller;
+    std::shared_ptr<JExecutionEngine> m_execution_engine;
 
     bool m_inspecting = false;
     bool m_quitting = false;
-    bool m_draining_queues = false;
     bool m_skip_join = false;
     std::atomic_bool m_initialized {false};
     std::atomic_bool m_services_available {false};
-    bool m_ticker_on = true;
-    bool m_timeout_on = true;
-    bool m_extended_report = false;
     int  m_exit_code = (int) ExitCode::Success;
     int  m_desired_nthreads;
     std::atomic_int m_sigint_count {0};
 
-    std::mutex m_status_mutex;
-    int m_ticker_interval_ms = 1000;
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_last_measurement;
-    std::unique_ptr<const JPerfSummary> m_perf_summary;
-
-    void update_status();
+    // For instantaneous rate calculations
+    std::mutex m_inst_rate_mutex;
+    std::chrono::steady_clock::time_point m_last_measurement_time = std::chrono::steady_clock::now();
+    size_t m_last_event_count = 0;
 };
 
 

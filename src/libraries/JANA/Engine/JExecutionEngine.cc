@@ -30,12 +30,16 @@ void JExecutionEngine::Init() {
     // The reason this works is because JTopologyBuilder::create_topology() has already been called before 
     // JApplication::ProvideService<JExecutionEngine>().
     for (JArrow* arrow : m_topology->arrows) {
+
+        arrow->initialize();
+
         m_scheduler_state.emplace_back();
         auto& state = m_scheduler_state.back();
         state.is_source = arrow->is_source();
         state.is_sink = arrow->is_sink();
         state.is_parallel = arrow->is_parallel();
         state.next_input = arrow->get_next_port_index();
+
     }
 }
 
@@ -540,11 +544,11 @@ void JExecutionEngine::PrintFinalReport() {
     }
 
     auto total_scheduler_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_scheduler_duration).count();
-    auto total_idle_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_scheduler_duration).count();
+    auto total_idle_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_idle_duration).count();
 
-    LOG_INFO(GetLogger()) << "  Total useful time [s]:     " << std::setprecision(4) << total_useful_ms/1000.0 << LOG_END;
-    LOG_INFO(GetLogger()) << "  Total scheduler time [s]:  " << std::setprecision(4) << total_scheduler_ms/1000.0 << LOG_END;
-    LOG_INFO(GetLogger()) << "  Total idle time [s]:       " << std::setprecision(4) << total_idle_ms/1000.0 << LOG_END;
+    LOG_INFO(GetLogger()) << "  Total useful time [s]:     " << std::setprecision(6) << total_useful_ms/1000.0 << LOG_END;
+    LOG_INFO(GetLogger()) << "  Total scheduler time [s]:  " << std::setprecision(6) << total_scheduler_ms/1000.0 << LOG_END;
+    LOG_INFO(GetLogger()) << "  Total idle time [s]:       " << std::setprecision(6) << total_idle_ms/1000.0 << LOG_END;
 
     LOG_INFO(GetLogger()) << LOG_END;
 
