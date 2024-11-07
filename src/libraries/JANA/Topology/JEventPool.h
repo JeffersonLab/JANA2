@@ -98,7 +98,6 @@ public:
             // Do any necessary teardown within the item itself
             item->Clear();
         }
-        auto use_count = item->shared_from_this().use_count();
 
         LocalPool& pool = *(m_pools[location]);
 
