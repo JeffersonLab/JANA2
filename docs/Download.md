@@ -10,6 +10,25 @@
 - [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest/index.html)
 - [Download doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest.tar.gz)
 
+### 2.3.3
+
+#### Bugfixes
+* Fix problem with user-defined factory generators (#366)
+* JEventProcessor::Process() called before BeginRun() (#367)
+* Lock overwrite in RootFillLock() (#369)
+* JFactory::Finish() is called (#377)
+
+#### Features
+* JTopologyBuilder supports topologies with arbitrarily nested levels (#346)
+* Barrier events are back (#371)
+
+#### Refactoring
+* Improved log output (#368)
+* JTest uses new-style component interfaces (#374)
+* JArrows now fire on individual events (#375, #378)
+
+- [See release on GitHub](https://github.com/JeffersonLab/JANA2/releases/tag/v2.3.3)
+
 ### 2.3.2
 This release includes the following:
 
