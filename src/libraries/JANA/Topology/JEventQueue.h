@@ -31,7 +31,7 @@
 
 class JEventQueue {
 
-private:
+protected:
     struct alignas(JANA2_CACHE_LINE_BYTES) LocalQueue {
         std::vector<JEvent*> ringbuffer;
         size_t size=0;
@@ -54,7 +54,9 @@ public:
         Scale(initial_capacity);
     }
 
-    inline void Scale(size_t capacity) {
+    virtual ~JEventQueue() = default;
+
+    virtual void Scale(size_t capacity) {
         if (capacity < m_capacity) {
             for (auto& local_queue : m_local_queues) {
                 if (local_queue->size != 0) {

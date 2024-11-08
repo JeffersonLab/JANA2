@@ -39,7 +39,7 @@ JEvent* JArrow::pull(size_t port_index, size_t location_id) {
         port.queue->pop(&event, 1, 1, location_id);
     }
     else if (port.pool != nullptr){
-        port.pool->pop(&event, 1, 1, location_id);
+        event = port.pool->Pop( location_id);
     }
     else {
         throw JException("Arrow %s: Port %d not wired!", m_name.c_str(), port_index);
@@ -58,8 +58,10 @@ void JArrow::push(OutputData& outputs, size_t output_count, size_t location_id) 
             port.queue->push(&event, 1, location_id);
         }
         else if (port.pool != nullptr) {
-            bool clear_event = !port.is_input;
-            port.pool->push(&event, 1, clear_event, location_id);
+            if (!port.is_input) {
+                event->Clear();
+            }
+            port.pool->Push(event, location_id);
         }
         else {
             throw JException("Arrow %s: Port %d not wired!", m_name.c_str(), port_index);

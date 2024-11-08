@@ -49,10 +49,10 @@ TEST_CASE("UnfoldTests_Basic") {
     JMailbox<JEvent*> parent_queue {3}; // size
     JMailbox<JEvent*> child_queue {3};
 
-    auto ts1 = parent_pool.get();
+    auto ts1 = parent_pool.Pop(0);
     ts1->SetEventNumber(17);
 
-    auto ts2 = parent_pool.get();
+    auto ts2 = parent_pool.Pop(0);
     ts2->SetEventNumber(28);
 
     parent_queue.try_push(&ts1, 1);
@@ -105,17 +105,17 @@ TEST_CASE("FoldArrowTests") {
 
     SECTION("One-to-one relationship between timeslices and events") {
 
-        auto ts1 = parent_pool.get();
+        auto ts1 = parent_pool.Pop(0);
         ts1->SetEventNumber(17);
         REQUIRE(ts1->GetLevel() == JEventLevel::Timeslice);
 
-        auto ts2 = parent_pool.get();
+        auto ts2 = parent_pool.Pop(0);
         ts2->SetEventNumber(28);
 
-        auto evt1 = child_pool.get();
+        auto evt1 = child_pool.Pop(0);
         evt1->SetEventNumber(111);
 
-        auto evt2 = child_pool.get();
+        auto evt2 = child_pool.Pop(0);
         evt2->SetEventNumber(112);
 
 
@@ -138,23 +138,23 @@ TEST_CASE("FoldArrowTests") {
 
     SECTION("One-to-two relationship between timeslices and events") {
 
-        auto ts1 = parent_pool.get();
+        auto ts1 = parent_pool.Pop(0);
         ts1->SetEventNumber(17);
         REQUIRE(ts1->GetLevel() == JEventLevel::Timeslice);
 
-        auto ts2 = parent_pool.get();
+        auto ts2 = parent_pool.Pop(0);
         ts2->SetEventNumber(28);
 
-        auto evt1 = child_pool.get();
+        auto evt1 = child_pool.Pop(0);
         evt1->SetEventNumber(111);
 
-        auto evt2 = child_pool.get();
+        auto evt2 = child_pool.Pop(0);
         evt2->SetEventNumber(112);
 
-        auto evt3 = child_pool.get();
+        auto evt3 = child_pool.Pop(0);
         evt3->SetEventNumber(113);
 
-        auto evt4 = child_pool.get();
+        auto evt4 = child_pool.Pop(0);
         evt4->SetEventNumber(114);
 
 

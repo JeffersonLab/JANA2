@@ -289,7 +289,7 @@ void JScheduler::finish_topology() {
     // JApplication::Run() exits. This leaves the topology in an unrunnable state, 
     // but it won't be resumable anyway once it reaches Status::Finished.
     for (JEventPool* pool : m_topology->pools) {
-        pool->finalize();
+        pool->Finalize();
     }
 
     // Next we finalize all remaining components (particularly JEventProcessors)
