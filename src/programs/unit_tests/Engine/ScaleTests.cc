@@ -2,7 +2,7 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/Utils/JCpuInfo.h>
-#include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Engine/JExecutionEngine.h>
 
 #include "ScaleTests.h"
 
@@ -46,17 +46,7 @@ TEST_CASE("ScaleNWorkerUpdate") {
     REQUIRE(threads == 4);
 
     app.Scale(8); // Scale blocks until workers have fired up
-
-    // Ideally we could just do this:
-    // threads = app.GetNThreads();
-    // However, we can't, because JApplication caches performance metrics based off of a ticker interval, and
-    // Scale() doesn't invalidate the cache. We don't have a clean mechanism to manually force a cache invalidation
-    // from JApplication yet. So for now we will obtain the thread count directly from the JArrowProcessingController.
-
-    auto pc = app.GetService<JArrowProcessingController>();
-    auto perf_summary = pc->measure_performance();
-    threads = perf_summary->thread_count;
-
+    threads = app.GetNThreads();
     REQUIRE(threads == 8);
 }
 
@@ -64,30 +54,39 @@ TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
 
     JApplication app;
     app.SetParameterValue("jana:global_loglevel", "INFO");
+    app.SetParameterValue("jana:max_events_in_flight", 8);
     app.SetTicker(false);
     app.Add(new scaletest::DummySource);
     app.Add(new scaletest::DummyProcessor);
-    // app.SetParameterValue("benchmark:minthreads", 1);
-    // app.SetParameterValue("benchmark:maxthreads", 5);
-    // app.SetParameterValue("benchmark:threadstep", 2);
-    // app.SetParameterValue("benchmark:nsamples", 3);
     app.Initialize();
-    auto japc = app.GetService<JArrowProcessingController>();
-    app.Run(false);
+    auto jee = app.GetService<JExecutionEngine>();
+
+    jee->Scale(1);
+    jee->Run();
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    auto throughput_hz_1 = japc->measure_performance()->latest_throughput_hz;
-    japc->print_report();
+    auto throughput_hz_1 = jee->GetPerf().throughput_hz;
+    jee->RequestPause();
+    jee->Wait();
     std::cout << "nthreads=1: throughput_hz=" << throughput_hz_1 << std::endl;
-    app.Scale(2);
+
+    jee->Scale(2);
+    jee->Run();
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    auto throughput_hz_2 = japc->measure_performance()->latest_throughput_hz;
-    japc->print_report();
+    auto throughput_hz_2 = jee->GetPerf().throughput_hz;
+    jee->RequestPause();
+    jee->Wait();
     std::cout << "nthreads=2: throughput_hz=" << throughput_hz_2 << std::endl;
-    app.Scale(4);
+
+    jee->Scale(4);
+    jee->Run();
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    auto throughput_hz_4 = japc->measure_performance()->latest_throughput_hz;
-    japc->print_report();
+    auto throughput_hz_4 = jee->GetPerf().throughput_hz;
+    jee->RequestPause();
+    jee->Wait();
     std::cout << "nthreads=4: throughput_hz=" << throughput_hz_4 << std::endl;
+
+    jee->Finish();
+
     REQUIRE(throughput_hz_2 > throughput_hz_1*1.5);
     REQUIRE(throughput_hz_4 > throughput_hz_2*1.25);
 }

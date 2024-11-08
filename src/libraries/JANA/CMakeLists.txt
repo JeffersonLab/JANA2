@@ -13,11 +13,6 @@ set(JANA2_SOURCES
     JVersion.cc
     JEvent.cc
 
-    Engine/JArrowProcessingController.cc
-    Engine/JScheduler.cc
-    Engine/JWorker.cc
-    Engine/JPerfMetrics.cc
-    Engine/JPerfSummary.cc
     Engine/JExecutionEngine.cc
 
     Topology/JArrow.cc

@@ -1,10 +1,9 @@
 
 #include "JApplicationInspector.h"
-#include "JANA/Services/JComponentManager.h"
 #include "JANA/Components/JComponentSummary.h"
 #include "JANA/Topology/JTopologyBuilder.h"
 #include <JANA/JApplication.h>
-#include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Engine/JExecutionEngine.h>
 
 
 void PrintMenu() {
@@ -32,9 +31,8 @@ void InspectTopology(JApplication* app) {
 }
 
 void Fire(JApplication* app, int arrow_id) {
-    auto engine = app->GetService<JArrowProcessingController>();
-    auto result = engine->execute_arrow(arrow_id);
-    std::cout << to_string(result) << std::endl;
+    auto engine = app->GetService<JExecutionEngine>();
+    // engine->Fire(arrow_id, 0);
 }
 
 void InspectComponents(JApplication* app) {
@@ -79,9 +77,9 @@ void InspectCollection(JApplication* app, std::string collection_name) {
 
 
 void InspectApplication(JApplication* app) {
-    auto engine = app->GetService<JArrowProcessingController>();
-    engine->request_pause();
-    engine->wait_until_paused();
+    auto engine = app->GetService<JExecutionEngine>();
+    engine->RequestPause();
+    engine->Wait();
     app->SetTimeoutEnabled(false);
     PrintMenu();
 
