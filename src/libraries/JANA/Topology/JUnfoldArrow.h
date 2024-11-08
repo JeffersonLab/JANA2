@@ -37,7 +37,7 @@ public:
         size_t sum = 0;
         for (Port& port : m_ports) {
             if (port.is_input && port.queue!=nullptr) {
-                sum += port.queue->size();
+                sum += port.queue->GetSize(0); // Mechanism is going away anyhow
             }
         }
         if (m_parent_event != nullptr) {

@@ -20,7 +20,7 @@ struct RandIntArrow : public JArrow {
     size_t emit_count = 0;   // How many emitted so far
     int emit_sum = 0;        // Sum of all ints emitted so far
 
-    RandIntArrow(std::string name, JEventPool* pool, JMailbox<JEvent*>* output_queue) {
+    RandIntArrow(std::string name, JEventPool* pool, JEventQueue* output_queue) {
         set_name(name);
         set_is_source(true);
         create_ports(1, 1);
@@ -55,7 +55,7 @@ struct RandIntArrow : public JArrow {
 
 struct MultByTwoArrow : public JArrow {
 
-    MultByTwoArrow(std::string name, JMailbox<JEvent*>* input_queue, JMailbox<JEvent*>* output_queue) {
+    MultByTwoArrow(std::string name, JEventQueue* input_queue, JEventQueue* output_queue) {
         set_name(name);
         set_is_parallel(true);
         create_ports(1, 1);
@@ -77,7 +77,7 @@ struct MultByTwoArrow : public JArrow {
 
 struct SubOneArrow : public JArrow {
     
-    SubOneArrow(std::string name, JMailbox<JEvent*>* input_queue, JMailbox<JEvent*>* output_queue) {
+    SubOneArrow(std::string name, JEventQueue* input_queue, JEventQueue* output_queue) {
         set_name(name);
         set_is_parallel(true);
         create_ports(1, 1);
@@ -103,7 +103,7 @@ struct SumArrow : public JArrow {
 
     double sum = 0;
 
-    SumArrow(std::string name, JMailbox<JEvent*>* input_queue, JEventPool* pool) {
+    SumArrow(std::string name, JEventQueue* input_queue, JEventPool* pool) {
         set_name(name);
         set_is_sink(true);
         create_ports(1, 1);

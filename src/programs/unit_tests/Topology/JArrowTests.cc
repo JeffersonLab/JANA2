@@ -54,7 +54,7 @@ TEST_CASE("BasicParallelArrow_ExecuteSucceeds") {
 
     BasicParallelArrow sut;
     JEventPool input_pool(app.GetService<JComponentManager>(), 10, 1);
-    JMailbox<JEvent*> output_queue(10);
+    JEventQueue output_queue(10, 1);
 
     sut.attach(&input_pool, 0);
     sut.attach(&output_queue, 1);
@@ -64,9 +64,8 @@ TEST_CASE("BasicParallelArrow_ExecuteSucceeds") {
 
     REQUIRE(metrics.get_last_status() == JArrowMetrics::Status::KeepGoing);
     REQUIRE(metrics.get_total_message_count() == 1);
-    REQUIRE(output_queue.size() == 1);
-    JEvent* event;
-    output_queue.pop(&event, 1, 1, 0);
+    REQUIRE(output_queue.GetSize(0) == 1);
+    JEvent* event = output_queue.Pop(0);
     REQUIRE(event->GetSingle<TestData>()->x == 22);
 }
 
@@ -77,8 +76,8 @@ TEST_CASE("BasicParallelArrow_ExecuteFails") {
     app.Initialize();
 
     BasicParallelArrow sut;
-    JMailbox<JEvent*> input_queue(10);
-    JMailbox<JEvent*> output_queue(10);
+    JEventQueue input_queue(10, 1);
+    JEventQueue output_queue(10, 1);
 
     sut.attach(&input_queue, 0);
     sut.attach(&output_queue, 1);
@@ -88,7 +87,7 @@ TEST_CASE("BasicParallelArrow_ExecuteFails") {
 
     REQUIRE(metrics.get_last_status() == JArrowMetrics::Status::ComeBackLater);
     REQUIRE(metrics.get_total_message_count() == 0);
-    REQUIRE(output_queue.size() == 0);
+    REQUIRE(output_queue.GetSize(0) == 0);
 }
 
 

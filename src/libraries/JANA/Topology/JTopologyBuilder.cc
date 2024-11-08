@@ -44,7 +44,7 @@ std::string JTopologyBuilder::print_topology() {
     // Build index lookup for queues
     int i = 0;
     std::map<void*, int> lookup;
-    for (JQueue* queue : queues) {
+    for (JEventQueue* queue : queues) {
         lookup[queue] = i;
         i += 1;
     }
@@ -102,12 +102,6 @@ void JTopologyBuilder::create_topology() {
         attach_level(JEventLevel::Run, nullptr, nullptr);
         LOG_INFO(GetLogger()) << "Arrow topology is:\n" << print_topology() << LOG_END;
     }
-    int id=0;
-    for (auto* queue : queues) {
-        queue->set_logger(GetLogger());
-        queue->set_id(id);
-        id += 1;
-    }
     for (auto* arrow : arrows) {
         arrow->set_logger(GetLogger());
     }
@@ -132,9 +126,11 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
                                     "The number of events which may be in-flight at once. Should be at least `nthreads` to prevent starvation; more gives better load balancing.")
             ->SetIsAdvanced(true);
 
+    /*
     m_params->SetDefaultParameter("jana:enable_stealing", m_enable_stealing,
                                     "Enable work stealing. Improves load balancing when jana:locality != 0; otherwise does nothing.")
             ->SetIsAdvanced(true);
+    */
     m_params->SetDefaultParameter("jana:affinity", m_affinity,
                                     "Constrain worker thread CPU affinity. 0=Let the OS decide. 1=Avoid extra memory movement at the expense of using hyperthreads. 2=Avoid hyperthreads at the expense of extra memory movement")
             ->SetIsAdvanced(true);
@@ -146,7 +142,7 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
 
 void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downstream, size_t down_index) {
 
-    auto queue = new JMailbox<JEvent*>(m_max_inflight_events, mapping.get_loc_count(), m_enable_stealing);
+    auto queue = new JEventQueue(m_max_inflight_events, mapping.get_loc_count());
     queues.push_back(queue);
 
     size_t i = 0;

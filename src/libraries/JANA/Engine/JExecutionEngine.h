@@ -32,7 +32,7 @@ public:
         JEventLevel event_level;
     };
 
-#ifndef JANA2_TEST_JEXECUTIONENGINE
+#ifndef JANA2_TESTCASE
 private:
 #endif
 
@@ -70,7 +70,7 @@ private:
     };
 
 
-#ifndef JANA2_TEST_JEXECUTIONENGINE
+#ifndef JANA2_TESTCASE
 private:
 #endif
     // Services
@@ -121,7 +121,7 @@ public:
     void SetTimeoutEnabled(bool timeout_on);
     bool IsTimeoutEnabled() const;
 
-#ifndef JANA2_TEST_JEXECUTIONENGINE
+#ifndef JANA2_TESTCASE
 private:
 #endif
 

@@ -21,9 +21,9 @@ TEST_CASE("ArrowActivationTests") {
     app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
 
-    auto q1 = new JMailbox<JEvent*>();
-    auto q2 = new JMailbox<JEvent*>();
-    auto q3 = new JMailbox<JEvent*>();
+    auto q1 = new JEventQueue(10, 1);
+    auto q2 = new JEventQueue(10, 1);
+    auto q3 = new JEventQueue(10, 1);
 
     auto p1 = new JEventPool(jcm, 10,1);
     auto p2 = new JEventPool(jcm, 10,1);
@@ -60,9 +60,9 @@ TEST_CASE("ArrowActivationTests") {
 
     SECTION("At first, everything is deactivated and all queues are empty") {
 
-        REQUIRE(q1->size() == 0);
-        REQUIRE(q2->size() == 0);
-        REQUIRE(q3->size() == 0);
+        REQUIRE(q1->GetSize(0) == 0);
+        REQUIRE(q2->GetSize(0) == 0);
+        REQUIRE(q3->GetSize(0) == 0);
 
         JScheduler::TopologyState state = scheduler.get_topology_state();
 

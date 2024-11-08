@@ -9,7 +9,7 @@
 #include "JArrowMetrics.h"
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
-#include <JANA/Topology/JMailbox.h>
+#include <JANA/Topology/JEventQueue.h>
 #include <JANA/Topology/JEventPool.h>
 
 
@@ -21,7 +21,7 @@ public:
     using OutputData = std::array<std::pair<JEvent*, int>, 2>;
 
     struct Port {
-        JMailbox<JEvent*>* queue = nullptr;
+        JEventQueue* queue = nullptr;
         JEventPool* pool = nullptr;
         bool is_input = false;
     };
@@ -87,7 +87,7 @@ public:
 
     void create_ports(size_t inputs, size_t outputs);
 
-    void attach(JMailbox<JEvent*>* queue, size_t port);
+    void attach(JEventQueue* queue, size_t port);
     void attach(JEventPool* pool, size_t port);
 
     JEvent* pull(size_t input_port, size_t location_id);

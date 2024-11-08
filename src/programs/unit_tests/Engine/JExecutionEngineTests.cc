@@ -1,5 +1,5 @@
 
-#define JANA2_TEST_JEXECUTIONENGINE
+#define JANA2_TESTCASE
 
 #include "JANA/Engine/JExecutionEngine.h"
 #include "JANA/Utils/JBenchUtils.h"

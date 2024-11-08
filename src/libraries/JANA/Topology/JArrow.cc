@@ -12,7 +12,7 @@ void JArrow::create_ports(size_t inputs, size_t outputs) {
 }
 
 
-void JArrow::attach(JMailbox<JEvent*>* queue, size_t port) {
+void JArrow::attach(JEventQueue* queue, size_t port) {
     // Place index is relative to whether it is an input or not
     // Port index, however, is agnostic to whether it is an input or not
     if (port >= m_ports.size()) {
@@ -36,7 +36,7 @@ JEvent* JArrow::pull(size_t port_index, size_t location_id) {
     JEvent* event = nullptr;
     auto& port = m_ports.at(port_index);
     if (port.queue != nullptr) {
-        port.queue->pop(&event, 1, 1, location_id);
+        event = port.queue->Pop(location_id);
     }
     else if (port.pool != nullptr){
         event = port.pool->Pop( location_id);
@@ -55,7 +55,7 @@ void JArrow::push(OutputData& outputs, size_t output_count, size_t location_id) 
         int port_index = outputs[output].second;
         Port& port = m_ports.at(port_index);
         if (port.queue != nullptr) {
-            port.queue->push(&event, 1, location_id);
+            port.queue->Push(event, location_id);
         }
         else if (port.pool != nullptr) {
             if (!port.is_input) {
@@ -73,7 +73,7 @@ size_t JArrow::get_pending() {
     size_t sum = 0;
     for (Port& port : m_ports) {
         if (port.is_input && port.queue != nullptr) {
-            sum += port.queue->size();
+            sum += port.queue->GetSize(0); // this will go away soon
         }
     }
     return sum;
