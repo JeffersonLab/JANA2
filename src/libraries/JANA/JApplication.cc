@@ -40,13 +40,14 @@ JApplication::JApplication(JParameterManager* params) {
     m_component_manager = std::make_shared<JComponentManager>();
     m_plugin_loader = std::make_shared<JPluginLoader>();
     m_service_locator = std::make_unique<JServiceLocator>();
+    m_execution_engine = std::make_unique<JExecutionEngine>();
 
     ProvideService(m_params);
     ProvideService(m_component_manager);
     ProvideService(m_plugin_loader);
+    ProvideService(m_execution_engine);
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
-
 }
 
 
@@ -131,7 +132,6 @@ void JApplication::Initialize() {
         JVersion::PrintSplash(oss);
         JVersion::PrintVersionDescription(oss);
         LOG_WARN(m_logger) << oss.str() << LOG_END;
-
     }
 
     // Set up wiring
@@ -151,8 +151,7 @@ void JApplication::Initialize() {
     }
 
     topology_builder->create_topology();
-    ProvideService(std::make_shared<JExecutionEngine>());
-    m_execution_engine = m_service_locator->get<JExecutionEngine>();  // Get deps from SL
+    auto execution_engine = m_service_locator->get<JExecutionEngine>();
     m_initialized = true;
     // This needs to be at the end so that m_initialized==false while InitPlugin() is being called
 }
