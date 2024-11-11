@@ -30,9 +30,10 @@ void InspectTopology(JApplication* app) {
     std::cout << topology->print_topology() << std::endl;
 }
 
-void Fire(JApplication* app, int /*arrow_id*/) {
+void Fire(JApplication* app, int arrow_id) {
     auto engine = app->GetService<JExecutionEngine>();
-    // engine->Fire(arrow_id, 0);
+    auto result = engine->Fire(arrow_id, 0);
+    std::cout << to_string(result);
 }
 
 void InspectComponents(JApplication* app) {

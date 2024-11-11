@@ -570,4 +570,36 @@ bool JExecutionEngine::IsTimeoutEnabled() const {
     return m_enable_timeout;
 }
 
+JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
+
+    std::unique_lock<std::mutex> lock(m_mutex);
+    assert(m_runstatus == RunStatus::Paused);
+    JArrow* arrow = m_topology->arrows[arrow_id];
+
+    //ArrowState& arrow_state = m_arrow_states[arrow_id];
+    // TODO: Firing logic presently doesn't need arrow state because fire() doesn't care
+    // about arrows that have finished. However, we are going to need to track arrow.is_finished
+    // separately from arrow.is_active again, if we want to correctly unpause and if we want to be
+    // able to test topology termination. This is why Fire() lives on JExecutionEngine and not
+    // JTopologyBuilder.
+
+    auto port = arrow->get_next_port_index();
+    JEvent* event = nullptr;
+    if (port != -1) {
+        event = arrow->pull(port, location_id);
+    }
+
+    size_t output_count;
+    JArrow::OutputData outputs;
+    JArrow::FireResult result = JArrow::FireResult::NotRunYet;
+
+    if (event != nullptr || port == -1) {
+        arrow->fire(event, outputs, output_count, result);
+    }
+
+    return result;
+
+}
+
+
 

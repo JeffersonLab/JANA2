@@ -120,6 +120,8 @@ public:
     void Wait();
     void Finish();
 
+    JArrow::FireResult Fire(size_t arrow_id, size_t location_id=0);
+
     Perf GetPerf();
     RunStatus GetRunStatus();
     void SetTickerEnabled(bool ticker_on);
