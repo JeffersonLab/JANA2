@@ -223,7 +223,7 @@ void JApplication::Inspect() {
     m_inspecting = false;
 }
 
-void JApplication::Stop(bool wait_until_idle) {
+void JApplication::Stop(bool wait_until_idle, bool finish) {
     if (!m_initialized) {
         // People might call Stop() during Initialize() rather than Run().
         // For instance, during JEventProcessor::Init, or via Ctrl-C.
@@ -237,9 +237,8 @@ void JApplication::Stop(bool wait_until_idle) {
         // whenever we like
         m_execution_engine->RequestDrain();
         if (wait_until_idle) {
-            m_execution_engine->Wait(true);
+            m_execution_engine->Wait(finish);
         }
-
     }
 }
 

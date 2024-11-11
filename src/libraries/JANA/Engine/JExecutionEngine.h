@@ -105,6 +105,12 @@ public:
     JExecutionEngine() {
         SetLoggerName("jana");
     }
+
+    ~JExecutionEngine() {
+        Scale(0);
+        // If we don't shut down the thread team, the condition variable will hang during destruction
+    }
+
     void Init() override;
 
     void Run();

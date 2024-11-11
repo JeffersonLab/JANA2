@@ -46,7 +46,10 @@ public:
             // the time the topology pauses. Consider JEventUnfolder, which may very well hold
             // on to a child event that it won't need because the parent event source has 
             // paused or finished.
-            throw JException("Downscaling a JEventPool is not supported yet!");
+            // For now we don't reduce the size of the pools or queues because there's little
+            // penalty to keeping them around (the main penalty comes from event creation time 
+            // and memory footprint, but if we are downscaling we already paid that)
+            return;
         }
 
         // Resize queues to fit new capacity

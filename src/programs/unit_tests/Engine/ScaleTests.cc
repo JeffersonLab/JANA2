@@ -45,17 +45,19 @@ TEST_CASE("ScaleNWorkerUpdate") {
     auto threads = app.GetNThreads();
     REQUIRE(threads == 4);
 
+    app.Stop(true, false);
+
     app.Scale(8); // Scale blocks until workers have fired up
     threads = app.GetNThreads();
     REQUIRE(threads == 8);
+    app.Stop(true);
 }
 
 TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
 
     JApplication app;
-    app.SetParameterValue("jana:global_loglevel", "INFO");
-    app.SetParameterValue("jana:max_events_in_flight", 8);
-    app.SetTicker(false);
+    app.SetParameterValue("jana:loglevel", "INFO");
+    //app.SetTicker(false);
     app.Add(new scaletest::DummySource);
     app.Add(new scaletest::DummyProcessor);
     app.Initialize();
