@@ -14,7 +14,6 @@
 
 
 class JArrow {
-    friend class JScheduler;
     friend class JTopologyBuilder;
 
 public:
@@ -39,7 +38,6 @@ protected:
     int m_next_input_port=0; // -1 denotes "no input necessary", e.g. for barrier events
     clock_t::time_point m_next_visit_time=clock_t::now();
     std::vector<Port> m_ports;
-    std::vector<JArrow *> m_listeners;    // Downstream Arrows
     JLogger m_logger;
 
 public:
@@ -78,12 +76,6 @@ public:
     virtual void fire(JEvent*, OutputData&, size_t&, JArrowMetrics::Status&) {};
 
     virtual void finalize() {};
-
-    virtual size_t get_pending();
-
-    void attach(JArrow* downstream) {
-        m_listeners.push_back(downstream);
-    };
 
     void create_ports(size_t inputs, size_t outputs);
 

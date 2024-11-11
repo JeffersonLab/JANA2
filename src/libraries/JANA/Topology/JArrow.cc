@@ -69,16 +69,6 @@ void JArrow::push(OutputData& outputs, size_t output_count, size_t location_id) 
     }
 }
 
-size_t JArrow::get_pending() {
-    size_t sum = 0;
-    for (Port& port : m_ports) {
-        if (port.is_input && port.queue != nullptr) {
-            sum += port.queue->GetSize(0); // this will go away soon
-        }
-    }
-    return sum;
-}
-
 void JArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     auto start_total_time = std::chrono::steady_clock::now();

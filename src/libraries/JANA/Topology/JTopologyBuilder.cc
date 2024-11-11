@@ -165,7 +165,6 @@ void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downst
             }
         }
     }
-    upstream->attach(downstream);
 }
 
 

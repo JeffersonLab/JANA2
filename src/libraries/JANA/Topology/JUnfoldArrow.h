@@ -33,20 +33,6 @@ public:
         LOG_INFO(m_logger) << "Finalized JEventUnfolder '" << m_unfolder->GetTypeName() << "'" << LOG_END;
     }
 
-    size_t get_pending() final {
-        size_t sum = 0;
-        for (Port& port : m_ports) {
-            if (port.is_input && port.queue!=nullptr) {
-                sum += port.queue->GetSize(0); // Mechanism is going away anyhow
-            }
-        }
-        if (m_parent_event != nullptr) {
-            sum += 1; 
-            // Handle the case of UnfoldArrow hanging on to a parent
-        }
-        return sum;
-    }
-
     void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) final {
 
         // Take whatever we were given
