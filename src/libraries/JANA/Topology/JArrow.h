@@ -70,7 +70,7 @@ public:
 
     virtual void initialize() { };
 
-    virtual void execute(JArrowMetrics& result, size_t location_id);
+    virtual FireResult execute(size_t location_id);
 
     virtual void fire(JEvent*, OutputData&, size_t&, FireResult&) {};
 

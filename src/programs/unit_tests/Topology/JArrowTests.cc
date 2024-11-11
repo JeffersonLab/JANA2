@@ -59,11 +59,9 @@ TEST_CASE("BasicParallelArrow_ExecuteSucceeds") {
     sut.attach(&input_pool, 0);
     sut.attach(&output_queue, 1);
 
-    JArrowMetrics metrics;
-    sut.execute(metrics, 0);
+    auto result = sut.execute( 0);
 
-    REQUIRE(metrics.get_last_status() == JArrow::FireResult::KeepGoing);
-    REQUIRE(metrics.get_total_message_count() == 1);
+    REQUIRE(result == JArrow::FireResult::KeepGoing);
     REQUIRE(output_queue.GetSize(0) == 1);
     JEvent* event = output_queue.Pop(0);
     REQUIRE(event->GetSingle<TestData>()->x == 22);
@@ -82,11 +80,9 @@ TEST_CASE("BasicParallelArrow_ExecuteFails") {
     sut.attach(&input_queue, 0);
     sut.attach(&output_queue, 1);
 
-    JArrowMetrics metrics;
-    sut.execute(metrics, 0);
+    auto result = sut.execute(0);
 
-    REQUIRE(metrics.get_last_status() == JArrow::FireResult::ComeBackLater);
-    REQUIRE(metrics.get_total_message_count() == 0);
+    REQUIRE(result == JArrow::FireResult::ComeBackLater);
     REQUIRE(output_queue.GetSize(0) == 0);
 }
 

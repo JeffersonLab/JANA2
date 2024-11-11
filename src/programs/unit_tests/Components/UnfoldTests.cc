@@ -64,11 +64,10 @@ TEST_CASE("UnfoldTests_Basic") {
     arrow.attach(&child_pool, JUnfoldArrow::CHILD_IN);
     arrow.attach(&child_queue, JUnfoldArrow::CHILD_OUT);
 
-    JArrowMetrics m;
     arrow.initialize();
-    arrow.execute(m, 0); // First call to execute() picks up the parent and exits early
-    arrow.execute(m, 0); // Second call to execute() picks up the child, calls Unfold(), and emits the newly parented child
-    REQUIRE(m.get_last_status() == JArrow::FireResult::KeepGoing);
+    arrow.execute( 0); // First call to execute() picks up the parent and exits early
+    auto result = arrow.execute( 0); // Second call to execute() picks up the child, calls Unfold(), and emits the newly parented child
+    REQUIRE(result == JArrow::FireResult::KeepGoing);
     REQUIRE(child_queue.GetSize(0) == 1);
     REQUIRE(unfolder.preprocessed_event_nrs.size() == 0);
     REQUIRE(unfolder.unfolded_parent_nrs.size() == 1);
@@ -99,7 +98,6 @@ TEST_CASE("FoldArrowTests") {
     arrow.attach(&child_in, JFoldArrow::CHILD_IN);
     arrow.attach(&child_out, JFoldArrow::CHILD_OUT);
     arrow.attach(&parent_out, JFoldArrow::PARENT_OUT);
-    JArrowMetrics metrics;
     arrow.initialize();
 
     SECTION("One-to-one relationship between timeslices and events") {
@@ -126,7 +124,7 @@ TEST_CASE("FoldArrowTests") {
         ts2->Release(); // One-to-one
         child_in.Push(evt2, 0);
     
-        arrow.execute(metrics, 0);
+        arrow.execute(0);
 
         REQUIRE(child_in.GetSize(0) == 1);
         REQUIRE(child_out.GetSize(0) == 1);
@@ -170,25 +168,25 @@ TEST_CASE("FoldArrowTests") {
         child_in.Push(evt3, 0);
         child_in.Push(evt4, 0);
 
-        arrow.execute(metrics, 0);
+        arrow.execute(0);
 
         REQUIRE(child_in.GetSize(0) == 3);
         REQUIRE(child_out.GetSize(0) == 1);
         REQUIRE(parent_out.GetSize(0) == 0);
 
-        arrow.execute(metrics, 0);
+        arrow.execute(0);
 
         REQUIRE(child_in.GetSize(0) == 2);
         REQUIRE(child_out.GetSize(0) == 2);
         REQUIRE(parent_out.GetSize(0) == 1);
 
-        arrow.execute(metrics, 0);
+        arrow.execute(0);
 
         REQUIRE(child_in.GetSize(0) == 1);
         REQUIRE(child_out.GetSize(0) == 3);
         REQUIRE(parent_out.GetSize(0) == 1);
 
-        arrow.execute(metrics, 0);
+        arrow.execute(0);
 
         REQUIRE(child_in.GetSize(0) == 0);
         REQUIRE(child_out.GetSize(0) == 4);
