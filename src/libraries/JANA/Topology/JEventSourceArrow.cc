@@ -3,7 +3,6 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#include "JANA/Topology/JArrowMetrics.h"
 #include <JANA/JApplication.h>
 #include <JANA/JEventSource.h>
 #include <JANA/Topology/JEventSourceArrow.h>

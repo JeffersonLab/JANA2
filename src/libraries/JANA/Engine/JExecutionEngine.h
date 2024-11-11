@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "JANA/Topology/JArrowMetrics.h"
 #include <JANA/JService.h>
 #include <JANA/Topology/JArrow.h>
 #include <JANA/Topology/JTopologyBuilder.h>

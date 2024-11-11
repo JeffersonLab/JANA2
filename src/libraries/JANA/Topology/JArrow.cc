@@ -102,4 +102,15 @@ JArrow::FireResult JArrow::execute(size_t location_id) {
 }
 
 
+std::string to_string(JArrow::FireResult r) {
+    switch (r) {
+        case JArrow::FireResult::NotRunYet:     return "NotRunYet";
+        case JArrow::FireResult::KeepGoing:     return "KeepGoing";
+        case JArrow::FireResult::ComeBackLater: return "ComeBackLater";
+        case JArrow::FireResult::Finished:      return "Finished";
+        default:                                return "Error";
+    }
+}
+
+
 

@@ -1,6 +1,5 @@
 
 #include "JExecutionEngine.h"
-#include "JANA/Topology/JArrowMetrics.h"
 
 #include <chrono>
 #include <cstddef>

@@ -6,7 +6,6 @@
 #include <cassert>
 #include <vector>
 
-#include "JArrowMetrics.h"
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
 #include <JANA/Topology/JEventQueue.h>
@@ -18,7 +17,7 @@ class JArrow {
 
 public:
     using OutputData = std::array<std::pair<JEvent*, int>, 2>;
-    using FireResult = JArrowMetrics::Status;
+    enum class FireResult {NotRunYet, KeepGoing, ComeBackLater, Finished};
 
     struct Port {
         JEventQueue* queue = nullptr;
@@ -86,6 +85,4 @@ public:
 };
 
 
-
-
-
+std::string to_string(JArrow::FireResult r);
