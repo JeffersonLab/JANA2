@@ -33,7 +33,7 @@ public:
         LOG_INFO(m_logger) << "Finalized JEventUnfolder '" << m_unfolder->GetTypeName() << "'" << LOG_END;
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) final {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final {
 
         // Take whatever we were given
         if (this->m_next_input_port == PARENT_IN) {
@@ -52,7 +52,7 @@ public:
         if (m_parent_event == nullptr) {
             m_next_input_port = PARENT_IN;
             output_count = 0;
-            status = JArrowMetrics::Status::KeepGoing;
+            status = JArrow::FireResult::KeepGoing;
             return;
         }
 
@@ -60,7 +60,7 @@ public:
         if (m_child_event == nullptr) {
             m_next_input_port = CHILD_IN;
             output_count = 0;
-            status = JArrowMetrics::Status::KeepGoing;
+            status = JArrow::FireResult::KeepGoing;
             return;
         }
 
@@ -84,7 +84,7 @@ public:
             m_parent_event = nullptr;
             output_count = 0;
             m_next_input_port = PARENT_IN;
-            status = JArrowMetrics::Status::KeepGoing;
+            status = JArrow::FireResult::KeepGoing;
             LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
             return;
         }
@@ -94,7 +94,7 @@ public:
             output_count = 1;
             m_child_event = nullptr;
             m_next_input_port = CHILD_IN;
-            status = JArrowMetrics::Status::KeepGoing;
+            status = JArrow::FireResult::KeepGoing;
             return;
         }
         else if (result == JEventUnfolder::Result::NextChildNextParent) {
@@ -105,7 +105,7 @@ public:
             m_child_event = nullptr;
             m_parent_event = nullptr;
             m_next_input_port = PARENT_IN;
-            status = JArrowMetrics::Status::KeepGoing;
+            status = JArrow::FireResult::KeepGoing;
             LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
             return;
         }

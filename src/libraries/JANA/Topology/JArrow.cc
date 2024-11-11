@@ -75,7 +75,7 @@ void JArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     if (m_next_visit_time > start_total_time) {
         // If we haven't reached the next visit time, exit immediately
-        result.update(JArrowMetrics::Status::ComeBackLater, 0, 0, std::chrono::milliseconds(0), std::chrono::milliseconds(0));
+        result.update(JArrow::FireResult::ComeBackLater, 0, 0, std::chrono::milliseconds(0), std::chrono::milliseconds(0));
         return;
     }
 
@@ -89,7 +89,7 @@ void JArrow::execute(JArrowMetrics& result, size_t location_id) {
 
         auto end_total_time = std::chrono::steady_clock::now();
 
-        result.update(JArrowMetrics::Status::ComeBackLater, 0, 1, std::chrono::milliseconds(0), end_total_time - start_total_time);
+        result.update(JArrow::FireResult::ComeBackLater, 0, 1, std::chrono::milliseconds(0), end_total_time - start_total_time);
         return;
     }
 
@@ -100,7 +100,7 @@ void JArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     OutputData outputs;
     size_t output_count;
-    JArrowMetrics::Status status = JArrowMetrics::Status::KeepGoing;
+    JArrow::FireResult status = JArrow::FireResult::KeepGoing;
 
     fire(input, outputs, output_count, status);
 

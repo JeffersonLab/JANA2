@@ -21,7 +21,7 @@ public:
 
     void add_processor(JEventProcessor* proc);
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) final;
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final;
     void initialize() final;
     void finalize() final;
 };

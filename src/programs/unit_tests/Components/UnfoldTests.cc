@@ -68,7 +68,7 @@ TEST_CASE("UnfoldTests_Basic") {
     arrow.initialize();
     arrow.execute(m, 0); // First call to execute() picks up the parent and exits early
     arrow.execute(m, 0); // Second call to execute() picks up the child, calls Unfold(), and emits the newly parented child
-    REQUIRE(m.get_last_status() == JArrowMetrics::Status::KeepGoing);
+    REQUIRE(m.get_last_status() == JArrow::FireResult::KeepGoing);
     REQUIRE(child_queue.GetSize(0) == 1);
     REQUIRE(unfolder.preprocessed_event_nrs.size() == 0);
     REQUIRE(unfolder.unfolded_parent_nrs.size() == 1);

@@ -28,12 +28,12 @@ struct RandIntArrow : public JArrow {
         attach(output_queue, 1);
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
         if (emit_count >= emit_limit) {
             outputs[0] = {event, 0}; // Send event back to the input pool
             output_count = 1;
-            status = JArrowMetrics::Status::Finished;
+            status = JArrow::FireResult::Finished;
             return;
         }
 
@@ -45,7 +45,7 @@ struct RandIntArrow : public JArrow {
 
         outputs[0] = {event, 1}; // Send event back to the input pool
         output_count = 1;
-        status = (emit_count == emit_limit) ? JArrowMetrics::Status::Finished : JArrowMetrics::Status::KeepGoing;
+        status = (emit_count == emit_limit) ? JArrow::FireResult::Finished : JArrow::FireResult::KeepGoing;
         // This design lets us declare Finished immediately on the last event, instead of after
 
         LOG_DEBUG(JArrow::m_logger) << "RandIntSource emitted event " << emit_count << " with value " << data->x << LOG_END;
@@ -63,7 +63,7 @@ struct MultByTwoArrow : public JArrow {
         attach(output_queue, 1);
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
         auto prev = event->Get<EventData>("first");
         auto x = prev.at(0)->x;
         auto next = new EventData { .x=x, .y=x*2.0 };
@@ -71,7 +71,7 @@ struct MultByTwoArrow : public JArrow {
 
         outputs[0] = {event, 1};
         output_count = 1;
-        status = JArrowMetrics::Status::KeepGoing;
+        status = JArrow::FireResult::KeepGoing;
     }
 };
 
@@ -85,7 +85,7 @@ struct SubOneArrow : public JArrow {
         attach(output_queue, 1);
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
         auto prev = event->Get<EventData>("second");
         auto x = prev.at(0)->x;
         auto y = prev.at(0)->y;
@@ -95,7 +95,7 @@ struct SubOneArrow : public JArrow {
 
         outputs[0] = {event, 1};
         output_count = 1;
-        status = JArrowMetrics::Status::KeepGoing;
+        status = JArrow::FireResult::KeepGoing;
     }
 };
 
@@ -111,14 +111,14 @@ struct SumArrow : public JArrow {
         attach(pool, 1);
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
         auto prev = event->Get<EventData>("third");
         auto z = prev.at(0)->z;
         sum += z;
 
         outputs[0] = {event, 1};
         output_count = 1;
-        status = JArrowMetrics::Status::KeepGoing;
+        status = JArrow::FireResult::KeepGoing;
     }
 };
 

@@ -391,7 +391,7 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_poi
         task.arrow->push(task.outputs, task.output_count, worker.location_id);
     }
 
-    if (task.status == JArrowMetrics::Status::Finished) {
+    if (task.status == JArrow::FireResult::Finished) {
         // If this is an eventsource self-terminating (the only thing that returns Status::Finished right now) it will
         // have already called DoClose(). I'm tempted to always call DoClose() as part of JExecutionEngine::Finish() instead, however.
 
@@ -415,7 +415,7 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_poi
     task.arrow_id = -1;
     task.input_event = nullptr;
     task.output_count = 0;
-    task.status = JArrowMetrics::Status::NotRunYet;
+    task.status = JArrow::FireResult::NotRunYet;
 };
 
 
@@ -453,7 +453,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
                 task.input_port = port;
                 task.input_event = event;
                 task.output_count = 0;
-                task.status = JArrowMetrics::Status::NotRunYet;
+                task.status = JArrow::FireResult::NotRunYet;
                 return;
             }
         }
@@ -497,7 +497,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
     task.input_port = -1;
     task.input_event = nullptr;
     task.output_count = 0;
-    task.status = JArrowMetrics::Status::NotRunYet;
+    task.status = JArrow::FireResult::NotRunYet;
 }
 
 

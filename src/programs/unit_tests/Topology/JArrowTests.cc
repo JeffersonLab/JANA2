@@ -13,13 +13,13 @@ struct BasicParallelArrow : public JArrow {
         set_is_parallel(true);
     }
 
-    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& process_status) {
+    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& process_status) {
 
         input->Insert(new TestData {.x=22});
 
         outputs[0] = {input, 1};
         output_count = 1;
-        process_status = JArrowMetrics::Status::KeepGoing;
+        process_status = JArrow::FireResult::KeepGoing;
 
     }
 };
@@ -34,7 +34,7 @@ TEST_CASE("BasicParallelArrow_Fire") {
     BasicParallelArrow sut;
     JArrow::OutputData outputs;
     size_t output_count;
-    JArrowMetrics::Status status;
+    JArrow::FireResult status;
 
     sut.fire(event.get(), outputs, output_count, status);
 
@@ -42,7 +42,7 @@ TEST_CASE("BasicParallelArrow_Fire") {
     REQUIRE(output_count == 1);
     REQUIRE(outputs[0].first == event.get());
     REQUIRE(outputs[0].second == 1);
-    REQUIRE(status == JArrowMetrics::Status::KeepGoing);
+    REQUIRE(status == JArrow::FireResult::KeepGoing);
 }
 
 
@@ -62,7 +62,7 @@ TEST_CASE("BasicParallelArrow_ExecuteSucceeds") {
     JArrowMetrics metrics;
     sut.execute(metrics, 0);
 
-    REQUIRE(metrics.get_last_status() == JArrowMetrics::Status::KeepGoing);
+    REQUIRE(metrics.get_last_status() == JArrow::FireResult::KeepGoing);
     REQUIRE(metrics.get_total_message_count() == 1);
     REQUIRE(output_queue.GetSize(0) == 1);
     JEvent* event = output_queue.Pop(0);
@@ -85,7 +85,7 @@ TEST_CASE("BasicParallelArrow_ExecuteFails") {
     JArrowMetrics metrics;
     sut.execute(metrics, 0);
 
-    REQUIRE(metrics.get_last_status() == JArrowMetrics::Status::ComeBackLater);
+    REQUIRE(metrics.get_last_status() == JArrow::FireResult::ComeBackLater);
     REQUIRE(metrics.get_total_message_count() == 0);
     REQUIRE(output_queue.GetSize(0) == 0);
 }

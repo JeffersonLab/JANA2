@@ -17,7 +17,7 @@ void JEventTapArrow::add_processor(JEventProcessor* proc) {
     m_procs.push_back(proc);
 }
 
-void JEventTapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+void JEventTapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventProcessor* proc : m_procs) {
@@ -28,7 +28,7 @@ void JEventTapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_cou
     }
     outputs[0] = {event, 1};
     output_count = 1;
-    status = JArrowMetrics::Status::KeepGoing;
+    status = JArrow::FireResult::KeepGoing;
     LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
 }
 

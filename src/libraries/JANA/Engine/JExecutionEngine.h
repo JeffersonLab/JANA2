@@ -44,7 +44,7 @@ private:
         int input_port = -1;
         JArrow::OutputData outputs;
         size_t output_count = 0;
-        JArrowMetrics::Status status = JArrowMetrics::Status::NotRunYet;
+        JArrow::FireResult status = JArrow::FireResult::NotRunYet;
     };
 
     struct ArrowState {

@@ -18,6 +18,7 @@ class JArrow {
 
 public:
     using OutputData = std::array<std::pair<JEvent*, int>, 2>;
+    using FireResult = JArrowMetrics::Status;
 
     struct Port {
         JEventQueue* queue = nullptr;
@@ -30,7 +31,6 @@ private:
     bool m_is_parallel;        // Whether or not it is safe to parallelize
     bool m_is_source;          // Whether or not this arrow should activate/drain the topology
     bool m_is_sink;            // Whether or not tnis arrow contributes to the final event count
-    JArrowMetrics m_metrics;   // Performance information accumulated over all workers
 
 protected:
     using clock_t = std::chrono::steady_clock;
@@ -46,7 +46,6 @@ public:
     bool is_parallel() { return m_is_parallel; }
     bool is_source() { return m_is_source; }
     bool is_sink() { return m_is_sink; }
-    JArrowMetrics& get_metrics() { return m_metrics; }
     Port& get_port(size_t port_index) { return m_ports.at(port_index); }
     int get_next_port_index() { return m_next_input_port; }
 
@@ -73,7 +72,7 @@ public:
 
     virtual void execute(JArrowMetrics& result, size_t location_id);
 
-    virtual void fire(JEvent*, OutputData&, size_t&, JArrowMetrics::Status&) {};
+    virtual void fire(JEvent*, OutputData&, size_t&, FireResult&) {};
 
     virtual void finalize() {};
 

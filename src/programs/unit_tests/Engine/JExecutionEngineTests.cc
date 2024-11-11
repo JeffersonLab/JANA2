@@ -124,7 +124,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
         task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
-        REQUIRE(task.status == JArrowMetrics::Status::KeepGoing);
+        REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
         sut->ExchangeTask(task);
         REQUIRE(task.arrow != nullptr);
@@ -135,7 +135,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
         REQUIRE(task.outputs[0].second == 0); // Failure => return to pool
-        REQUIRE(task.status == JArrowMetrics::Status::Finished);
+        REQUIRE(task.status == JArrow::FireResult::Finished);
 
         sut->ExchangeTask(task);
         REQUIRE(task.arrow != nullptr);
@@ -145,7 +145,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
         task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
-        REQUIRE(task.status == JArrowMetrics::Status::KeepGoing);
+        REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
         sut->ExchangeTask(task);
         REQUIRE(task.arrow != nullptr);
@@ -155,7 +155,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
         task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
-        REQUIRE(task.status == JArrowMetrics::Status::KeepGoing);
+        REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
         sut->ExchangeTask(task, true);
         REQUIRE(task.arrow == nullptr);

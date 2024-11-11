@@ -54,7 +54,7 @@ public:
         }
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) final {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final {
 
         assert(m_next_input_port == CHILD_IN);
 
@@ -68,7 +68,7 @@ public:
             m_folder->DoFold(*event, *parent);
         }
 
-        status = JArrowMetrics::Status::KeepGoing;
+        status = JArrow::FireResult::KeepGoing;
         outputs[0] = {event, CHILD_OUT};
         output_count = 1;
 
