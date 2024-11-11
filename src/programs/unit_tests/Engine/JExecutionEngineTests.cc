@@ -86,7 +86,9 @@ TEST_CASE("JExecutionEngine_StateMachine") {
         task.worker_id = worker_id;
         sut->ExchangeTask(task, true);
 
-        sut->Wait(true);
+        sut->Wait();
+        sut->Finish();
+
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Finished);
     }
 }
@@ -160,7 +162,8 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
         REQUIRE(sut->GetPerf().event_count == 1);
 
-        sut->Wait(true);
+        sut->Wait();
+        sut->Finish();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Finished);
     }
 }

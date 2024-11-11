@@ -117,7 +117,7 @@ public:
     void Scale(size_t nthreads);
     void RequestPause();
     void RequestDrain();
-    void Wait(bool finish=false);
+    void Wait();
     void Finish();
 
     Perf GetPerf();

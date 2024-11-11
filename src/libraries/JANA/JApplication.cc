@@ -174,7 +174,7 @@ void JApplication::Initialize() {
 /// See JProcessingController::run() for more details.
 ///
 /// @param [in] wait_until_finished If true (default) do not return until the work has completed.
-void JApplication::Run(bool wait_until_finished) {
+void JApplication::Run(bool wait_until_stopped, bool finish) {
 
     Initialize();
     if(m_quitting) return;
@@ -195,11 +195,14 @@ void JApplication::Run(bool wait_until_finished) {
     m_execution_engine->Scale(m_desired_nthreads);
     m_execution_engine->Run();
 
-    if (!wait_until_finished) {
+    if (!wait_until_stopped) {
         return;
     }
 
-    m_execution_engine->Wait(true);
+    m_execution_engine->Wait();
+    if (finish) {
+        m_execution_engine->Finish();
+    }
 
     // Join all threads
     if (!m_skip_join) {
@@ -223,7 +226,7 @@ void JApplication::Inspect() {
     m_inspecting = false;
 }
 
-void JApplication::Stop(bool wait_until_idle, bool finish) {
+void JApplication::Stop(bool wait_until_stopped, bool finish) {
     if (!m_initialized) {
         // People might call Stop() during Initialize() rather than Run().
         // For instance, during JEventProcessor::Init, or via Ctrl-C.
@@ -236,8 +239,11 @@ void JApplication::Stop(bool wait_until_idle, bool finish) {
         // Once we've called Initialize(), we can Finish() all of our components
         // whenever we like
         m_execution_engine->RequestDrain();
-        if (wait_until_idle) {
-            m_execution_engine->Wait(finish);
+        if (wait_until_stopped) {
+            m_execution_engine->Wait();
+            if (finish) {
+                m_execution_engine->Finish();
+            }
         }
     }
 }

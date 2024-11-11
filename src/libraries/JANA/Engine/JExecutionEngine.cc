@@ -164,7 +164,7 @@ void JExecutionEngine::RequestDrain() {
     m_condvar.notify_all();
 }
 
-void JExecutionEngine::Wait(bool finish) {
+void JExecutionEngine::Wait() {
 
     size_t last_event_count = 0;
     clock_t::time_point last_measurement_time = clock_t::now();
@@ -200,9 +200,6 @@ void JExecutionEngine::Wait(bool finish) {
         HandleFailures();
     }
 
-    if (finish) {
-        Finish();
-    }
     PrintFinalReport();
 }
 
