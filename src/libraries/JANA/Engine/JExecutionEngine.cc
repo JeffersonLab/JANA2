@@ -38,7 +38,6 @@ void JExecutionEngine::Init() {
         arrow_state.is_sink = arrow->is_sink();
         arrow_state.is_parallel = arrow->is_parallel();
         arrow_state.next_input = arrow->get_next_port_index();
-
     }
 }
 
@@ -51,8 +50,13 @@ void JExecutionEngine::Run() {
     m_time_at_start = clock_t::now();
     m_event_count_at_start = m_event_count_at_finish;
 
+    // Reactivate topology
+    for (auto& arrow: m_arrow_states) {
+        arrow.is_active = true;
+        // TODO: is_active => {paused, running, finished}
+    }
+
     m_runstatus = RunStatus::Running;
-    // Put some initial tasks in the active task queue?
 
     lock.unlock();
     m_condvar.notify_one();
@@ -69,7 +73,7 @@ void JExecutionEngine::Scale(size_t nthreads) {
 
     std::unique_lock<std::mutex> lock(m_mutex);
 
-    assert(m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Finished);
+    assert(m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Finished || m_runstatus == RunStatus::Failed);
 
     auto prev_nthreads = m_worker_states.size();
 
@@ -175,7 +179,9 @@ void JExecutionEngine::Wait() {
             CheckTimeout();
         }
         perf = GetPerf();
-        if (perf.runstatus == RunStatus::Paused || perf.runstatus == RunStatus::Finished) {
+        if (perf.runstatus == RunStatus::Paused || 
+            perf.runstatus == RunStatus::Finished || 
+            perf.runstatus == RunStatus::Failed) {
             break;
         }
 
@@ -237,7 +243,7 @@ void JExecutionEngine::HandleFailures() {
     // In reality all callers are going to print everything they can about the exception and exit.
     for (auto& worker: m_worker_states) {
         if (worker->stored_exception != nullptr) {
-            throw worker->stored_exception;
+            std::rethrow_exception(worker->stored_exception);
         }
     }
     if (timeout_found) {
@@ -252,6 +258,9 @@ void JExecutionEngine::Finish() {
     LOG_DEBUG(GetLogger()) << "Finishing processing..." << LOG_END;
     for (auto* arrow : m_topology->arrows) {
         arrow->finalize();
+    }
+    for (auto* pool: m_topology->pools) {
+        pool->Finalize();
     }
     m_runstatus = RunStatus::Finished;
     LOG_INFO(GetLogger()) << "Finished processing." << LOG_END;
@@ -385,10 +394,10 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_poi
         if (!task.arrow->get_port(task.outputs[output].second).is_input) {
             arrow_state.events_processed++;
         }
-
-        // Put each output in its correct queue or pool
-        task.arrow->push(task.outputs, task.output_count, worker.location_id);
     }
+
+    // Put each output in its correct queue or pool
+    task.arrow->push(task.outputs, task.output_count, worker.location_id);
 
     if (task.status == JArrow::FireResult::Finished) {
         // If this is an eventsource self-terminating (the only thing that returns Status::Finished right now) it will
@@ -442,8 +451,8 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
             JArrow* arrow = m_topology->arrows[arrow_id];
             // TODO: consider setting state.next_input, retrieving via fire()
             auto port = arrow->get_next_port_index();
-            JEvent* event = arrow->pull(port, worker.location_id);
-            if (event != nullptr) {
+            JEvent* event = (port == -1) ? nullptr : arrow->pull(port, worker.location_id);
+            if (event != nullptr || port == -1) {
                 // We've found a task that is ready!
                 state.active_tasks += 1;
 
@@ -594,6 +603,7 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 
     if (event != nullptr || port == -1) {
         arrow->fire(event, outputs, output_count, result);
+        arrow->push(outputs, output_count, location_id);
     }
 
     return result;

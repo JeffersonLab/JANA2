@@ -80,11 +80,12 @@ public:
 
         if (result == JEventUnfolder::Result::KeepChildNextParent) {
             m_parent_event->Release(); // Decrement the reference count so that this can be recycled
+            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
+
             m_parent_event = nullptr;
             output_count = 0;
             m_next_input_port = PARENT_IN;
             status = JArrow::FireResult::KeepGoing;
-            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
             return;
         }
         else if (result == JEventUnfolder::Result::NextChildKeepParent) {
@@ -101,11 +102,11 @@ public:
             m_parent_event->Release(); // Decrement the reference count so that this can be recycled
             outputs[0] = {m_child_event, CHILD_OUT};
             output_count = 1;
+            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
             m_child_event = nullptr;
             m_parent_event = nullptr;
             m_next_input_port = PARENT_IN;
             status = JArrow::FireResult::KeepGoing;
-            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
             return;
         }
         else {

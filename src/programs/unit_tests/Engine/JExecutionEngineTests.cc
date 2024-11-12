@@ -140,7 +140,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         sut->ExchangeTask(task);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventMap2");
-        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
         REQUIRE(sut->GetPerf().event_count == 0);
 
         task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
@@ -150,7 +150,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         sut->ExchangeTask(task);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventTap");
-        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
+        REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
         REQUIRE(sut->GetPerf().event_count == 0);
 
         task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);

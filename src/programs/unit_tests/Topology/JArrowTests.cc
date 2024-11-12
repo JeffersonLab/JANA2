@@ -82,7 +82,7 @@ TEST_CASE("BasicParallelArrow_ExecuteFails") {
 
     auto result = sut.execute(0);
 
-    REQUIRE(result == JArrow::FireResult::ComeBackLater);
+    REQUIRE(result == JArrow::FireResult::NotRunYet);
     REQUIRE(output_queue.GetSize(0) == 0);
 }
 

@@ -14,24 +14,27 @@ TEST_CASE("NThreads") {
     app.Add(new scaletest::DummySource);
 
     SECTION("If nthreads not provided, default to 1") {
-        app.Run(true);
+        app.Run(false);
         auto threads = app.GetNThreads();
         REQUIRE(threads == 1);
+        app.Stop(true);
     }
 
     SECTION("If nthreads=Ncores, use ncores") {
         auto ncores = JCpuInfo::GetNumCpus();
         app.SetParameterValue("nthreads", "Ncores");
-        app.Run(true);
+        app.Run(false);
         auto threads = app.GetNThreads();
         REQUIRE(threads == ncores);
+        app.Stop(true);
     }
 
     SECTION("If nthreads is something else, use that") {
         app.SetParameterValue("nthreads", 17);
-        app.Run(true);
+        app.Run(false);
         auto threads = app.GetNThreads();
         REQUIRE(threads == 17);
+        app.Stop(true);
     }
 }
 
@@ -53,13 +56,14 @@ TEST_CASE("ScaleNWorkerUpdate") {
     app.Stop(true);
 }
 
-TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
+TEST_CASE("ScaleThroughputImprovement") {
 
     JApplication app;
     app.SetParameterValue("jana:loglevel", "INFO");
     //app.SetTicker(false);
     app.Add(new scaletest::DummySource);
     app.Add(new scaletest::DummyProcessor);
+    app.Add(new JFactoryGeneratorT<scaletest::DummyFactory>());
     app.Initialize();
     auto jee = app.GetService<JExecutionEngine>();
 
@@ -67,17 +71,18 @@ TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
     jee->Run();
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto throughput_hz_1 = jee->GetPerf().throughput_hz;
+    std::cout << "nthreads=1: throughput_hz=" << throughput_hz_1 << std::endl;
     jee->RequestPause();
     jee->Wait();
-    std::cout << "nthreads=1: throughput_hz=" << throughput_hz_1 << std::endl;
 
     jee->Scale(2);
     jee->Run();
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto throughput_hz_2 = jee->GetPerf().throughput_hz;
+    std::cout << "nthreads=2: throughput_hz=" << throughput_hz_2 << std::endl;
+    REQUIRE(jee->GetPerf().runstatus == JExecutionEngine::RunStatus::Running);
     jee->RequestPause();
     jee->Wait();
-    std::cout << "nthreads=2: throughput_hz=" << throughput_hz_2 << std::endl;
 
     jee->Scale(4);
     jee->Run();

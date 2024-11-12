@@ -84,7 +84,7 @@ JArrow::FireResult JArrow::execute(size_t location_id) {
 
     if (input == nullptr && m_next_input_port != -1) {
         // Failed to obtain the input we needed; arrow is NOT ready to fire
-        return FireResult::ComeBackLater;
+        return FireResult::NotRunYet;
     }
 
     // Obtained the input we needed; arrow is ready to fire
