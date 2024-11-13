@@ -66,6 +66,7 @@ private:
         clock_t::time_point last_checkout_time = clock_t::now();
         std::exception_ptr stored_exception = nullptr;
         bool is_stop_requested = false;
+        bool is_event_warmed_up = false;
         bool is_timed_out = false;
     };
 

@@ -218,8 +218,9 @@ bool JExecutionEngine::CheckTimeout() {
     auto now = clock_t::now();
     bool timeout_detected = false;
     for (auto& worker: m_worker_states) {
+        auto timeout_s = (worker->is_event_warmed_up) ? m_timeout_s : m_warmup_timeout_s;
         auto duration_s = std::chrono::duration_cast<std::chrono::seconds>(now - worker->last_checkout_time).count();
-        if (duration_s > m_timeout_s) {
+        if (duration_s > timeout_s) {
             worker->is_timed_out = true;
             timeout_detected = true;
             m_runstatus = RunStatus::Failed;
@@ -467,6 +468,9 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
                 task.input_event = event;
                 task.output_count = 0;
                 task.status = JArrow::FireResult::NotRunYet;
+
+                // TODO: Track the event number as well, or maybe even the event itself
+                worker.is_event_warmed_up = event->IsWarmedUp();
                 return;
             }
         }

@@ -116,6 +116,7 @@ void JEvent::Clear() {
     mInspector.Reset();
     mCallGraph.Reset();
     mReferenceCount = 1;
+    mIsWarmedUp = true;
 }
 
 void JEvent::Finish() {
