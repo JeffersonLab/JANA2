@@ -44,7 +44,13 @@ void JExecutionEngine::Init() {
 
 void JExecutionEngine::Run() {
     std::unique_lock<std::mutex> lock(m_mutex);
-    assert(m_runstatus == RunStatus::Paused);
+
+    if (m_runstatus == RunStatus::Failed) {
+        throw JException("Cannot switch topology runstatus to Running because it is already Failed");
+    }
+    if (m_runstatus == RunStatus::Finished) {
+        throw JException("Cannot switch topology runstatus to Running because it is already Finished");
+    }
 
     // Set start time and event count
     m_time_at_start = clock_t::now();
@@ -73,8 +79,6 @@ void JExecutionEngine::Scale(size_t nthreads) {
     // an external thread team, should the need arise.
 
     std::unique_lock<std::mutex> lock(m_mutex);
-
-    assert(m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Finished || m_runstatus == RunStatus::Failed);
 
     auto prev_nthreads = m_worker_states.size();
 
