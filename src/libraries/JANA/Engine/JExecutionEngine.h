@@ -47,10 +47,11 @@ private:
     };
 
     struct ArrowState {
+        enum class Status { Paused, Running, Finished };
+        Status status = Status::Paused;
         bool is_parallel = false;
         bool is_source = false;
         bool is_sink = false;
-        bool is_active = true;
         size_t next_input = 0;
         size_t active_tasks = 0;
         size_t events_processed;

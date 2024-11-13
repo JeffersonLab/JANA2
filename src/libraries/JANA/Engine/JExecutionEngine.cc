@@ -52,8 +52,9 @@ void JExecutionEngine::Run() {
 
     // Reactivate topology
     for (auto& arrow: m_arrow_states) {
-        arrow.is_active = true;
-        // TODO: is_active => {paused, running, finished}
+        if (arrow.status == ArrowState::Status::Paused) {
+            arrow.status = ArrowState::Status::Running;
+        }
     }
 
     m_runstatus = RunStatus::Running;
@@ -146,7 +147,9 @@ void JExecutionEngine::RequestPause() {
     assert(m_runstatus == RunStatus::Running);
     m_runstatus = RunStatus::Pausing;
     for (auto& arrow: m_arrow_states) {
-        arrow.is_active = false;
+        if (arrow.status == ArrowState::Status::Running) {
+            arrow.status = ArrowState::Status::Paused;
+        }
     }
     LOG_WARN(GetLogger()) << "Requested pause" << LOG_END;
     lock.unlock();
@@ -159,7 +162,9 @@ void JExecutionEngine::RequestDrain() {
     m_runstatus = RunStatus::Draining;
     for (auto& arrow: m_arrow_states) {
         if (arrow.is_source) {
-            arrow.is_active = false;
+            if (arrow.status == ArrowState::Status::Running) {
+                arrow.status = ArrowState::Status::Paused;
+            }
         }
     }
     LOG_WARN(GetLogger()) << "Requested drain" << LOG_END;
@@ -404,13 +409,13 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_poi
         // have already called DoClose(). I'm tempted to always call DoClose() as part of JExecutionEngine::Finish() instead, however.
 
         // Mark arrow as finished
-        arrow_state.is_active = false;
+        arrow_state.status = ArrowState::Status::Finished;
 
         // Check if this switches the topology to Draining()
         if (m_runstatus == RunStatus::Running) {
             bool draining = true;
             for (auto& arrow: m_arrow_states) {
-                if (arrow.is_source && arrow.is_active) {
+                if (arrow.is_source && arrow.status == ArrowState::Status::Running) {
                     draining = false;
                 }
             }
@@ -442,7 +447,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
                 continue;
             }
 
-            if (!state.is_active) {
+            if (state.status != ArrowState::Status::Running) {
                 continue;
             }
             // TODO: Support next_visit_time so that we don't hammer blocked event sources
@@ -481,9 +486,9 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
         auto& state = m_arrow_states[arrow_id];
         auto* arrow = m_topology->arrows[arrow_id];
         LOG_TRACE(GetLogger()) << "Scheduler: arrow=" << arrow->get_name() << ", is_source=" << state.is_source << ", active_tasks=" << state.active_tasks << ", is_parallel=" << state.is_parallel << LOG_END;
-        any_active_source_found |= (state.is_active && state.is_source);
+        any_active_source_found |= (state.status == ArrowState::Status::Running && state.is_source);
         any_active_task_found |= (state.active_tasks != 0);
-        // A source might have been deactivated by RequestPause, Ctrl-C, etc, and might be inactive even though it still has active tasksa
+        // A source might have been deactivated by RequestPause, Ctrl-C, etc, and might be inactive even though it still has active tasks
     }
 
     if (!any_active_source_found && !any_active_task_found) {
@@ -581,21 +586,23 @@ bool JExecutionEngine::IsTimeoutEnabled() const {
 JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 
     std::unique_lock<std::mutex> lock(m_mutex);
-    assert(m_runstatus == RunStatus::Paused);
     JArrow* arrow = m_topology->arrows[arrow_id];
 
-    //ArrowState& arrow_state = m_arrow_states[arrow_id];
-    // TODO: Firing logic presently doesn't need arrow state because fire() doesn't care
-    // about arrows that have finished. However, we are going to need to track arrow.is_finished
-    // separately from arrow.is_active again, if we want to correctly unpause and if we want to be
-    // able to test topology termination. This is why Fire() lives on JExecutionEngine and not
-    // JTopologyBuilder.
+    ArrowState& arrow_state = m_arrow_states[arrow_id];
+    if (arrow_state.status == ArrowState::Status::Finished) {
+        return JArrow::FireResult::Finished;
+    }
+    if (!arrow_state.is_parallel && arrow_state.active_tasks != 0) {
+        return JArrow::FireResult::NotRunYet;
+    }
+    arrow_state.active_tasks += 1;
 
     auto port = arrow->get_next_port_index();
     JEvent* event = nullptr;
     if (port != -1) {
         event = arrow->pull(port, location_id);
     }
+    lock.unlock();
 
     size_t output_count;
     JArrow::OutputData outputs;
@@ -603,7 +610,10 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 
     if (event != nullptr || port == -1) {
         arrow->fire(event, outputs, output_count, result);
+        lock.lock();
         arrow->push(outputs, output_count, location_id);
+        arrow_state.active_tasks -= 1;
+        lock.unlock();
     }
 
     return result;
