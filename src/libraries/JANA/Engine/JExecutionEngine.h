@@ -36,8 +36,6 @@ private:
 #endif
 
     struct Task {
-        int arrow_id = -1;
-        int worker_id = -1;
         JArrow* arrow = nullptr;
         JEvent* input_event = nullptr;
         int input_port = -1;
@@ -140,10 +138,10 @@ private:
     void PrintFinalReport();
     bool CheckTimeout();
     void HandleFailures();
-    void RunWorker(WorkerState& worker);
-    void ExchangeTask(Task& task, bool nonblocking=false);
-    void CheckinCompletedTask_Unsafe(Task& task, clock_t::time_point checkin_time);
-    void FindNextReadyTask_Unsafe(Task& task);
+    void RunWorker(size_t worker_id);
+    void ExchangeTask(Task& task, size_t worker_id, bool nonblocking=false);
+    void CheckinCompletedTask_Unsafe(Task& task, WorkerState& worker, clock_t::time_point checkin_time);
+    void FindNextReadyTask_Unsafe(Task& task, WorkerState& worker);
 
 };
 

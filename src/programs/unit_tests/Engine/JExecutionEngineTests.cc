@@ -63,8 +63,7 @@ TEST_CASE("JExecutionEngine_StateMachine") {
         // Need to trigger the Pause since there are no workers to do so
         auto worker_id = sut->RegisterExternalWorker();
         JExecutionEngine::Task task;
-        task.worker_id = worker_id;
-        sut->ExchangeTask(task, true);
+        sut->ExchangeTask(task, worker_id, true);
 
         sut->Wait();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
@@ -83,8 +82,7 @@ TEST_CASE("JExecutionEngine_StateMachine") {
         // Need to trigger the Pause since there are no workers to do so
         auto worker_id = sut->RegisterExternalWorker();
         JExecutionEngine::Task task;
-        task.worker_id = worker_id;
-        sut->ExchangeTask(task, true);
+        sut->ExchangeTask(task, worker_id, true);
 
         sut->Wait();
         sut->Finish();
@@ -114,9 +112,8 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
 
         JExecutionEngine::Task task;
-        task.worker_id = worker_id;
 
-        sut->ExchangeTask(task);
+        sut->ExchangeTask(task, worker_id);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // Only task available at this point!
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
@@ -126,7 +123,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
-        sut->ExchangeTask(task);
+        sut->ExchangeTask(task, worker_id);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // This will fail due to jana:nevents
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
@@ -137,7 +134,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(task.outputs[0].second == 0); // Failure => return to pool
         REQUIRE(task.status == JArrow::FireResult::Finished);
 
-        sut->ExchangeTask(task);
+        sut->ExchangeTask(task, worker_id);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventMap2");
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
@@ -147,7 +144,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
-        sut->ExchangeTask(task);
+        sut->ExchangeTask(task, worker_id);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventTap");
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
@@ -157,7 +154,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
-        sut->ExchangeTask(task, true);
+        sut->ExchangeTask(task, worker_id, true);
         REQUIRE(task.arrow == nullptr);
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
         REQUIRE(sut->GetPerf().event_count == 1);

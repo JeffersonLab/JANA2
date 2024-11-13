@@ -87,7 +87,8 @@ void JExecutionEngine::Scale(size_t nthreads) {
             worker->is_stop_requested = false;
             worker->cpu_id = m_topology->mapping.get_cpu_id(worker_id);
             worker->location_id = m_topology->mapping.get_loc_id(worker_id);
-            worker->thread = new std::thread(&JExecutionEngine::RunWorker, this, std::ref(*worker));
+            worker->thread = new std::thread(&JExecutionEngine::RunWorker, this, worker_id);
+            LOG_DEBUG(GetLogger()) << "Launching worker thread " << worker_id << " on cpu=" << worker->cpu_id << ", location=" << worker->location_id << LOG_END;
             m_worker_states.push_back(std::move(worker));
 
             bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
@@ -323,50 +324,46 @@ int JExecutionEngine::RegisterExternalWorker() {
 }
 
 
-void JExecutionEngine::RunWorker(WorkerState& worker) {
-    Task task;
-    task.worker_id = worker.worker_id;
+void JExecutionEngine::RunWorker(size_t worker_id) {
 
-    LOG_DEBUG(GetLogger()) << "Launched worker thread " << worker.worker_id << ". cpu=" << worker.cpu_id << ", location=" << worker.location_id << LOG_END;
+    LOG_DEBUG(GetLogger()) << "Launched worker thread " << worker_id << LOG_END;
     try {
+        Task task;
         while (true) {
-            ExchangeTask(task);
+            ExchangeTask(task, worker_id);
             if (task.arrow == nullptr) break; // Exit as soon as ExchangeTask() stops blocking
             task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
         }
-        LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker.worker_id << LOG_END;
+        LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker_id << LOG_END;
     }
     catch (...) {
-        LOG_ERROR(GetLogger()) << "Exception on worker thread " << worker.worker_id << LOG_END;
+        LOG_ERROR(GetLogger()) << "Exception on worker thread " << worker_id << LOG_END;
         std::unique_lock<std::mutex> lock(m_mutex);
         m_runstatus = RunStatus::Failed;
-        worker.stored_exception = std::current_exception();
+        m_worker_states.at(worker_id)->stored_exception = std::current_exception();
     }
 }
 
 
-void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
+void JExecutionEngine::ExchangeTask(Task& task, size_t worker_id, bool nonblocking) {
 
     auto checkin_time = std::chrono::steady_clock::now();
     // It's important to start measuring this _before_ acquiring the lock because acquiring the lock
     // may be a big part of the scheduler overhead
 
     std::unique_lock<std::mutex> lock(m_mutex);
+    
+    auto& worker = *m_worker_states.at(worker_id);
 
     if (task.arrow != nullptr) {
-        CheckinCompletedTask_Unsafe(task, checkin_time);
+        CheckinCompletedTask_Unsafe(task, worker, checkin_time);
     }
 
-    if (task.worker_id == -1 || task.worker_id >= (int) m_worker_states.size()) {
-        // This happens if we are an external worker and someone called Scale() to deactivate us
-        return;
-    }
-    auto& worker = *m_worker_states[task.worker_id];
     if (worker.is_stop_requested) {
         return;
     }
 
-    FindNextReadyTask_Unsafe(task);
+    FindNextReadyTask_Unsafe(task, worker);
 
     if (nonblocking) { return; }
     auto idle_time_start = clock_t::now();
@@ -374,7 +371,7 @@ void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
 
     while (task.arrow == nullptr && !worker.is_stop_requested) {
         m_condvar.wait(lock);
-        FindNextReadyTask_Unsafe(task);
+        FindNextReadyTask_Unsafe(task, worker);
     }
     worker.last_checkout_time = clock_t::now();
 
@@ -384,7 +381,6 @@ void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
     else {
         worker.last_event_nr = 0;
     }
-    worker.last_arrow_id = task.arrow_id;
     m_total_idle_duration += (worker.last_checkout_time - idle_time_start);
 
     lock.unlock();
@@ -395,12 +391,11 @@ void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
 }
 
 
-void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_point checkin_time) {
+void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, WorkerState& worker, clock_t::time_point checkin_time) {
 
-    auto& worker = *m_worker_states.at(task.worker_id);
     auto processing_duration = checkin_time - worker.last_checkout_time;
 
-    ArrowState& arrow_state = m_arrow_states.at(task.arrow_id);
+    ArrowState& arrow_state = m_arrow_states.at(worker.last_arrow_id);
 
     arrow_state.active_tasks -= 1;
     arrow_state.total_processing_duration += processing_duration;
@@ -434,17 +429,17 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, clock_t::time_poi
             }
         }
     }
+    worker.last_arrow_id = -1;
+    worker.last_event_nr = 0;
+
     task.arrow = nullptr;
-    task.arrow_id = -1;
     task.input_event = nullptr;
     task.output_count = 0;
     task.status = JArrow::FireResult::NotRunYet;
 };
 
 
-void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
-
-    auto& worker = *m_worker_states.at(task.worker_id);
+void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker) {
 
     if (m_runstatus == RunStatus::Running || m_runstatus == RunStatus::Draining) {
         // We only pick up a new task if the topology is running or draining.
@@ -471,19 +466,20 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
                 // We've found a task that is ready!
                 state.active_tasks += 1;
 
-                task.arrow_id = arrow_id;
                 task.arrow = arrow;
                 task.input_port = port;
                 task.input_event = event;
                 task.output_count = 0;
                 task.status = JArrow::FireResult::NotRunYet;
 
-                // TODO: Track the event number as well, or maybe even the event itself
+                worker.last_arrow_id = arrow_id;
                 if (event != nullptr) {
                     worker.is_event_warmed_up = event->IsWarmedUp();
+                    worker.last_event_nr = event->GetEventNumber();
                 }
                 else {
                     worker.is_event_warmed_up = true; // Use shorter timeout
+                    worker.last_event_nr = 0;
                 }
                 return;
             }
@@ -523,7 +519,8 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
         // I think this is the ONLY site where the topology gets paused. Verify this?
     }
 
-    task.arrow_id = -1;
+    worker.last_arrow_id = -1;
+
     task.arrow = nullptr;
     task.input_port = -1;
     task.input_event = nullptr;
