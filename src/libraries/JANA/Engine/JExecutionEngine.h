@@ -68,6 +68,8 @@ private:
         bool is_stop_requested = false;
         bool is_event_warmed_up = false;
         bool is_timed_out = false;
+        uint64_t last_event_nr = 0;
+        size_t last_arrow_id = 0;
     };
 
 

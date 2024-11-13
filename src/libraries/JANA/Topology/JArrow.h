@@ -40,7 +40,7 @@ protected:
     JLogger m_logger;
 
 public:
-    std::string get_name() { return m_name; }
+    const std::string& get_name() { return m_name; }
     JLogger& get_logger() { return m_logger; }
     bool is_parallel() { return m_is_parallel; }
     bool is_source() { return m_is_source; }

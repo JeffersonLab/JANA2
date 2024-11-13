@@ -44,6 +44,7 @@ TEST_CASE("ScaleNWorkerUpdate") {
     app.SetParameterValue("jana:loglevel","warn");
     app.Add(new scaletest::DummySource);
     app.Add(new scaletest::DummyProcessor);
+    app.Add(new JFactoryGeneratorT<scaletest::DummyFactory>());
     app.Run(false);
     auto threads = app.GetNThreads();
     REQUIRE(threads == 4);

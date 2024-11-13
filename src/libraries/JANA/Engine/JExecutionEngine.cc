@@ -236,12 +236,13 @@ void JExecutionEngine::HandleFailures() {
     // First, we log all of the failures we've found
     bool timeout_found = false;
     for (auto& worker: m_worker_states) {
+        const auto& arrow_name = m_topology->arrows[worker->last_arrow_id]->get_name();
         if (worker->is_timed_out) {
-            LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << LOG_END;
+            LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
             timeout_found = true;
         }
         if (worker->stored_exception != nullptr) {
-            LOG_FATAL(GetLogger()) << "Exception in worker thread " << worker->worker_id << LOG_END;
+            LOG_FATAL(GetLogger()) << "Exception in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
         }
     }
 
@@ -376,6 +377,14 @@ void JExecutionEngine::ExchangeTask(Task& task, bool nonblocking) {
         FindNextReadyTask_Unsafe(task);
     }
     worker.last_checkout_time = clock_t::now();
+
+    if (task.input_event != nullptr) {
+        worker.last_event_nr = task.input_event->GetEventNumber();
+    }
+    else {
+        worker.last_event_nr = 0;
+    }
+    worker.last_arrow_id = task.arrow_id;
     m_total_idle_duration += (worker.last_checkout_time - idle_time_start);
 
     lock.unlock();
@@ -470,7 +479,12 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task) {
                 task.status = JArrow::FireResult::NotRunYet;
 
                 // TODO: Track the event number as well, or maybe even the event itself
-                worker.is_event_warmed_up = event->IsWarmedUp();
+                if (event != nullptr) {
+                    worker.is_event_warmed_up = event->IsWarmedUp();
+                }
+                else {
+                    worker.is_event_warmed_up = true; // Use shorter timeout
+                }
                 return;
             }
         }
