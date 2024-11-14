@@ -72,14 +72,13 @@ public:
     // Controlling processing
 
     void Initialize(void);
-    void Run(bool wait_until_stopped = true, bool finish=true);
+    void Run(bool wait_until_stopped=true, bool finish=true);
     void Scale(int nthreads);
-    void Stop(bool wait_until_stopped = false, bool finish=true);
+    void Stop(bool wait_until_stopped=false, bool finish=true);
     void Inspect();
     void Quit(bool skip_join = false);
     void SetExitCode(int exitCode);
     int GetExitCode();
-    void HandleSigint();
 
 
     // Performance/status monitoring

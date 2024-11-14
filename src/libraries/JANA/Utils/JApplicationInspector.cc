@@ -79,9 +79,6 @@ void InspectCollection(JApplication* app, std::string collection_name) {
 
 void InspectApplication(JApplication* app) {
     auto engine = app->GetService<JExecutionEngine>();
-    engine->RequestPause();
-    engine->Wait();
-    app->SetTimeoutEnabled(false);
     PrintMenu();
 
     while (true) {
@@ -125,15 +122,16 @@ void InspectApplication(JApplication* app) {
                 Fire(app, std::stoi(args[0]));
             }
             else if (token == "Resume" || token == "r") {
-                app->Run(false);
+                engine->Run();
                 break;
             }
             else if ((token == "Scale" || token == "s") && (args.size() == 1)) {
-                app->Scale(std::stoi(args[0]));
+                engine->Scale(std::stoi(args[0]));
+                engine->Run();
                 break;
             }
             else if (token == "Quit" || token == "q") {
-                app->Quit(true);
+                engine->RequestDrain();
                 break;
             }
             else if (token == "Help" || token == "h") {

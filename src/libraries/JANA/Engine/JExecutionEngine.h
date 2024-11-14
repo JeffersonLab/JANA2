@@ -20,7 +20,7 @@ public:
     using clock_t = std::chrono::steady_clock;
 
     enum class RunStatus { Paused, Running, Pausing, Draining, Failed, Finished };
-
+    enum class InterruptStatus { NoInterruptsSupervised, NoInterruptsUnsupervised, InspectRequested, InspectInProgress, PauseAndQuit };
 
     struct Perf {
         RunStatus runstatus;
@@ -91,6 +91,7 @@ private:
     std::vector<std::unique_ptr<WorkerState>> m_worker_states;
     std::vector<ArrowState> m_arrow_states;
     RunStatus m_runstatus = RunStatus::Paused;
+    std::atomic<InterruptStatus> m_interrupt_status { InterruptStatus::NoInterruptsUnsupervised };
 
     // Metrics
     size_t m_event_count_at_start = 0;
@@ -129,6 +130,10 @@ public:
     bool IsTickerEnabled() const;
     void SetTimeoutEnabled(bool timeout_on);
     bool IsTimeoutEnabled() const;
+
+    void HandleSIGINT();
+    void HandleSIGUSR1();
+    void HandleSIGUSR2();
 
 #ifndef JANA2_TESTCASE
 private:

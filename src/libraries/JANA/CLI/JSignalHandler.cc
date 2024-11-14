@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JSignalHandler.h"
+#include <JANA/Engine/JExecutionEngine.h>
 
 #include <csignal>
 #include <thread>
@@ -115,7 +116,12 @@ void send_overall_report_to_named_pipe() {
 /// The first 2 SIGINT signals received will tell JANA to shutdown gracefully.
 /// On the 3rd SIGINT, the program will try to exit immediately.
 void handle_sigint(int) {
-    g_app->HandleSigint();
+    if (g_app->IsInitialized()) {
+        g_app->GetService<JExecutionEngine>()->HandleSIGINT();
+    }
+    else {
+        exit(-2);
+    }
 }
 
 void handle_usr1(int) {

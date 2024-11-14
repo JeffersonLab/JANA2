@@ -1,8 +1,10 @@
 
 #include "JExecutionEngine.h"
+#include <JANA/Utils/JApplicationInspector.h>
 
 #include <chrono>
 #include <cstddef>
+#include <cstdio>
 #include <ctime>
 #include <exception>
 #include <mutex>
@@ -149,7 +151,7 @@ void JExecutionEngine::Scale(size_t nthreads) {
 
 void JExecutionEngine::RequestPause() {
     std::unique_lock<std::mutex> lock(m_mutex);
-    assert(m_runstatus == RunStatus::Running);
+    if (m_runstatus != RunStatus::Running) return;
     m_runstatus = RunStatus::Pausing;
     for (auto& arrow: m_arrow_states) {
         if (arrow.status == ArrowState::Status::Running) {
@@ -163,7 +165,7 @@ void JExecutionEngine::RequestPause() {
 
 void JExecutionEngine::RequestDrain() {
     std::unique_lock<std::mutex> lock(m_mutex);
-    assert(m_runstatus == RunStatus::Running);
+    if (m_runstatus != RunStatus::Running) return;
     m_runstatus = RunStatus::Draining;
     for (auto& arrow: m_arrow_states) {
         if (arrow.is_source) {
@@ -179,6 +181,7 @@ void JExecutionEngine::RequestDrain() {
 
 void JExecutionEngine::Wait() {
 
+    m_interrupt_status = InterruptStatus::NoInterruptsSupervised;
     size_t last_event_count = 0;
     clock_t::time_point last_measurement_time = clock_t::now();
 
@@ -188,8 +191,26 @@ void JExecutionEngine::Wait() {
         if (m_enable_timeout) {
             CheckTimeout();
         }
+
+        if (m_interrupt_status == InterruptStatus::InspectRequested) {
+            if (m_runstatus == RunStatus::Paused) {
+                PrintFinalReport();
+                LOG_INFO(GetLogger()) << "Entering inspector" << LOG_END;
+                m_enable_timeout = false;
+                m_interrupt_status = InterruptStatus::InspectInProgress;
+                InspectApplication(GetApplication());
+                m_interrupt_status = InterruptStatus::NoInterruptsSupervised;
+            }
+            else {
+                RequestPause();
+            }
+        }
+        else if (m_interrupt_status == InterruptStatus::PauseAndQuit) {
+            RequestPause();
+        }
+
         perf = GetPerf();
-        if (perf.runstatus == RunStatus::Paused || 
+        if ((perf.runstatus == RunStatus::Paused && m_interrupt_status != InterruptStatus::InspectRequested) || 
             perf.runstatus == RunStatus::Finished || 
             perf.runstatus == RunStatus::Failed) {
             break;
@@ -637,6 +658,20 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 
     return result;
 
+}
+
+
+void JExecutionEngine::HandleSIGINT() {
+    InterruptStatus status = m_interrupt_status;
+    switch (status) {
+        case InterruptStatus::NoInterruptsSupervised: m_interrupt_status = InterruptStatus::InspectRequested; break;
+        case InterruptStatus::InspectRequested: m_interrupt_status = InterruptStatus::PauseAndQuit; break;
+        case InterruptStatus::NoInterruptsUnsupervised:
+        case InterruptStatus::PauseAndQuit:
+        case InterruptStatus::InspectInProgress: 
+            std::cout << std::endl;
+            exit(-2);
+    }
 }
 
 

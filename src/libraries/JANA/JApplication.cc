@@ -206,7 +206,6 @@ void JApplication::Run(bool wait_until_stopped, bool finish) {
 
     // Join all threads
     if (!m_skip_join) {
-        LOG_INFO(m_logger) << "Merging threads ..." << LOG_END;
         m_execution_engine->Scale(0);
     }
 }
@@ -283,29 +282,6 @@ int JApplication::GetExitCode() {
     /// value can be set via the SetExitCode method.
 
     return m_exit_code;
-}
-
-void JApplication::HandleSigint() {
-    m_sigint_count++;
-    switch (m_sigint_count) {
-        case 1:
-            LOG_WARN(m_logger) << "Entering Inspector..." << LOG_END;
-            m_inspecting = true;
-            m_execution_engine->RequestPause();
-            break;
-        case 2:
-            LOG_FATAL(m_logger) << "Exiting gracefully..." << LOG_END;
-            japp->Quit(false);
-            break;
-        case 3:
-            LOG_FATAL(m_logger) << "Exiting without waiting for threads to join..." << LOG_END;
-            japp->Quit(true);
-            break;
-        default:
-            LOG_FATAL(m_logger) << "Exiting immediately." << LOG_END;
-            exit(-2);
-    }
-
 }
 
 const JComponentSummary& JApplication::GetComponentSummary() {
