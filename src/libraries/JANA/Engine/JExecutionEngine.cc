@@ -211,8 +211,15 @@ void JExecutionEngine::Wait() {
             m_report_requested = false;
         }
 
+        perf = GetPerf();
+        if ((perf.runstatus == RunStatus::Paused && m_interrupt_status != InterruptStatus::InspectRequested) || 
+            perf.runstatus == RunStatus::Finished || 
+            perf.runstatus == RunStatus::Failed) {
+            break;
+        }
+
         if (m_interrupt_status == InterruptStatus::InspectRequested) {
-            if (m_runstatus == RunStatus::Paused) {
+            if (perf.runstatus == RunStatus::Paused) {
                 PrintFinalReport();
                 LOG_INFO(GetLogger()) << "Entering inspector" << LOG_END;
                 m_enable_timeout = false;
@@ -226,13 +233,6 @@ void JExecutionEngine::Wait() {
         }
         else if (m_interrupt_status == InterruptStatus::PauseAndQuit) {
             RequestPause();
-        }
-
-        perf = GetPerf();
-        if ((perf.runstatus == RunStatus::Paused && m_interrupt_status != InterruptStatus::InspectRequested) || 
-            perf.runstatus == RunStatus::Finished || 
-            perf.runstatus == RunStatus::Failed) {
-            break;
         }
 
         if (m_show_ticker) {
@@ -284,6 +284,7 @@ void JExecutionEngine::HandleFailures() {
         if (worker->is_timed_out) {
             LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
             pthread_kill(worker->thread->native_handle(), SIGUSR2);
+            LOG_INFO(GetLogger()) << "Worker thread signalled; waiting for backtrace capture." << LOG_END;
             worker->backtrace.WaitForCapture();
         }
         if (worker->stored_exception != nullptr) {
@@ -692,7 +693,7 @@ void JExecutionEngine::HandleSIGINT() {
         case InterruptStatus::NoInterruptsUnsupervised:
         case InterruptStatus::PauseAndQuit:
         case InterruptStatus::InspectInProgress: 
-            exit(-2);
+            _exit(-2);
     }
 }
 
@@ -707,6 +708,7 @@ void JExecutionEngine::HandleSIGUSR2() {
 }
 
 void JExecutionEngine::HandleSIGTSTP() {
+    std::cout << std::endl;
     m_report_requested = true;
 }
 
