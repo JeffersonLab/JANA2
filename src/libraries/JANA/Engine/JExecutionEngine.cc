@@ -8,7 +8,10 @@
 #include <ctime>
 #include <exception>
 #include <mutex>
+#include <csignal>
 
+thread_local int jana2_worker_id = -1;
+thread_local JBacktrace* jana2_worker_backtrace = nullptr;
 
 void JExecutionEngine::Init() {
     auto params = GetApplication()->GetJParameterManager();
@@ -93,7 +96,7 @@ void JExecutionEngine::Scale(size_t nthreads) {
             worker->is_stop_requested = false;
             worker->cpu_id = m_topology->mapping.get_cpu_id(worker_id);
             worker->location_id = m_topology->mapping.get_loc_id(worker_id);
-            worker->thread = new std::thread(&JExecutionEngine::RunWorker, this, worker_id);
+            worker->thread = new std::thread(&JExecutionEngine::RunWorker, this, worker_id, &worker->backtrace);
             LOG_DEBUG(GetLogger()) << "Launching worker thread " << worker_id << " on cpu=" << worker->cpu_id << ", location=" << worker->location_id << LOG_END;
             m_worker_states.push_back(std::move(worker));
 
@@ -260,12 +263,12 @@ void JExecutionEngine::HandleFailures() {
     std::unique_lock<std::mutex> lock(m_mutex);
 
     // First, we log all of the failures we've found
-    bool timeout_found = false;
     for (auto& worker: m_worker_states) {
         const auto& arrow_name = m_topology->arrows[worker->last_arrow_id]->get_name();
         if (worker->is_timed_out) {
             LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
-            timeout_found = true;
+            pthread_kill(worker->thread->native_handle(), SIGUSR2);
+            worker->backtrace.WaitForCapture();
         }
         if (worker->stored_exception != nullptr) {
             LOG_FATAL(GetLogger()) << "Exception in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
@@ -278,9 +281,11 @@ void JExecutionEngine::HandleFailures() {
         if (worker->stored_exception != nullptr) {
             std::rethrow_exception(worker->stored_exception);
         }
-    }
-    if (timeout_found) {
-        throw JException("Worker timeout!");
+        if (worker->is_timed_out) {
+            auto ex = JException("Timeout in worker thread");
+            ex.stacktrace = worker->backtrace.ToString();
+            throw ex;
+        }
     }
 }
 
@@ -329,7 +334,7 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
     return result;
 }
 
-int JExecutionEngine::RegisterExternalWorker() {
+std::pair<int,JBacktrace*> JExecutionEngine::RegisterExternalWorker() {
     std::unique_lock<std::mutex> lock(m_mutex);
     auto worker_id = m_worker_states.size();
     auto worker = std::make_unique<WorkerState>();
@@ -344,14 +349,16 @@ int JExecutionEngine::RegisterExternalWorker() {
     if (pin_to_cpu) {
         JCpuInfo::PinThreadToCpu(worker->thread, worker->cpu_id);
     }
-    return worker_id;
+    return {worker_id, &worker->backtrace};
 
 }
 
 
-void JExecutionEngine::RunWorker(size_t worker_id) {
+void JExecutionEngine::RunWorker(size_t worker_id, JBacktrace* worker_backtrace) {
 
     LOG_DEBUG(GetLogger()) << "Launched worker thread " << worker_id << LOG_END;
+    jana2_worker_id = worker_id;
+    jana2_worker_backtrace = worker_backtrace;
     try {
         Task task;
         while (true) {
@@ -657,7 +664,6 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     }
 
     return result;
-
 }
 
 
@@ -671,6 +677,12 @@ void JExecutionEngine::HandleSIGINT() {
         case InterruptStatus::InspectInProgress: 
             std::cout << std::endl;
             exit(-2);
+    }
+}
+
+void JExecutionEngine::HandleSIGUSR2() {
+    if (jana2_worker_backtrace != nullptr) {
+        jana2_worker_backtrace->Capture(3);
     }
 }
 

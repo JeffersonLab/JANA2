@@ -7,12 +7,14 @@
 #include <JANA/JService.h>
 #include <JANA/Topology/JArrow.h>
 #include <JANA/Topology/JTopologyBuilder.h>
+#include <JANA/Utils/JBacktrace.h>
 
 #include <chrono>
 #include <condition_variable>
 #include <ctime>
 #include <exception>
 
+extern thread_local int jana2_worker_id;
 
 class JExecutionEngine : public JService {
 
@@ -68,6 +70,7 @@ private:
         bool is_timed_out = false;
         uint64_t last_event_nr = 0;
         size_t last_arrow_id = 0;
+        JBacktrace backtrace;
     };
 
 
@@ -139,11 +142,11 @@ public:
 private:
 #endif
 
-    int RegisterExternalWorker();
+    std::pair<int, JBacktrace*> RegisterExternalWorker();
     void PrintFinalReport();
     bool CheckTimeout();
     void HandleFailures();
-    void RunWorker(size_t worker_id);
+    void RunWorker(size_t worker_id, JBacktrace* worker_backtrace);
     void ExchangeTask(Task& task, size_t worker_id, bool nonblocking=false);
     void CheckinCompletedTask_Unsafe(Task& task, WorkerState& worker, clock_t::time_point checkin_time);
     void FindNextReadyTask_Unsafe(Task& task, WorkerState& worker);

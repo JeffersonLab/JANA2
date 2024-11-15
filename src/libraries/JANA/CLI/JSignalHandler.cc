@@ -130,7 +130,9 @@ void handle_usr1(int) {
 }
 
 void handle_usr2(int) {
-    produce_thread_report();
+    if (g_app->IsInitialized()) {
+        g_app->GetService<JExecutionEngine>()->HandleSIGUSR2();
+    }
 }
 
 void handle_sigsegv(int /*signal_number*/, siginfo_t* /*signal_info*/, void* /*context*/) {

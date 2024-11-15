@@ -61,7 +61,7 @@ TEST_CASE("JExecutionEngine_StateMachine") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Pausing);
         
         // Need to trigger the Pause since there are no workers to do so
-        auto worker_id = sut->RegisterExternalWorker();
+        auto [worker_id, _]= sut->RegisterExternalWorker();
         JExecutionEngine::Task task;
         sut->ExchangeTask(task, worker_id, true);
 
@@ -80,7 +80,7 @@ TEST_CASE("JExecutionEngine_StateMachine") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Pausing);
 
         // Need to trigger the Pause since there are no workers to do so
-        auto worker_id = sut->RegisterExternalWorker();
+        auto [worker_id, _] = sut->RegisterExternalWorker();
         JExecutionEngine::Task task;
         sut->ExchangeTask(task, worker_id, true);
 
@@ -103,7 +103,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
     SECTION("SelfTermination") {
 
-        auto worker_id = sut->RegisterExternalWorker();
+        auto [worker_id, _] = sut->RegisterExternalWorker();
         REQUIRE(worker_id == 0); // Not threadsafe doing this
 
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
