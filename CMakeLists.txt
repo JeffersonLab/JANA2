@@ -220,6 +220,9 @@ add_subdirectory(src/python)
 install(DIRECTORY scripts/ DESTINATION bin FILES_MATCHING PATTERN "jana-*.py"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
 
+    install(FILES "scripts/jana-status.sh" RENAME "jana-status" DESTINATION "bin"
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
+
 include(${CMAKE_SOURCE_DIR}/cmake/MakeConfig.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/MakeJanaThis.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/MakeJVersionH.cmake)

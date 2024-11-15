@@ -33,12 +33,22 @@ void JExecutionEngine::Init() {
 
     params->SetDefaultParameter("jana:ticker_interval", m_ticker_ms, "Controls the ticker interval (in ms)");
 
-    params->SetDefaultParameter("jana:status_fname", m_path_to_named_pipe,
+    auto p = params->SetDefaultParameter("jana:status_fname", m_path_to_named_pipe,
         "Filename of named pipe for retrieving instantaneous status info");
 
-
-    LOG_WARN(GetLogger()) << "Creating pipe named \"" << m_path_to_named_pipe << "\" for status info." << LOG_END;
+    size_t pid = getpid();
     mkfifo(m_path_to_named_pipe.c_str(), 0666);
+
+    LOG_WARN(GetLogger()) << "To pause processing and inspect, press Ctrl-C." << LOG_END;
+    LOG_WARN(GetLogger()) << "For a clean shutdown, press Ctrl-C twice." << LOG_END;
+    LOG_WARN(GetLogger()) << "For a hard shutdown, press Ctrl-C three times." << LOG_END;
+
+    if (p->IsDefault()) {
+        LOG_WARN(GetLogger()) << "For worker status information, press Ctrl-Z, or run `jana-status " << pid << "`" << LOG_END;
+    }
+    else {
+        LOG_WARN(GetLogger()) << "For worker status information, press Ctrl-Z, or run `jana-status " << pid << " " << m_path_to_named_pipe << "`" << LOG_END;
+    }
 
 
     // Not sure how I feel about putting this here yet, but I think it will at least work in both cases it needs to.
@@ -206,9 +216,14 @@ void JExecutionEngine::RunSupervisor() {
             CheckTimeout();
         }
 
-        if (m_report_requested) {
-            PrintWorkerReport();
-            m_report_requested = false;
+        if (m_print_worker_report_requested) {
+            PrintWorkerReport(false);
+            m_print_worker_report_requested = false;
+        }
+
+        if (m_send_worker_report_requested) {
+            PrintWorkerReport(true);
+            m_send_worker_report_requested = false;
         }
 
         perf = GetPerf();
@@ -698,7 +713,7 @@ void JExecutionEngine::HandleSIGINT() {
 }
 
 void JExecutionEngine::HandleSIGUSR1() {
-    m_report_requested = true;
+    m_send_worker_report_requested = true;
 }
 
 void JExecutionEngine::HandleSIGUSR2() {
@@ -709,10 +724,10 @@ void JExecutionEngine::HandleSIGUSR2() {
 
 void JExecutionEngine::HandleSIGTSTP() {
     std::cout << std::endl;
-    m_report_requested = true;
+    m_print_worker_report_requested = true;
 }
 
-void JExecutionEngine::PrintWorkerReport() {
+void JExecutionEngine::PrintWorkerReport(bool send_to_pipe) {
 
     std::unique_lock<std::mutex> lock(m_mutex);
     LOG_INFO(GetLogger()) << "Generating worker report. It may take some time to retrieve each symbol's debug information." << LOG_END;
@@ -735,22 +750,20 @@ void JExecutionEngine::PrintWorkerReport() {
     }
     auto s = oss.str();
     LOG_WARN(GetLogger()) << s << LOG_END;
-    /*
 
-    std::string path_to_named_pipe = "/tmp/jana_status";
-    mkfifo(path_to_named_pipe.c_str(), 0666);
-    
-    int fd = open(path_to_named_pipe.c_str(), O_WRONLY);
-    if (fd >= 0) {
-        write(fd, s.c_str(), s.length()+1);
-        close(fd);
+    if (send_to_pipe) {
+
+        int fd = open(m_path_to_named_pipe.c_str(), O_WRONLY);
+        if (fd >= 0) {
+            write(fd, s.c_str(), s.length()+1);
+            close(fd);
+        }
+        else {
+            LOG_ERROR(GetLogger()) << "Unable to open named pipe '" << m_path_to_named_pipe << "' for writing. \n"
+            << "  You can use a different named pipe for status info by setting the parameter `jana:status_fname`.\n"
+            << "  The status report will still show up in the log." << LOG_END;
+        }
     }
-    else {
-        LOG_ERROR(GetLogger()) << "Unable to open named pipe '" << path_to_named_pipe << "' for writing. \n"
-        << "  You can use a different named pipe for status info by setting the parameter `jana:status_fname`.\n"
-        << "  The status report will still show up in the log." << LOG_END;
-    }
-    */
 }
 
 

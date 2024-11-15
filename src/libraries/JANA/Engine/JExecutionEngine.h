@@ -101,7 +101,8 @@ private:
     std::vector<ArrowState> m_arrow_states;
     RunStatus m_runstatus = RunStatus::Paused;
     std::atomic<InterruptStatus> m_interrupt_status { InterruptStatus::NoInterruptsUnsupervised };
-    std::atomic_bool m_report_requested {false};
+    std::atomic_bool m_print_worker_report_requested {false};
+    std::atomic_bool m_send_worker_report_requested {false};
 
     // Metrics
     size_t m_event_count_at_start = 0;
@@ -153,7 +154,7 @@ public:
 private:
 #endif
 
-    void PrintWorkerReport();
+    void PrintWorkerReport(bool);
     void PrintFinalReport();
     bool CheckTimeout();
     void HandleFailures();
