@@ -68,32 +68,32 @@ TEST_CASE("ScaleThroughputImprovement") {
     app.Initialize();
     auto jee = app.GetService<JExecutionEngine>();
 
-    jee->Scale(1);
-    jee->Run();
+    jee->ScaleWorkers(1);
+    jee->RunTopology();
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto throughput_hz_1 = jee->GetPerf().throughput_hz;
     std::cout << "nthreads=1: throughput_hz=" << throughput_hz_1 << std::endl;
-    jee->RequestPause();
-    jee->Wait();
+    jee->PauseTopology();
+    jee->RunSupervisor();
 
-    jee->Scale(2);
-    jee->Run();
+    jee->ScaleWorkers(2);
+    jee->RunTopology();
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto throughput_hz_2 = jee->GetPerf().throughput_hz;
     std::cout << "nthreads=2: throughput_hz=" << throughput_hz_2 << std::endl;
     REQUIRE(jee->GetPerf().runstatus == JExecutionEngine::RunStatus::Running);
-    jee->RequestPause();
-    jee->Wait();
+    jee->PauseTopology();
+    jee->RunSupervisor();
 
-    jee->Scale(4);
-    jee->Run();
+    jee->ScaleWorkers(4);
+    jee->RunTopology();
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto throughput_hz_4 = jee->GetPerf().throughput_hz;
-    jee->RequestPause();
-    jee->Wait();
+    jee->PauseTopology();
+    jee->RunSupervisor();
     std::cout << "nthreads=4: throughput_hz=" << throughput_hz_4 << std::endl;
 
-    jee->Finish();
+    jee->FinishTopology();
 
     REQUIRE(throughput_hz_2 > throughput_hz_1*1.5);
     REQUIRE(throughput_hz_4 > throughput_hz_2*1.25);

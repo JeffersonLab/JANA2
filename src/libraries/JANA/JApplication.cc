@@ -192,29 +192,29 @@ void JApplication::Run(bool wait_until_stopped, bool finish) {
     m_params->PrintParameters();
 
     LOG_WARN(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
-    m_execution_engine->Scale(m_desired_nthreads);
-    m_execution_engine->Run();
+    m_execution_engine->ScaleWorkers(m_desired_nthreads);
+    m_execution_engine->RunTopology();
 
     if (!wait_until_stopped) {
         return;
     }
 
-    m_execution_engine->Wait();
+    m_execution_engine->RunSupervisor();
     if (finish) {
-        m_execution_engine->Finish();
+        m_execution_engine->FinishTopology();
     }
 
     // Join all threads
     if (!m_skip_join) {
-        m_execution_engine->Scale(0);
+        m_execution_engine->ScaleWorkers(0);
     }
 }
 
 
 void JApplication::Scale(int nthreads) {
     LOG_WARN(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
-    m_execution_engine->Scale(nthreads);
-    m_execution_engine->Run();
+    m_execution_engine->ScaleWorkers(nthreads);
+    m_execution_engine->RunTopology();
 }
 
 void JApplication::Inspect() {
@@ -237,11 +237,11 @@ void JApplication::Stop(bool wait_until_stopped, bool finish) {
     else {
         // Once we've called Initialize(), we can Finish() all of our components
         // whenever we like
-        m_execution_engine->RequestDrain();
+        m_execution_engine->DrainTopology();
         if (wait_until_stopped) {
-            m_execution_engine->Wait();
+            m_execution_engine->RunSupervisor();
             if (finish) {
-                m_execution_engine->Finish();
+                m_execution_engine->FinishTopology();
             }
         }
     }

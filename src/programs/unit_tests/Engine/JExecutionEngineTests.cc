@@ -54,38 +54,38 @@ TEST_CASE("JExecutionEngine_StateMachine") {
 
     SECTION("ManualFinish") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
-        sut->Scale(0);
-        sut->Run();
+        sut->ScaleWorkers(0);
+        sut->RunTopology();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
-        sut->RequestPause();
+        sut->PauseTopology();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Pausing);
         
         // Need to trigger the Pause since there are no workers to do so
-        auto [worker_id, _]= sut->RegisterExternalWorker();
+        auto worker = sut->RegisterWorker();
         JExecutionEngine::Task task;
-        sut->ExchangeTask(task, worker_id, true);
+        sut->ExchangeTask(task, worker.worker_id, true);
 
-        sut->Wait();
+        sut->RunSupervisor();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
-        sut->Finish();
+        sut->FinishTopology();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Finished);
     }
 
     SECTION("AutoFinish") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
-        sut->Scale(0);
-        sut->Run();
+        sut->ScaleWorkers(0);
+        sut->RunTopology();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
-        sut->RequestPause();
+        sut->PauseTopology();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Pausing);
 
         // Need to trigger the Pause since there are no workers to do so
-        auto [worker_id, _] = sut->RegisterExternalWorker();
+        auto worker = sut->RegisterWorker();
         JExecutionEngine::Task task;
-        sut->ExchangeTask(task, worker_id, true);
+        sut->ExchangeTask(task, worker.worker_id, true);
 
-        sut->Wait();
-        sut->Finish();
+        sut->RunSupervisor();
+        sut->FinishTopology();
 
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Finished);
     }
@@ -103,17 +103,17 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
     SECTION("SelfTermination") {
 
-        auto [worker_id, _] = sut->RegisterExternalWorker();
-        REQUIRE(worker_id == 0); // Not threadsafe doing this
+        auto worker = sut->RegisterWorker();
+        REQUIRE(worker.worker_id == 0); // Not threadsafe doing this
 
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
         REQUIRE(sut->GetPerf().thread_count == 1);
-        sut->Run();
+        sut->RunTopology();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
 
         JExecutionEngine::Task task;
 
-        sut->ExchangeTask(task, worker_id);
+        sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // Only task available at this point!
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
@@ -123,7 +123,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
-        sut->ExchangeTask(task, worker_id);
+        sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // This will fail due to jana:nevents
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
@@ -134,7 +134,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(task.outputs[0].second == 0); // Failure => return to pool
         REQUIRE(task.status == JArrow::FireResult::Finished);
 
-        sut->ExchangeTask(task, worker_id);
+        sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventMap2");
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
@@ -144,7 +144,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
-        sut->ExchangeTask(task, worker_id);
+        sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
         REQUIRE(task.arrow->get_name() == "PhysicsEventTap");
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
@@ -154,13 +154,13 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
-        sut->ExchangeTask(task, worker_id, true);
+        sut->ExchangeTask(task, worker.worker_id, true);
         REQUIRE(task.arrow == nullptr);
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
         REQUIRE(sut->GetPerf().event_count == 1);
 
-        sut->Wait();
-        sut->Finish();
+        sut->RunSupervisor();
+        sut->FinishTopology();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Finished);
     }
 }
@@ -177,9 +177,9 @@ TEST_CASE("JExecutionEngine_ScaleWorkers") {
 
     SECTION("SingleWorker") {
         REQUIRE(sut->GetPerf().thread_count == 0);
-        sut->Scale(1);
+        sut->ScaleWorkers(1);
         REQUIRE(sut->GetPerf().thread_count == 1);
-        sut->Scale(0);
+        sut->ScaleWorkers(0);
         REQUIRE(sut->GetPerf().thread_count == 0);
     }
 }
@@ -196,39 +196,39 @@ TEST_CASE("JExecutionEngine_RunSingleEvent") {
 
     SECTION("SingleWorker") {
         REQUIRE(sut->GetPerf().thread_count == 0);
-        sut->Scale(1);
-        sut->Run();
+        sut->ScaleWorkers(1);
+        sut->RunTopology();
 
-        sut->Wait();
+        sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 1);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
 
-        sut->Finish();
+        sut->FinishTopology();
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Finished);
         REQUIRE(sut->GetPerf().event_count == 3);
 
         REQUIRE(sut->GetPerf().thread_count == 1);
-        sut->Scale(0);
+        sut->ScaleWorkers(0);
         REQUIRE(sut->GetPerf().thread_count == 0);
     }
     
     SECTION("MultipleWorker") {
         REQUIRE(sut->GetPerf().thread_count == 0);
-        sut->Scale(4);
+        sut->ScaleWorkers(4);
         REQUIRE(sut->GetPerf().thread_count == 4);
 
-        sut->Run();
+        sut->RunTopology();
 
-        sut->Wait();
+        sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 4);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
 
-        sut->Finish();
+        sut->FinishTopology();
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Finished);
         REQUIRE(sut->GetPerf().event_count == 3);
 
         REQUIRE(sut->GetPerf().thread_count == 4);
-        sut->Scale(0);
+        sut->ScaleWorkers(0);
         REQUIRE(sut->GetPerf().thread_count == 0);
     }
 }
@@ -242,39 +242,39 @@ TEST_CASE("JExecutionEngine_ExternalPause") {
     auto sut = app.GetService<JExecutionEngine>();
 
     REQUIRE(sut->GetPerf().thread_count == 0);
-    sut->Scale(4);
+    sut->ScaleWorkers(4);
     REQUIRE(sut->GetPerf().thread_count == 4);
 
     SECTION("PauseImmediately") {
-        sut->Run();
-        sut->RequestPause();
-        sut->Wait();
+        sut->RunTopology();
+        sut->PauseTopology();
+        sut->RunSupervisor();
 
         auto perf = sut->GetPerf();
         REQUIRE(perf.thread_count == 4);
         REQUIRE(perf.runstatus == JExecutionEngine::RunStatus::Paused);
 
-        sut->Finish();
+        sut->FinishTopology();
 
         perf = sut->GetPerf();
         REQUIRE(perf.runstatus == JExecutionEngine::RunStatus::Finished);
         REQUIRE(perf.event_count == 0);
         REQUIRE(perf.thread_count == 4);
 
-        sut->Scale(0);
+        sut->ScaleWorkers(0);
 
         perf = sut->GetPerf();
         REQUIRE(perf.thread_count == 0);
     }
 
     SECTION("RunForABit") {
-        sut->Run();
+        sut->RunTopology();
         std::thread t([&](){ 
             std::this_thread::sleep_for(std::chrono::seconds(3)); 
-            sut->RequestPause();
+            sut->PauseTopology();
         });
 
-        sut->Wait();
+        sut->RunSupervisor();
         t.join();
 
         auto perf = sut->GetPerf();
@@ -282,7 +282,7 @@ TEST_CASE("JExecutionEngine_ExternalPause") {
         REQUIRE(perf.runstatus == JExecutionEngine::RunStatus::Paused);
         REQUIRE(perf.event_count > 5);
 
-        sut->Scale(0);
+        sut->ScaleWorkers(0);
         REQUIRE(sut->GetPerf().thread_count == 0);
     }
 }

@@ -122,16 +122,16 @@ void InspectApplication(JApplication* app) {
                 Fire(app, std::stoi(args[0]));
             }
             else if (token == "Resume" || token == "r") {
-                engine->Run();
+                engine->RunTopology();
                 break;
             }
             else if ((token == "Scale" || token == "s") && (args.size() == 1)) {
-                engine->Scale(std::stoi(args[0]));
-                engine->Run();
+                engine->ScaleWorkers(std::stoi(args[0]));
+                engine->RunTopology();
                 break;
             }
             else if (token == "Quit" || token == "q") {
-                engine->RequestDrain();
+                engine->DrainTopology();
                 break;
             }
             else if (token == "Help" || token == "h") {

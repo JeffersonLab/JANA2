@@ -58,7 +58,7 @@ void JExecutionEngine::Init() {
 }
 
 
-void JExecutionEngine::Run() {
+void JExecutionEngine::RunTopology() {
     std::unique_lock<std::mutex> lock(m_mutex);
 
     if (m_runstatus == RunStatus::Failed) {
@@ -85,7 +85,7 @@ void JExecutionEngine::Run() {
     m_condvar.notify_one();
 }
 
-void JExecutionEngine::Scale(size_t nthreads) {
+void JExecutionEngine::ScaleWorkers(size_t nthreads) {
     // We both create and destroy the pool of workers here. They all sleep until they 
     // receive work from the scheduler, which won't happen until the runstatus <- {Running, 
     // Pausing, Draining} and there is a task ready to execute. This way worker creation/destruction
@@ -107,7 +107,7 @@ void JExecutionEngine::Scale(size_t nthreads) {
             worker->is_stop_requested = false;
             worker->cpu_id = m_topology->mapping.get_cpu_id(worker_id);
             worker->location_id = m_topology->mapping.get_loc_id(worker_id);
-            worker->thread = new std::thread(&JExecutionEngine::RunWorker, this, worker_id, &worker->backtrace);
+            worker->thread = new std::thread(&JExecutionEngine::RunWorker, this, Worker{worker_id, &worker->backtrace});
             LOG_DEBUG(GetLogger()) << "Launching worker thread " << worker_id << " on cpu=" << worker->cpu_id << ", location=" << worker->location_id << LOG_END;
             m_worker_states.push_back(std::move(worker));
 
@@ -163,7 +163,7 @@ void JExecutionEngine::Scale(size_t nthreads) {
     }
 }
 
-void JExecutionEngine::RequestPause() {
+void JExecutionEngine::PauseTopology() {
     std::unique_lock<std::mutex> lock(m_mutex);
     if (m_runstatus != RunStatus::Running) return;
     m_runstatus = RunStatus::Pausing;
@@ -177,7 +177,7 @@ void JExecutionEngine::RequestPause() {
     m_condvar.notify_all();
 }
 
-void JExecutionEngine::RequestDrain() {
+void JExecutionEngine::DrainTopology() {
     std::unique_lock<std::mutex> lock(m_mutex);
     if (m_runstatus != RunStatus::Running) return;
     m_runstatus = RunStatus::Draining;
@@ -193,7 +193,7 @@ void JExecutionEngine::RequestDrain() {
     m_condvar.notify_all();
 }
 
-void JExecutionEngine::Wait() {
+void JExecutionEngine::RunSupervisor() {
 
     m_interrupt_status = InterruptStatus::NoInterruptsSupervised;
     size_t last_event_count = 0;
@@ -228,11 +228,11 @@ void JExecutionEngine::Wait() {
                 m_interrupt_status = InterruptStatus::NoInterruptsSupervised;
             }
             else {
-                RequestPause();
+                PauseTopology();
             }
         }
         else if (m_interrupt_status == InterruptStatus::PauseAndQuit) {
-            RequestPause();
+            PauseTopology();
         }
 
         if (m_show_ticker) {
@@ -306,7 +306,7 @@ void JExecutionEngine::HandleFailures() {
     }
 }
 
-void JExecutionEngine::Finish() {
+void JExecutionEngine::FinishTopology() {
     std::unique_lock<std::mutex> lock(m_mutex);
     assert(m_runstatus == RunStatus::Paused);
 
@@ -351,7 +351,7 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
     return result;
 }
 
-std::pair<int,JBacktrace*> JExecutionEngine::RegisterExternalWorker() {
+JExecutionEngine::Worker JExecutionEngine::RegisterWorker() {
     std::unique_lock<std::mutex> lock(m_mutex);
     auto worker_id = m_worker_states.size();
     auto worker = std::make_unique<WorkerState>();
@@ -371,25 +371,25 @@ std::pair<int,JBacktrace*> JExecutionEngine::RegisterExternalWorker() {
 }
 
 
-void JExecutionEngine::RunWorker(size_t worker_id, JBacktrace* worker_backtrace) {
+void JExecutionEngine::RunWorker(Worker worker) {
 
-    LOG_DEBUG(GetLogger()) << "Launched worker thread " << worker_id << LOG_END;
-    jana2_worker_id = worker_id;
-    jana2_worker_backtrace = worker_backtrace;
+    LOG_DEBUG(GetLogger()) << "Launched worker thread " << worker.worker_id << LOG_END;
+    jana2_worker_id = worker.worker_id;
+    jana2_worker_backtrace = worker.backtrace;
     try {
         Task task;
         while (true) {
-            ExchangeTask(task, worker_id);
+            ExchangeTask(task, worker.worker_id);
             if (task.arrow == nullptr) break; // Exit as soon as ExchangeTask() stops blocking
             task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
         }
-        LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker_id << LOG_END;
+        LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker.worker_id << LOG_END;
     }
     catch (...) {
-        LOG_ERROR(GetLogger()) << "Exception on worker thread " << worker_id << LOG_END;
+        LOG_ERROR(GetLogger()) << "Exception on worker thread " << worker.worker_id << LOG_END;
         std::unique_lock<std::mutex> lock(m_mutex);
         m_runstatus = RunStatus::Failed;
-        m_worker_states.at(worker_id)->stored_exception = std::current_exception();
+        m_worker_states.at(worker.worker_id)->stored_exception = std::current_exception();
     }
 }
 

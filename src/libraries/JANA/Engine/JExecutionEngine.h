@@ -33,6 +33,11 @@ public:
         JEventLevel event_level;
     };
 
+    struct Worker {
+        size_t worker_id;
+        JBacktrace* backtrace;
+    };
+
 #ifndef JANA2_TESTCASE
 private:
 #endif
@@ -114,18 +119,21 @@ public:
     }
 
     ~JExecutionEngine() {
-        Scale(0);
+        ScaleWorkers(0);
         // If we don't shut down the thread team, the condition variable will hang during destruction
     }
 
     void Init() override;
 
-    void Run();
-    void Scale(size_t nthreads);
-    void RequestPause();
-    void RequestDrain();
-    void Wait();
-    void Finish();
+    void RunTopology();
+    void PauseTopology();
+    void DrainTopology();
+    void FinishTopology();
+
+    void ScaleWorkers(size_t nthreads);
+    Worker RegisterWorker();
+    void RunWorker(Worker);
+    void RunSupervisor();
 
     JArrow::FireResult Fire(size_t arrow_id, size_t location_id=0);
 
@@ -145,12 +153,10 @@ public:
 private:
 #endif
 
-    std::pair<int, JBacktrace*> RegisterExternalWorker();
     void PrintWorkerReport();
     void PrintFinalReport();
     bool CheckTimeout();
     void HandleFailures();
-    void RunWorker(size_t worker_id, JBacktrace* worker_backtrace);
     void ExchangeTask(Task& task, size_t worker_id, bool nonblocking=false);
     void CheckinCompletedTask_Unsafe(Task& task, WorkerState& worker, clock_t::time_point checkin_time);
     void FindNextReadyTask_Unsafe(Task& task, WorkerState& worker);
