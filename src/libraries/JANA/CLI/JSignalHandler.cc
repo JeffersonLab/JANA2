@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JSignalHandler.h"
+#include "JANA/Utils/JBacktrace.h"
 #include <JANA/Engine/JExecutionEngine.h>
 
 #include <csignal>
@@ -10,6 +11,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <thread>
 
 #include <JANA/JApplication.h>
 
@@ -48,12 +50,6 @@ void send_to_named_pipe(const std::string& path_to_named_pipe, const std::string
     }
 }
 
-void produce_thread_report() {
-    std::stringstream bt_str;
-    make_backtrace(bt_str);
-    g_thread_reports[pthread_self()] = bt_str.str();
-}
-
 /// If something goes wrong, we want to signal all threads to assemble a report
 /// Whereas USR1 is meant to be triggered externally and is caught by one thread,
 /// produce_overall_report triggers USR2 and is caught by all threads.
@@ -79,9 +75,9 @@ std::string produce_overall_report() {
         }
 
         // Assemble backtrace for own thread
-        std::stringstream bt_str;
-        make_backtrace(bt_str);
-        g_thread_reports[main_thread_id] = bt_str.str();
+        JBacktrace bt;
+        bt.Capture(1);
+        g_thread_reports[main_thread_id] = bt.ToString();
 
         // Wait for all other threads to finish handling USR2
         for(int i=0; i<1000; i++){
@@ -96,7 +92,6 @@ std::string produce_overall_report() {
 
         // Clear backtrace
         g_thread_reports.clear();
-        // TODO: Backtrace memory use is unsafe
     }
     else {
         ss << "Thread model: unknown" << std::endl;
