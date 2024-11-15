@@ -21,28 +21,62 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         DoInit();
     }
 
-    auto src = event->GetJEventSource();
-    if (!TestFactoryFlag(REGENERATE) && src != nullptr && src->IsGetObjectsEnabled()) {
-        // Attempt to obtain factory data via source->GetObjects(). This will eventually be deprecated,
-        // but for now we want it for migration purposes. If GetObjects() is not implemented, the default
-        // implementation returns false with a minimal performance penalty.
-        bool found_data = false;
+    // How do we obtain our data? The priority is as follows:
+    // 1. JFactory::Process() if REGENERATE flag is set
+    // 2. JEvent::Insert()
+    // 3. JEventSource::GetObjects() if source has GetObjects() enabled
+    // 4. JFactory::Process()
 
-        CallWithJExceptionWrapper("JEventSource::GetObjects", [&](){ 
-            found_data = src->GetObjects(event, this); });
+    // ---------------------------------------------------------------------
+    // 1. JFactory::Process() if REGENERATE flag is set
+    // ---------------------------------------------------------------------
 
-        if (found_data) {
-            mStatus = Status::Inserted;
-            mCreationStatus = CreationStatus::InsertedViaGetObjects;
+    if (TestFactoryFlag(REGENERATE)) {
+        if (mStatus == Status::Inserted) {
+            // Status::Inserted indicates that the data came from either src->GetObjects() or evt->Insert()
+            ClearData(); 
+            // ClearData() resets mStatus to Unprocessed so that the data will be regenerated exactly once.
+        }
+        // After this point, control flow falls through to "4. JFactory::Process"
+    }
+    else {
+
+        // ---------------------------------------------------------------------
+        // 2. JEvent::Insert()
+        // ---------------------------------------------------------------------
+
+        if (mStatus == Status::Inserted) {
+            // This may include data cached from eventsource->GetObjects().
+            // Either way, short-circuit here, because the data is present.
             return;
         }
+
+        // ---------------------------------------------------------------------
+        // 3. JEventSource::GetObjects() if source has GetObjects() enabled
+        // ---------------------------------------------------------------------
+
+        auto src = event->GetJEventSource();
+        if (src != nullptr && src->IsGetObjectsEnabled()) {
+            bool found_data = false;
+
+            CallWithJExceptionWrapper("JEventSource::GetObjects", [&](){ 
+                found_data = src->GetObjects(event, this); });
+
+            if (found_data) {
+                mStatus = Status::Inserted;
+                mCreationStatus = CreationStatus::InsertedViaGetObjects;
+                return;
+            }
+        }
+        // If neither "2. JEvent::Insert()" nor "3. JEventSource::GetObjects()" succeeded, fall through to "4. JFactory::Process()"
     }
 
-    if (TestFactoryFlag(REGENERATE) && (mStatus == Status::Inserted)) {
-        ClearData();
-        // ClearData will reset mStatus to Status::Unprocessed
-    }
+    // ---------------------------------------------------------------------
+    // 4. JFactory::Process()
+    // ---------------------------------------------------------------------
 
+    // If the data was Processed (instead of Inserted), it will be in cache, and we can just exit.
+    // Otherwise we call Process() to create the data in the first place.
     if (mStatus == Status::Unprocessed) {
         auto run_number = event->GetRunNumber();
         if (mPreviousRunNumber != run_number) {
@@ -61,7 +95,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 
 void JFactory::DoInit() {
     if (mStatus != Status::Uninitialized) {
-        throw JException("Attempted to initialize a JFactory that has already been initialized!");
+        return;
     }
     for (auto* parameter : m_parameters) {
         parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
