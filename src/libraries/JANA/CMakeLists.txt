@@ -37,6 +37,7 @@ set(JANA2_SOURCES
     Utils/JCallGraphRecorder.cc
     Utils/JInspector.cc
     Utils/JApplicationInspector.cc
+    Utils/JBacktrace.cc
 
     Calibrations/JCalibration.cc
     Calibrations/JCalibrationFile.cc
