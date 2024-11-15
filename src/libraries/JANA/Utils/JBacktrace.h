@@ -27,6 +27,10 @@ class JBacktrace {
 
 public:
 
+    void Reset() {
+        m_ready = false;
+    }
+
     void WaitForCapture() const {
         while (!m_ready.load(std::memory_order_acquire)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));

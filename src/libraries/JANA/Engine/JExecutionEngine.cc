@@ -9,6 +9,10 @@
 #include <exception>
 #include <mutex>
 #include <csignal>
+#include <ostream>
+#include <sstream>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 thread_local int jana2_worker_id = -1;
 thread_local JBacktrace* jana2_worker_backtrace = nullptr;
@@ -28,6 +32,13 @@ void JExecutionEngine::Init() {
     params->SetDefaultParameter("jana:show_ticker", m_show_ticker, "Controls whether the ticker is visible");
 
     params->SetDefaultParameter("jana:ticker_interval", m_ticker_ms, "Controls the ticker interval (in ms)");
+
+    params->SetDefaultParameter("jana:status_fname", m_path_to_named_pipe,
+        "Filename of named pipe for retrieving instantaneous status info");
+
+
+    LOG_WARN(GetLogger()) << "Creating pipe named \"" << m_path_to_named_pipe << "\" for status info." << LOG_END;
+    mkfifo(m_path_to_named_pipe.c_str(), 0666);
 
 
     // Not sure how I feel about putting this here yet, but I think it will at least work in both cases it needs to.
@@ -193,6 +204,11 @@ void JExecutionEngine::Wait() {
 
         if (m_enable_timeout) {
             CheckTimeout();
+        }
+
+        if (m_report_requested) {
+            PrintWorkerReport();
+            m_report_requested = false;
         }
 
         if (m_interrupt_status == InterruptStatus::InspectRequested) {
@@ -669,21 +685,70 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 
 void JExecutionEngine::HandleSIGINT() {
     InterruptStatus status = m_interrupt_status;
+    std::cout << std::endl;
     switch (status) {
         case InterruptStatus::NoInterruptsSupervised: m_interrupt_status = InterruptStatus::InspectRequested; break;
         case InterruptStatus::InspectRequested: m_interrupt_status = InterruptStatus::PauseAndQuit; break;
         case InterruptStatus::NoInterruptsUnsupervised:
         case InterruptStatus::PauseAndQuit:
         case InterruptStatus::InspectInProgress: 
-            std::cout << std::endl;
             exit(-2);
     }
+}
+
+void JExecutionEngine::HandleSIGUSR1() {
+    m_report_requested = true;
 }
 
 void JExecutionEngine::HandleSIGUSR2() {
     if (jana2_worker_backtrace != nullptr) {
         jana2_worker_backtrace->Capture(3);
     }
+}
+
+void JExecutionEngine::HandleSIGTSTP() {
+    m_report_requested = true;
+}
+
+void JExecutionEngine::PrintWorkerReport() {
+
+    std::unique_lock<std::mutex> lock(m_mutex);
+    LOG_INFO(GetLogger()) << "Generating worker report. It may take some time to retrieve each symbol's debug information." << LOG_END;
+    for (auto& worker: m_worker_states) {
+        worker->backtrace.Reset();
+        pthread_kill(worker->thread->native_handle(), SIGUSR2);
+    }
+    for (auto& worker: m_worker_states) {
+        worker->backtrace.WaitForCapture();
+    }
+    std::ostringstream oss;
+    oss << "Worker report" << std::endl;
+    for (auto& worker: m_worker_states) {
+        oss << "------------------------------" << std::endl 
+            << "  Worker:        " << worker->worker_id << std::endl
+            << "  Current arrow: " << worker->last_arrow_id << std::endl
+            << "  Current event: " << worker->last_event_nr << std::endl
+            << "  Backtrace:" << std::endl << std::endl
+            << worker->backtrace.ToString();
+    }
+    auto s = oss.str();
+    LOG_WARN(GetLogger()) << s << LOG_END;
+    /*
+
+    std::string path_to_named_pipe = "/tmp/jana_status";
+    mkfifo(path_to_named_pipe.c_str(), 0666);
+    
+    int fd = open(path_to_named_pipe.c_str(), O_WRONLY);
+    if (fd >= 0) {
+        write(fd, s.c_str(), s.length()+1);
+        close(fd);
+    }
+    else {
+        LOG_ERROR(GetLogger()) << "Unable to open named pipe '" << path_to_named_pipe << "' for writing. \n"
+        << "  You can use a different named pipe for status info by setting the parameter `jana:status_fname`.\n"
+        << "  The status report will still show up in the log." << LOG_END;
+    }
+    */
 }
 
 

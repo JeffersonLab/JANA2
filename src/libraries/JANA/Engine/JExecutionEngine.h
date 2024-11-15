@@ -87,6 +87,7 @@ private:
     int m_ticker_ms = 500;
     int m_timeout_s = 8;
     int m_warmup_timeout_s = 30;
+    std::string m_path_to_named_pipe = "/tmp/jana_status";
 
     // Concurrency
     std::mutex m_mutex;
@@ -95,6 +96,7 @@ private:
     std::vector<ArrowState> m_arrow_states;
     RunStatus m_runstatus = RunStatus::Paused;
     std::atomic<InterruptStatus> m_interrupt_status { InterruptStatus::NoInterruptsUnsupervised };
+    std::atomic_bool m_report_requested {false};
 
     // Metrics
     size_t m_event_count_at_start = 0;
@@ -137,12 +139,14 @@ public:
     void HandleSIGINT();
     void HandleSIGUSR1();
     void HandleSIGUSR2();
+    void HandleSIGTSTP();
 
 #ifndef JANA2_TESTCASE
 private:
 #endif
 
     std::pair<int, JBacktrace*> RegisterExternalWorker();
+    void PrintWorkerReport();
     void PrintFinalReport();
     bool CheckTimeout();
     void HandleFailures();

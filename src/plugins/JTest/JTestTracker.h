@@ -13,6 +13,7 @@
 
 class JTestTracker : public JFactoryT<JTestTrackData> {
 
+    Parameter<bool> m_segfault {this, "segfault", false, "Event #7 always segfaults" };
     Parameter<bool> m_timeout {this, "timeout", false, "Event #22 always times out" };
     Parameter<size_t> m_cputime_ms {this, "cputime_ms", 200, "Time spent during tracking" };
     Parameter<size_t> m_write_bytes {this, "bytes", 1000, "Bytes written during tracking"};
@@ -42,6 +43,13 @@ public:
         }
         else {
             m_bench_utils.consume_cpu_ms(*m_cputime_ms, *m_cputime_spread);
+        }
+
+
+        if(*m_segfault && aEvent->GetEventNumber() == 7) {
+            // Trigger a segfault on purpose
+            JTestTrackData* d = nullptr;
+            d->buffer[0] = 22;
         }
 
         // Write (small) track data
