@@ -69,10 +69,45 @@ public:
             else { // dladdr failed for some reason, so we fall back on backtrace_symbols
                 name = symbols[i];
             }
+            size_t offset = (size_t) m_buffer[i] - (size_t) dlinfo.dli_fbase;
             os << "  " << std::setw(2) << i-m_frames_to_omit << ": " << name << std::endl;
-            os << "      " << std::hex << m_buffer[i] << std::dec << " " << dlinfo.dli_fname << std::endl;
+            os << "      " << AddrToLineInfo(dlinfo.dli_fname, offset) << std::endl;
         }
         free(symbols);
+    }
+
+    std::string AddrToLineInfo(const char* filename, size_t offset) {
+
+        char backup_line_info[256];
+        std::snprintf(backup_line_info, sizeof(backup_line_info), "%s:%zx", filename, offset);
+
+        static bool addr2line_works = true;
+        if (addr2line_works) {
+            char command[256];
+            std::snprintf(command, sizeof(command), "addr2line -e %s %zx", filename, offset);
+
+            FILE* pipe = popen(command, "r");
+            if (pipe) {
+                // Capture stdout
+                std::string line_info;
+                char buffer[128];
+                while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+                    line_info += buffer;
+                }
+
+                int return_code = pclose(pipe);
+                if (return_code == 0) {
+                    if (line_info != "??:0") {
+                        return line_info;
+                    }
+                }
+            }
+            else {
+                addr2line_works = false;
+            }
+        }
+        // If addr2line failed for any reason, return the dladdr results instead
+        return std::string(backup_line_info);
     }
 
     std::string ToString() {
