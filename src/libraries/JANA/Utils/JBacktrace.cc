@@ -71,9 +71,9 @@ void JBacktrace::Format(std::ostream& os) {
 std::string JBacktrace::AddrToLineInfo(const char* filename, size_t offset) {
 
     char backup_line_info[256];
-    std::snprintf(backup_line_info, sizeof(backup_line_info), "%s:%zx", filename, offset);
+    std::snprintf(backup_line_info, sizeof(backup_line_info), "%s:%zx\n", filename, offset);
 
-    static bool addr2line_works = true;
+    static bool addr2line_works = false;
     if (addr2line_works) {
         char command[256];
         std::snprintf(command, sizeof(command), "addr2line -e %s %zx", filename, offset);
