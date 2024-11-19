@@ -341,4 +341,14 @@ float JApplication::GetInstantaneousRate()
     return instantaneous_throughput;
 }
 
+void JApplication::PrintStatus() {
+    auto perf = m_execution_engine->GetPerf();
+    LOG_INFO(m_logger) << "Topology status:     " << ToString(perf.runstatus) << LOG_END;
+    LOG_INFO(m_logger) << "Worker thread count: " << perf.thread_count << LOG_END;
+    LOG_INFO(m_logger) << "Events processed:    " << perf.event_count << LOG_END;
+    LOG_INFO(m_logger) << "Uptime [s]:          " << perf.uptime_ms*1000 << LOG_END;
+    LOG_INFO(m_logger) << "Throughput [Hz]:     " << perf.throughput_hz << LOG_END;
+}
+
+
 

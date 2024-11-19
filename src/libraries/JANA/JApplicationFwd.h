@@ -26,7 +26,6 @@ class JApplication;
 extern JApplication* japp;
 
 #include <JANA/Components/JComponentSummary.h>
-#include <JANA/Engine/JPerfSummary.h>
 #include <JANA/JLogger.h>
 
 
@@ -80,9 +79,8 @@ public:
     void SetExitCode(int exitCode);
     int GetExitCode();
 
-
     // Performance/status monitoring
-
+    void PrintStatus();
     bool IsInitialized(void){return m_initialized;}
     bool IsQuitting(void) { return m_quitting; }
     bool IsDrainingQueues();

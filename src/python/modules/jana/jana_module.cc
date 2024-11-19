@@ -5,6 +5,7 @@
 #include <janapy.h>
 #include <JANA/CLI/JMain.h>
 #include <JANA/JVersion.h>
+#include <dlfcn.h>
 
 // Something to throw that makes a nicer error message
 class PYTHON_MODULE_STARTUP_FAILED{public: PYTHON_MODULE_STARTUP_FAILED(){}};

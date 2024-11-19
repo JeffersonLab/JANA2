@@ -5,6 +5,7 @@
 #pragma once
 
 #include <JANA/Utils/JBacktrace.h>
+#include <sstream> // This is only here in order to not break halld_recon
 #include <string>
 
 /// JException is a data object which attaches JANA-specific context information to a generic exception.

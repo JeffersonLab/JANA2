@@ -13,6 +13,7 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 thread_local int jana2_worker_id = -1;
 thread_local JBacktrace* jana2_worker_backtrace = nullptr;
@@ -767,4 +768,14 @@ void JExecutionEngine::PrintWorkerReport(bool send_to_pipe) {
 }
 
 
+std::string ToString(JExecutionEngine::RunStatus runstatus) {
+    switch(runstatus) {
+        case JExecutionEngine::RunStatus::Running: return "Running";
+        case JExecutionEngine::RunStatus::Paused: return "Paused";
+        case JExecutionEngine::RunStatus::Failed: return "Failed";
+        case JExecutionEngine::RunStatus::Pausing: return "Pausing";
+        case JExecutionEngine::RunStatus::Draining: return "Draining";
+        case JExecutionEngine::RunStatus::Finished: return "Finished";
+    }
+}
 

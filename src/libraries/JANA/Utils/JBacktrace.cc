@@ -28,7 +28,7 @@ void JBacktrace::WaitForCapture() const {
 void JBacktrace::Capture(int frames_to_omit) {
     m_frame_count = backtrace(m_buffer, MAX_FRAMES);
     m_frames_to_omit = frames_to_omit;
-    m_ready.store(true, std::memory_order::release);
+    m_ready.store(true, std::memory_order_release);
 }
 
 void JBacktrace::Format(std::ostream& os) {

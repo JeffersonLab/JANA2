@@ -9,7 +9,6 @@
 #include <JANA/Utils/JProcessorMapping.h>
 #include <JANA/Topology/JEventQueue.h>
 #include <JANA/Topology/JEventPool.h>
-#include <JANA/Engine/JPerfMetrics.h>  // TODO: Should't be here
 
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Services/JComponentManager.h>
@@ -18,8 +17,6 @@
 class JParameterManager;
 class JComponentManager;
 class JArrow;
-class JQueue;
-class JQueue;
 class JFoldArrow;
 class JUnfoldArrow;
 
@@ -44,7 +41,6 @@ public:
     // Things that probably shouldn't be here
     std::function<void(JTopologyBuilder&)> m_configure_topology;
     JEventPool* event_pool = nullptr; // TODO: Move into pools eventually
-    JPerfMetrics metrics;
     JProcessorMapping mapping;
 
 public:

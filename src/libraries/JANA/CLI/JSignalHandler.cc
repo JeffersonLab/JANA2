@@ -8,6 +8,7 @@
 #include <JANA/Engine/JExecutionEngine.h>
 #include <JANA/Utils/JBacktrace.h>
 
+#include <unistd.h>
 #include <csignal>
 
 /// JSignalHandler bundles together the logic for querying a JApplication
