@@ -5,8 +5,8 @@
 #pragma once
 
 #include <JANA/Utils/JBacktrace.h>
+#include <sstream> // This is only here in order to not break halld_recon
 #include <string>
-#include <sstream>
 
 /// JException is a data object which attaches JANA-specific context information to a generic exception.
 /// As it unwinds the call stack, different exception handlers may add or change information as they see fit.
@@ -17,9 +17,9 @@ public:
     /// Basic constructor
     explicit JException(std::string message = "Unknown exception") : message(std::move(message))
     {
-        std::ostringstream ss;
-        make_backtrace(ss);
-        stacktrace = ss.str();
+        JBacktrace backtrace;
+        backtrace.Capture(2);
+        stacktrace = backtrace.ToString();
     }
 
     virtual ~JException() = default;
@@ -89,6 +89,10 @@ JException::JException(std::string format_str, Args... args) {
     char cmess[1024];
     snprintf(cmess, 1024, format_str.c_str(), args...);
     message = cmess;
+
+    JBacktrace backtrace;
+    backtrace.Capture(2);
+    stacktrace = backtrace.ToString();
 }
 
 

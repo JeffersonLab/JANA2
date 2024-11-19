@@ -382,6 +382,9 @@ TEST_CASE("JFactory_CallbackSequence") {
         app.Initialize(); // This init()s a throwaway JFactoryT, which we immediately clear from the log
         factory_with_finish_log.clear();
         app.Run();
+        for (auto& s : factory_with_finish_log) {
+            std::cout << s << std::endl;
+        }
         REQUIRE(factory_with_finish_log.size() == 6);
         REQUIRE(factory_with_finish_log.at(0) == "init");
         REQUIRE(factory_with_finish_log.at(1) == "beginrun");

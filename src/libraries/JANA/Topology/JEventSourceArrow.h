@@ -3,10 +3,10 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
-#include <JANA/Topology/JTriggeredArrow.h>
+#include <JANA/Topology/JArrow.h>
 
 
-class JEventSourceArrow : public JTriggeredArrow<JEventSourceArrow> {
+class JEventSourceArrow : public JArrow {
 public:
     enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
 
@@ -21,6 +21,6 @@ public:
 
     void initialize() final;
     void finalize() final;
-    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status);
+    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status);
 };
 

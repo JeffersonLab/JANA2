@@ -1,10 +1,9 @@
 
 #include "JApplicationInspector.h"
-#include "JANA/Services/JComponentManager.h"
 #include "JANA/Components/JComponentSummary.h"
 #include "JANA/Topology/JTopologyBuilder.h"
 #include <JANA/JApplication.h>
-#include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Engine/JExecutionEngine.h>
 
 
 void PrintMenu() {
@@ -32,9 +31,9 @@ void InspectTopology(JApplication* app) {
 }
 
 void Fire(JApplication* app, int arrow_id) {
-    auto engine = app->GetService<JArrowProcessingController>();
-    auto result = engine->execute_arrow(arrow_id);
-    std::cout << to_string(result) << std::endl;
+    auto engine = app->GetService<JExecutionEngine>();
+    auto result = engine->Fire(arrow_id, 0);
+    std::cout << to_string(result);
 }
 
 void InspectComponents(JApplication* app) {
@@ -79,10 +78,7 @@ void InspectCollection(JApplication* app, std::string collection_name) {
 
 
 void InspectApplication(JApplication* app) {
-    auto engine = app->GetService<JArrowProcessingController>();
-    engine->request_pause();
-    engine->wait_until_paused();
-    app->SetTimeoutEnabled(false);
+    auto engine = app->GetService<JExecutionEngine>();
     PrintMenu();
 
     while (true) {
@@ -126,15 +122,16 @@ void InspectApplication(JApplication* app) {
                 Fire(app, std::stoi(args[0]));
             }
             else if (token == "Resume" || token == "r") {
-                app->Run(false);
+                engine->RunTopology();
                 break;
             }
             else if ((token == "Scale" || token == "s") && (args.size() == 1)) {
-                app->Scale(std::stoi(args[0]));
+                engine->ScaleWorkers(std::stoi(args[0]));
+                engine->RunTopology();
                 break;
             }
             else if (token == "Quit" || token == "q") {
-                app->Quit(true);
+                engine->DrainTopology();
                 break;
             }
             else if (token == "Help" || token == "h") {

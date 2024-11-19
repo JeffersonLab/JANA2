@@ -47,6 +47,7 @@ private:
     std::map<std::string, std::string> mDefaultTags;
     JEventSource* mEventSource = nullptr;
     bool mIsBarrierEvent = false;
+    bool mIsWarmedUp = false;
 
     // Hierarchical event memory management
     std::vector<std::pair<JEventLevel, JEvent*>> mParents;
@@ -80,6 +81,7 @@ public:
     JInspector* GetJInspector() const {return &mInspector;}
     void Inspect() const { mInspector.Loop();}
     bool GetSequential() const {return mIsBarrierEvent;}
+    bool IsWarmedUp() { return mIsWarmedUp; }
 
     // Hierarchical
     JEventLevel GetLevel() const { return mFactorySet->GetLevel(); }

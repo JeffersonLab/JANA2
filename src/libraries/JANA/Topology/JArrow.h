@@ -6,22 +6,21 @@
 #include <cassert>
 #include <vector>
 
-#include "JArrowMetrics.h"
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
-#include <JANA/Topology/JMailbox.h>
+#include <JANA/Topology/JEventQueue.h>
 #include <JANA/Topology/JEventPool.h>
 
 
 class JArrow {
-    friend class JScheduler;
     friend class JTopologyBuilder;
 
 public:
     using OutputData = std::array<std::pair<JEvent*, int>, 2>;
+    enum class FireResult {NotRunYet, KeepGoing, ComeBackLater, Finished};
 
     struct Port {
-        JMailbox<JEvent*>* queue = nullptr;
+        JEventQueue* queue = nullptr;
         JEventPool* pool = nullptr;
         bool is_input = false;
     };
@@ -31,20 +30,23 @@ private:
     bool m_is_parallel;        // Whether or not it is safe to parallelize
     bool m_is_source;          // Whether or not this arrow should activate/drain the topology
     bool m_is_sink;            // Whether or not tnis arrow contributes to the final event count
-    JArrowMetrics m_metrics;   // Performance information accumulated over all workers
 
 protected:
-    std::vector<Port> m_ports;  // Will eventually supplant m_listeners
-    std::vector<JArrow *> m_listeners;    // Downstream Arrows
+    using clock_t = std::chrono::steady_clock;
+
+    int m_next_input_port=0; // -1 denotes "no input necessary", e.g. for barrier events
+    clock_t::time_point m_next_visit_time=clock_t::now();
+    std::vector<Port> m_ports;
     JLogger m_logger;
 
 public:
-    std::string get_name() { return m_name; }
+    const std::string& get_name() { return m_name; }
     JLogger& get_logger() { return m_logger; }
     bool is_parallel() { return m_is_parallel; }
     bool is_source() { return m_is_source; }
     bool is_sink() { return m_is_sink; }
-    JArrowMetrics& get_metrics() { return m_metrics; }
+    Port& get_port(size_t port_index) { return m_ports.at(port_index); }
+    int get_next_port_index() { return m_next_input_port; }
 
     void set_name(std::string name) { m_name = name; }
     void set_logger(JLogger logger) { m_logger = logger; }
@@ -67,20 +69,15 @@ public:
 
     virtual void initialize() { };
 
-    virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
+    virtual FireResult execute(size_t location_id);
+
+    virtual void fire(JEvent*, OutputData&, size_t&, FireResult&) {};
 
     virtual void finalize() {};
 
-    // TODO: Make no longer virtual
-    virtual size_t get_pending();
-
-    void attach(JArrow* downstream) {
-        m_listeners.push_back(downstream);
-    };
-
     void create_ports(size_t inputs, size_t outputs);
 
-    void attach(JMailbox<JEvent*>* queue, size_t port);
+    void attach(JEventQueue* queue, size_t port);
     void attach(JEventPool* pool, size_t port);
 
     JEvent* pull(size_t input_port, size_t location_id);
@@ -88,6 +85,4 @@ public:
 };
 
 
-
-
-
+std::string to_string(JArrow::FireResult r);

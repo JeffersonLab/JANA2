@@ -12,6 +12,7 @@
 #include <map>
 #include <cmath>
 #include <iomanip>
+#include <cstring>
 
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>

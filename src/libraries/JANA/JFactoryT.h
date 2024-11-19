@@ -59,6 +59,10 @@ public:
         return std::make_pair(mData.cbegin(), mData.cend());
     }
 
+    // Retrieve a const reference to the data directly (no copying!)
+    const std::vector<T*>& GetData() {
+        return mData;
+    }
 
     /// Please use the typed setters instead whenever possible
     // TODO: Deprecate this!

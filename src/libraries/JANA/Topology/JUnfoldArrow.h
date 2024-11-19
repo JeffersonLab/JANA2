@@ -3,11 +3,10 @@
 
 #pragma once
 
-#include "JANA/Topology/JArrowMetrics.h"
-#include <JANA/Topology/JTriggeredArrow.h>
+#include <JANA/Topology/JArrow.h>
 #include <JANA/JEventUnfolder.h>
 
-class JUnfoldArrow : public JTriggeredArrow<JUnfoldArrow> {
+class JUnfoldArrow : public JArrow {
 public:
     enum PortIndex {PARENT_IN=0, CHILD_IN=1, CHILD_OUT=2};
 
@@ -33,21 +32,7 @@ public:
         LOG_INFO(m_logger) << "Finalized JEventUnfolder '" << m_unfolder->GetTypeName() << "'" << LOG_END;
     }
 
-    size_t get_pending() final {
-        size_t sum = 0;
-        for (Port& port : m_ports) {
-            if (port.is_input && port.queue!=nullptr) {
-                sum += port.queue->size();
-            }
-        }
-        if (m_parent_event != nullptr) {
-            sum += 1; 
-            // Handle the case of UnfoldArrow hanging on to a parent
-        }
-        return sum;
-    }
-
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final {
 
         // Take whatever we were given
         if (this->m_next_input_port == PARENT_IN) {
@@ -66,7 +51,7 @@ public:
         if (m_parent_event == nullptr) {
             m_next_input_port = PARENT_IN;
             output_count = 0;
-            status = JArrowMetrics::Status::KeepGoing;
+            status = JArrow::FireResult::KeepGoing;
             return;
         }
 
@@ -74,7 +59,7 @@ public:
         if (m_child_event == nullptr) {
             m_next_input_port = CHILD_IN;
             output_count = 0;
-            status = JArrowMetrics::Status::KeepGoing;
+            status = JArrow::FireResult::KeepGoing;
             return;
         }
 
@@ -95,11 +80,12 @@ public:
 
         if (result == JEventUnfolder::Result::KeepChildNextParent) {
             m_parent_event->Release(); // Decrement the reference count so that this can be recycled
+            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
+
             m_parent_event = nullptr;
             output_count = 0;
             m_next_input_port = PARENT_IN;
-            status = JArrowMetrics::Status::KeepGoing;
-            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
+            status = JArrow::FireResult::KeepGoing;
             return;
         }
         else if (result == JEventUnfolder::Result::NextChildKeepParent) {
@@ -108,7 +94,7 @@ public:
             output_count = 1;
             m_child_event = nullptr;
             m_next_input_port = CHILD_IN;
-            status = JArrowMetrics::Status::KeepGoing;
+            status = JArrow::FireResult::KeepGoing;
             return;
         }
         else if (result == JEventUnfolder::Result::NextChildNextParent) {
@@ -116,11 +102,11 @@ public:
             m_parent_event->Release(); // Decrement the reference count so that this can be recycled
             outputs[0] = {m_child_event, CHILD_OUT};
             output_count = 1;
+            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
             m_child_event = nullptr;
             m_parent_event = nullptr;
             m_next_input_port = PARENT_IN;
-            status = JArrowMetrics::Status::KeepGoing;
-            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
+            status = JArrow::FireResult::KeepGoing;
             return;
         }
         else {

@@ -3,7 +3,6 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#include "JANA/Topology/JArrowMetrics.h"
 #include <JANA/JApplication.h>
 #include <JANA/JEventSource.h>
 #include <JANA/Topology/JEventSourceArrow.h>
@@ -18,7 +17,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name, std::vector<JEventSource*
 }
 
 
-void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << LOG_END;
 
@@ -35,7 +34,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
                 // which we have held on to until now
                 outputs[0] = {m_pending_barrier_event, 1};
                 output_count = 1;
-                status = JArrowMetrics::Status::KeepGoing;
+                status = JArrow::FireResult::KeepGoing;
 
                 m_pending_barrier_event = nullptr;
                 // There's not much for the thread team to do while the barrier event makes its way through the topology.
@@ -50,7 +49,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
 
                 assert(event == nullptr);
                 output_count = 0;
-                status = JArrowMetrics::Status::ComeBackLater;
+                status = JArrow::FireResult::ComeBackLater;
                 return;
             }
         }
@@ -66,7 +65,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
                 m_next_input_port = 0;
 
                 output_count = 0;
-                status = JArrowMetrics::Status::KeepGoing;
+                status = JArrow::FireResult::KeepGoing;
                 return;
             }
             else {
@@ -75,7 +74,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
                 LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result ComeBackLater"<< LOG_END;
                 assert(event == nullptr);
                 output_count = 0;
-                status = JArrowMetrics::Status::ComeBackLater;
+                status = JArrow::FireResult::ComeBackLater;
                 return;
             }
         }
@@ -95,7 +94,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
             LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result ComeBackLater"<< LOG_END;
             outputs[0] = {event, 0}; // Reject
             output_count = 1;
-            status = JArrowMetrics::Status::ComeBackLater;
+            status = JArrow::FireResult::ComeBackLater;
             return;
         }
         else if (event->GetSequential()){
@@ -107,7 +106,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
             
             // Arrow hangs on to the barrier event until the topology fully drains
             output_count = 0;
-            status = JArrowMetrics::Status::KeepGoing; // Mysteriously livelocks if we set this to ComeBackLater??
+            status = JArrow::FireResult::KeepGoing; // Mysteriously livelocks if we set this to ComeBackLater??
             return;
         }
         else {
@@ -115,7 +114,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
             LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result Success, emitting event# " << event->GetEventNumber() << LOG_END;
             outputs[0] = {event, 1}; // SUCCESS!
             output_count = 1;
-            status = JArrowMetrics::Status::KeepGoing;
+            status = JArrow::FireResult::KeepGoing;
             return;
         }
     }
@@ -123,7 +122,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
     // All event sources have finished now
     outputs[0] = {event, 0}; // Reject event
     output_count = 1;
-    status = JArrowMetrics::Status::Finished;
+    status = JArrow::FireResult::Finished;
 }
 
 void JEventSourceArrow::initialize() {

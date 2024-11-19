@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "JANA/Topology/JArrowMetrics.h"
-#include "JANA/Topology/JTriggeredArrow.h"
+#include <JANA/Topology/JArrow.h>
 #include <JANA/JEvent.h>
 
 struct EventData {
@@ -14,13 +13,13 @@ struct EventData {
     double z = 0.0;
 };
 
-struct RandIntArrow : public JTriggeredArrow<RandIntArrow> {
+struct RandIntArrow : public JArrow {
 
     size_t emit_limit = 20;  // How many to emit
     size_t emit_count = 0;   // How many emitted so far
     int emit_sum = 0;        // Sum of all ints emitted so far
 
-    RandIntArrow(std::string name, JEventPool* pool, JMailbox<JEvent*>* output_queue) {
+    RandIntArrow(std::string name, JEventPool* pool, JEventQueue* output_queue) {
         set_name(name);
         set_is_source(true);
         create_ports(1, 1);
@@ -28,12 +27,12 @@ struct RandIntArrow : public JTriggeredArrow<RandIntArrow> {
         attach(output_queue, 1);
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
         if (emit_count >= emit_limit) {
             outputs[0] = {event, 0}; // Send event back to the input pool
             output_count = 1;
-            status = JArrowMetrics::Status::Finished;
+            status = JArrow::FireResult::Finished;
             return;
         }
 
@@ -45,7 +44,7 @@ struct RandIntArrow : public JTriggeredArrow<RandIntArrow> {
 
         outputs[0] = {event, 1}; // Send event back to the input pool
         output_count = 1;
-        status = (emit_count == emit_limit) ? JArrowMetrics::Status::Finished : JArrowMetrics::Status::KeepGoing;
+        status = (emit_count == emit_limit) ? JArrow::FireResult::Finished : JArrow::FireResult::KeepGoing;
         // This design lets us declare Finished immediately on the last event, instead of after
 
         LOG_DEBUG(JArrow::m_logger) << "RandIntSource emitted event " << emit_count << " with value " << data->x << LOG_END;
@@ -53,9 +52,9 @@ struct RandIntArrow : public JTriggeredArrow<RandIntArrow> {
 };
 
 
-struct MultByTwoArrow : public JTriggeredArrow<MultByTwoArrow> {
+struct MultByTwoArrow : public JArrow {
 
-    MultByTwoArrow(std::string name, JMailbox<JEvent*>* input_queue, JMailbox<JEvent*>* output_queue) {
+    MultByTwoArrow(std::string name, JEventQueue* input_queue, JEventQueue* output_queue) {
         set_name(name);
         set_is_parallel(true);
         create_ports(1, 1);
@@ -63,7 +62,7 @@ struct MultByTwoArrow : public JTriggeredArrow<MultByTwoArrow> {
         attach(output_queue, 1);
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
         auto prev = event->Get<EventData>("first");
         auto x = prev.at(0)->x;
         auto next = new EventData { .x=x, .y=x*2.0 };
@@ -71,13 +70,13 @@ struct MultByTwoArrow : public JTriggeredArrow<MultByTwoArrow> {
 
         outputs[0] = {event, 1};
         output_count = 1;
-        status = JArrowMetrics::Status::KeepGoing;
+        status = JArrow::FireResult::KeepGoing;
     }
 };
 
-struct SubOneArrow : public JTriggeredArrow<SubOneArrow> {
+struct SubOneArrow : public JArrow {
     
-    SubOneArrow(std::string name, JMailbox<JEvent*>* input_queue, JMailbox<JEvent*>* output_queue) {
+    SubOneArrow(std::string name, JEventQueue* input_queue, JEventQueue* output_queue) {
         set_name(name);
         set_is_parallel(true);
         create_ports(1, 1);
@@ -85,7 +84,7 @@ struct SubOneArrow : public JTriggeredArrow<SubOneArrow> {
         attach(output_queue, 1);
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
         auto prev = event->Get<EventData>("second");
         auto x = prev.at(0)->x;
         auto y = prev.at(0)->y;
@@ -95,15 +94,15 @@ struct SubOneArrow : public JTriggeredArrow<SubOneArrow> {
 
         outputs[0] = {event, 1};
         output_count = 1;
-        status = JArrowMetrics::Status::KeepGoing;
+        status = JArrow::FireResult::KeepGoing;
     }
 };
 
-struct SumArrow : public JTriggeredArrow<SumArrow> {
+struct SumArrow : public JArrow {
 
     double sum = 0;
 
-    SumArrow(std::string name, JMailbox<JEvent*>* input_queue, JEventPool* pool) {
+    SumArrow(std::string name, JEventQueue* input_queue, JEventPool* pool) {
         set_name(name);
         set_is_sink(true);
         create_ports(1, 1);
@@ -111,14 +110,14 @@ struct SumArrow : public JTriggeredArrow<SumArrow> {
         attach(pool, 1);
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
         auto prev = event->Get<EventData>("third");
         auto z = prev.at(0)->z;
         sum += z;
 
         outputs[0] = {event, 1};
         output_count = 1;
-        status = JArrowMetrics::Status::KeepGoing;
+        status = JArrow::FireResult::KeepGoing;
     }
 };
 

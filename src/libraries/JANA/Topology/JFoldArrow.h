@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include <JANA/Topology/JTriggeredArrow.h>
 #include <JANA/JEventFolder.h>
+#include <JANA/Topology/JArrow.h>
 
-class JFoldArrow : public JTriggeredArrow<JFoldArrow> {
+class JFoldArrow : public JArrow {
 public:
     enum PortIndex {CHILD_IN=0, CHILD_OUT=1, PARENT_OUT=2};
 
@@ -54,7 +54,7 @@ public:
         }
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final {
 
         assert(m_next_input_port == CHILD_IN);
 
@@ -68,7 +68,7 @@ public:
             m_folder->DoFold(*event, *parent);
         }
 
-        status = JArrowMetrics::Status::KeepGoing;
+        status = JArrow::FireResult::KeepGoing;
         outputs[0] = {event, CHILD_OUT};
         output_count = 1;
 

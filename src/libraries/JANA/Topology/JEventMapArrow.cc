@@ -29,7 +29,7 @@ void JEventMapArrow::add_processor(JEventProcessor* processor) {
     m_procs.push_back(processor);
 }
 
-void JEventMapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrowMetrics::Status& status) {
+void JEventMapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventSource* source : m_sources) {
@@ -52,7 +52,7 @@ void JEventMapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_cou
     LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     outputs[0] = {event, 1};
     output_count = 1;
-    status = JArrowMetrics::Status::KeepGoing;
+    status = JArrow::FireResult::KeepGoing;
 }
 
 void JEventMapArrow::initialize() {
