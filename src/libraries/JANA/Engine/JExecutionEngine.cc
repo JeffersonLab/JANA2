@@ -312,9 +312,11 @@ void JExecutionEngine::HandleFailures() {
     // In reality all callers are going to print everything they can about the exception and exit.
     for (auto& worker: m_worker_states) {
         if (worker->stored_exception != nullptr) {
+            GetApplication()->SetExitCode((int) JApplication::ExitCode::UnhandledException);
             std::rethrow_exception(worker->stored_exception);
         }
         if (worker->is_timed_out) {
+            GetApplication()->SetExitCode((int) JApplication::ExitCode::Timeout);
             auto ex = JException("Timeout in worker thread");
             ex.stacktrace = worker->backtrace.ToString();
             throw ex;
