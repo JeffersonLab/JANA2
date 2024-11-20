@@ -46,14 +46,14 @@ void JMultifactory::Execute(const std::shared_ptr<const JEvent>& event) {
     });
 }
 
-void JMultifactory::Release() {
+void JMultifactory::DoFinish() {
     std::lock_guard<std::mutex> lock(m_mutex);
     // Only call Finish() if we actually initialized
     // Only call Finish() once
+    
     if (m_status == Status::Initialized) {
-        CallWithJExceptionWrapper("JMultifactory::Finish", [&](){
-            Finish();
-        });
+        CallWithJExceptionWrapper("JMultifactory::EndRun", [&](){ EndRun(); });
+        CallWithJExceptionWrapper("JMultifactory::Finish", [&](){ Finish(); });
         m_status = Status::Finalized;
     }
 }
@@ -66,12 +66,17 @@ JFactorySet* JMultifactory::GetHelpers() {
 void JMultifactory::DoInit() {
 
     std::lock_guard<std::mutex> lock(m_mutex);
-    if (m_status == Status::Uninitialized) {
-        CallWithJExceptionWrapper("JMultifactory::Init", [&](){
-            Init();
-        });
-        m_status = Status::Initialized;
+    if (m_status != Status::Uninitialized) {
+        throw JException("Attempted to initialzie a JMultifactory that has already been initialized!");
     }
+    CallWithJExceptionWrapper("JMultifactory::Init", [&](){ Init(); });
+    for (auto* parameter : m_parameters) {
+        parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+    }
+    for (auto* service : m_services) {
+        service->Fetch(m_app);
+    }
+    m_status = Status::Initialized;
 }
 
 void JMultifactory::Summarize(JComponentSummary& summary) const {

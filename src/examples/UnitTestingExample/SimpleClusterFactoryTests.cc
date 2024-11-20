@@ -13,8 +13,7 @@ TEST_CASE("SimpleClusterFactoryTests") {
     // We need to fire up the JApplication so that our Factory can access all of its JServices.
     // However, for unit testing, we don't need (or want!) to set up an event source or actually call JApplication::Run().
     JApplication app;
-    app.SetParameterValue("log:debug", "SimpleClusterFactory");
-    app.SetParameterValue("log:off", "JApplication,JParameterManager,JArrowProcessingController,JArrow");
+    app.SetParameterValue("jana:loglevel", "off");
     // Add any plugins you need here
     // app.AddPlugin("myPlugin");
     app.Initialize();  // Load the plugins

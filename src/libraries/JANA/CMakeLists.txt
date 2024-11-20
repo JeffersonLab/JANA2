@@ -4,25 +4,24 @@
 set(JANA2_SOURCES
 
     JApplication.cc
+    JEvent.cc
+    JEventSource.cc
     JFactory.cc
     JFactorySet.cc
     JMultifactory.cc
     JService.cc
     JVersion.cc
+    JEvent.cc
 
-    Engine/JArrowProcessingController.cc
-    Engine/JScheduler.cc
-    Engine/JWorker.cc
-    Engine/JPerfMetrics.cc
-    Engine/JPerfSummary.cc
+    Engine/JExecutionEngine.cc
 
-    Topology/JEventProcessorArrow.cc
+    Topology/JArrow.cc
     Topology/JEventSourceArrow.cc
     Topology/JEventMapArrow.cc
+    Topology/JEventTapArrow.cc
     Topology/JTopologyBuilder.cc
 
     Services/JComponentManager.cc
-    Services/JLoggingService.cc
     Services/JParameterManager.cc
     Services/JPluginLoader.cc
     Services/JWiringService.cc
@@ -38,6 +37,7 @@ set(JANA2_SOURCES
     Utils/JCallGraphRecorder.cc
     Utils/JInspector.cc
     Utils/JApplicationInspector.cc
+    Utils/JBacktrace.cc
 
     Calibrations/JCalibration.cc
     Calibrations/JCalibrationFile.cc

@@ -12,6 +12,7 @@
 #include <map>
 #include <cmath>
 #include <iomanip>
+#include <cstring>
 
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
@@ -34,6 +35,7 @@ class JParameter {
                                     //   We want to differentiate these from the parameters that users are meant to control and understand.
     bool m_is_used = false;         // If a parameter hasn't been used, it probably contains a typo, and we should warn the user.
 
+    bool m_is_conflicted = false;   // Whether or not this parameter has been registered with inconsistent default values
 
 public:
 
@@ -55,6 +57,7 @@ public:
     inline bool IsAdvanced() const { return m_is_advanced; }
     inline bool IsUsed() const { return m_is_used; }
     inline bool IsDeprecated() const { return m_is_deprecated; }
+    inline bool IsConflicted() const { return m_is_conflicted; }
 
     inline void SetKey(std::string key) { m_name = std::move(key); }
     inline void SetValue(std::string val) { m_value = std::move(val); }
@@ -65,6 +68,7 @@ public:
     inline void SetIsAdvanced(bool isHidden) { m_is_advanced = isHidden; }
     inline void SetIsUsed(bool isUsed) { m_is_used = isUsed; }
     inline void SetIsDeprecated(bool isDeprecated) { m_is_deprecated = isDeprecated; }
+    inline void SetIsConflicted(bool isConflicted) { m_is_conflicted = isConflicted; }
 
 };
 
@@ -86,9 +90,6 @@ public:
     void PrintParameters();
     
     void PrintParameters(int verbosity, int strictness);
-
-    [[deprecated]]
-    void PrintParameters(bool show_defaulted, bool show_advanced=true, bool warn_on_unused=false);
 
     std::map<std::string, JParameter*> GetAllParameters();
 
@@ -141,14 +142,14 @@ public:
 
     static std::string ToLower(const std::string& name);
 
+    JLogger GetLogger(const std::string& prefix);
+
 private:
 
     std::map<std::string, JParameter*> m_parameters;
 
     int m_strictness = 1;
     int m_verbosity = 1;
-
-    JLogger m_logger;
 
     std::mutex m_mutex;
 };
@@ -264,15 +265,20 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
             // However, we still want to warn the user if the same parameter was declared with different values.
             Parse(param->GetDefault(),t);
             if (!Equals(val, t)) {
-                LOG_WARN(m_logger) << "Parameter '" << name << "' has conflicting defaults: '"
-                                   << Stringify(val) << "' vs '" << param->GetDefault() << "'"
-                                   << LOG_END;
-                if (param->IsDefault()) {
-                    // If we tried to set the same default parameter twice with different values, and there is no
-                    // existing non-default value, we remember the _latest_ default value. This way, we return the
-                    // default provided by the caller, instead of the default provided by the mysterious interloper.
-                    param->SetValue(Stringify(val));
+                if (!param->IsConflicted()) {
+                    // Only show this warning once per parameter
+                    LOG_WARN(m_logger) << "Parameter '" << name << "' has conflicting defaults: '"
+                                    << Stringify(val) << "' vs '" << param->GetDefault() << "'"
+                                    << LOG_END;
+                    param->SetIsConflicted(true);
                 }
+                // If we tried to set the same default parameter twice with different values, and there is no
+                // existing non-default value, we remember the _latest_ default value. This way, we return the
+                // default provided by the caller, instead of the default provided by the mysterious interloper.
+                param->SetDefault(Stringify(val));
+            }
+            if (param->IsDefault()) {
+                param->SetValue(Stringify(val)); // Use _latest_ default value
             }
         }
     }
@@ -381,6 +387,37 @@ inline void JParameterManager::Parse(const std::string& value, std::vector<T> &v
         T t;
         Parse(s, t);
         val.push_back(t);
+    }
+}
+
+/// @brief Specialization for JLogger::Level enum
+template <>
+inline void JParameterManager::Parse(const std::string& in, JLogger::Level& out) {
+    std::string token(in);
+    std::transform(in.begin(), in.end(), token.begin(), ::tolower);
+    if (std::strcmp(token.c_str(), "trace") == 0) { 
+        out = JLogger::Level::TRACE;
+    }
+    else if (std::strcmp(token.c_str(), "debug") == 0) { 
+        out = JLogger::Level::DEBUG;
+    }
+    else if (std::strcmp(token.c_str(), "info") == 0) { 
+        out = JLogger::Level::INFO;
+    }
+    else if (std::strcmp(token.c_str(), "warn") == 0) { 
+        out = JLogger::Level::WARN;
+    }
+    else if (std::strcmp(token.c_str(), "error") == 0) { 
+        out = JLogger::Level::ERROR;
+    }
+    else if (std::strcmp(token.c_str(), "fatal") == 0) { 
+        out = JLogger::Level::FATAL;
+    }
+    else if (std::strcmp(token.c_str(), "off") == 0) { 
+        out = JLogger::Level::OFF;
+    }
+    else {
+        throw JException("Unable to parse log level: '%s'. Options are: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF", in.c_str());
     }
 }
 

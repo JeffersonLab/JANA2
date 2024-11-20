@@ -20,7 +20,7 @@ void InitPlugin(JApplication* app) {
     app->Add(new JFactoryGeneratorT<SimpleClusterFactory>);
 
     // Always use RandomSource
-    app->Add(new RandomSource("random", app));
+    app->Add(new RandomSource());
 
     // Only use RandomSource when 'random' specified on cmd line
     // app->Add(new JEventSourceGeneratorT<RandomSource>); 

@@ -108,7 +108,7 @@ public:
 
 protected:
 
-    void Init(JApplication* app) {
+    void Fetch(JApplication* app) {
         m_data = app->GetService<ServiceT>();
     }
 };

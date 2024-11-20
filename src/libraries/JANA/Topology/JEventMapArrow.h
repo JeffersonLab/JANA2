@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <JANA/Topology/JPipelineArrow.h>
+#include <JANA/Topology/JArrow.h>
 
 class JEventPool;
 class JEventSource;
@@ -11,10 +11,11 @@ class JEventUnfolder;
 class JEventProcessor;
 class JEvent;
 
-using Event = std::shared_ptr<JEvent>;
-using EventQueue = JMailbox<Event*>;
 
-class JEventMapArrow : public JPipelineArrow<JEventMapArrow, Event> {
+class JEventMapArrow : public JArrow {
+
+public:
+    enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
 
 private:
     std::vector<JEventSource*> m_sources;
@@ -22,13 +23,13 @@ private:
     std::vector<JEventProcessor*> m_procs;
 
 public:
-    JEventMapArrow(std::string name, EventQueue *input_queue, EventQueue *output_queue);
+    JEventMapArrow(std::string name);
 
     void add_source(JEventSource* source);
     void add_unfolder(JEventUnfolder* unfolder);
     void add_processor(JEventProcessor* proc);
 
-    void process(Event* event, bool& success, JArrowMetrics::Status& status);
+    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status);
 
     void initialize() final;
     void finalize() final;

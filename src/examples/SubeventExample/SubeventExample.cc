@@ -8,9 +8,9 @@
 #include <JANA/JEventProcessor.h>
 
 #include <JANA/Topology/JEventSourceArrow.h>
-#include <JANA/Topology/JEventProcessorArrow.h>
+#include <JANA/Topology/JEventMapArrow.h>
 #include <JANA/Topology/JSubeventArrow.h>
-#include "JANA/Topology/JTopologyBuilder.h"
+#include <JANA/Topology/JTopologyBuilder.h>
 
 
 struct MyInput : public JObject {
@@ -86,7 +86,7 @@ struct SimpleProcessor : public JEventProcessor {
 int main() {
 
     JApplication app;
-    app.SetParameterValue("log:info", "JWorker,JScheduler,JArrowProcessingController,JEventProcessorArrow");
+    app.SetParameterValue("jana:loglevel", "info");
     app.SetTimeoutEnabled(false);
     app.SetTicker(false);
 
@@ -98,8 +98,8 @@ int main() {
     auto topology = app.GetService<JTopologyBuilder>();
     topology->set_configure_fn([&](JTopologyBuilder& builder) {
 
-        JMailbox<std::shared_ptr<JEvent>*> events_in;
-        JMailbox<std::shared_ptr<JEvent>*> events_out;
+        JMailbox<JEvent*> events_in;
+        JMailbox<JEvent*> events_out;
         JMailbox<SubeventWrapper<MyInput>> subevents_in;
         JMailbox<SubeventWrapper<MyOutput>> subevents_out;
 
@@ -107,11 +107,13 @@ int main() {
         auto subprocess_arrow = new JSubeventArrow<MyInput, MyOutput>("subprocess", &processor, &subevents_in, &subevents_out);
         auto merge_arrow = new JMergeArrow<MyInput, MyOutput>("merge", &processor, &subevents_out, &events_out);
 
-        auto source_arrow = new JEventSourceArrow("simpleSource",
-                                                    {source},
-                                                    &events_in,
-                                                    topology->event_pool);
-        auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);
+        auto source_arrow = new JEventSourceArrow("simpleSource", {source});
+        source_arrow->attach(topology->event_pool, 0);
+        source_arrow->attach(&events_in, 1);
+
+        auto proc_arrow = new JEventMapArrow("simpleProcessor");
+        proc_arrow->attach(&events_out, 0);
+        proc_arrow->attach(topology->event_pool, 1);
         proc_arrow->add_processor(new SimpleProcessor);
 
         builder.arrows.push_back(source_arrow);

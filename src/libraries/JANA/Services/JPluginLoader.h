@@ -36,7 +36,9 @@ class JPluginLoader : public JService {
 
 public:
 
-    JPluginLoader() = default;
+    JPluginLoader() {
+        SetPrefix("jana");
+    }
     ~JPluginLoader() override = default;
     void Init() override;
 

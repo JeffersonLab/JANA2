@@ -5,6 +5,7 @@
 #include <catch.hpp>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include "JANA/JEvent.h"
+#include "JANA/JFactoryGenerator.h"
 
 TEST_CASE("Test topological sort algorithm in isolation") {
 
@@ -68,13 +69,11 @@ struct FacD: public JFactoryT<ObjD> {
 
 TEST_CASE("Test topological sort algorithm using actual Factories") {
     JApplication app;
-    JFactorySet* factories = new JFactorySet;
-    factories->Add(new FacA());
-    factories->Add(new FacB());
-    factories->Add(new FacC());
-    factories->Add(new FacD());
+    app.Add(new JFactoryGeneratorT<FacA>());
+    app.Add(new JFactoryGeneratorT<FacB>());
+    app.Add(new JFactoryGeneratorT<FacC>());
+    app.Add(new JFactoryGeneratorT<FacD>());
     auto event = std::make_shared<JEvent>(&app);
-    event->SetFactorySet(factories);
     event->GetJCallGraphRecorder()->SetEnabled();
     event->Get<ObjD>();
     auto result = event->GetJCallGraphRecorder()->TopologicalSort();

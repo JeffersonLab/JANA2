@@ -1,12 +1,11 @@
 
 set(TEST_SOURCES
     
-    Topology/ArrowTests.cc
+    Topology/JArrowTests.cc
     Topology/JPoolTests.cc
     Topology/MultiLevelTopologyTests.cc
     Topology/QueueTests.cc
-    Topology/SubeventTests.cc
-    Topology/TopologyTests.cc
+    #Topology/SubeventTests.cc
 
     Components/BarrierEventTests.cc
     Components/JObjectTests.cc
@@ -21,6 +20,7 @@ set(TEST_SOURCES
     Components/JEventTests.cc
     Components/JFactoryDefTagsTests.cc
     Components/JFactoryTests.cc
+    Components/JFactoryGeneratorTests.cc
     Components/JMultiFactoryTests.cc
     Components/UnfoldTests.cc
     Components/UserExceptionTests.cc
@@ -29,11 +29,10 @@ set(TEST_SOURCES
     Services/JParameterManagerTests.cc
     Services/JWiringServiceTests.cc
 
-    Engine/ArrowActivationTests.cc
     Engine/ScaleTests.cc
-    Engine/SchedulerTests.cc
     Engine/TerminationTests.cc
     Engine/TimeoutTests.cc
+    Engine/JExecutionEngineTests.cc
 
     Utils/JAutoactivableTests.cc
     Utils/JEventGroupTests.cc

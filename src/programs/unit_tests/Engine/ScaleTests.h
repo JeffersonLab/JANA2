@@ -19,7 +19,6 @@ struct DummySource : public JEventSource {
     Result Emit(JEvent& event) override {
         m_bench_utils.set_seed(event.GetEventNumber(), NAME_OF_THIS);
         m_bench_utils.consume_cpu_ms(20);
-        std::this_thread::sleep_for(std::chrono::nanoseconds(1));
         return Result::Success;
     }
 
@@ -27,15 +26,30 @@ struct DummySource : public JEventSource {
         JBenchUtils m_bench_utils = JBenchUtils();
 };
 
+struct DummyData {int x;};
+struct DummyFactory : public JFactoryT<DummyData> {
+    JBenchUtils m_bench_utils = JBenchUtils();
+
+    void Process(const std::shared_ptr<const JEvent>& event) override {
+        m_bench_utils.set_seed(event->GetEventNumber(), NAME_OF_THIS);
+        m_bench_utils.consume_cpu_ms(70);
+        Insert(new DummyData {22});
+    }
+};
+
 struct DummyProcessor : public JEventProcessor {
 
     DummyProcessor() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
+
+    void ProcessParallel(const JEvent& event) override {
+        event.Get<DummyData>();
+    }
+
     void Process(const JEvent& event) override {
         m_bench_utils.set_seed(event.GetEventNumber(), NAME_OF_THIS);
-        m_bench_utils.consume_cpu_ms(100);
-        std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+        m_bench_utils.consume_cpu_ms(10);
     }
 
     private:

@@ -4,10 +4,10 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JObject.h>
-#include <JANA/Engine/JSubeventArrow.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
 #include "JANA/Engine/JTopologyBuilder.h"
+#include <JANA/Topology/JSubeventArrow.h>
 
 
 struct MyInput : public JObject {
@@ -128,12 +128,10 @@ int main() {
     JMailbox <SubeventWrapper<MyOutput>> subevents_out;
 
     auto split_arrow = new JSplitArrow<MyInput, MyOutput>("split", &processor, &events_in, &subevents_in);
-    auto subprocess_arrow = new JSubeventArrow<MyInput, MyOutput>("subprocess", &processor, &subevents_in,
-                                                                  &subevents_out);
+    auto subprocess_arrow = new JSubeventArrow<MyInput, MyOutput>("subprocess", &processor, &subevents_in, &subevents_out);
     auto merge_arrow = new JMergeArrow<MyInput, MyOutput>("merge", &processor, &subevents_out, &events_out);
 
     JApplication app;
-    app.SetParameterValue("log:info", "JWorker,JScheduler,JArrowProcessingController,JEventProcessorArrow");
     app.SetTimeoutEnabled(false);
     app.SetTicker(false);
 
@@ -141,12 +139,14 @@ int main() {
     source->SetNEvents(10); // limit ourselves to 10 events. Note that the 'jana:nevents' param won't work
     // here because we aren't using JComponentManager to manage the EventSource
 
-    auto topology = app.GetService<JTopologyBuilder>()->create_empty();
-    auto source_arrow = new JEventSourceArrow("simpleSource",
-                                              {source},
-                                              &events_in,
-                                              topology->event_pool);
-    auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);
+    auto topology = app.GetService<JTopologyBuilder>();
+    auto source_arrow = new JEventSourceArrow("simpleSource", {source});
+    source_arrow->set_input(topology->event_pool);
+    source_arrow->set_output(&events_in);
+
+    auto proc_arrow = new JEventMapArrow("simpleProcessor");
+    proc_arrow->set_input(&events_out);
+    proc_arrow->set_output(topology->event_pool);
     proc_arrow->add_processor(new SimpleProcessor);
 
     topology->arrows.push_back(source_arrow);

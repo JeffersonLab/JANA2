@@ -6,15 +6,17 @@
 #include "JTopologyBuilder.h"
 
 #include "JEventSourceArrow.h"
-#include "JEventProcessorArrow.h"
 #include "JEventMapArrow.h"
+#include "JEventTapArrow.h"
 #include "JUnfoldArrow.h"
 #include "JFoldArrow.h"
+#include <JANA/JEventProcessor.h>
 #include <JANA/Utils/JTablePrinter.h>
 
 
-using Event = std::shared_ptr<JEvent>;
-using EventQueue = JMailbox<Event*>;
+JTopologyBuilder::JTopologyBuilder() {
+    SetPrefix("jana");
+}
 
 JTopologyBuilder::~JTopologyBuilder() {
     for (auto arrow : arrows) {
@@ -42,12 +44,12 @@ std::string JTopologyBuilder::print_topology() {
     // Build index lookup for queues
     int i = 0;
     std::map<void*, int> lookup;
-    for (JQueue* queue : queues) {
+    for (JEventQueue* queue : queues) {
         lookup[queue] = i;
         i += 1;
     }
     // Build index lookup for pools
-    for (JPoolBase* pool : pools) {
+    for (JEventPool* pool : pools) {
         lookup[pool] = i;
         i += 1;
     }
@@ -58,7 +60,7 @@ std::string JTopologyBuilder::print_topology() {
     for (JArrow* arrow : arrows) {
 
         show_row = true;
-        for (PlaceRefBase* place : arrow->m_places) {
+        for (JArrow::Port& port : arrow->m_ports) {
             if (show_row) {
                 t | arrow->get_name();
                 t | arrow->is_parallel();
@@ -67,10 +69,11 @@ std::string JTopologyBuilder::print_topology() {
             else {
                 t | "" | "" ;
             }
+            auto place_index = lookup[(port.queue!=nullptr) ? (void*) port.queue : (void*) port.pool];
 
-            t | ((place->is_input) ? "Input ": "Output");
-            t | ((place->is_queue) ? "Queue ": "Pool");
-            t | lookup[place->place_ref];
+            t | ((port.is_input) ? "Input ": "Output");
+            t | ((port.queue != nullptr) ? "Queue ": "Pool");
+            t | place_index;
         }
     }
     return t.Render();
@@ -89,28 +92,18 @@ void JTopologyBuilder::create_topology() {
     mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(m_affinity),
                        static_cast<JProcessorMapping::LocalityStrategy>(m_locality));
 
-    event_pool = new JEventPool(m_components,
-                                m_event_pool_size,
-                                m_location_count,
-                                m_limit_total_events_in_flight);
-    event_pool->init();
+    event_pool = new JEventPool(m_components, m_max_inflight_events, m_location_count);
 
     if (m_configure_topology) {
         m_configure_topology(*this);
         LOG_WARN(GetLogger()) << "Found custom topology configurator! Modified arrow topology is: \n" << print_topology() << LOG_END;
     }
     else {
-        attach_top_level(JEventLevel::Run);
+        attach_level(JEventLevel::Run, nullptr, nullptr);
         LOG_INFO(GetLogger()) << "Arrow topology is:\n" << print_topology() << LOG_END;
     }
-    int id=0;
-    for (auto* queue : queues) {
-        queue->set_logger(m_queue_logger);
-        queue->set_id(id);
-        id += 1;
-    }
     for (auto* arrow : arrows) {
-        arrow->set_logger(m_arrow_logger);
+        arrow->set_logger(GetLogger());
     }
 }
 
@@ -123,252 +116,276 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
     // We parse the 'nthreads' parameter two different ways for backwards compatibility.
     if (m_params->Exists("nthreads")) {
         if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
-            m_event_pool_size = JCpuInfo::GetNumCpus();
+            m_max_inflight_events = JCpuInfo::GetNumCpus();
         } else {
-            m_event_pool_size = m_params->GetParameterValue<int>("nthreads");
+            m_max_inflight_events = m_params->GetParameterValue<int>("nthreads");
         }
     }
 
-    m_params->SetDefaultParameter("jana:event_pool_size", m_event_pool_size,
-                                    "Sets the initial size of the event pool. Having too few events starves the workers; having too many consumes memory and introduces overhead from extra factory initializations")
+    m_params->SetDefaultParameter("jana:max_inflight_events", m_max_inflight_events,
+                                    "The number of events which may be in-flight at once. Should be at least `nthreads` to prevent starvation; more gives better load balancing.")
             ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("jana:limit_total_events_in_flight", m_limit_total_events_in_flight,
-                                    "Controls whether the event pool is allowed to automatically grow beyond jana:event_pool_size")
-            ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("jana:event_queue_threshold", m_event_queue_threshold,
-                                    "Max number of events allowed on the main event queue. Higher => Better load balancing; Lower => Fewer events in flight")
-            ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("jana:event_source_chunksize", m_event_source_chunksize,
-                                    "Max number of events that a JEventSource may enqueue at once. Higher => less queue contention; Lower => better load balancing")
-            ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("jana:event_processor_chunksize", m_event_processor_chunksize,
-                                    "Max number of events that the JEventProcessors may dequeue at once. Higher => less queue contention; Lower => better load balancing")
-            ->SetIsAdvanced(true);
+
+    /*
     m_params->SetDefaultParameter("jana:enable_stealing", m_enable_stealing,
                                     "Enable work stealing. Improves load balancing when jana:locality != 0; otherwise does nothing.")
             ->SetIsAdvanced(true);
+    */
     m_params->SetDefaultParameter("jana:affinity", m_affinity,
                                     "Constrain worker thread CPU affinity. 0=Let the OS decide. 1=Avoid extra memory movement at the expense of using hyperthreads. 2=Avoid hyperthreads at the expense of extra memory movement")
             ->SetIsAdvanced(true);
     m_params->SetDefaultParameter("jana:locality", m_locality,
                                     "Constrain memory locality. 0=No constraint. 1=Events stay on the same socket. 2=Events stay on the same NUMA domain. 3=Events stay on same core. 4=Events stay on same cpu/hyperthread.")
             ->SetIsAdvanced(true);
-
-    m_arrow_logger = m_logging->get_logger("JArrow");
-    m_queue_logger = m_logging->get_logger("JQueue");
 };
 
 
-void JTopologyBuilder::attach_lower_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder, bool found_sink) {
+void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downstream, size_t down_index) {
 
+    auto queue = new JEventQueue(m_max_inflight_events, mapping.get_loc_count());
+    queues.push_back(queue);
+
+    size_t i = 0;
+    for (JArrow::Port& port : upstream->m_ports) {
+        if (!port.is_input) {
+            if (i++ == up_index) {
+                // Found the correct output
+                port.queue = queue;
+                port.pool = nullptr;
+            }
+        }
+    }
+    i = 0;
+    for (JArrow::Port& port : downstream->m_ports) {
+        if (port.is_input) {
+            if (i++ == down_index) {
+                // Found the correct input
+                port.queue = queue;
+                port.pool = nullptr;
+            }
+        }
+    }
+}
+
+
+void JTopologyBuilder::connect_to_first_available(JArrow* upstream, std::vector<JArrow*> downstreams) {
+    for (JArrow* downstream : downstreams) {
+        if (downstream != nullptr) {
+            // Arrows at the same level all connect at index 0 (even the input for the parent JFoldArrow)
+            connect(upstream, 0, downstream, 0);
+            return;
+        }
+    }
+}
+
+
+void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder) {
     std::stringstream ss;
     ss << current_level;
+    auto level_str = ss.str();
 
-    LOG_DEBUG(GetLogger()) << "JTopologyBuilder: Attaching components at lower level = " << current_level << LOG_END;
-    
-    JEventPool* pool = new JEventPool(m_components,
-                                        m_event_pool_size,
-                                        m_location_count,
-                                        m_limit_total_events_in_flight, 
-                                        current_level);
-    pool->init();
-    pools.push_back(pool); // Transfers ownership
-
-
+    // Find all event sources at this level
     std::vector<JEventSource*> sources_at_level;
     for (JEventSource* source : m_components->get_evt_srces()) {
         if (source->GetLevel() == current_level) {
             sources_at_level.push_back(source);
         }
     }
-    std::vector<JEventProcessor*> procs_at_level;
-    for (JEventProcessor* proc : m_components->get_evt_procs()) {
-        if (proc->GetLevel() == current_level) {
-            procs_at_level.push_back(proc);
-        }
-    }
+    
+    // Find all unfolders at this level
     std::vector<JEventUnfolder*> unfolders_at_level;
     for (JEventUnfolder* unfolder : m_components->get_unfolders()) {
         if (unfolder->GetLevel() == current_level) {
             unfolders_at_level.push_back(unfolder);
         }
     }
+    
+    // Find all processors at this level
+    std::vector<JEventProcessor*> mappable_procs_at_level;
+    std::vector<JEventProcessor*> tappable_procs_at_level;
 
-
-    if (sources_at_level.size() != 0) {
-        throw JException("Support for lower-level event sources coming soon!");
-    }
-    if (unfolders_at_level.size() != 0) {
-        throw JException("Support for lower-level event unfolders coming soon!");
-    }
-    if (procs_at_level.size() == 0) {
-        throw JException("For now we require you to provide at least one JEventProcessor");
-    }
-
-    auto q1 = new EventQueue(m_event_queue_threshold, mapping.get_loc_count(), m_enable_stealing);
-    queues.push_back(q1);
-
-    auto q2 = new EventQueue(m_event_queue_threshold, mapping.get_loc_count(), m_enable_stealing);
-    queues.push_back(q2);
-
-    auto* proc_arrow = new JEventProcessorArrow(ss.str()+"Tap", q1, q2, nullptr);
-    arrows.push_back(proc_arrow);
-    proc_arrow->set_chunksize(m_event_processor_chunksize);
-    proc_arrow->set_logger(m_arrow_logger);
-    if (found_sink) {
-        proc_arrow->set_is_sink(false);
-    }
-
-    for (auto proc: procs_at_level) {
-        proc_arrow->add_processor(proc);
-    }
-
-    parent_unfolder->attach_child_in(pool);
-    parent_unfolder->attach_child_out(q1);
-    parent_folder->attach_child_in(q2);
-    parent_folder->attach_child_out(pool);
-    parent_unfolder->attach(proc_arrow);
-    proc_arrow->attach(parent_folder);
-}
-
-
-void JTopologyBuilder::attach_top_level(JEventLevel current_level) {
-
-    std::stringstream ss;
-    ss << current_level;
-    auto level_str = ss.str();
-
-    std::vector<JEventSource*> sources_at_level;
-    for (JEventSource* source : m_components->get_evt_srces()) {
-        if (source->GetLevel() == current_level) {
-            sources_at_level.push_back(source);
+    for (JEventProcessor* proc : m_components->get_evt_procs()) {
+        if (proc->GetLevel() == current_level) {
+            mappable_procs_at_level.push_back(proc);
+            if (proc->GetCallbackStyle() != JEventProcessor::CallbackStyle::LegacyMode) {
+                tappable_procs_at_level.push_back(proc);
+            }
         }
     }
-    if (sources_at_level.size() == 0) {
-        // Skip level entirely for now. Consider eventually supporting 
-        // folding low levels into higher levels without corresponding unfold
+
+
+    bool is_top_level = (parent_unfolder == nullptr);
+    if (is_top_level && sources_at_level.size() == 0) {
+        // Skip level entirely when no source is present.
         LOG_TRACE(GetLogger()) << "JTopologyBuilder: No sources found at level " << current_level << ", skipping" << LOG_END;
         JEventLevel next = next_level(current_level);
         if (next == JEventLevel::None) {
             LOG_WARN(GetLogger()) << "No sources found: Processing topology will be empty." << LOG_END;
             return;
         }
-        return attach_top_level(next);
+        return attach_level(next, nullptr, nullptr);
     }
-    LOG_DEBUG(GetLogger()) << "JTopologyBuilder: Attaching components at top level = " << current_level << LOG_END;
 
-    // We've now found our top level. No matter what, we need an event pool for this level
-    JEventPool* pool_at_level = new JEventPool(m_components,
-                                                m_event_pool_size,
-                                                m_location_count,
-                                                m_limit_total_events_in_flight, 
-                                                current_level);
-    pool_at_level->init();
+    // Enforce constraints on what our builder will accept (at least for now)
+    if (!is_top_level && !sources_at_level.empty()) {
+        throw JException("Topology forbids event sources at lower event levels in the topology");
+    }
+    if ((parent_unfolder == nullptr && parent_folder != nullptr) || (parent_unfolder != nullptr && parent_folder == nullptr)) {
+        throw JException("Topology requires matching unfolder/folder arrow pairs");
+    }
+    if (unfolders_at_level.size() > 1) {
+        throw JException("Multiple JEventUnfolders provided for level %s", level_str.c_str());
+    }
+    // Another constraint is that the highest level of the topology has an event sources, but this is automatically handled by
+    // the level-skipping logic above
+
+
+    // Fill out arrow grid from components at this event level
+    // --------------------------
+    // 0. Pool
+    // --------------------------
+    JEventPool* pool_at_level = new JEventPool(m_components, m_max_inflight_events, m_location_count, current_level);
     pools.push_back(pool_at_level); // Hand over ownership of the pool to the topology
 
-    // There are two possibilities at this point:
-    // a. This is the only level, in which case we wire up the arrows and exit
-    // b. We have an unfolder/folder pair, in which case we wire everything up, and then recursively attach_lower_level().
-    // We use the presence of an unfolder as our test for whether or not a lower level should be included. This is because
-    // the folder might be trivial and hence omitted by the user. (Note that some folder is always needed in order to return 
-    // the higher-level event to the pool). 
-    // The user always needs to provide an unfolder because I can't think of a trivial unfolder that would be useful.
-
-    std::vector<JEventUnfolder*> unfolders_at_level;
-    for (JEventUnfolder* unfolder : m_components->get_unfolders()) {
-        if (unfolder->GetLevel() == current_level) {
-            unfolders_at_level.push_back(unfolder);
-        }
-    }
-
-    std::vector<JEventProcessor*> procs_at_level;
-    for (JEventProcessor* proc : m_components->get_evt_procs()) {
-        if (proc->GetLevel() == current_level) {
-            procs_at_level.push_back(proc);
-        }
-    }
-
-    if (unfolders_at_level.size() == 0) {
-        // No unfolders, so this is the only level
-        // Attach the source to the map/tap just like before
-        //
-        // We might want to print a friendly warning message communicating why any lower-level
-        // components are being ignored, like so:
-        // skip_lower_level(next_level(current_level));
-
-        LOG_DEBUG(GetLogger()) << "JTopologyBuilder: No unfolders found at level " << current_level << ", finishing here." << LOG_END;
-
-        auto queue = new EventQueue(m_event_queue_threshold, mapping.get_loc_count(), m_enable_stealing);
-        queues.push_back(queue);
-
-        auto* src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level, queue, pool_at_level);
+    // --------------------------
+    // 1. Source
+    // --------------------------
+    JEventSourceArrow* src_arrow = nullptr;
+    bool need_source = !sources_at_level.empty();
+    if (need_source) {
+        src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level);
+        src_arrow->attach(pool_at_level, JEventSourceArrow::EVENT_IN);
+        src_arrow->attach(pool_at_level, JEventSourceArrow::EVENT_OUT);
         arrows.push_back(src_arrow);
-        src_arrow->set_chunksize(m_event_source_chunksize);
-
-        auto* proc_arrow = new JEventProcessorArrow(level_str+"Tap", queue, nullptr, pool_at_level);
-        arrows.push_back(proc_arrow);
-        proc_arrow->set_chunksize(m_event_processor_chunksize);
-
-        for (auto proc: procs_at_level) {
-            proc_arrow->add_processor(proc);
-        }
-        src_arrow->attach(proc_arrow);
     }
-    else if (unfolders_at_level.size() != 1) {
-        throw JException("At most one unfolder must be provided for each level in the event hierarchy!");
+
+    // --------------------------
+    // 2. Map1
+    // --------------------------
+    bool have_parallel_sources = false;
+    for (JEventSource* source: sources_at_level) {
+        have_parallel_sources |= source->IsPreprocessEnabled();
+    }
+    bool have_unfolder = !unfolders_at_level.empty();
+    JEventMapArrow* map1_arrow = nullptr;
+    bool need_map1 = (have_parallel_sources || have_unfolder);
+
+    if (need_map1) {
+        map1_arrow = new JEventMapArrow(level_str+"Map1");
+        for (JEventSource* source: sources_at_level) {
+            if (source->IsPreprocessEnabled()) {
+                map1_arrow->add_source(source);
+            }
+        }
+        for (JEventUnfolder* unf: unfolders_at_level) {
+            map1_arrow->add_unfolder(unf);
+        }
+        map1_arrow->attach(pool_at_level, JEventMapArrow::EVENT_IN);
+        map1_arrow->attach(pool_at_level, JEventMapArrow::EVENT_OUT);
+        arrows.push_back(map1_arrow);
+    }
+
+    // --------------------------
+    // 3. Unfold
+    // --------------------------
+    JUnfoldArrow* unfold_arrow = nullptr;
+    bool need_unfold = have_unfolder;
+    if (need_unfold) {
+        unfold_arrow = new JUnfoldArrow(level_str+"Unfold", unfolders_at_level[0]);
+        arrows.push_back(unfold_arrow);
+    }
+
+    // --------------------------
+    // 4. Fold
+    // --------------------------
+    JFoldArrow* fold_arrow = nullptr;
+    bool need_fold = have_unfolder;
+    if(need_fold) {
+        fold_arrow = new JFoldArrow(level_str+"Fold", current_level, unfolders_at_level[0]->GetChildLevel());
+        arrows.push_back(fold_arrow);
+        fold_arrow->attach(pool_at_level, JFoldArrow::PARENT_OUT); 
+    }
+
+    // --------------------------
+    // 5. Map2
+    // --------------------------
+    JEventMapArrow* map2_arrow = nullptr;
+    bool need_map2 = !mappable_procs_at_level.empty();
+    if (need_map2) {
+        map2_arrow = new JEventMapArrow(level_str+"Map2");
+        for (JEventProcessor* proc : mappable_procs_at_level) {
+            map2_arrow->add_processor(proc);
+            map2_arrow->attach(pool_at_level, JEventMapArrow::EVENT_IN);
+            map2_arrow->attach(pool_at_level, JEventMapArrow::EVENT_OUT);
+        }
+        arrows.push_back(map2_arrow);
+    }
+
+    // --------------------------
+    // 6. Tap
+    // --------------------------
+    JEventTapArrow* tap_arrow = nullptr;
+    bool need_tap = !tappable_procs_at_level.empty();
+    if (need_tap) {
+        tap_arrow = new JEventTapArrow(level_str+"Tap");
+        for (JEventProcessor* proc : tappable_procs_at_level) {
+            tap_arrow->add_processor(proc);
+            tap_arrow->attach(pool_at_level, JEventTapArrow::EVENT_IN);
+            tap_arrow->attach(pool_at_level, JEventTapArrow::EVENT_OUT);
+        }
+        arrows.push_back(tap_arrow);
+    }
+
+
+    // Now that we've set up our component grid, we can do wiring!
+    // --------------------------
+    // 1. Source
+    // --------------------------
+    if (parent_unfolder != nullptr) {
+        parent_unfolder->attach(pool_at_level, JUnfoldArrow::CHILD_IN);
+        connect_to_first_available(parent_unfolder, {map1_arrow, unfold_arrow, map2_arrow, tap_arrow, parent_folder});
+    }
+    if (src_arrow != nullptr) {
+        connect_to_first_available(src_arrow, {map1_arrow, unfold_arrow, map2_arrow, tap_arrow, parent_folder});
+    }
+    if (map1_arrow != nullptr) {
+        connect_to_first_available(map1_arrow, {unfold_arrow, map2_arrow, tap_arrow, parent_folder});
+    }
+    if (fold_arrow != nullptr) {
+        connect_to_first_available(fold_arrow, {map2_arrow, tap_arrow, parent_folder});
+    }
+    if (map2_arrow != nullptr) {
+        connect_to_first_available(map2_arrow, {tap_arrow, parent_folder});
+    }
+    if (tap_arrow != nullptr) {
+        connect_to_first_available(tap_arrow, {parent_folder});
+    }
+    if (parent_folder != nullptr) {
+        parent_folder->attach(pool_at_level, JFoldArrow::CHILD_OUT);
+    }
+
+    // Finally, we recur over lower levels!
+    if (need_unfold) {
+        auto next_level = unfolders_at_level[0]->GetChildLevel();
+        attach_level(next_level, unfold_arrow, fold_arrow);
     }
     else {
-        
-        auto q1 = new EventQueue(m_event_queue_threshold, mapping.get_loc_count(), m_enable_stealing);
-        auto q2 = new EventQueue(m_event_queue_threshold, mapping.get_loc_count(), m_enable_stealing);
-
-        queues.push_back(q1);
-        queues.push_back(q2);
-
-        auto *src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level, q1, pool_at_level);
-        arrows.push_back(src_arrow);
-        src_arrow->set_chunksize(m_event_source_chunksize);
-
-        auto *map_arrow = new JEventMapArrow(level_str+"Map", q1, q2);;
-        arrows.push_back(map_arrow);
-        map_arrow->set_chunksize(m_event_source_chunksize);
-        src_arrow->attach(map_arrow);
-
-        // TODO: We are using q2 temporarily knowing that it will be overwritten in attach_lower_level.
-        // It would be better to rejigger how we validate PlaceRefs and accept empty placerefs/fewer ctor args
-        auto *unfold_arrow = new JUnfoldArrow(level_str+"Unfold", unfolders_at_level[0], q2, pool_at_level, q2);
-        arrows.push_back(unfold_arrow);
-        unfold_arrow->set_chunksize(m_event_source_chunksize);
-        map_arrow->attach(unfold_arrow);
-
-        // child_in, child_out, parent_out
-        auto *fold_arrow = new JFoldArrow(level_str+"Fold", current_level, unfolders_at_level[0]->GetChildLevel(), q2, pool_at_level, pool_at_level);
-        // TODO: Support user-provided folders
-        fold_arrow->set_chunksize(m_event_source_chunksize);
-
-        bool found_sink = (procs_at_level.size() > 0);
-        attach_lower_level(unfolders_at_level[0]->GetChildLevel(), unfold_arrow, fold_arrow, found_sink);
-
-        // Push fold arrow back _after_ attach_lower_level so that arrows can be iterated over in order
-        arrows.push_back(fold_arrow);
-
-        if (procs_at_level.size() != 0) {
-
-            auto q3 = new EventQueue(m_event_queue_threshold, mapping.get_loc_count(), m_enable_stealing);
-            queues.push_back(q3);
-
-            auto* proc_arrow = new JEventProcessorArrow(level_str+"Tap", q3, nullptr, pool_at_level);
-            arrows.push_back(proc_arrow);
-            proc_arrow->set_chunksize(m_event_processor_chunksize);
-
-            for (auto proc: procs_at_level) {
-                proc_arrow->add_processor(proc);
-            }
-
-            fold_arrow->attach_parent_out(q3);
-            fold_arrow->attach(proc_arrow);
+        // This is the lowest level
+        // TODO: Improve logic for determining event counts for multilevel topologies
+        if (tap_arrow != nullptr) {
+            tap_arrow->set_is_sink(true);
+        }
+        else if (map2_arrow != nullptr) {
+            map2_arrow->set_is_sink(true);
+        }
+        else if (map1_arrow != nullptr) {
+            map1_arrow->set_is_sink(true);
+        }
+        else if (src_arrow != nullptr) {
+            src_arrow->set_is_sink(true);
         }
     }
-
 }
+
+
 

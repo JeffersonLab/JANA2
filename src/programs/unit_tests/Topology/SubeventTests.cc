@@ -7,8 +7,9 @@
 
 #include <JANA/JObject.h>
 #include <JANA/JEvent.h>
+#include <JANA/JEventProcessor.h>
 #include <JANA/Topology/JEventSourceArrow.h>
-#include <JANA/Topology/JEventProcessorArrow.h>
+#include <JANA/Topology/JEventMapArrow.h>
 #include <JANA/Topology/JSubeventArrow.h>
 #include <JANA/Topology/JTopologyBuilder.h>
 
@@ -46,8 +47,8 @@ TEST_CASE("Create subevent processor") {
 TEST_CASE("Basic subevent arrow functionality") {
 
     MyProcessor processor;
-    JMailbox<std::shared_ptr<JEvent>*> events_in;
-    JMailbox<std::shared_ptr<JEvent>*> events_out;
+    JMailbox<JEvent*> events_in;
+    JMailbox<JEvent*> events_out;
     JMailbox<SubeventWrapper<MyInput>> subevents_in;
     JMailbox<SubeventWrapper<MyOutput>> subevents_out;
 
@@ -67,7 +68,7 @@ TEST_CASE("Basic subevent arrow functionality") {
             SetCallbackStyle(CallbackStyle::ExpertMode);
         }
         Result Emit(JEvent& event) override {
-            if (GetEventCount() == 10) return Result::FailureFinished;
+            if (GetEmittedEventCount() == 10) return Result::FailureFinished;
             std::vector<MyInput*> inputs;
             inputs.push_back(new MyInput(22,3.6));
             inputs.push_back(new MyInput(23,3.5));
@@ -95,18 +96,19 @@ TEST_CASE("Basic subevent arrow functionality") {
     SECTION("Execute subevent arrows end-to-end") {
 
         JApplication app;
-        app.SetParameterValue("log:info", "JWorker,JScheduler,JArrow,JArrowProcessingController,JEventProcessorArrow");
         app.SetTimeoutEnabled(false);
         app.SetTicker(false);
 
         auto topology = app.GetService<JTopologyBuilder>();
         topology->set_configure_fn([&](JTopologyBuilder& topology) {
-            auto source_arrow = new JEventSourceArrow("simpleSource",
-                                                    {new SimpleSource},
-                                                    &events_in,
-                                                    topology.event_pool);
-            auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, 
-                    nullptr, topology.event_pool);
+
+            auto source_arrow = new JEventSourceArrow("simpleSource", {new SimpleSource});
+            source_arrow->attach(topology.event_pool, JEventSourceArrow::EVENT_IN);
+            source_arrow->attach(&events_in, JEventSourceArrow::EVENT_OUT);
+
+            auto proc_arrow = new JEventMapArrow("simpleProcessor");
+            proc_arrow->attach(&events_out, 0);
+            proc_arrow->attach(topology.event_pool, 1);
             proc_arrow->add_processor(new SimpleProcessor);
 
             topology.arrows.push_back(source_arrow);
@@ -114,6 +116,7 @@ TEST_CASE("Basic subevent arrow functionality") {
             topology.arrows.push_back(subprocess_arrow);
             topology.arrows.push_back(merge_arrow);
             topology.arrows.push_back(proc_arrow);
+
             source_arrow->attach(split_arrow);
             split_arrow->attach(subprocess_arrow);
             subprocess_arrow->attach(merge_arrow);

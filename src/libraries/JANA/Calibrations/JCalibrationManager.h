@@ -6,10 +6,10 @@
 #include <JANA/Calibrations/JCalibrationFile.h>
 #include <JANA/Calibrations/JCalibrationGenerator.h>
 
-#include <JANA/Services/JServiceLocator.h>
-#include <JANA/Services/JLoggingService.h>
+#include <JANA/JService.h>
 
 #include <algorithm>
+#include "JANA/Services/JParameterManager.h"
 #include "JLargeCalibration.h"
 
 class JCalibrationManager : public JService {
@@ -22,17 +22,20 @@ class JCalibrationManager : public JService {
     pthread_mutex_t m_resource_manager_mutex;
 
     std::shared_ptr<JParameterManager> m_params;
-    JLogger m_logger;
+
     std::string m_url = "file://./";
     std::string m_context = "default";
 
 public:
-    void acquire_services(JServiceLocator *service_locator) {
 
-        // Configure our logger
-        m_logger = service_locator->get<JLoggingService>()->get_logger("JCalibrationManager");
+    JCalibrationManager() { 
+        pthread_mutex_init(&m_calibration_mutex, nullptr);
+        pthread_mutex_init(&m_resource_manager_mutex, nullptr);
 
-        m_params = service_locator->get<JParameterManager>();
+        SetPrefix("jana"); 
+    }
+
+    void acquire_services(JServiceLocator* sl) {
 
         // Url and context may be passed in either as environment variables
         // or configuration parameters. Default values are used if neither is available.
@@ -40,6 +43,7 @@ public:
         if (getenv("JANA_CALIB_URL") != nullptr) m_url = getenv("JANA_CALIB_URL");
         if (getenv("JANA_CALIB_CONTEXT") != nullptr) m_context = getenv("JANA_CALIB_CONTEXT");
 
+        m_params = sl->get<JParameterManager>();
         m_params->SetDefaultParameter("JANA:CALIB_URL", m_url, "URL used to access calibration constants");
         m_params->SetDefaultParameter("JANA:CALIB_CONTEXT", m_context,
                                     "Calibration context to pass on to concrete JCalibration derived class");

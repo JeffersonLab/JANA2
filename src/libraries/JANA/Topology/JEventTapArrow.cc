@@ -3,40 +3,33 @@
 
 
 #include <JANA/Topology/JEventTapArrow.h>
-#include <JANA/Utils/JEventPool.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventUnfolder.h>
 #include <JANA/JEvent.h>
 
 
-JEventTapArrow::JEventTapArrow(std::string name,
-                               EventQueue *input_queue,
-                               EventQueue *output_queue,
-                               JEventPool *pool)
-        : JPipelineArrow(std::move(name),
-                         false,
-                         false,
-                         false,
-                         input_queue,
-                         output_queue,
-                         pool) {}
+JEventTapArrow::JEventTapArrow(std::string name) {
+    set_name(name);
+    create_ports(1,1);
+}
 
 void JEventTapArrow::add_processor(JEventProcessor* proc) {
     m_procs.push_back(proc);
 }
 
-void JEventTapArrow::process(Event* event, bool& success, JArrowMetrics::Status& status) {
+void JEventTapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
-    LOG_DEBUG(m_logger) << "JEventTapArrow '" << get_name() << "': Starting event# " << (*event)->GetEventNumber() << LOG_END;
+    LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventProcessor* proc : m_procs) {
-        JCallGraphEntryMaker cg_entry(*(*event)->GetJCallGraphRecorder(), proc->GetTypeName()); // times execution until this goes out of scope
+        JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), proc->GetTypeName()); // times execution until this goes out of scope
         if (proc->GetCallbackStyle() != JEventProcessor::CallbackStyle::LegacyMode) {
             proc->DoTap(*event);
         }
     }
-    LOG_DEBUG(m_logger) << "JEventTapArrow '" << get_name() << "': Finished event# " << (*event)->GetEventNumber() << LOG_END;
-    success = true;
-    status = JArrowMetrics::Status::KeepGoing;
+    outputs[0] = {event, 1};
+    output_count = 1;
+    status = JArrow::FireResult::KeepGoing;
+    LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
 }
 
 void JEventTapArrow::initialize() {

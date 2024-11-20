@@ -10,13 +10,11 @@
  * which might be changed by user parameters.
  */
 
+#include "JANA/Services/JParameterManager.h"
 #include <JANA/JEvent.h>
 #include <JANA/JMultifactory.h>
 #include <JANA/JVersion.h>
 #include <JANA/Components/JHasInputs.h>
-
-#include <JANA/JLogger.h>
-#include <JANA/Services/JLoggingService.h>
 
 #include <string>
 #include <vector>
@@ -271,8 +269,7 @@ public:
         }
 
         // Obtain logger
-        //m_logger = m_app->GetService<Log_service>()->logger(m_prefix);
-        m_logger = m_app->GetService<JLoggingService>()->get_logger(m_prefix);
+        m_logger = m_app->GetService<JParameterManager>()->GetLogger(m_prefix);
 
         // Configure logger. Priority = [JParameterManager, system log level]
         // std::string default_log_level = eicrecon::LogLevelToString(m_logger->level());
@@ -285,7 +282,7 @@ public:
             parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
         }
         for (auto* service : m_services) {
-            service->Init(m_app);
+            service->Fetch(m_app);
         }
         static_cast<AlgoT*>(this)->Configure();
     }

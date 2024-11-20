@@ -18,36 +18,12 @@
 #endif
 
 
-/// Class template for metadata. This constrains JFactoryT<T> to use the same (user-defined)
-/// metadata structure, JMetadata<T> for that T. This is essential for retrieving metadata from
-/// JFactoryT's without breaking the Liskov substitution property.
-template<typename T>
-struct JMetadata {};
-
 template<typename T>
 class JFactoryT : public JFactory {
 public:
 
     using IteratorType = typename std::vector<T*>::const_iterator;
     using PairType = std::pair<IteratorType, IteratorType>;
-
-    /// JFactoryT constructor requires a name and a tag.
-    /// Name should always be JTypeInfo::demangle<T>(), tag is usually "".
-    JFactoryT(const std::string& aName, const std::string& aTag) __attribute__ ((deprecated)) : JFactory(aName, aTag) {
-        EnableGetAs<T>();
-        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
-#if JANA2_HAVE_ROOT
-        EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
-#endif
-    }
-
-    JFactoryT(const std::string& aName) __attribute__ ((deprecated))  : JFactory(aName, "") {
-        EnableGetAs<T>();
-        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
-#if JANA2_HAVE_ROOT
-        EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
-#endif
-    }
 
     JFactoryT() : JFactory(JTypeInfo::demangle<T>(), ""){
         EnableGetAs<T>();
@@ -83,6 +59,10 @@ public:
         return std::make_pair(mData.cbegin(), mData.cend());
     }
 
+    // Retrieve a const reference to the data directly (no copying!)
+    const std::vector<T*>& GetData() {
+        return mData;
+    }
 
     /// Please use the typed setters instead whenever possible
     // TODO: Deprecate this!
@@ -167,20 +147,9 @@ public:
         mCreationStatus = CreationStatus::NotCreatedYet;
     }
 
-    /// Set the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
-    /// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
-    [[deprecated("Use JMultifactory instead")]]
-    void SetMetadata(JMetadata<T> metadata) { mMetadata = metadata; }
-
-    /// Get the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
-    /// and also used by JEvent under the hood.
-    /// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
-    JMetadata<T> GetMetadata() { return mMetadata; }
-
 
 protected:
     std::vector<T*> mData;
-    JMetadata<T> mMetadata;
 };
 
 template<typename T>

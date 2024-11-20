@@ -3,7 +3,9 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JParameterManager.h"
+#include "JANA/JLogger.h"
 
+#include <sstream>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -15,10 +17,7 @@ using namespace std;
 
 /// @brief Default constructor
 JParameterManager::JParameterManager() {
-    // Set the logger temporarily, until the JLoggingService figures out the correct log level
-    m_logger.show_classname = true;
-    m_logger.className = "JParameterManager";
-    m_logger.level = JLogger::Level::INFO;
+    SetLoggerName("jana");
 }
 
 /// @brief Copy constructor
@@ -94,22 +93,6 @@ void JParameterManager::PrintParameters() {
     PrintParameters(m_verbosity, m_strictness);
 }
 
-void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced, bool warn_on_unused) {
-    int verbosity = 1;
-    int strictness = 0;
-
-    if (show_advanced) {
-        verbosity = 3;
-    }
-    else if (show_defaulted) {
-        verbosity = 2;
-    }
-    if (warn_on_unused) {
-        strictness = 1;
-    }
-    PrintParameters(verbosity, strictness);
-}
-
 
 /// @brief Prints parameters to stdout
 ///
@@ -128,15 +111,9 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
         return;
     }
 
-    bool warnings_present = false;
     bool strictness_violation = false;
 
-    // We don't need to show "Advanced" as a warning unless we are using full verbosity
-    if (verbosity == 3) {
-        warnings_present = true;
-    }
-
-    // Check for warnings and unused parameters first 
+    // Unused parameters first 
     // The former might change the table columns and the latter might change the filter verbosity
     for (auto& pair : m_parameters) {
         const auto& key = pair.first;
@@ -144,17 +121,10 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
         
         if ((strictness > 0) && (!param->IsDefault()) && (!param->IsUsed())) {
             strictness_violation = true;
-            warnings_present = true;
-            if (strictness < 2) {
-                LOG_WARN(m_logger) << "Parameter '" << key << "' appears to be unused. Possible typo?" << LOG_END;
-            }
-            else {
-                LOG_FATAL(m_logger) << "Parameter '" << key << "' appears to be unused. Possible typo?" << LOG_END;
-            }
+            LOG_ERROR(m_logger) << "Parameter '" << key << "' appears to be unused. Possible typo?" << LOG_END;
         }
         if ((!param->IsDefault()) && (param->IsDeprecated())) {
-            LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and will no longer be supported in the next release." << LOG_END;
-            warnings_present = true;
+            LOG_ERROR(m_logger) << "Parameter '" << key << "' has been deprecated and may no longer be supported in future releases." << LOG_END;
         }
     }
 
@@ -169,10 +139,10 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
     for (auto& pair : m_parameters) {
         auto param = pair.second;
 
-        if (param->IsDeprecated() && (param->IsDefault())) continue;      
+        if (param->IsDeprecated() && (param->IsDefault())) continue;
         // Always hide deprecated parameters that are NOT in use
         
-        if ((verbosity == 1) && (param->IsDefault())) continue;           
+        if ((verbosity == 1) && (param->IsDefault())) continue;
         // At verbosity level 1, hide all default-valued parameters
         
         if ((verbosity == 2) && (param->IsDefault()) && (param->IsAdvanced())) continue;
@@ -187,48 +157,48 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
         return;
     }
 
-    // Print table
-    JTablePrinter table;
-    table.AddColumn("Name", JTablePrinter::Justify::Left, 20);
-    if (warnings_present) {
-        table.AddColumn("Warnings");  // IsDeprecated column
-    }
-    table.AddColumn("Value", JTablePrinter::Justify::Left, 25);
-    table.AddColumn("Default", JTablePrinter::Justify::Left, 25);
-    table.AddColumn("Description", JTablePrinter::Justify::Left, 50);
-
+    LOG_WARN(m_logger) << "Configuration Parameters" << LOG_END;
     for (JParameter* p: params_to_print) {
-        if (warnings_present) {
-            std::string warning;
-            if (p->IsDeprecated()) {
-                // If deprecated, it no longer matters whether it is advanced or not. If unused, won't show up here anyway.
-                warning = "Deprecated";
-            }
-            else if (!p->IsUsed()) {
-                // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
-                // Can't be both advanced and unused, since JANA only finds out that it is advanced by trying to use it
-                warning = "Unused";
-            }
-            else if (p->IsAdvanced()) {
-                warning = "Advanced";
-            }
 
-            table | p->GetKey()
-                  | warning
-                  | p->GetValue()
-                  | p->GetDefault()
-                  | p->GetDescription();
+        LOG_WARN(m_logger) << LOG_END;
+        LOG_WARN(m_logger) << " - key:         " << p->GetKey() << LOG_END;
+        if (!p->IsDefault()) {
+            LOG_WARN(m_logger) << "   value:       " << p->GetValue() << LOG_END;
         }
-        else {
-            table | p->GetKey()
-            | p->GetValue()
-            | p->GetDefault()
-            | p->GetDescription();
+        if (p->HasDefault()) {
+            LOG_WARN(m_logger) << "   default:     " << p->GetDefault() << LOG_END;
+        }
+        if (!p->GetDescription().empty()) {
+            std::istringstream iss(p->GetDescription());
+            std::string line;
+            bool is_first_line =  true;
+            while (std::getline(iss, line)) {
+                if (is_first_line) {
+                    LOG_INFO(m_logger) << "   description: " << line << LOG_END;
+                }
+                else {
+                    LOG_INFO(m_logger) << "                " << line << LOG_END;
+                }
+                is_first_line = false;
+            }
+        }
+        if (p->IsConflicted()) {
+            LOG_WARN(m_logger) << "   warning:     Conflicting defaults" << LOG_END;
+        }
+        if (p->IsDeprecated()) {
+            LOG_WARN(m_logger) << "   warning:     Deprecated" << LOG_END;
+            // If deprecated, it no longer matters whether it is advanced or not. If unused, won't show up here anyway.
+        }
+        if (!p->IsUsed()) {
+            // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
+            // Can't be both advanced and unused, since JANA only finds out that it is advanced by trying to use it
+            LOG_WARN(m_logger) << "   warning:     Unused" << LOG_END;
+        }
+        if (p->IsAdvanced()) {
+            LOG_WARN(m_logger) << "   warning:     Advanced" << LOG_END;
         }
     }
-    std::ostringstream ss;
-    table.Render(ss);
-    LOG_INFO(m_logger) << "Configuration Parameters\n"  << ss.str() << LOG_END;
+    LOG_WARN(m_logger) << LOG_END;
 
     // Now that we've printed the table, we can throw an exception if we are being super strict
     if (strictness_violation && strictness > 1) {
@@ -409,3 +379,33 @@ void JParameterManager::FilterParameters(std::map<std::string, std::string> &par
         parms[key] = value;
     }
 }
+
+JLogger JParameterManager::GetLogger(const std::string& component_prefix) {
+
+    JLogger logger;
+    logger.group = component_prefix;
+
+    auto global_log_level = RegisterParameter("jana:global_loglevel", JLogger::Level::INFO, "Global log level");
+
+    bool enable_timestamp = RegisterParameter("jana:log:show_timestamp", true, "Show timestamp in log output");
+    auto enable_threadstamp = RegisterParameter("jana:log:show_threadstamp", false, "Show threadstamp in log output");
+    auto enable_group = RegisterParameter("jana:log:show_group", false, "Show threadstamp in log output");
+    auto enable_level = RegisterParameter("jana:log:show_level", true, "Show threadstamp in log output");
+
+    if (component_prefix.empty()) {
+        logger.level = global_log_level;
+    }
+    else {
+        std::ostringstream os;
+        os << component_prefix << ":loglevel";
+        logger.level = RegisterParameter(os.str(), global_log_level, "Component log level");
+    }
+    logger.ShowLevel(enable_level);
+    logger.ShowTimestamp(enable_timestamp);
+    logger.ShowThreadstamp(enable_threadstamp);
+    logger.ShowGroup(enable_group);
+    logger.show_threadstamp = enable_threadstamp;
+    return logger;
+}
+
+

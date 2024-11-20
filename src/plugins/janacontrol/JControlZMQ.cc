@@ -258,7 +258,7 @@ void JControlZMQ::ServerLoop()
             ss << "OK";
         }else if( vals[0]=="resume" ){
             //------------------ resume
-            _japp->Resume();
+            _japp->Run(false);
             ss << "OK";
         }else if( vals[0]=="debug_mode" ){
             //------------------ debug_mode

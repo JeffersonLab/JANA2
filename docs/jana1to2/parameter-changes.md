@@ -10,9 +10,9 @@ The following table compares commonly used JANA parameters between JANA1 and JAN
 |-----------------------|------------------------|------------------------------|--------------------------------------------------|
 | **PLUGINS**           | `- `                   | `-`                          | `-`                                              |
 | **EVENTS_TO_KEEP**    | `EVENTS_TO_KEEP`       | `jana:nevents`               | `-`                                              |
-| **EVENTS_TO_SKIP**    | `EVENTS_TO_SKIP`       | `jana:nskips`                | `-`                                              |
+| **EVENTS_TO_SKIP**    | `EVENTS_TO_SKIP`       | `jana:nskip`                | `-`                                              |
 | **NTHREADS**          | `-`                    | `-`                          | `-`                                              |
-| **JANA:BATCH_MODE**   | `JANA:BATCH_MODE`      | `log:global`                 | `TRACE`, `DEBUG`, `INFO`, `WARN`, `FATAL`, `OFF` |
+| **JANA:BATCH_MODE**   | `JANA:BATCH_MODE`      | `jana:global_loglevel`                 | `TRACE`, `DEBUG`, `INFO`, `WARN`, `FATAL`, `OFF` |
 | **JANA_CALIB_CONTEXT**| `JANA_CALIB_CONTEXT`   | `jana:calib_context`         | `-`                                              |
 
 ## Changes in `halld_recon` Parameters

@@ -10,7 +10,9 @@
 #include <JANA/JEventUnfolder.h>
 #include <JANA/Utils/JAutoActivator.h>
 
-JComponentManager::JComponentManager() {}
+JComponentManager::JComponentManager() {
+    SetPrefix("jana");
+}
 
 JComponentManager::~JComponentManager() {
 
@@ -69,11 +71,11 @@ void JComponentManager::configure_components() {
 void JComponentManager::preinitialize_components() {
     for (auto* src : m_evt_srces) {
         src->SetApplication(GetApplication());
-        src->SetLogger(m_logging->get_logger(src->GetLoggerName()));
+        src->SetLogger(m_params->GetLogger(src->GetLoggerName()));
     }
     for (auto* proc : m_evt_procs) {
         proc->SetApplication(GetApplication());
-        proc->SetLogger(m_logging->get_logger(proc->GetLoggerName()));
+        proc->SetLogger(m_params->GetLogger(proc->GetLoggerName()));
     }
     for (auto* fac_gen : m_fac_gens) {
         fac_gen->SetApplication(GetApplication());
@@ -85,7 +87,7 @@ void JComponentManager::preinitialize_components() {
     }
     for (auto* unfolder : m_unfolders) {
         unfolder->SetApplication(GetApplication());
-        unfolder->SetLogger(m_logging->get_logger(unfolder->GetLoggerName()));
+        unfolder->SetLogger(m_params->GetLogger(unfolder->GetLoggerName()));
     }
 }
 
@@ -118,6 +120,7 @@ void JComponentManager::initialize_components() {
         try {
             // Run Init() on each factory in order to capture any parameters 
             // (and eventually services) that are retrieved via GetApplication().
+            fac->SetApplication(GetApplication());
             fac->DoInit();
         }
         catch (...) {
@@ -229,11 +232,7 @@ JEventSourceGenerator *JComponentManager::resolve_event_source(std::string sourc
     }
 
     // Otherwise, report the problem and throw
-    auto ex = JException("Unable to open event source \"%s\": No suitable generator found!", source_name.c_str());
-    std::ostringstream os;
-    make_backtrace(os);
-    ex.stacktrace = os.str();
-    throw ex;
+    throw JException("Unable to open event source \"%s\": No suitable generator found!", source_name.c_str());
 }
 
 

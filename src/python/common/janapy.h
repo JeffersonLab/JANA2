@@ -31,7 +31,6 @@ static JApplication *pyjapp = nullptr;
 inline void     janapy_Start(void) { PY_INITIALIZED = true; }
 inline void     janapy_Quit(bool skip_join=false) { pyjapp->Quit(skip_join); }
 inline void     janapy_Stop(bool wait_until_idle=false) { pyjapp->Stop(wait_until_idle); }
-inline void     janapy_Resume(void) { pyjapp->Resume(); }
 
 inline bool     janapy_IsInitialized(void) { return pyjapp->IsInitialized(); }
 inline bool     janapy_IsQuitting(void) { return pyjapp->IsQuitting(); }
@@ -135,7 +134,6 @@ m.def("Start",                       &janapy_Start,                       "Allow
 m.def("Run",                         &janapy_Run,                         "Begin processing events (use when running python as an extension)"); \
 m.def("Quit",                        &janapy_Quit,                        "Tell JANA to quit gracefully", py::arg("skip_join")=false); \
 m.def("Stop",                        &janapy_Stop,                        "Tell JANA to (temporarily) stop event processing. If optional agrument is True then block until all threads are stopped."); \
-m.def("Resume",                      &janapy_Resume,                      "Tell JANA to resume event processing."); \
 \
 m.def("IsInitialized",               &janapy_IsInitialized,               "Check if JApplication has already been initialized."); \
 m.def("IsQuitting",                  &janapy_IsQuitting,                  "Check if JApplication is in the process of quitting."); \

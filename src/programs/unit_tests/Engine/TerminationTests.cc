@@ -4,7 +4,6 @@
 
 #include "TerminationTests.h"
 #include "catch.hpp"
-#include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/JApplication.h>
 #include <thread>
 
@@ -13,10 +12,9 @@
 TEST_CASE("TerminationTests") {
 
     JApplication app;
-    app.SetParameterValue("log:global", "OFF");
+    app.SetParameterValue("jana:loglevel", "warn");
     auto processor = new CountingProcessor();
     app.Add(processor);
-    app.SetParameterValue("jana:extended_report", 0);
 
     SECTION("Manual termination") {
 
@@ -27,7 +25,7 @@ TEST_CASE("TerminationTests") {
         app.Stop(true);
         REQUIRE(source->event_count > 0);
         REQUIRE(processor->finish_call_count == 1);
-        REQUIRE(app.GetNEventsProcessed() == source->event_count);
+        REQUIRE(app.GetNEventsProcessed() == source->GetEmittedEventCount());
     }
 
     SECTION("Self termination") {
@@ -38,7 +36,7 @@ TEST_CASE("TerminationTests") {
         REQUIRE(source->event_count == 10);
         REQUIRE(processor->processed_count == 10);
         REQUIRE(processor->finish_call_count == 1);
-        REQUIRE(app.GetNEventsProcessed() == source->event_count);
+        REQUIRE(app.GetNEventsProcessed() == source->GetEmittedEventCount());
     }
 
     SECTION("Interrupted during JEventSource::Open()") {
@@ -47,7 +45,7 @@ TEST_CASE("TerminationTests") {
         app.Add(source);
         app.Run(true);
         REQUIRE(processor->finish_call_count == 1);
-        REQUIRE(app.GetNEventsProcessed() == source->GetEventCount());
+        REQUIRE(app.GetNEventsProcessed() == source->GetEmittedEventCount());
         // We don't know how many events will emit before Stop() request propagates
     }
 

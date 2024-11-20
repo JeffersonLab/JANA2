@@ -128,10 +128,23 @@ void PrintComponentTable(std::ostream& os, const JComponentSummary& cs) {
     os << comp_table;
 }
 
+void PrintComponentYaml(std::ostream& os, const JComponentSummary& cs) {
+    os << "Component Summary" << std::endl;
+
+    for (const auto* comp : cs.GetAllComponents()) {
+        os << std::endl;
+        os << " - base:   " << "\"" << comp->GetBaseName() << "\"" << std::endl;
+        os << "   type:   " << "\"" << comp->GetTypeName() << "\"" << std::endl;
+        os << "   prefix: " << "\"" << comp->GetPrefix() << "\"" << std::endl;
+        os << "   level:  " << "\"" << comp->GetLevel() << "\"" << std::endl;
+        os << "   plugin: " << "\"" << comp->GetPluginName() << "\"" << std::endl;
+    }
+}
+
 
 std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
 
-    PrintComponentTable(os,cs);
+    PrintComponentYaml(os,cs);
     return os;
 }
 

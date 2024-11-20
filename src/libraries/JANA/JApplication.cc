@@ -3,21 +3,18 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <JANA/JApplication.h>
-
 #include <JANA/JEventSource.h>
-
-#include <JANA/Utils/JCpuInfo.h>
-#include <JANA/Services/JParameterManager.h>
-#include <JANA/Services/JGlobalRootLock.h>
-#include <JANA/Services/JPluginLoader.h>
+#include <JANA/Engine/JExecutionEngine.h>
 #include <JANA/Services/JComponentManager.h>
-#include <JANA/Services/JWiringService.h>
-#include <JANA/Topology/JTopologyBuilder.h>
-#include <JANA/Services/JLoggingService.h>
 #include <JANA/Services/JGlobalRootLock.h>
-#include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Services/JParameterManager.h>
+#include <JANA/Services/JPluginLoader.h>
+#include <JANA/Topology/JTopologyBuilder.h>
+#include <JANA/Services/JWiringService.h>
+#include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Utils/JApplicationInspector.h>
 
+#include <chrono>
 #include <sstream>
 #include <unistd.h>
 
@@ -43,14 +40,14 @@ JApplication::JApplication(JParameterManager* params) {
     m_component_manager = std::make_shared<JComponentManager>();
     m_plugin_loader = std::make_shared<JPluginLoader>();
     m_service_locator = std::make_unique<JServiceLocator>();
+    m_execution_engine = std::make_unique<JExecutionEngine>();
 
     ProvideService(m_params);
     ProvideService(m_component_manager);
     ProvideService(m_plugin_loader);
-    ProvideService(std::make_shared<JLoggingService>());
+    ProvideService(m_execution_engine);
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
-
 }
 
 
@@ -110,25 +107,32 @@ void JApplication::Initialize() {
     // Only run this once
     if (m_initialized) return;
 
-    std::ostringstream oss;
-    oss << "Initializing..." << std::endl;
-    JVersion::PrintSplash(oss);
-    JVersion::PrintVersionDescription(oss);
-    LOG_INFO(m_logger) << oss.str() << LOG_END;
-
     // Now that all parameters, components, plugin names, etc have been set, 
     // we can expose our builtin services to the user via GetService()
     m_services_available = true;
-    
+
     // We trigger initialization 
-    auto logging_service = m_service_locator->get<JLoggingService>();
+    m_service_locator->get<JParameterManager>();
     auto component_manager = m_service_locator->get<JComponentManager>();
     auto plugin_loader = m_service_locator->get<JPluginLoader>();
     auto topology_builder = m_service_locator->get<JTopologyBuilder>();
 
     // Set logger on JApplication itself
-    m_logger = logging_service->get_logger("JApplication");
-    m_logger.show_classname = false;
+    m_logger = m_params->GetLogger("jana");
+
+    if (m_logger.level > JLogger::Level::INFO) {
+        std::ostringstream oss;
+        oss << "Initializing..." << std::endl << std::endl;
+        JVersion::PrintVersionDescription(oss);
+        LOG_WARN(m_logger) << oss.str() << LOG_END;
+    }
+    else {
+        std::ostringstream oss;
+        oss << "Initializing..." << std::endl;
+        JVersion::PrintSplash(oss);
+        JVersion::PrintVersionDescription(oss);
+        LOG_WARN(m_logger) << oss.str() << LOG_END;
+    }
 
     // Set up wiring
     ProvideService(std::make_shared<jana::services::JWiringService>());
@@ -146,14 +150,8 @@ void JApplication::Initialize() {
         m_desired_nthreads = JCpuInfo::GetNumCpus();
     }
 
-    m_params->SetDefaultParameter("jana:ticker_interval", m_ticker_interval_ms, "Controls the ticker interval (in ms)");
-    m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
-
     topology_builder->create_topology();
-    ProvideService(std::make_shared<JArrowProcessingController>());
-    m_processing_controller = m_service_locator->get<JArrowProcessingController>();  // Get deps from SL
-    m_processing_controller->initialize();
-
+    auto execution_engine = m_service_locator->get<JExecutionEngine>();
     m_initialized = true;
     // This needs to be at the end so that m_initialized==false while InitPlugin() is being called
 }
@@ -176,7 +174,7 @@ void JApplication::Initialize() {
 /// See JProcessingController::run() for more details.
 ///
 /// @param [in] wait_until_finished If true (default) do not return until the work has completed.
-void JApplication::Run(bool wait_until_finished) {
+void JApplication::Run(bool wait_until_stopped, bool finish) {
 
     Initialize();
     if(m_quitting) return;
@@ -193,90 +191,30 @@ void JApplication::Run(bool wait_until_finished) {
     // Print summary of all config parameters
     m_params->PrintParameters();
 
-    LOG_INFO(m_logger) << GetComponentSummary() << LOG_END;
-    LOG_INFO(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
-    m_processing_controller->run(m_desired_nthreads);
+    LOG_WARN(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
+    m_execution_engine->ScaleWorkers(m_desired_nthreads);
+    m_execution_engine->RunTopology();
 
-    if (!wait_until_finished) {
+    if (!wait_until_stopped) {
         return;
     }
 
-    // Monitor status of all threads
-    while (!m_quitting) {
-
-        // If we are finishing up (all input sources are closed, and are waiting for all events to finish processing)
-        // This flag is used by the integrated rate calculator
-        if (!m_draining_queues) {
-            bool draining = true;
-            for (auto evt_src : m_component_manager->get_evt_srces()) {
-                draining &= (evt_src->GetStatus() == JEventSource::Status::Finalized);
-            }
-            m_draining_queues = draining;
-        }
-
-        // Run until topology is deactivated, either because it finished or because another thread called stop()
-        if (m_processing_controller->is_stopped()) {
-            LOG_INFO(m_logger) << "All workers have stopped." << LOG_END;
-            break;
-        }
-        if (m_processing_controller->is_finished()) {
-            LOG_INFO(m_logger) << "All workers have finished." << LOG_END;
-            break;
-        }
-
-        // Sleep a few cycles
-        std::this_thread::sleep_for(std::chrono::milliseconds(m_ticker_interval_ms));
-
-        // Print status
-        if( m_ticker_on ) PrintStatus();
-
-        // Test for timeout
-        if(m_timeout_on && m_processing_controller->is_timed_out()) {
-            LOG_FATAL(m_logger) << "Detected timeout in worker! Stopping." << LOG_END;
-            SetExitCode((int) ExitCode::Timeout);
-            m_processing_controller->request_stop();
-            // TODO: Timeout error is not obvious enough from UI. Maybe throw an exception instead?
-            // TODO: Send USR2 signal to obtain a backtrace for timed out threads?
-            break;
-        }
-
-        // Test for exception
-        if (m_processing_controller->is_excepted()) {
-            LOG_FATAL(m_logger) << "Detected exception in worker! Re-throwing on main thread." << LOG_END;
-            SetExitCode((int) ExitCode::UnhandledException);
-            m_processing_controller->request_stop();
-
-            // We are going to throw the first exception and ignore the others.
-            throw m_processing_controller->get_exceptions()[0];
-        }
-
-        if (m_inspecting) {
-            Inspect();
-        }
+    m_execution_engine->RunSupervisor();
+    if (finish) {
+        m_execution_engine->FinishTopology();
     }
 
     // Join all threads
     if (!m_skip_join) {
-        LOG_INFO(m_logger) << "Merging threads ..." << LOG_END;
-        m_processing_controller->wait_until_stopped();
-    }
-
-    LOG_INFO(m_logger) << "Event processing ended." << LOG_END;
-    PrintFinalReport();
-
-    // Test for exception one more time, in case it shut down the topology before the supervisor could detect it
-    if (m_processing_controller->is_excepted()) {
-        LOG_FATAL(m_logger) << "Exception in worker!" << LOG_END;
-        SetExitCode((int) ExitCode::UnhandledException);
-        // We are going to throw the first exception and ignore the others.
-        throw m_processing_controller->get_exceptions()[0];
+        m_execution_engine->ScaleWorkers(0);
     }
 }
 
 
 void JApplication::Scale(int nthreads) {
-    LOG_INFO(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
-    m_processing_controller->scale(nthreads);
+    LOG_WARN(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
+    m_execution_engine->ScaleWorkers(nthreads);
+    m_execution_engine->RunTopology();
 }
 
 void JApplication::Inspect() {
@@ -287,7 +225,7 @@ void JApplication::Inspect() {
     m_inspecting = false;
 }
 
-void JApplication::Stop(bool wait_until_idle) {
+void JApplication::Stop(bool wait_until_stopped, bool finish) {
     if (!m_initialized) {
         // People might call Stop() during Initialize() rather than Run().
         // For instance, during JEventProcessor::Init, or via Ctrl-C.
@@ -299,11 +237,13 @@ void JApplication::Stop(bool wait_until_idle) {
     else {
         // Once we've called Initialize(), we can Finish() all of our components
         // whenever we like
-        m_processing_controller->request_stop();
-        if (wait_until_idle) {
-            m_processing_controller->wait_until_stopped();
+        m_execution_engine->DrainTopology();
+        if (wait_until_stopped) {
+            m_execution_engine->RunSupervisor();
+            if (finish) {
+                m_execution_engine->FinishTopology();
+            }
         }
-
     }
 }
 
@@ -312,7 +252,7 @@ void JApplication::Quit(bool skip_join) {
     if (m_initialized) {
         m_skip_join = skip_join;
         m_quitting = true;
-        if (!skip_join && m_processing_controller != nullptr) {
+        if (!skip_join && m_execution_engine != nullptr) {
             Stop(true);
         }
     }
@@ -344,29 +284,6 @@ int JApplication::GetExitCode() {
     return m_exit_code;
 }
 
-void JApplication::HandleSigint() {
-    m_sigint_count++;
-    switch (m_sigint_count) {
-        case 1:
-            LOG_WARN(m_logger) << "Entering Inspector..." << LOG_END;
-            m_inspecting = true;
-            m_processing_controller->request_pause();
-            break;
-        case 2:
-            LOG_FATAL(m_logger) << "Exiting gracefully..." << LOG_END;
-            japp->Quit(false);
-            break;
-        case 3:
-            LOG_FATAL(m_logger) << "Exiting without waiting for threads to join..." << LOG_END;
-            japp->Quit(true);
-            break;
-        default:
-            LOG_FATAL(m_logger) << "Exiting immediately." << LOG_END;
-            exit(-2);
-    }
-
-}
-
 const JComponentSummary& JApplication::GetComponentSummary() {
     /// Returns a data object describing all components currently running
     return m_component_manager->get_component_summary();
@@ -374,82 +291,64 @@ const JComponentSummary& JApplication::GetComponentSummary() {
 
 // Performance/status monitoring
 void JApplication::SetTicker(bool ticker_on) {
-    m_ticker_on = ticker_on;
+    m_execution_engine->SetTickerEnabled(ticker_on);
 }
 
 bool JApplication::IsTickerEnabled() {
-    return m_ticker_on;
+    return m_execution_engine->IsTickerEnabled();
 }
 
 void JApplication::SetTimeoutEnabled(bool enabled) {
-    m_timeout_on = enabled;
+    m_execution_engine->SetTimeoutEnabled(enabled);
 }
 
 bool JApplication::IsTimeoutEnabled() {
-    return m_timeout_on;
+    return m_execution_engine->IsTimeoutEnabled();
 }
 
-void JApplication::PrintStatus() {
-    if (m_extended_report) {
-        m_processing_controller->print_report();
-    }
-    else {
-        std::lock_guard<std::mutex> lock(m_status_mutex);
-        update_status();
-        LOG_INFO(m_logger) << "Status: " << m_perf_summary->total_events_completed << " events processed  "
-                           << JTypeInfo::to_string_with_si_prefix(m_perf_summary->latest_throughput_hz) << "Hz ("
-                           << JTypeInfo::to_string_with_si_prefix(m_perf_summary->avg_throughput_hz) << "Hz avg)" << LOG_END;
-    }
-}
-
-void JApplication::PrintFinalReport() {
-    m_processing_controller->print_final_report();
-}
-
-/// Performs a new measurement if the time elapsed since the previous measurement exceeds some threshold
-void JApplication::update_status() {
-    auto now = std::chrono::high_resolution_clock::now();
-    if ((now - m_last_measurement) >= std::chrono::milliseconds(m_ticker_interval_ms) || m_perf_summary == nullptr) {
-        m_perf_summary = m_processing_controller->measure_performance();
-        m_last_measurement = now;
-    }
+bool JApplication::IsDrainingQueues() {
+    return (m_execution_engine->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
 }
 
 /// Returns the number of threads currently being used.
-/// Note: This data gets stale. If you need event counts and rates
-/// which are more consistent with one another, call GetStatus() instead.
 uint64_t JApplication::GetNThreads() {
-    std::lock_guard<std::mutex> lock(m_status_mutex);
-    update_status();
-    return m_perf_summary->thread_count;
+    return m_execution_engine->GetPerf().thread_count;
 }
 
 /// Returns the number of events processed since Run() was called.
-/// Note: This data gets stale. If you need event counts and rates
-/// which are more consistent with one another, call GetStatus() instead.
 uint64_t JApplication::GetNEventsProcessed() {
-    std::lock_guard<std::mutex> lock(m_status_mutex);
-    update_status();
-    return m_perf_summary->total_events_completed;
+    return m_execution_engine->GetPerf().event_count;
 }
 
 /// Returns the total integrated throughput so far in Hz since Run() was called.
-/// Note: This data gets stale. If you need event counts and rates
-/// which are more consistent with one another, call GetStatus() instead.
 float JApplication::GetIntegratedRate() {
-    std::lock_guard<std::mutex> lock(m_status_mutex);
-    update_status();
-    return m_perf_summary->avg_throughput_hz;
+    return m_execution_engine->GetPerf().throughput_hz;
 }
 
-/// Returns the 'instantaneous' throughput in Hz since the last perf measurement was made.
-/// Note: This data gets stale. If you need event counts and rates
-/// which are more consistent with one another, call GetStatus() instead.
+/// Returns the 'instantaneous' throughput in Hz since the last such call was made.
 float JApplication::GetInstantaneousRate()
 {
-    std::lock_guard<std::mutex> lock(m_status_mutex);
-    update_status();
-    return m_perf_summary->latest_throughput_hz;
+    std::lock_guard<std::mutex> lock(m_inst_rate_mutex);
+    auto latest_event_count = m_execution_engine->GetPerf().event_count;
+    auto latest_time = JExecutionEngine::clock_t::now();
+    
+    auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(latest_time - m_last_measurement_time).count();
+    auto instantaneous_throughput = (duration_ms == 0) ? 0 : (latest_event_count - m_last_event_count) * 1000.0 / duration_ms;
+
+    m_last_event_count = latest_event_count;
+    m_last_measurement_time = latest_time;
+
+    return instantaneous_throughput;
 }
+
+void JApplication::PrintStatus() {
+    auto perf = m_execution_engine->GetPerf();
+    LOG_INFO(m_logger) << "Topology status:     " << ToString(perf.runstatus) << LOG_END;
+    LOG_INFO(m_logger) << "Worker thread count: " << perf.thread_count << LOG_END;
+    LOG_INFO(m_logger) << "Events processed:    " << perf.event_count << LOG_END;
+    LOG_INFO(m_logger) << "Uptime [s]:          " << perf.uptime_ms*1000 << LOG_END;
+    LOG_INFO(m_logger) << "Throughput [Hz]:     " << perf.throughput_hz << LOG_END;
+}
+
 
 

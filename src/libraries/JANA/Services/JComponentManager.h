@@ -56,7 +56,6 @@ public:
 private:
 
     Service<JParameterManager> m_params {this};
-    Service<JLoggingService> m_logging {this};
 
     std::string m_current_plugin_name;
     std::vector<std::string> m_src_names;

@@ -23,11 +23,6 @@ RandomSource::RandomSource() : JEventSource() {
     SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
-RandomSource::RandomSource(std::string resource_name, JApplication* app) : JEventSource(resource_name, app) {
-    SetTypeName(NAME_OF_THIS); // Provide JANA with class name
-    SetCallbackStyle(CallbackStyle::ExpertMode);
-}
-
 void RandomSource::Open() {
 
     /// Open is called exactly once when processing begins.

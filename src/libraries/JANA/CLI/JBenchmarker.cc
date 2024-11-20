@@ -5,7 +5,6 @@
 #include "JBenchmarker.h"
 
 #include <JANA/Utils/JCpuInfo.h>
-#include <JANA/Services/JLoggingService.h>
 
 #include <fstream>
 #include <cmath>
@@ -15,9 +14,10 @@
 JBenchmarker::JBenchmarker(JApplication* app) : m_app(app) {
 
     m_max_threads = JCpuInfo::GetNumCpus();
-    m_logger = app->GetService<JLoggingService>()->get_logger("JBenchmarker");
 
     auto params = app->GetJParameterManager();
+
+    m_logger = params->GetLogger("JBenchmarker");
 
     params->SetParameter("jana:nevents", 0);
     // Prevent users' choice of nevents from interfering with everything
@@ -159,7 +159,7 @@ void JBenchmarker::RunUntilFinished() {
             << "    cd " << m_output_dir << "\n"
             << "    $JANA_HOME/bin/jana-plot-scaletest.py\n" << LOG_END;
     }
-    m_app->Stop();
+    m_app->Stop(true);
 }
 
 

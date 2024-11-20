@@ -5,57 +5,22 @@
 
 #include <JANA/Topology/JArrow.h>
 #include <JANA/JEventUnfolder.h>
-#include <JANA/Utils/JEventPool.h>
 
 class JUnfoldArrow : public JArrow {
+public:
+    enum PortIndex {PARENT_IN=0, CHILD_IN=1, CHILD_OUT=2};
+
 private:
-    using EventT = std::shared_ptr<JEvent>;
-
     JEventUnfolder* m_unfolder = nullptr;
-    EventT* m_parent_event = nullptr;
-    bool m_ready_to_fetch_parent = true;
-
-    PlaceRef<EventT> m_parent_in;
-    PlaceRef<EventT> m_child_in;
-    PlaceRef<EventT> m_child_out;
+    JEvent* m_parent_event = nullptr;
+    JEvent* m_child_event = nullptr;
 
 public:
-
-    JUnfoldArrow(
-        std::string name,
-        JEventUnfolder* unfolder,
-        JMailbox<EventT*>* parent_in,
-        JEventPool* child_in,
-        JMailbox<EventT*>* child_out)
-
-      : JArrow(std::move(name), false, false, false), 
-        m_unfolder(unfolder),
-        m_parent_in(this, parent_in, true, 1, 1),
-        m_child_in(this, child_in, true, 1, 1),
-        m_child_out(this, child_out, false, 1, 1)
-    {
+    JUnfoldArrow(std::string name, JEventUnfolder* unfolder) : m_unfolder(unfolder) {
+        set_name(name);
+        create_ports(2, 1);
+        m_next_input_port = PARENT_IN;
     }
-
-    void attach_parent_in(JMailbox<EventT*>* parent_in) {
-        m_parent_in.place_ref = parent_in;
-        m_parent_in.is_queue = true;
-    }
-
-    void attach_child_in(JEventPool* child_in) {
-        m_child_in.place_ref = child_in;
-        m_child_in.is_queue = false;
-    }
-
-    void attach_child_in(JMailbox<EventT*>* child_in) {
-        m_child_in.place_ref = child_in;
-        m_child_in.is_queue = true;
-    }
-
-    void attach_child_out(JMailbox<EventT*>* child_out) {
-        m_child_out.place_ref = child_out;
-        m_child_out.is_queue = true;
-    }
-
 
     void initialize() final {
         m_unfolder->DoInit();
@@ -67,119 +32,87 @@ public:
         LOG_INFO(m_logger) << "Finalized JEventUnfolder '" << m_unfolder->GetTypeName() << "'" << LOG_END;
     }
 
-    bool try_pull_all(Data<EventT>& pi, Data<EventT>& ci, Data<EventT>& co) {
-        bool success;
-        success = m_parent_in.pull(pi);
-        if (! success) {
-            return false;
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final {
+
+        // Take whatever we were given
+        if (this->m_next_input_port == PARENT_IN) {
+            assert(m_parent_event == nullptr);
+            m_parent_event = event;
         }
-        success = m_child_in.pull(ci);
-        if (! success) {
-            m_parent_in.push(pi);
-            return false;
+        else if (this->m_next_input_port == CHILD_IN) {
+            assert(m_child_event == nullptr);
+            m_child_event = event;
         }
-        success = m_child_out.pull(co);
-        if (! success) {
-            m_parent_in.push(pi);
-            m_child_in.push(ci);
-            return false;
+        else {
+            throw JException("Invalid input port for JEventUnfolder!");
         }
-        return true;
-    }
 
-    size_t push_all(Data<EventT>& parent_in, Data<EventT>& child_in, Data<EventT>& child_out) {
-        size_t message_count = 0;
-        message_count += m_parent_in.push(parent_in);
-        message_count += m_child_in.push(child_in);
-        message_count += m_child_out.push(child_out);
-        return message_count;
-    }
-
-
-    size_t get_pending() final {
-        size_t sum = 0;
-        for (PlaceRefBase* place : m_places) {
-            sum += place->get_pending();
+        // Check if we should exit early because we don't have a parent event
+        if (m_parent_event == nullptr) {
+            m_next_input_port = PARENT_IN;
+            output_count = 0;
+            status = JArrow::FireResult::KeepGoing;
+            return;
         }
-        if (m_parent_event != nullptr) {
-            sum += 1; 
-            // Handle the case of UnfoldArrow hanging on to a parent
+
+        // Check if we should exit early because we don't have a child event
+        if (m_child_event == nullptr) {
+            m_next_input_port = CHILD_IN;
+            output_count = 0;
+            status = JArrow::FireResult::KeepGoing;
+            return;
         }
-        return sum;
-    }
 
+        // At this point we know we have both inputs, so we can run the unfolder. First we validate 
+        // that the events we received are at the correct level for the unfolder. Hopefully the only 
+        // way to end up here is to override the JTopologyBuilder wiring and do it wrong
 
-    void execute(JArrowMetrics& metrics, size_t location_id) final {
+        if (m_parent_event->GetLevel() != m_unfolder->GetLevel()) {
+            throw JException("JUnfolder: Expected parent with level %d, got %d", m_unfolder->GetLevel(), m_parent_event->GetLevel());
+        }
 
-        auto start_total_time = std::chrono::steady_clock::now();
+        if (m_child_event->GetLevel() != m_unfolder->GetChildLevel()) {
+            throw JException("JUnfolder: Expected child with level %d, got %d", m_unfolder->GetChildLevel(), m_child_event->GetLevel());
+        }
 
-        Data<EventT> parent_in_data {location_id};
-        Data<EventT> child_in_data {location_id};
-        Data<EventT> child_out_data {location_id};
+        auto result = m_unfolder->DoUnfold(*m_parent_event, *m_child_event);
+        LOG_DEBUG(m_logger) << "Unfold succeeded: Parent event = " << m_parent_event->GetEventNumber() << ", child event = " << m_child_event->GetEventNumber() << LOG_END;
 
-        bool success = try_pull_all(parent_in_data, child_in_data, child_out_data);
-        if (success) {
+        if (result == JEventUnfolder::Result::KeepChildNextParent) {
+            m_parent_event->Release(); // Decrement the reference count so that this can be recycled
+            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
 
-            auto start_processing_time = std::chrono::steady_clock::now();
-            if (m_ready_to_fetch_parent) {
-                m_ready_to_fetch_parent = false;
-                m_parent_in.min_item_count = 0;
-                m_parent_in.max_item_count = 0;
-                m_parent_event = parent_in_data.items[0];
-                parent_in_data.items[0] = nullptr;
-                parent_in_data.item_count = 0;
-            }
-            auto child = child_in_data.items[0];
-            child_in_data.items[0] = nullptr;
-            child_in_data.item_count = 0;
-            if (m_parent_event == nullptr) {
-                throw JException("Attempting to unfold without a valid parent event");
-            }
-            if (m_parent_event->get()->GetLevel() != m_unfolder->GetLevel()) {
-                throw JException("JUnfolder: Expected parent with level %d, got %d", m_unfolder->GetLevel(), m_parent_event->get()->GetLevel());
-            }
-            if (child->get()->GetLevel() != m_unfolder->GetChildLevel()) {
-                throw JException("JUnfolder: Expected child with level %d, got %d", m_unfolder->GetChildLevel(), child->get()->GetLevel());
-            }
-            
-            auto status = m_unfolder->DoUnfold(*(m_parent_event->get()), *(child->get()));
-
-
-            // Join always succeeds (for now)
-            child->get()->SetParent(m_parent_event);
-
-            LOG_DEBUG(m_logger) << "Unfold succeeded: Parent event = " << m_parent_event->get()->GetEventNumber() << ", child event = " << child->get()->GetEventNumber() << LOG_END;
-            // TODO: We'll need something more complicated for the streaming join case
-
-            if (status == JEventUnfolder::Result::NextChildNextParent || status == JEventUnfolder::Result::KeepChildNextParent) {
-                LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->get()->GetEventNumber() << LOG_END;
-                m_ready_to_fetch_parent = true;
-                m_parent_event->get()->Release();
-                m_parent_event = nullptr;
-                m_parent_in.min_item_count = 1;
-                m_parent_in.max_item_count = 1;
-            }
-
-            child_out_data.items[0] = child;
-            child_out_data.item_count = 1;
-
-            auto end_processing_time = std::chrono::steady_clock::now();
-            size_t events_processed = push_all(parent_in_data, child_in_data, child_out_data);
-
-            auto end_total_time = std::chrono::steady_clock::now();
-            auto latency = (end_processing_time - start_processing_time);
-            auto overhead = (end_total_time - start_total_time) - latency;
-
-            metrics.update(JArrowMetrics::Status::KeepGoing, events_processed, 1, latency, overhead);
+            m_parent_event = nullptr;
+            output_count = 0;
+            m_next_input_port = PARENT_IN;
+            status = JArrow::FireResult::KeepGoing;
+            return;
+        }
+        else if (result == JEventUnfolder::Result::NextChildKeepParent) {
+            m_child_event->SetParent(m_parent_event);
+            outputs[0] = {m_child_event, CHILD_OUT};
+            output_count = 1;
+            m_child_event = nullptr;
+            m_next_input_port = CHILD_IN;
+            status = JArrow::FireResult::KeepGoing;
+            return;
+        }
+        else if (result == JEventUnfolder::Result::NextChildNextParent) {
+            m_child_event->SetParent(m_parent_event);
+            m_parent_event->Release(); // Decrement the reference count so that this can be recycled
+            outputs[0] = {m_child_event, CHILD_OUT};
+            output_count = 1;
+            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
+            m_child_event = nullptr;
+            m_parent_event = nullptr;
+            m_next_input_port = PARENT_IN;
+            status = JArrow::FireResult::KeepGoing;
             return;
         }
         else {
-            auto end_total_time = std::chrono::steady_clock::now();
-            metrics.update(JArrowMetrics::Status::ComeBackLater, 0, 1, std::chrono::milliseconds(0), end_total_time - start_total_time);
-            return;
+            throw JException("Unsupported (corrupt?) JEventUnfolder::Result");
         }
     }
-
 };
 
 

@@ -71,6 +71,7 @@ struct JFactoryTestDummySource: public JEventSource {
 
     JFactoryTestDummySource() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
+        EnableGetObjects();
     }
 
     Result Emit(JEvent&) override {

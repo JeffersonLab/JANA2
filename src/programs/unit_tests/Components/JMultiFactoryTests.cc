@@ -37,6 +37,7 @@ public:
     }
 
     void Process(const std::shared_ptr<const JEvent>&) override {
+        REQUIRE(GetApplication() != nullptr);
         m_process_call_count += 1;
         std::vector<A*> as;
         std::vector<B*> bs;
@@ -81,10 +82,7 @@ TEST_CASE("MultiFactoryTests") {
 
     SECTION("Multifactories work with JFactoryGeneratorT") {
         app.Add(new JFactoryGeneratorT<MyMultifactory>());
-        app.Initialize();
-        auto jcm = app.GetService<JComponentManager>();
         auto event = std::make_shared<JEvent>(&app);
-        jcm->configure_event(*event);
         auto as = event->Get<A>("first");
         REQUIRE(as.size() == 2);
         REQUIRE(as[1]->x == 5.5);
@@ -92,10 +90,7 @@ TEST_CASE("MultiFactoryTests") {
 
     SECTION("Test that multifactory Process() is only called once") {
         app.Add(new JFactoryGeneratorT<MyMultifactory>());
-        app.Initialize();
-        auto jcm = app.GetService<JComponentManager>();
         auto event = std::make_shared<JEvent>(&app);
-        jcm->configure_event(*event);
 
         auto helper_fac = dynamic_cast<JMultifactoryHelper<A>*>(event->GetFactory<A>("first"));
         REQUIRE(helper_fac != nullptr);

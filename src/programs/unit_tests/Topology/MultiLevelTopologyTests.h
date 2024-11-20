@@ -32,7 +32,7 @@ struct MyTimesliceSource : public JEventSource {
 
     void GetEvent(std::shared_ptr<JEvent> event) override {
         // TODO: Insert something
-        jout << "MyTimesliceSource: Emitting " << event->GetEventNumber() << jendl;
+        LOG_INFO(GetLogger()) << "MyTimesliceSource: Emitting " << event->GetEventNumber() << LOG_END;
     }
 };
 
@@ -66,7 +66,7 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
         // TODO: 
 
         if (item == 3) {
-            jout << "Unfold found item 3, finishing join" << jendl;
+            LOG_INFO(GetLogger()) << "Unfold found item 3, finishing join" << LOG_END;
             // TODO: Insert protocluster into child
             return Result::NextChildNextParent;
         }
@@ -95,7 +95,7 @@ struct MyEventProcessor : public JEventProcessor {
 
     void Process(const JEvent& event) override {
         process_called_count++;
-        jout << "MyEventProcessor: Processing " << event.GetEventNumber() << jendl;
+        LOG_INFO(GetLogger()) << "MyEventProcessor: Processing " << event.GetEventNumber() << LOG_END;
         auto clusters = event.Get<MyCluster>("evt");
         // TODO: Validate that the clusters make sense
         REQUIRE(init_called_count == 1);

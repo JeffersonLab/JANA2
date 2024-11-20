@@ -6,8 +6,6 @@
 namespace jana {
 namespace unfoldtests {
 
-using EventT = std::shared_ptr<JEvent>;
-
 
 struct TestUnfolder : public JEventUnfolder {
     mutable std::vector<int> preprocessed_event_nrs;
@@ -46,31 +44,31 @@ TEST_CASE("UnfoldTests_Basic") {
     app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
 
-    JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
-    JEventPool child_pool {jcm, 5, 1, true, JEventLevel::PhysicsEvent};
-    JMailbox<EventT*> parent_queue {3}; // size
-    JMailbox<EventT*> child_queue {3};
+    JEventPool parent_pool {jcm, 5, 1, JEventLevel::Timeslice};
+    JEventPool child_pool {jcm, 5, 1, JEventLevel::PhysicsEvent};
+    JEventQueue parent_queue {3, 1};
+    JEventQueue child_queue {3, 1};
 
-    parent_pool.init();
-    child_pool.init();
+    auto ts1 = parent_pool.Pop(0);
+    ts1->SetEventNumber(17);
 
-    auto ts1 = parent_pool.get();
-    (*ts1)->SetEventNumber(17);
+    auto ts2 = parent_pool.Pop(0);
+    ts2->SetEventNumber(28);
 
-    auto ts2 = parent_pool.get();
-    (*ts2)->SetEventNumber(28);
-
-    parent_queue.try_push(&ts1, 1);
-    parent_queue.try_push(&ts2, 1);
+    parent_queue.Push(ts1, 0);
+    parent_queue.Push(ts2, 0);
 
     TestUnfolder unfolder;
-    JUnfoldArrow arrow("sut", &unfolder, &parent_queue, &child_pool, &child_queue);
+    JUnfoldArrow arrow("sut", &unfolder);
+    arrow.attach(&parent_queue, JUnfoldArrow::PARENT_IN);
+    arrow.attach(&child_pool, JUnfoldArrow::CHILD_IN);
+    arrow.attach(&child_queue, JUnfoldArrow::CHILD_OUT);
 
-    JArrowMetrics m;
     arrow.initialize();
-    arrow.execute(m, 0);
-    REQUIRE(m.get_last_status() == JArrowMetrics::Status::KeepGoing);
-    REQUIRE(child_queue.size() == 1);
+    arrow.execute( 0); // First call to execute() picks up the parent and exits early
+    auto result = arrow.execute( 0); // Second call to execute() picks up the child, calls Unfold(), and emits the newly parented child
+    REQUIRE(result == JArrow::FireResult::KeepGoing);
+    REQUIRE(child_queue.GetSize(0) == 1);
     REQUIRE(unfolder.preprocessed_event_nrs.size() == 0);
     REQUIRE(unfolder.unfolded_parent_nrs.size() == 1);
     REQUIRE(unfolder.unfolded_parent_nrs[0] == 17);
@@ -86,115 +84,113 @@ TEST_CASE("FoldArrowTests") {
     JApplication app;
     app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
-    
 
     // We only use these to obtain preconfigured JEvents
-    JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
-    JEventPool child_pool {jcm, 5, 1, true, JEventLevel::PhysicsEvent};
-    parent_pool.init();
-    child_pool.init();
-
+    JEventPool parent_pool {jcm, 5, 1, JEventLevel::Timeslice};
+    JEventPool child_pool {jcm, 5, 1, JEventLevel::PhysicsEvent};
 
     // We set up our test cases by putting events on these queues
-    JMailbox<std::shared_ptr<JEvent>*> child_in;
-    JMailbox<std::shared_ptr<JEvent>*> child_out;
-    JMailbox<std::shared_ptr<JEvent>*> parent_out;
+    JEventQueue child_in(5, 1);
+    JEventQueue child_out(5, 1);
+    JEventQueue parent_out(5, 1);
 
-    JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::PhysicsEvent, &child_in, &child_out, &parent_out);
-    JArrowMetrics metrics;
+    JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::PhysicsEvent);
+    arrow.attach(&child_in, JFoldArrow::CHILD_IN);
+    arrow.attach(&child_out, JFoldArrow::CHILD_OUT);
+    arrow.attach(&parent_out, JFoldArrow::PARENT_OUT);
     arrow.initialize();
 
     SECTION("One-to-one relationship between timeslices and events") {
 
-        auto ts1 = parent_pool.get();
-        (*ts1)->SetEventNumber(17);
-        REQUIRE(ts1->get()->GetLevel() == JEventLevel::Timeslice);
+        auto ts1 = parent_pool.Pop(0);
+        ts1->SetEventNumber(17);
+        REQUIRE(ts1->GetLevel() == JEventLevel::Timeslice);
 
-        auto ts2 = parent_pool.get();
-        (*ts2)->SetEventNumber(28);
+        auto ts2 = parent_pool.Pop(0);
+        ts2->SetEventNumber(28);
 
-        auto evt1 = child_pool.get();
-        (*evt1)->SetEventNumber(111);
+        auto evt1 = child_pool.Pop(0);
+        evt1->SetEventNumber(111);
 
-        auto evt2 = child_pool.get();
-        (*evt2)->SetEventNumber(112);
+        auto evt2 = child_pool.Pop(0);
+        evt2->SetEventNumber(112);
 
 
-        evt1->get()->SetParent(ts1);
-        ts1->get()->Release(); // One-to-one
-        child_in.try_push(&evt1, 1, 0);
+        evt1->SetParent(ts1);
+        ts1->Release(); // One-to-one
+        child_in.Push(evt1, 0);
 
-        evt2->get()->SetParent(ts2);
-        ts2->get()->Release(); // One-to-one
-        child_in.try_push(&evt2, 1, 0);
+        evt2->SetParent(ts2);
+        ts2->Release(); // One-to-one
+        child_in.Push(evt2, 0);
     
-        arrow.execute(metrics, 0);
+        arrow.execute(0);
 
-        REQUIRE(child_in.size() == 1);
-        REQUIRE(child_out.size() == 1);
-        REQUIRE(parent_out.size() == 1);
+        REQUIRE(child_in.GetSize(0) == 1);
+        REQUIRE(child_out.GetSize(0) == 1);
+        REQUIRE(parent_out.GetSize(0) == 1);
 
     }
 
 
     SECTION("One-to-two relationship between timeslices and events") {
 
-        auto ts1 = parent_pool.get();
-        (*ts1)->SetEventNumber(17);
-        REQUIRE(ts1->get()->GetLevel() == JEventLevel::Timeslice);
+        auto ts1 = parent_pool.Pop(0);
+        ts1->SetEventNumber(17);
+        REQUIRE(ts1->GetLevel() == JEventLevel::Timeslice);
 
-        auto ts2 = parent_pool.get();
-        (*ts2)->SetEventNumber(28);
+        auto ts2 = parent_pool.Pop(0);
+        ts2->SetEventNumber(28);
 
-        auto evt1 = child_pool.get();
-        (*evt1)->SetEventNumber(111);
+        auto evt1 = child_pool.Pop(0);
+        evt1->SetEventNumber(111);
 
-        auto evt2 = child_pool.get();
-        (*evt2)->SetEventNumber(112);
+        auto evt2 = child_pool.Pop(0);
+        evt2->SetEventNumber(112);
 
-        auto evt3 = child_pool.get();
-        (*evt3)->SetEventNumber(113);
+        auto evt3 = child_pool.Pop(0);
+        evt3->SetEventNumber(113);
 
-        auto evt4 = child_pool.get();
-        (*evt4)->SetEventNumber(114);
+        auto evt4 = child_pool.Pop(0);
+        evt4->SetEventNumber(114);
 
 
-        evt1->get()->SetParent(ts1);
-        evt2->get()->SetParent(ts1);
-        ts1->get()->Release(); // One-to-two
+        evt1->SetParent(ts1);
+        evt2->SetParent(ts1);
+        ts1->Release(); // One-to-two
         
-        evt3->get()->SetParent(ts2);
-        evt4->get()->SetParent(ts2);
-        ts2->get()->Release(); // One-to-two
+        evt3->SetParent(ts2);
+        evt4->SetParent(ts2);
+        ts2->Release(); // One-to-two
    
-        child_in.try_push(&evt1, 1, 0);
-        child_in.try_push(&evt2, 1, 0);
-        child_in.try_push(&evt3, 1, 0);
-        child_in.try_push(&evt4, 1, 0);
+        child_in.Push(evt1, 0);
+        child_in.Push(evt2, 0);
+        child_in.Push(evt3, 0);
+        child_in.Push(evt4, 0);
 
-        arrow.execute(metrics, 0);
+        arrow.execute(0);
 
-        REQUIRE(child_in.size() == 3);
-        REQUIRE(child_out.size() == 1);
-        REQUIRE(parent_out.size() == 0);
+        REQUIRE(child_in.GetSize(0) == 3);
+        REQUIRE(child_out.GetSize(0) == 1);
+        REQUIRE(parent_out.GetSize(0) == 0);
 
-        arrow.execute(metrics, 0);
+        arrow.execute(0);
 
-        REQUIRE(child_in.size() == 2);
-        REQUIRE(child_out.size() == 2);
-        REQUIRE(parent_out.size() == 1);
+        REQUIRE(child_in.GetSize(0) == 2);
+        REQUIRE(child_out.GetSize(0) == 2);
+        REQUIRE(parent_out.GetSize(0) == 1);
 
-        arrow.execute(metrics, 0);
+        arrow.execute(0);
 
-        REQUIRE(child_in.size() == 1);
-        REQUIRE(child_out.size() == 3);
-        REQUIRE(parent_out.size() == 1);
+        REQUIRE(child_in.GetSize(0) == 1);
+        REQUIRE(child_out.GetSize(0) == 3);
+        REQUIRE(parent_out.GetSize(0) == 1);
 
-        arrow.execute(metrics, 0);
+        arrow.execute(0);
 
-        REQUIRE(child_in.size() == 0);
-        REQUIRE(child_out.size() == 4);
-        REQUIRE(parent_out.size() == 2);
+        REQUIRE(child_in.GetSize(0) == 0);
+        REQUIRE(child_out.GetSize(0) == 4);
+        REQUIRE(parent_out.GetSize(0) == 2);
     }
 
 
