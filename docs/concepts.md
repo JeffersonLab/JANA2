@@ -16,6 +16,118 @@ By assigning threads to arrows, JANA2 takes full advantage of modern hardware, a
 ![JANA2 Factory diagram](_media/concepts-factory-diagram.png)
 
 
+
+## Algorithms organization
+
+One can see the data analysis application flow as a chain of algorithms providing some data transformation from 
+what is given as application input and what is produced as an output. Some very simplified such chane is given on 
+the next diagram. 
+
+![Simple Algorithms Flow](_media/algo_flow_01.svg)
+
+Where for each event, raw ADC values of hits are taken, combined into clusters then put into track finding and
+fitting algorithms whith resulting tracks as the chain output. Experts would instantly spot, that such reconstruction
+chain in real life the graph would be much complex and much more elements are required: Geometry, Magnetic Field maps,
+calibrations and alignment, which will be covered later in the documentation.  We start with how the algorithms
+are implemented in JANA2, what is this data, that flows between the algorithms and how those algorithms may be wired together.
+
+### Algorithms
+
+### Declarative way
+
+JANA2 call those algorithms to calculate specific results on an event-by-event basis. 
+Algorithms are decoupled from one another. One can think of algorithms in declarative or imperative ways. JFactory supports both!
+
+### Data
+
+JANA2 alows users to define and select their own event models, 
+providing the flexibility to design data structures to specific experimental needs. Taking the above 
+diagram as an example, classes such as `RawHits`, `HitClusters`, ... `Tracks` might be just a user defined classes. 
+
+JANA2 offers extended support for PODIO (Plain Old Data Input/Output) to facilitate standardized data handling, 
+it does not mandate the use of PODIO or even ROOT. This ensures that users can choose the most suitable data management 
+tools for their projects without being constrained by the framework.
+
+
+
+
+
+
+
+
+```mermaid
+graph LR
+    A[RawHits]:::data --> B("Hit\nReconstruction\nAlgorithm"):::algorithm
+    B --> C[HitClusters]:::data
+    C --> D("Seeding\nAlgorithm"):::algorithm
+    D --> E[TrackCandidates]:::data
+    E --> F("Kalman\nFilter"):::algorithm
+    F --> G[Tracks]:::data
+
+    classDef data fill:#4DB6AC,stroke:#000,stroke-width:1px,color:#000
+    classDef algorithm fill:#FF8A65,stroke:#000,stroke-width:1px,color:#000
+```
+
+
+```mermaid
+graph LR
+
+%% Define classes for styling
+classDef data fill:#4DB6AC,stroke:#000,stroke-width:1px,color:#000
+classDef algorithm fill:#FF8A65,stroke:#000,stroke-width:1px,color:#000
+classDef eventsource fill:#FFD54F,stroke:#000,stroke-width:1px,color:#000
+classDef eventprocessor fill:#BA68C8,stroke:#000,stroke-width:1px,color:#000
+
+%% Event Source
+ES[EventSource]:::eventsource
+
+%% Algorithm Flow
+subgraph Algorithms
+    A[RawDataHit]:::data
+    B("Hit\nReconstruction\nAlgorithm"):::algorithm
+    C[TrackHitClusters]:::data
+    D("Seeding\nAlgorithm"):::algorithm
+    E[TrackCandidates]:::data
+    F("Kalman\nFilter"):::algorithm
+    G[Tracks Data]:::data
+
+    %% Define the flow between algorithms and data
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+end
+
+%% Event Processors
+EP1[EventProcessor:\nWrite to Disk]:::eventprocessor
+EP2[EventProcessor:\nAnalysis]:::eventprocessor
+
+%% Connect EventSource and EventProcessors to the Algorithm Flow
+ES --> A
+G --> EP1
+G --> EP2
+```
+
+
+
+```mermaid
+block-beta
+  columns 3
+  a:3
+  block:group1:2
+    columns 2
+    h i j k
+  end
+  space
+  block:group2:3
+    %% columns auto (default)
+    l m n o p q r
+  end
+  
+  h-->r
+```
 ## JANA concepts
 
 - JObjects are data containers for specific resuts, e.g. clusters or tracks. They may be plain-old structs or they may
