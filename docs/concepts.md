@@ -3,35 +3,109 @@
 
 ## Core Architecture
 
-This section provides higher-level background and context for JANA, and discusses JANA's design philosophy and the
-associated tradeoffs.At its core, JANA2’s job is to take data in one form and apply some algorithms to it to produce
-data in a more refined form. This process is organized into two main layers:
-
-1. **Queue-Arrow Mechanism:** At the highest level, JANA2 uses [arrow model](https://en.wikipedia.org/wiki/Arrow_\(computer_science\)). In this model, data starts in a queue. An "arrow" is responsible for pulling data from the queue, processing it with algorithms, and then placing the processed data into another queue. The simplest setup consists of just two queues: one for input and one for output, with the arrow handling all the necessary algorithms to reconstruct the event. However, JANA2 can support much more complex configurations, where multiple queues and arrows are chained together. These arrows can operate sequentially or in parallel, depending on the needs of the processing task.
-
-2. **Algorithm Management within Arrows:** Within each arrow, JANA2 organizes and manages the algorithms, along with their respective inputs and outputs. This internal structure allows for flexibility in how algorithms are applied to the data. Arrows can be configured differently to split the processing load across multiple types of algorithms.
-
-By assigning threads to arrows, JANA2 takes full advantage of modern hardware, allowing it to process data concurrently across multiple cores and processors. This makes the framework both powerful and scalable, capable of handling complex data processing tasks efficiently.
-
-![JANA2 Factory diagram](_media/concepts-factory-diagram.png)
+![Simple Algorithms Flow](_media/jana2-diagram.png)
 
 
+At its core, JANA2 views data processing as a chain of transformations, 
+where algorithms are applied to data to produce more refined data. 
+This process is organized into two main layers:
 
-## Algorithms organization
+1. **Queue-Arrow Mechanism:** JANA2 utilizes the [arrow model](https://en.wikipedia.org/wiki/Arrow_\(computer_science\)), 
+   where data starts in a queue. An "arrow" pulls data from the queue, processes it with algorithms, 
+   and places the processed data into another queue. The simplest setup involves input and output queues 
+   with a single arrow handling all necessary algorithms. But JANA2 supports more complex configurations 
+   with multiple queues and arrows chained together, operating sequentially or in parallel as needed.
 
-One can see the data analysis application flow as a chain of algorithms providing some data transformation from 
-what is given as application input and what is produced as an output. Some very simplified such chane is given on 
-the next diagram. 
+2. **Algorithm Management within Arrows:** Within each arrow, JANA2 organizes and manages algorithms along with their
+  inputs and outputs, allowing flexibility in data processing. Arrows can be configured to distribute the processing
+  load across various algorithms. By assigning threads to arrows, JANA2 leverages modern hardware to process data 
+  concurrently across multiple cores and processors, enhancing scalability and efficiency.
+
+In organizing, managing, and building the codebase, JANA2 provides:
+
+- **Algorithm Building Blocks:** Essential components like Factories, Processors, Services and others, 
+  help write, organize and manage algorithms. These modular units can be configured and combined to construct 
+  the desired data processing pipelines, promoting flexibility and scalability.
+
+- **Plugin Mechanism:** Orthogonal to the above, JANA2 offers a plugin mechanism to enhance modularity and flexibility. 
+  Plugins are dynamic libraries with a specialized interface, enabling them to register components with the main application.
+  This allows for dynamic runtime configuration, selecting or replacing algorithms and components without recompilation,
+  and better code organization and reuse. Large applications are typically built from multiple plugins, 
+  each responsible for specific processing aspects. Alternatively, monolithic applications without plugins 
+  can be created for simpler, smaller applications.
+
+
+## Algorithms
+
+The data analysis application flow can be viewed as a chain of algorithms that transform input data into the 
+desired output. A simplified example of such a chain is shown in the diagram below:
 
 ![Simple Algorithms Flow](_media/algo_flow_01.svg)
 
-Where for each event, raw ADC values of hits are taken, combined into clusters then put into track finding and
-fitting algorithms whith resulting tracks as the chain output. Experts would instantly spot, that such reconstruction
-chain in real life the graph would be much complex and much more elements are required: Geometry, Magnetic Field maps,
-calibrations and alignment, which will be covered later in the documentation.  We start with how the algorithms
-are implemented in JANA2, what is this data, that flows between the algorithms and how those algorithms may be wired together.
+In this example, for each event, raw ADC values of hits are processed: 
+first combined into clusters, then passed into track-finding and fitting algorithms, 
+with the resulting tracks as the chain's output. In real-world scenarios, 
+the actual graph is significantly more complex and requires additional components such as Geometry, 
+magnetic field maps, calibrations, alignments, etc. 
+Additionally, some algorithms are responsible not only for processing objects in memory 
+but also for tasks such as reading data from disk or DAQ streams 
+and writing reconstructed data to a destination. 
+A more realistic and complex flow can be represented as follows:
 
-### Algorithms
+
+![Simple Algorithms Flow](_media/algo_flow_02.svg)
+
+To give very brief overview algorithm building blocks, how this flow is organized in JANA2 : 
+
+- **JFactory** - This is the primary component for implementing algorithms (depicted as orange boxes). 
+  JFactories compute specific results on an event-by-event basis. 
+  Their inputs may come from an EventSource or other JFactories. 
+  Algorithms in JFactories can be implemented using either Declarative or Imperative approaches 
+  (described later in the documentation).
+
+- **JEventSource** - A special type of algorithm responsible for acquiring raw event data, 
+  and exposes it to JANA for subsequent processing. For example reading events from a file or listening 
+  to DAQ messaging producer which provides raw event data.  
+
+- **JEventProcessor** - Positioned at the top of the calculation chain, JEventProcessor is designed 
+  to collect data from JFactories and handle end-point processing tasks, such as writing results to 
+  an output file or messaging consumer. However, JEventProcessor is not limited to I/O operations; 
+  it can also perform tasks like histogram plotting, data quality monitoring, and other forms of analysis.
+
+  To clarify the distinction: JFactories form a lazy directed acyclic graph (DAG), 
+  where each factory defines a specific step in the data processing chain. 
+  In contrast, the JEventProcessor algorithm is executed for each event. 
+  When the JEventProcessor collects data, it triggers the lazy evaluation of the required factories, 
+  initiating the corresponding steps in the data processing chain.
+
+- **JService** - Used to store resources that remain constant across events, such as Geometry descriptions, 
+ Magnetic Field Maps, and other shared data. Services are accessible by both algorithms and other services.
+
+
+We now may redraw the above diagram in terms of JANA2 building blocks:
+
+![Simple Algorithms Flow](_media/algo_flow_03.svg)
+
+
+### Implementing algorithms
+
+We start with how the algorithms are implemented in JANA2, what is this data, 
+that flows between the algorithms and how those algorithms may be wired together.
+
+If we look at algorithms in very general way, each algorithm may have several types
+of resources it needs to operate: 
+
+- 
+
+JANA2 allows users to define algorithms in two different approaches: 
+
+- **Declarative Approach** - When resources required for algorithms to run are explicitly declared in class body.  
+- **Imperative Approach** - When algorithm can dynamically deside what it needs and even, maybe, what it produces. 
+
+
+#### Declarative Approach
+
+Each algorithm should explicitly declare what 
 
 ### Declarative way
 
@@ -49,6 +123,7 @@ it does not mandate the use of PODIO or even ROOT. This ensures that users can c
 tools for their projects without being constrained by the framework.
 
 
+![JANA2 Factory diagram](_media/concepts-factory-diagram.png)
 
 
 
