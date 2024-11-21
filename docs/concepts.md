@@ -92,8 +92,29 @@ We now may redraw the above diagram in terms of JANA2 building blocks:
 We start with how the algorithms are implemented in JANA2, what is this data, 
 that flows between the algorithms and how those algorithms may be wired together.
 
-If we look at algorithms in very general way, each algorithm may have several types
-of resources it needs to operate: 
+JANA implements a type of factory model where data objects are the product 
+and the algorithms that produce them are the factories. There are different types of factories in JANA2, which will 
+be covered later, but they follow the same base idea. 
+
+![JANA2 Factory diagram](_media/concepts-factory-diagram.png)
+
+This figure illustrates the analogy to industry.When a specific data object is requested for the current event 
+from the JANA framework, this request will be matched to an algorithm (factory) that can produce
+it. It will then check to see if the factory has produced that data for the current event already 
+(i.e. are they in stock). If so, this data is returned to user. If not, then the factory is called to 
+produce the data and then a pointer to the data is returned to user. 
+
+In another words, JANA2 factories form a lazily evaluated directed acyclic graph
+\([DAG](https://en.wikipedia.org/wiki/Directed_acyclic_graph)\) of data creation, 
+where the produced data cached until the entire event is finished processing.
+The model is designed such that the factory will produce its objects only once
+for a given event making it very efficient even when mixing plugins from multiple users.
+
+This model also frees the end user from having to specify which factories should be
+activated before starting the job. A user may write an event processor that requests only a few
+mid-level objects. The factories that produce those objects will request the lower-level objects
+they need and so on and so on.
+
 
 - 
 
@@ -123,7 +144,7 @@ it does not mandate the use of PODIO or even ROOT. This ensures that users can c
 tools for their projects without being constrained by the framework.
 
 
-![JANA2 Factory diagram](_media/concepts-factory-diagram.png)
+
 
 
 
