@@ -63,4 +63,5 @@ cmake-build*/
 .cache
 compile_commands.json
 
-
+# Drawio backups
+*.bkp

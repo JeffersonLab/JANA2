@@ -18,12 +18,93 @@ sites like [NERSC](http://www.nersc.gov/ ":target=_blank").
 The project is [hosted on GitHub](https://github.com/JeffersonLab/JANA2)
 
 ```cpp
-auto tracks = jevent->Get<DTrack>();
+auto tracks = event->Get<DTrack>();
 
 for(auto t : tracks){
   // ... do something with a track
 }
 ```
+
+
+## Design philosophy
+
+JANA2's design philosophy can be boiled down to five values, ordered by importance:
+
+### Simple to use
+
+JANA2 focuses on making parallel computations over event-based\* data simple. 
+Unlike the aforementioned, JANA2's vocabulary of abstractions is designed around the needs of physicists rather than 
+general programmers. However, JANA2 does not attempt to meet _all_ of the needs of physicists.
+
+JANA2 recognizes that some tasks, like data persistence, should be handled separately. 
+As example, instead of providing its own persistence layer or requiring specific dependencies like ROOT, Numpy, or Apache Arrow, 
+JANA2 allows users to choose their preferred tools. 
+This flexibility ensures that if a team wants to switch from one tool to another (e.g., from ROOT to Arrow), 
+the core analysis code remains largely unaffected.
+
+To keep things simple, JANA minimizes the complexity of its build system and orchestration. 
+Using JANA should be straightforward: implement a several key interfaces, add an include path, and link against a single library.
+
+?> **Tip** The term `event-based` in JANA2 doesn't strictly refer to _physics_ or _trigger_ events. 
+In JANA2, `event` is used in a broader computer science context, aligning with the streaming readout paradigm 
+and supporting concepts like event nesting and sub-event parallelization.
+
+
+### Well-organized
+
+While JANA's primary goal is running code in parallel, its secondary goal is imposing an organizing principle on the users' codebase. 
+This can be invaluable in a large collaboration where members vary in programming skill. Specifically, 
+JANA organizes processing logic into decoupled units. JFactories are agnostic of how and when their prerequisites are 
+computed, are only run when actually needed, and cache their results for reuse. Different analyses can coexist in separate
+JEventProcessors. Components can be compiled into independent plugins, to be mixed and matched at runtime. All together, 
+JANA enforces an organizing principle that enables groups to develop and test their code with both freedom and discipline.
+
+
+### Safe
+
+JANA recognizes that not all of its users are proficient parallel programmers, and it steers users towards patterns which
+mitigate some of the pitfalls. Specifically, it provides:
+
+- **Modern C++ features** such as smart pointers and judicious templating, to discourage common classes of bugs. JANA seeks to
+make its memory ownership semantics explicit in the type system as much as possible.
+
+- **Internally managed locks** to reduce the learning curve and discourage tricky parallelism bugs.
+
+- **A stable API** with an effort towards backwards-compatibility, so that everybody can benefit from new features
+and performance/stability improvements.
+
+
+### Fast
+
+JANA uses low-level optimizations wherever it can in order to boost performance. 
+
+### Flexible
+
+The simplest use case for JANA is to read a file of batched events, process each event independently, and aggregate 
+the results into a new file. However, it can be used in more sophisticated ways. 
+
+- Disentangling: Input data is bundled into blocks (each containing an array of entangled events) and we want to 
+parse each block in order to emit a stream of events (_flatmap_)
+
+- Software triggers: With streaming data readout, we may want to accept a stream of raw hit data and let JANA 
+determine the event boundaries. Arbitrary triggers can be created using existing JFactories. (_windowed join_)
+
+- Subevent-level parallelism: This is necessary if individual events are very large. It may also play a role in 
+effectively utilizing a GPU, particularly as machine learning is adopted in reconstruction (_flatmap+merge_)
+
+JANA is also flexible enough to be compiled and run different ways. Users may compile their code into a standalone 
+executable, into one or more plugins which can be run by a generic executable, or run from a Jupyter notebook. 
+
+
+## Comparison to other frameworks
+
+Many different event reconstruction frameworks exist. The following are frequently compared and contrasted with JANA:
+
+- [Clara](https://claraweb.jlab.org/clara/) While JANA specializes in thread-level parallelism, Clara
+ uses node-level parallelism via a message-passing interface. This higher level of abstraction comes with some performance
+ overhead and significant orchestration requirements. On the other hand, it can scale to larger problem sizes and 
+ support more general stream topologies. JANA is to OpenMP as Clara is to MPI.
+ 
 
 ## History
 
