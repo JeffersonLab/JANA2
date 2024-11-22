@@ -18,7 +18,7 @@ sites like [NERSC](http://www.nersc.gov/ ":target=_blank").
 The project is [hosted on GitHub](https://github.com/JeffersonLab/JANA2)
 
 ```cpp
-auto tracks = jevent->Get<DTrack>();
+auto tracks = event->Get<DTrack>();
 
 for(auto t : tracks){
   // ... do something with a track

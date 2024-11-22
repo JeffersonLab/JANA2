@@ -35,7 +35,7 @@ In organizing, managing, and building the codebase, JANA2 provides:
   can be created for simpler, smaller applications.
 
 
-## Algorithms
+## Building blocks
 
 The data analysis application flow can be viewed as a chain of algorithms that transform input data into the 
 desired output. A simplified example of such a chain is shown in the diagram below:
@@ -87,61 +87,198 @@ We now may redraw the above diagram in terms of JANA2 building blocks:
 ![Simple Algorithms Flow](_media/algo_flow_03.svg)
 
 
-### Implementing algorithms
+## Data model
 
-We start with how the algorithms are implemented in JANA2, what is this data, 
+JANA2 alows users to define and select their own event models,
+providing the flexibility to design data structures to specific experimental needs. Taking the above
+diagram as an example, classes such as `RawHits`, `HitClusters`, ... `Tracks` might be just a user defined classes.
+The data structures can be as simple as:
+
+```cpp
+struct GenericHit {
+double x,y,z, edep;
+};
+```
+
+A key feature of JANA2 is that it doesn't require data being passed around 
+to inherit from any specific base class, such as JObject (used in JANA1) or ROOT's TObject. 
+While your data classes can inherit from other classes if your data model requires it, 
+JANA2 remains agnostic about this. 
+
+JANA2 offers extended support for PODIO (Plain Old Data Input/Output) to facilitate standardized data handling,
+it does not mandate the use of PODIO or even ROOT. This ensures that users can choose the most suitable data management
+tools for their projects without being constrained by the framework.
+
+### Data Identification in JANA2
+
+An important aspect is how data is identified within JANA2. JANA2 supports two identifiers:
+
+1. **Data Type**: The C++ type of the data, e.g., `GenericHit` from the above example.
+2. **Tags**: A string identifier in addition to type. 
+
+The concept of tags is useful in several scenarios. For instance:
+- When multiple factories can produce the same type of data e.g. utilizing different underlying algorithms. 
+  By specifying the tag name, you can select which algorithm's output you want.
+- To reuse the same type. E.g. You might have `GenericHit` data with tags 
+  `"VertexTracker"` and `"BarrelTracker"` to distinguish between hits from different detectors. Or
+  type `Particle` with tags `"TrueMcParticles"` and `"ReconstructedParticles"` 
+
+Depending on your data model and the types of factories used (described below), 
+you can choose different strategies for data identification:
+
+- **Type-Based Identification**: Fully identify data only by its type name, keeping the tag empty most of the time. 
+  Use tags only to identify alternative algorithms. This approach is used by GlueX.
+- **Tag-Based Identification**: Use tags as the main data identifier and deduce types automatically whenever possible.
+  This approach is used in PODIO data model and EIC reconstruction software.
+
+
+## Factories
+
+We start with how the algorithms are implemented in JANA2, what is the data, 
 that flows between the algorithms and how those algorithms may be wired together.
 
-JANA implements a type of factory model where data objects are the product 
-and the algorithms that produce them are the factories. There are different types of factories in JANA2, which will 
-be covered later, but they follow the same base idea. 
+JANA implements a **factory model**, where data objects are the products, and the algorithms that generate them are the 
+factories. While there are various types of factories in JANA2 (covered later in this documentation), 
+they all follow the same fundamental concept:
 
 ![JANA2 Factory diagram](_media/concepts-factory-diagram.png)
 
-This figure illustrates the analogy to industry.When a specific data object is requested for the current event 
-from the JANA framework, this request will be matched to an algorithm (factory) that can produce
-it. It will then check to see if the factory has produced that data for the current event already 
-(i.e. are they in stock). If so, this data is returned to user. If not, then the factory is called to 
-produce the data and then a pointer to the data is returned to user. 
+This diagram illustrates the analogy to industry. When a specific data object is requested for the current event in JANA, 
+the framework identifies the corresponding algorithm (factory) capable of producing it. 
+The framework then checks if the factory has already produced this data for the current event 
+(i.e., if the product is "in stock"). 
 
-In another words, JANA2 factories form a lazily evaluated directed acyclic graph
+- If the data **is already available**, it is retrieved and returned to the user.
+- **If not**, the factory is invoked to produce the required data, and the newly generated data is returned to the user.
+
+To create the requested data, factories may need lower-level objects, 
+triggering requests to the corresponding factories. It continues until all required factories have been 
+invoked and the entire chain of dependent objects has been produced.
+
+In other words, JANA2 factories form a lazily evaluated directed acyclic graph
 \([DAG](https://en.wikipedia.org/wiki/Directed_acyclic_graph)\) of data creation, 
-where the produced data cached until the entire event is finished processing.
-The model is designed such that the factory will produce its objects only once
-for a given event making it very efficient even when mixing plugins from multiple users.
-
-This model also frees the end user from having to specify which factories should be
-activated before starting the job. A user may write an event processor that requests only a few
-mid-level objects. The factories that produce those objects will request the lower-level objects
-they need and so on and so on.
+where all the produced data is cached until the entire event is finished processing.
+Thus factories produce its objects only once for a given event making it efficient when the 
+same data is required from multiple algorithms.
 
 
-- 
-
-JANA2 allows users to define algorithms in two different approaches: 
-
-- **Declarative Approach** - When resources required for algorithms to run are explicitly declared in class body.  
-- **Imperative Approach** - When algorithm can dynamically deside what it needs and even, maybe, what it produces. 
 
 
-#### Declarative Approach
 
-Each algorithm should explicitly declare what 
 
-### Declarative way
+How the simplest factory looks in terms of code? Probably the simplest would be JFactory<T>
+
+```c++
+class ExampleFactory : public JFactoryT<MyCluster> {
+public:   
+    void Init() override { /* ... initialize what is needed */ }    
+    
+    void Process(const std::shared_ptr<const JEvent> &event) override 
+    {   
+        auto hits = event->Get<MyHit>(); 
+        std::vector<MyCluster*> clusters;        
+        // ... produce clusters from hits                        
+        Set(clusters);
+    }
+};
+```
+
+The code above is given to provide a glimpse of how such algorithm/factory may look. Later we will go 
+in greater details of what are those methods, what are the other parts that could be used, etc. 
+
+What is important here, in the example above, JFactory<T> follows so called **Imperative Approach**.
+With this approach factory given  JEvent as an interface which can be used to request data, that is needed. 
+
+JANA2 allows users to define algorithms in two different approaches:
+
+- **Imperative Approach** - When algorithm can dynamically deside what it needs and requrest the data.
+- **Declarative Approach** - When resources required for algorithms are explicitly declared in class body.
+
+JOmniFactory<T> is the example of factory that implements declarative approach. 
+
+
+
+
+### Multithreading and factories
+
+In context of factories it is important to at least briefly mention how they work 
+in terms of multithreading (much more details on it further)
+
+In JANA2, each thread has its own complete and independent set of factories capable of
+fully reconstructing an event within that thread. This minimizes the use of locks which would be required
+to coordinate between threads and subsequently degrade performance. Factory sets are maintained in a pool and
+are (optionally) assigned affinity to a specific NUMA group. 
+
+![JANA2 Factory diagram](_media/threading-schema.png)
+
+With some level of simplification, this diagram shows how sets of factories are created for each thread in the 
+working pool. Limited by IO operations, events usually must be read in from the source sequentially(orange) 
+and similarly written sequentially to the output(violet).
+
+
+### Data 
+
+
+They do not need to specify which factories to activate before starting a job. 
+Instead, users can focus on writing event processors that request only the mid-level or high-level objects they need,
+while the framework dynamically resolves the dependencies and handles the data production chain automatically.
+This behaviour is referenced as **automatic wiring** of algorithms chain. 
+JANA2 also supports **semi-manual wiring** where users can explicitly specify the graph of data transformations. 
+
+
+
+
+## Imperative approach
+
+
+## Declarative Factories
+
+```cpp
+
+/// A factory should be inherited from JOmniFactory<T> 
+/// where T should be the factory class itself (CRTP)  
+struct HitRecoFactory : public JOmniFactory<HitRecoFactory> {
+
+   /// "Output-s" is what data produced.
+   Output<HitCluster> m_clusters{this};
+   
+   /// "Input-s" is the data that factory uses to produce result 
+   Input<McHit> m_mcHits{this};
+   
+   /// Additional service needed to produce data
+   Service<CalibrationService> m_calibration{this};
+   
+   /// Parameters are values, that can be changed from command line
+   Parameter<bool> m_cfg_use_true_pos{this, "hits:min_edep_cut", 100, "Flag description"};
+
+   /// Configure is called once, to configure the algorithm
+   void Configure() {  /* ... */ }
+
+   /// Called when processing run number is changed 
+   void ChangeRun(int32_t run_number) { /* ... get calibrations for run ... */ }
+
+   /// Called for each event
+   void Execute(int32_t /*run_nr*/, uint64_t event_index) 
+   {
+      auto result = std::vector<HitCluster*>();  
+      for(auto hit: m_mcHits()) {   // get input data from event source or other factories
+         // ... produce clusters from hits
+      }
+      
+      // 
+      m_clusters() = std::move(result);
+   }
+
+``` 
+
+## Declarative way
 
 JANA2 call those algorithms to calculate specific results on an event-by-event basis. 
 Algorithms are decoupled from one another. One can think of algorithms in declarative or imperative ways. JFactory supports both!
 
-### Data
+## Parameters
 
-JANA2 alows users to define and select their own event models, 
-providing the flexibility to design data structures to specific experimental needs. Taking the above 
-diagram as an example, classes such as `RawHits`, `HitClusters`, ... `Tracks` might be just a user defined classes. 
-
-JANA2 offers extended support for PODIO (Plain Old Data Input/Output) to facilitate standardized data handling, 
-it does not mandate the use of PODIO or even ROOT. This ensures that users can choose the most suitable data management 
-tools for their projects without being constrained by the framework.
+ 
 
 
 
