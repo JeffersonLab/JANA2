@@ -3,7 +3,7 @@
 
 ## Core Architecture
 
-![Simple Algorithms Flow](_media/jana2-diagram.png)
+![JANA diagram](_media/jana-flow.svg)
 
 
 At its core, JANA2 views data processing as a chain of transformations, 
@@ -15,6 +15,8 @@ This process is organized into two main layers:
    and places the processed data into another queue. The simplest setup involves input and output queues 
    with a single arrow handling all necessary algorithms. But JANA2 supports more complex configurations 
    with multiple queues and arrows chained together, operating sequentially or in parallel as needed.
+
+   ![Queue-Arrow mechanism](_media/arrows-queue.svg)
 
 2. **Algorithm Management within Arrows:** Within each arrow, JANA2 organizes and manages algorithms along with their
   inputs and outputs, allowing flexibility in data processing. Arrows can be configured to distribute the processing
@@ -111,6 +113,8 @@ tools for their projects without being constrained by the framework.
 
 ### Data Identification in JANA2
 
+![Simple Algorithms Flow](_media/data-identification.svg)
+
 An important aspect is how data is identified within JANA2. JANA2 supports two identifiers:
 
 1. **Data Type**: The C++ type of the data, e.g., `GenericHit` from the above example.
@@ -131,6 +135,49 @@ you can choose different strategies for data identification:
 - **Tag-Based Identification**: Use tags as the main data identifier and deduce types automatically whenever possible.
   This approach is used in PODIO data model and EIC reconstruction software.
 
+## JApplication
+
+The [JApplication](https://jeffersonlab.github.io/JANA2/refcpp/class_j_application.html) 
+class is the central hub of the JANA2 framework, orchestrating all aspects of a JANA2-based 
+application. It manages the initialization, configuration, and execution of the data processing workflow, 
+serving as the entry point for interacting with the core components of the system. 
+By providing access to key managers, services, and runtime controls, 
+JApplication ensures that the application operates smoothly from setup to shutdown.
+To illustrate this, here is a code of typical standalone JANA2 application:
+
+```cpp
+int main(int argc, char* argv[]) {
+
+    auto params = new JParameterManager();
+    // ...  usually some processing of argv here adding them to JParameterManager
+
+    // Instantiate the JApplication with the parameter manager    
+    JApplication app(params);
+
+    // Add predefined plugoms
+    app.AddPlugin("my_plugin");
+    
+    // Register services:
+    app.ProvideService(std::make_shared<LogService>());
+    app.ProvideService(std::make_shared<GeometryService>());
+
+    // Register components
+    app.Add(new JFactoryGeneratorT<MyFactoryA>);
+    app.Add(new JFactoryGeneratorT<MyFactoryB>);
+    app.Add(new JEventSourceGeneratorT<MyEventSource>);
+    app.Add(new MyEventProcessor());
+
+    // Initialize and run the application
+    app.Initialize();
+    app.Run();
+
+    // Print the final performance report
+    app.PrintFinalReport();
+
+    // Retrieve and return the exit code
+    return app.GetExitCode();
+}
+```
 
 ## Factories
 
@@ -162,76 +209,147 @@ Thus factories produce its objects only once for a given event making it efficie
 same data is required from multiple algorithms.
 
 
+### Multithreading and factories
 
+In context of factories it is important to at least briefly mention how they work
+in terms of multithreading (much more details on it further)
 
+In JANA2, each thread has its own complete and independent set of factories capable of
+fully reconstructing an event within that thread. This minimizes the use of locks which would be required
+to coordinate between threads and subsequently degrade performance. Factory sets are maintained in a pool and
+are (optionally) assigned affinity to a specific NUMA group.
 
+![JANA2 Factory diagram](_media/threading-schema.png)
+
+With some level of simplification, this diagram shows how sets of factories are created for each thread in the
+working pool. Limited by IO operations, events usually must be read in from the source sequentially(orange)
+and similarly written sequentially to the output(violet).
+
+### Imperative vs Declarative factories
 
 How the simplest factory looks in terms of code? Probably the simplest would be JFactory<T>
 
-```c++
+```cpp
+// MyCluster - is what this factory outputs
 class ExampleFactory : public JFactoryT<MyCluster> {
 public:   
     void Init() override { /* ... initialize what is needed */ }    
     
     void Process(const std::shared_ptr<const JEvent> &event) override 
     {   
-        auto hits = event->Get<MyHit>(); 
+        auto hits = event->Get<MyHit>();   // Request data of type MyHit from JANA
         std::vector<MyCluster*> clusters;        
-        // ... produce clusters from hits                        
-        Set(clusters);
+        for(auto hit: hits) {// ...        // Produce clusters from hits  
+        Set(clusters);                     // Set the output data
     }
 };
 ```
 
-The code above is given to provide a glimpse of how such algorithm/factory may look. Later we will go 
-in greater details of what are those methods, what are the other parts that could be used, etc. 
+The above code gives a glimpse into how such an algorithm or factory might look. 
+In later sections, we will explore the methods, their details, and other components that can be utilized.
 
-What is important here, in the example above, JFactory<T> follows so called **Imperative Approach**.
-With this approach factory given  JEvent as an interface which can be used to request data, that is needed. 
+What’s important to note in this example is that `JFactory<T>` follows the ***Imperative Approach***. 
+In this approach, the factory is provided with the `JEvent` interface, which it used to dynamically request
+the data required by the algorithm as needed. 
 
-JANA2 allows users to define algorithms in two different approaches:
+JANA2 supports two distinct approaches for defining algorithms:
 
-- **Imperative Approach** - When algorithm can dynamically deside what it needs and requrest the data.
-- **Declarative Approach** - When resources required for algorithms are explicitly declared in class body.
+- **Imperative Approach**: The algorithm determines dynamically what data it needs and requests 
+  it through the JEvent interface.
 
-JOmniFactory<T> is the example of factory that implements declarative approach. 
+- **Declarative Approach**: The algorithm explicitly declares its required inputs and outputs upfront
+  in the class definition.
+- 
+For instance, the declarative approach can be implemented using `JOmniFactory<T>`. 
+Here's how the same factory might look when following the declarative approach:
+
+```cpp
+class ExampleFactory : public JOmniFactory<ExampleFactory> {
+public: 
+
+    Input<MyHit> hits {this};              // Declare intputs
+    Output<MyCluster> clusters {this};     // Declare what factory produces
+    
+    void Configure() override { /* ... same as Init() in JFactory */ }    
+    
+    void Execute(int32_t run_number, int32_t event_number) override 
+    {   
+        // It is ensured that all inputs are ready, when Execute is called. 
+        for(auto hit: hits()) {// ...        // Produce clusters from hits  
+        
+        clusters() = std::move(clusters)     // Set the output data
+    }
+};
+```
+
+Declarative factories excel in terms of code management and clarity. 
+The declarative approach makes it immediately clear what an algorithm's inputs are and what it produces. 
+While this advantage may not be obvious in the above simple example, it becomes particularly evident when dealing 
+with complex algorithms that have numerous inputs, outputs, and configuration parameters. 
+For instance, consider a generic clustering algorithm that could later be adapted for various calorimeter detectors.
+
+In general, it is recommended to follow the declarative approach unless the dynamic flexibility 
+of imperative factories is explicitly required.
+
+As a good example scenario where the imperative approach is preferred is in software Level-3 (L3) triggers. 
+The imperative approach allows for highly efficient implementations of L3 (i.e., high-level) triggers. 
+A decision-making algorithm could be designed to request low-level objects first 
+to quickly determine whether to accept or reject an event. If the decision cannot be made using the low-level objects, 
+the algorithm can request higher-level objects for further evaluation. 
+This ability to dynamically activate factories on an event-by-event basis optimizes the L3 system’s throughput, 
+reducing the computational resources required to implement it.
+
+### Factory types
+
+Main factory types in JANA2 are: 
+
+- `JFactory` - imperative factory with a single output type
+- `JMultifactory` - imperative factory that can produce several types at once
+- `JOmniFactory` - declarative factory with multiple outputs. 
+
+<table> 
+<tr>
+<th></th>
+<th>Declarative</th>
+<th colspan="2">Imperative</th>
+</tr>
+<tr>
+<th></th>
+<th>JOmniFactory</th>
+<th>JFactory</th>
+<th>JMultifactory</th>
+</tr>
+
+<tr>
+<td>Inputs</td>
+<td>Fixed number of input types</td>
+<td colspan="2">Any number of input types</td>
+</tr>
+
+<tr>
+<td>Input requests</td>
+<td>Declared upfront in class definition</td>
+<td colspan="2">Requested dynamically through JEvent interface</td>
+</tr>
+
+<tr>
+<td>Outputs</td>
+<td>Multiple types/outputs</td>
+<td>Single type</td>
+<td>Multiple types</td>
+</tr>
+
+<tr>
+<td>Outputs declaration</td>
+<td>Declared upfront in class definition</td>
+<td>Declared in class definition</td>
+<td>Must be declared in constructor</td>
+</tr>
+
+</table>
 
 
-
-
-### Multithreading and factories
-
-In context of factories it is important to at least briefly mention how they work 
-in terms of multithreading (much more details on it further)
-
-In JANA2, each thread has its own complete and independent set of factories capable of
-fully reconstructing an event within that thread. This minimizes the use of locks which would be required
-to coordinate between threads and subsequently degrade performance. Factory sets are maintained in a pool and
-are (optionally) assigned affinity to a specific NUMA group. 
-
-![JANA2 Factory diagram](_media/threading-schema.png)
-
-With some level of simplification, this diagram shows how sets of factories are created for each thread in the 
-working pool. Limited by IO operations, events usually must be read in from the source sequentially(orange) 
-and similarly written sequentially to the output(violet).
-
-
-### Data 
-
-
-They do not need to specify which factories to activate before starting a job. 
-Instead, users can focus on writing event processors that request only the mid-level or high-level objects they need,
-while the framework dynamically resolves the dependencies and handles the data production chain automatically.
-This behaviour is referenced as **automatic wiring** of algorithms chain. 
-JANA2 also supports **semi-manual wiring** where users can explicitly specify the graph of data transformations. 
-
-
-
-
-## Imperative approach
-
-
-## Declarative Factories
+### Declarative Factories
 
 ```cpp
 
@@ -271,114 +389,70 @@ struct HitRecoFactory : public JOmniFactory<HitRecoFactory> {
 
 ``` 
 
-## Declarative way
+### Factory generators
 
-JANA2 call those algorithms to calculate specific results on an event-by-event basis. 
-Algorithms are decoupled from one another. One can think of algorithms in declarative or imperative ways. JFactory supports both!
+Since every working thread creates its set of factory, besides factories code one has to provide a way 
+how to create a factory. I.e. provide a factory generator class. Fortunately, JANA2 provides a templated
+generic FactoryGeneratorT code that work for the majority of cases:
 
-## Parameters
+```cpp
+// For JFactories
 
- 
-
-
-
-
-
-
-
-
-
-```mermaid
-graph LR
-    A[RawHits]:::data --> B("Hit\nReconstruction\nAlgorithm"):::algorithm
-    B --> C[HitClusters]:::data
-    C --> D("Seeding\nAlgorithm"):::algorithm
-    D --> E[TrackCandidates]:::data
-    E --> F("Kalman\nFilter"):::algorithm
-    F --> G[Tracks]:::data
-
-    classDef data fill:#4DB6AC,stroke:#000,stroke-width:1px,color:#000
-    classDef algorithm fill:#FF8A65,stroke:#000,stroke-width:1px,color:#000
-```
-
-
-```mermaid
-graph LR
-
-%% Define classes for styling
-classDef data fill:#4DB6AC,stroke:#000,stroke-width:1px,color:#000
-classDef algorithm fill:#FF8A65,stroke:#000,stroke-width:1px,color:#000
-classDef eventsource fill:#FFD54F,stroke:#000,stroke-width:1px,color:#000
-classDef eventprocessor fill:#BA68C8,stroke:#000,stroke-width:1px,color:#000
-
-%% Event Source
-ES[EventSource]:::eventsource
-
-%% Algorithm Flow
-subgraph Algorithms
-    A[RawDataHit]:::data
-    B("Hit\nReconstruction\nAlgorithm"):::algorithm
-    C[TrackHitClusters]:::data
-    D("Seeding\nAlgorithm"):::algorithm
-    E[TrackCandidates]:::data
-    F("Kalman\nFilter"):::algorithm
-    G[Tracks Data]:::data
-
-    %% Define the flow between algorithms and data
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    E --> F
-    F --> G
-end
-
-%% Event Processors
-EP1[EventProcessor:\nWrite to Disk]:::eventprocessor
-EP2[EventProcessor:\nAnalysis]:::eventprocessor
-
-%% Connect EventSource and EventProcessors to the Algorithm Flow
-ES --> A
-G --> EP1
-G --> EP2
+// For JOmniFactories
 ```
 
 
 
-```mermaid
-block-beta
-  columns 3
-  a:3
-  block:group1:2
-    columns 2
-    h i j k
-  end
-  space
-  block:group2:3
-    %% columns auto (default)
-    l m n o p q r
-  end
-  
-  h-->r
+## Plugins
+
+In JANA2, plugins are dynamic libraries that extend the functionality of the main application by registering 
+additional components such as event sources, factories, event processors, and services. 
+Plugins are a powerful mechanism that allows developers to modularize their code, promote code reuse, 
+and configure applications dynamically at runtime without the need for recompilation.
+
+For a library to be recognized as a plugin, it must implement a specific initialization function called 
+`InitPlugin()` with C linkage. The function is called by JANA when plugins are loaded and should be used 
+for registering the plugin's components with the JApplication instance.
+
+```cpp
+extern "C" {
+    void InitPlugin(JApplication* app) {
+        InitJANAPlugin(app);
+        // Register components: 
+        app->Add(/** ... */);    // add components from this plugin 
+        app->Add(/** ... */); 
+        // ...    
+    }
+}
 ```
-## JANA concepts
 
-- JObjects are data containers for specific resuts, e.g. clusters or tracks. They may be plain-old structs or they may
-optionally inherit from (e.g.) ROOT or NumPy datatypes. 
+### How Plugins Are Found and Loaded
 
-- JEventSources take a file or messaging producer which provides raw event data, and exposes it to JANA as a stream.
+When a JANA2 application starts, it searches for plugins in specific directories. 
+The framework maintains a list of plugin search paths where it looks for plugin libraries. 
+By default, this includes directories such as:
 
-- JFactories calculate a specific result on an event-by-event basis. Their inputs may come from an EventSource or may
-be computed via other JFactories. All results are evaluated lazily and cached until the entire event is finished processing.
-in order to do so. Importantly, JFactories are decoupled from one another via the JEvent interface. It should make no
-difference to the JFactory where its input data came from, as long as it has the correct type and tag. While the [Factory 
-Pattern](https://en.wikipedia.org/wiki/Factory_method_pattern) usually abstracts away the _subtype_ of the class being 
-created, in our case it abstracts away the _number of instances_ created instead. For instance, a ClusterFactory may 
-take m Hit objects and produce n Cluster objects, where m and n vary per event and won't be known until that
- event gets processed. 
+- The current working directory.
+- Directories specified by the `JANA_PLUGIN_PATH` environment variable.
+- Directories added programmatically via the `AddPluginPath()` method of `JApplication`.
 
-- JEventProcessors run desired JFactories over the event stream and write the results to an output file or messaging
-consumer. JFactories form a lazy directed acyclic graph, whereas JEventProcessors trigger their actual evaluation. 
+Plugins are loaded in two main ways:
+
+- **Automatic Loading**: The application can be configured to load plugins specified by 
+  command-line arguments or configuration parameters via `-Pplugins` flag.
+
+  ```bash
+  ./my_jana_application -Pplugins=MyPlugin1,AnotherPlugin
+  ```
+
+- **Programmatic Loading**: Plugins can be loaded explicitly in the application code 
+  by calling the `AddPlugin()` method of `JApplication`.
+
+### Plugins debugging
+
+JANA2 provides a very handy parameter `jana:debug_plugin_loading=1` which will print 
+the detailed information on the process of plugin loading. 
+
 
 ## Object lifecycles
 
