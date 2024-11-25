@@ -23,6 +23,11 @@ struct JFactoryTestDummyObject : public JObject {
     }
 };
 
+struct DifferentDummyObject : public JObject {
+    double E;
+    DifferentDummyObject(double E) : E(E) {}
+};
+
 
 
 /// DummyFactory is a trivial JFactory which reports how often its member functions get called
@@ -69,6 +74,10 @@ struct JFactoryTestExceptingInInitFactory : public JFactoryT<JFactoryTestDummyOb
 
 struct JFactoryTestDummySource: public JEventSource {
 
+    int get_objects_count = 0;
+    int get_objects_dummy_count = 0;
+    int get_objects_different_count = 0;
+
     JFactoryTestDummySource() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
         EnableGetObjects();
@@ -79,10 +88,19 @@ struct JFactoryTestDummySource: public JEventSource {
     };
 
     bool GetObjects(const std::shared_ptr<const JEvent>&, JFactory* aFactory) override {
-        auto factory = dynamic_cast<JFactoryT<JFactoryTestDummyObject>*>(aFactory);
-        if (factory != nullptr) {
-            factory->Insert(new JFactoryTestDummyObject(8));
-            factory->Insert(new JFactoryTestDummyObject(88));
+        get_objects_count += 1;
+        auto dummy_factory = dynamic_cast<JFactoryT<JFactoryTestDummyObject>*>(aFactory);
+        if (dummy_factory != nullptr) {
+            get_objects_dummy_count += 1;
+            dummy_factory->Insert(new JFactoryTestDummyObject(8));
+            dummy_factory->Insert(new JFactoryTestDummyObject(88));
+            return true;
+        }
+        auto different_factory = dynamic_cast<JFactoryT<DifferentDummyObject>*>(aFactory);
+        if (different_factory != nullptr) {
+            get_objects_different_count += 1;
+            different_factory->Insert(new DifferentDummyObject(123.));
+            return true;
         }
         return false;
     }
