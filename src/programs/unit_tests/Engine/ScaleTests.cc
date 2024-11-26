@@ -57,7 +57,7 @@ TEST_CASE("ScaleNWorkerUpdate") {
     app.Stop(true);
 }
 
-TEST_CASE("ScaleThroughputImprovement") {
+TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
 
     JApplication app;
     app.SetParameterValue("jana:loglevel", "INFO");
