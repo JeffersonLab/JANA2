@@ -788,6 +788,7 @@ std::string ToString(JExecutionEngine::RunStatus runstatus) {
         case JExecutionEngine::RunStatus::Pausing: return "Pausing";
         case JExecutionEngine::RunStatus::Draining: return "Draining";
         case JExecutionEngine::RunStatus::Finished: return "Finished";
+        default: return "CorruptedRunStatus";
     }
 }
 

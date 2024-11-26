@@ -8,7 +8,7 @@
 #include "JANA/Utils/JBenchUtils.h"
 #include "catch.hpp"
 
-int global_resource = 0;
+size_t global_resource = 0;
 
 
 struct BarrierSource : public JEventSource {
