@@ -511,15 +511,23 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
     if (m_runstatus == RunStatus::Running || m_runstatus == RunStatus::Draining) {
         // We only pick up a new task if the topology is running or draining.
 
-        for (size_t arrow_id=0; arrow_id<m_arrow_states.size(); ++arrow_id) {
+        // Each call to FindNextReadyTask_Unsafe() starts with a different m_next_arrow_id to ensure balanced arrow assignments
+        size_t arrow_count = m_arrow_states.size();
+        m_next_arrow_id += 1;
+        m_next_arrow_id %= arrow_count;
+
+        for (size_t i=m_next_arrow_id; i<(m_next_arrow_id+arrow_count); ++i) {
+            size_t arrow_id = i % arrow_count;
 
             auto& state = m_arrow_states[arrow_id];
             if (!state.is_parallel && (state.active_tasks != 0)) {
-                // We've found a sequential arrow that is already running. Nothing we can do here.
+                // We've found a sequential arrow that is already active. Nothing we can do here.
+                LOG_TRACE(GetLogger()) << "Scheduler: Arrow with id " << arrow_id << " is unready: Sequential and already active." << LOG_END;
                 continue;
             }
 
             if (state.status != ArrowState::Status::Running) {
+                LOG_TRACE(GetLogger()) << "Scheduler: Arrow with id " << arrow_id << " is unready: Arrow is either paused or finished." << LOG_END;
                 continue;
             }
             // TODO: Support next_visit_time so that we don't hammer blocked event sources
@@ -530,6 +538,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
             auto port = arrow->get_next_port_index();
             JEvent* event = (port == -1) ? nullptr : arrow->pull(port, worker.location_id);
             if (event != nullptr || port == -1) {
+                LOG_TRACE(GetLogger()) << "Scheduler: Found next ready arrow with id " << arrow_id << LOG_END;
                 // We've found a task that is ready!
                 state.active_tasks += 1;
 
@@ -550,6 +559,9 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
                 }
                 return;
             }
+            else {
+                LOG_TRACE(GetLogger()) << "Scheduler: Arrow with id " << arrow_id << " is unready: Input event is needed but not on queue yet." << LOG_END;
+            }
         }
     }
 
@@ -565,8 +577,6 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
 
     for (size_t arrow_id = 0; arrow_id < m_arrow_states.size(); ++arrow_id) {
         auto& state = m_arrow_states[arrow_id];
-        auto* arrow = m_topology->arrows[arrow_id];
-        LOG_TRACE(GetLogger()) << "Scheduler: arrow=" << arrow->get_name() << ", is_source=" << state.is_source << ", active_tasks=" << state.active_tasks << ", is_parallel=" << state.is_parallel << LOG_END;
         any_active_source_found |= (state.status == ArrowState::Status::Running && state.is_source);
         any_active_task_found |= (state.active_tasks != 0);
         // A source might have been deactivated by RequestPause, Ctrl-C, etc, and might be inactive even though it still has active tasks
@@ -581,7 +591,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
                 m_event_count_at_finish += arrow_state.events_processed;
             }
         }
-        LOG_DEBUG(GetLogger()) << "Processing paused" << LOG_END;
+        LOG_DEBUG(GetLogger()) << "Scheduler: Processing paused" << LOG_END;
         m_runstatus = RunStatus::Paused;
         // I think this is the ONLY site where the topology gets paused. Verify this?
     }

@@ -103,6 +103,7 @@ private:
     std::atomic<InterruptStatus> m_interrupt_status { InterruptStatus::NoInterruptsUnsupervised };
     std::atomic_bool m_print_worker_report_requested {false};
     std::atomic_bool m_send_worker_report_requested {false};
+    size_t m_next_arrow_id=0;
 
     // Metrics
     size_t m_event_count_at_start = 0;
