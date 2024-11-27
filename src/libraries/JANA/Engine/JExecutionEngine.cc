@@ -683,16 +683,21 @@ bool JExecutionEngine::IsTimeoutEnabled() const {
 JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 
     std::unique_lock<std::mutex> lock(m_mutex);
+    if (arrow_id >= m_topology->arrows.size()) {
+        LOG_WARN(GetLogger()) << "Firing unsuccessful: No arrow exists with id=" << arrow_id << LOG_END;
+        return JArrow::FireResult::NotRunYet;
+    }
     JArrow* arrow = m_topology->arrows[arrow_id];
-    LOG_INFO(GetLogger()) << "Attempting to fire arrow with name=" << arrow->get_name() << ", index=" << arrow_id << LOG_END;
+    LOG_WARN(GetLogger()) << "Attempting to fire arrow with name=" << arrow->get_name() 
+                          << ", index=" << arrow_id << ", location=" << location_id << LOG_END;
 
     ArrowState& arrow_state = m_arrow_states[arrow_id];
     if (arrow_state.status == ArrowState::Status::Finished) {
-        LOG_INFO(GetLogger()) << "Firing unsuccessful: Arrow status is Finished." << arrow_id << LOG_END;
+        LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow status is Finished." << arrow_id << LOG_END;
         return JArrow::FireResult::Finished;
     }
     if (!arrow_state.is_parallel && arrow_state.active_tasks != 0) {
-        LOG_INFO(GetLogger()) << "Firing unsuccessful: Arrow is sequential and already has an active task." << arrow_id << LOG_END;
+        LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow is sequential and already has an active task." << arrow_id << LOG_END;
         return JArrow::FireResult::NotRunYet;
     }
     arrow_state.active_tasks += 1;
@@ -710,20 +715,20 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 
     if (event != nullptr || port == -1) {
         if (event != nullptr) {
-            LOG_INFO(GetLogger()) << "Input event #" << event->GetEventNumber() << " from port " << port << LOG_END;
+            LOG_WARN(GetLogger()) << "Input event #" << event->GetEventNumber() << " from port " << port << LOG_END;
         }
         else {
-            LOG_INFO(GetLogger()) << "No input events." << LOG_END;
+            LOG_WARN(GetLogger()) << "No input events" << LOG_END;
         }
-        LOG_INFO(GetLogger()) << "Firing arrow." << LOG_END;
+        LOG_WARN(GetLogger()) << "Firing arrow" << LOG_END;
         arrow->fire(event, outputs, output_count, result);
-        LOG_INFO(GetLogger()) << "Fired arrow." << LOG_END;
+        LOG_WARN(GetLogger()) << "Fired arrow" << LOG_END;
         if (output_count == 0) {
-            LOG_INFO(GetLogger()) << "No output events." << LOG_END;
+            LOG_WARN(GetLogger()) << "No output events" << LOG_END;
         }
         else {
             for (size_t i=0; i<output_count; ++i) {
-                LOG_INFO(GetLogger()) << "Output event #" << outputs.at(i).first->GetEventNumber() << " on port " << outputs.at(i).second << LOG_END;
+                LOG_WARN(GetLogger()) << "Output event #" << outputs.at(i).first->GetEventNumber() << " on port " << outputs.at(i).second << LOG_END;
             }
         }
 
@@ -733,7 +738,7 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
         lock.unlock();
     }
     else {
-        LOG_INFO(GetLogger()) << "Firing unsuccessful: Arrow needs an input event on port " << port << " but the queue or pool is empty." << LOG_END;
+        LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow needs an input event from port " << port << ", but the queue or pool is empty." << LOG_END;
     }
 
     return result;
