@@ -4,6 +4,7 @@
 
 
 #include "JANA/Components/JComponentFwd.h"
+#include "JANA/JApplicationFwd.h"
 #include "JANA/JFactory.h"
 #include "catch.hpp"
 #include "JFactoryTests.h"
@@ -566,4 +567,43 @@ TEST_CASE("JFactory_ExceptionHandling") {
     }
 }
 
+TEST_CASE("JFactory_GetObjects_Caching") {
+    JApplication app;
+    app.Add(new JFactoryGeneratorT<JFactoryT<JFactoryTestDummyObject>>());
+    app.Add(new JFactoryGeneratorT<JFactoryT<DifferentDummyObject>>());
+    auto source = new JFactoryTestDummySource;
+    auto event = std::make_shared<JEvent>(&app);
+    event->SetJEventSource(source);
 
+    SECTION("RepeatedGetObjectsAreCached") {
+        auto dummies = event->Get<JFactoryTestDummyObject>();
+        REQUIRE(dummies.at(0)->data == 8);
+        REQUIRE(source->get_objects_count == 1);
+        REQUIRE(source->get_objects_dummy_count == 1);
+
+        dummies = event->Get<JFactoryTestDummyObject>();
+        REQUIRE(dummies.at(0)->data == 8);
+        REQUIRE(source->get_objects_count == 1);
+        REQUIRE(source->get_objects_dummy_count == 1);
+    }
+
+    SECTION("DifferentGetObjectsAreNotCached") {
+        auto dummies = event->Get<JFactoryTestDummyObject>();
+        REQUIRE(dummies.at(0)->data == 8);
+        REQUIRE(source->get_objects_count == 1);
+        REQUIRE(source->get_objects_dummy_count == 1);
+        REQUIRE(source->get_objects_different_count == 0);
+
+        auto different = event->Get<DifferentDummyObject>();
+        REQUIRE(different.at(0)->E == 123.0);
+        REQUIRE(source->get_objects_count == 2);
+        REQUIRE(source->get_objects_dummy_count == 1);
+        REQUIRE(source->get_objects_different_count == 1);
+
+        different = event->Get<DifferentDummyObject>();
+        REQUIRE(different.at(0)->E == 123.0);
+        REQUIRE(source->get_objects_count == 2);
+        REQUIRE(source->get_objects_dummy_count == 1);
+        REQUIRE(source->get_objects_different_count == 1);
+    }
+}

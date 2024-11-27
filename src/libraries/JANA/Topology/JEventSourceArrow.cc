@@ -23,11 +23,15 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
 
     // First check to see if we need to handle a barrier event before attempting to emit another event
     if (m_barrier_active) {
+
+        auto emitted_event_count = m_sources[m_current_source]->GetEmittedEventCount();
+        auto finished_event_count = m_sources[m_current_source]->GetFinishedEventCount();
+
         // A barrier event has been emitted by the source.
         if (m_pending_barrier_event != nullptr) {
+
             // This barrier event is pending until the topology drains
-            if (m_sources[m_current_source]->GetEmittedEventCount() - 
-                m_sources[m_current_source]->GetFinishedEventCount() == 1) {
+            if ((emitted_event_count - finished_event_count) == 1) {
                 LOG_DEBUG(m_logger) << "JEventSourceArrow: Barrier event is in-flight" << LOG_END;
 
                 // Topology has drained; only remaining in-flight event is the barrier event itself,
@@ -44,7 +48,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
             }
             else {
                 // Topology has _not_ finished draining, all we can do is wait
-                LOG_DEBUG(m_logger) << "JEventSourceArrow: Waiting on pending barrier event" << LOG_END;
+                LOG_DEBUG(m_logger) << "JEventSourceArrow: Waiting on pending barrier event. Emitted = " << emitted_event_count << ", Finished = " << finished_event_count << LOG_END;
                 LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result ComeBackLater"<< LOG_END;
 
                 assert(event == nullptr);
@@ -56,8 +60,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
         else {
             // This barrier event has already been sent into the topology and we need to wait
             // until it is finished before emitting any more events
-            if (m_sources[m_current_source]->GetFinishedEventCount() == 
-                m_sources[m_current_source]->GetEmittedEventCount()) {
+            if (finished_event_count == emitted_event_count) {
 
                 // Barrier event has finished.
                 LOG_DEBUG(m_logger) << "JEventSourceArrow: Barrier event finished, returning to normal operation" << LOG_END;

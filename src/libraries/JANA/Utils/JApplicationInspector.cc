@@ -32,8 +32,7 @@ void InspectTopology(JApplication* app) {
 
 void Fire(JApplication* app, int arrow_id) {
     auto engine = app->GetService<JExecutionEngine>();
-    auto result = engine->Fire(arrow_id, 0);
-    std::cout << to_string(result);
+    engine->Fire(arrow_id, 0);
 }
 
 void InspectComponents(JApplication* app) {

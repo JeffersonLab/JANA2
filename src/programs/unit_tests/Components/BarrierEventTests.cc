@@ -8,7 +8,7 @@
 #include "JANA/Utils/JBenchUtils.h"
 #include "catch.hpp"
 
-int global_resource = 0;
+size_t global_resource = 0;
 
 
 struct BarrierSource : public JEventSource {
@@ -90,6 +90,32 @@ struct BarrierProcessor : public JEventProcessor {
         }
         bench.consume_cpu_ms(100, 0, false);
     }
+};
+
+
+TEST_CASE("BarrierEventTests_SingleThread") {
+    global_resource = 0;
+    JApplication app;
+    app.Add(new BarrierProcessor);
+    app.Add(new BarrierSource);
+    app.SetParameterValue("nthreads", 1);
+    app.SetParameterValue("jana:nevents", 40);
+    //app.SetParameterValue("jana:log:show_threadstamp", true);
+    //app.SetParameterValue("jana:loglevel", "debug");
+    app.Run(true);
+};
+
+
+TEST_CASE("BarrierEventTests_Legacy_SingleThread") {
+    global_resource = 0;
+    JApplication app;
+    app.Add(new LegacyBarrierProcessor);
+    app.Add(new BarrierSource);
+    app.SetParameterValue("nthreads", 1);
+    app.SetParameterValue("jana:nevents", 40);
+    //app.SetParameterValue("jana:log:show_threadstamp", true);
+    //app.SetParameterValue("jana:loglevel", "debug");
+    app.Run(true);
 };
 
 

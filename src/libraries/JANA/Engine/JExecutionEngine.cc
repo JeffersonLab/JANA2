@@ -511,15 +511,23 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
     if (m_runstatus == RunStatus::Running || m_runstatus == RunStatus::Draining) {
         // We only pick up a new task if the topology is running or draining.
 
-        for (size_t arrow_id=0; arrow_id<m_arrow_states.size(); ++arrow_id) {
+        // Each call to FindNextReadyTask_Unsafe() starts with a different m_next_arrow_id to ensure balanced arrow assignments
+        size_t arrow_count = m_arrow_states.size();
+        m_next_arrow_id += 1;
+        m_next_arrow_id %= arrow_count;
+
+        for (size_t i=m_next_arrow_id; i<(m_next_arrow_id+arrow_count); ++i) {
+            size_t arrow_id = i % arrow_count;
 
             auto& state = m_arrow_states[arrow_id];
             if (!state.is_parallel && (state.active_tasks != 0)) {
-                // We've found a sequential arrow that is already running. Nothing we can do here.
+                // We've found a sequential arrow that is already active. Nothing we can do here.
+                LOG_TRACE(GetLogger()) << "Scheduler: Arrow with id " << arrow_id << " is unready: Sequential and already active." << LOG_END;
                 continue;
             }
 
             if (state.status != ArrowState::Status::Running) {
+                LOG_TRACE(GetLogger()) << "Scheduler: Arrow with id " << arrow_id << " is unready: Arrow is either paused or finished." << LOG_END;
                 continue;
             }
             // TODO: Support next_visit_time so that we don't hammer blocked event sources
@@ -530,6 +538,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
             auto port = arrow->get_next_port_index();
             JEvent* event = (port == -1) ? nullptr : arrow->pull(port, worker.location_id);
             if (event != nullptr || port == -1) {
+                LOG_TRACE(GetLogger()) << "Scheduler: Found next ready arrow with id " << arrow_id << LOG_END;
                 // We've found a task that is ready!
                 state.active_tasks += 1;
 
@@ -550,6 +559,9 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
                 }
                 return;
             }
+            else {
+                LOG_TRACE(GetLogger()) << "Scheduler: Arrow with id " << arrow_id << " is unready: Input event is needed but not on queue yet." << LOG_END;
+            }
         }
     }
 
@@ -557,33 +569,36 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
     // so we check whether more are potentially coming. If not, we can pause the topology.
     // Note that our worker threads will still wait at ExchangeTask() until they get
     // shut down separately during Scale().
-
-    bool any_active_source_found = false;
-    bool any_active_task_found = false;
     
-    LOG_DEBUG(GetLogger()) << "Scheduler: No tasks ready" << LOG_END;
+    if (m_runstatus == RunStatus::Running || m_runstatus == RunStatus::Pausing || m_runstatus == RunStatus::Draining) {
+        // We want to avoid scenarios such as where the topology already Finished but then gets reset to Paused
+        // This also leaves a cleaner narrative in the logs. 
 
-    for (size_t arrow_id = 0; arrow_id < m_arrow_states.size(); ++arrow_id) {
-        auto& state = m_arrow_states[arrow_id];
-        auto* arrow = m_topology->arrows[arrow_id];
-        LOG_TRACE(GetLogger()) << "Scheduler: arrow=" << arrow->get_name() << ", is_source=" << state.is_source << ", active_tasks=" << state.active_tasks << ", is_parallel=" << state.is_parallel << LOG_END;
-        any_active_source_found |= (state.status == ArrowState::Status::Running && state.is_source);
-        any_active_task_found |= (state.active_tasks != 0);
-        // A source might have been deactivated by RequestPause, Ctrl-C, etc, and might be inactive even though it still has active tasks
-    }
+        bool any_active_source_found = false;
+        bool any_active_task_found = false;
+        
+        LOG_DEBUG(GetLogger()) << "Scheduler: No tasks ready" << LOG_END;
 
-    if (!any_active_source_found && !any_active_task_found) {
-        // Pause the topology
-        m_time_at_finish = clock_t::now();
-        m_event_count_at_finish = 0;
-        for (auto& arrow_state : m_arrow_states) {
-            if (arrow_state.is_sink) {
-                m_event_count_at_finish += arrow_state.events_processed;
-            }
+        for (size_t arrow_id = 0; arrow_id < m_arrow_states.size(); ++arrow_id) {
+            auto& state = m_arrow_states[arrow_id];
+            any_active_source_found |= (state.status == ArrowState::Status::Running && state.is_source);
+            any_active_task_found |= (state.active_tasks != 0);
+            // A source might have been deactivated by RequestPause, Ctrl-C, etc, and might be inactive even though it still has active tasks
         }
-        LOG_DEBUG(GetLogger()) << "Processing paused" << LOG_END;
-        m_runstatus = RunStatus::Paused;
-        // I think this is the ONLY site where the topology gets paused. Verify this?
+
+        if (!any_active_source_found && !any_active_task_found) {
+            // Pause the topology
+            m_time_at_finish = clock_t::now();
+            m_event_count_at_finish = 0;
+            for (auto& arrow_state : m_arrow_states) {
+                if (arrow_state.is_sink) {
+                    m_event_count_at_finish += arrow_state.events_processed;
+                }
+            }
+            LOG_DEBUG(GetLogger()) << "Scheduler: Processing paused" << LOG_END;
+            m_runstatus = RunStatus::Paused;
+            // I think this is the ONLY site where the topology gets paused. Verify this?
+        }
     }
 
     worker.last_arrow_id = -1;
@@ -668,13 +683,21 @@ bool JExecutionEngine::IsTimeoutEnabled() const {
 JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 
     std::unique_lock<std::mutex> lock(m_mutex);
+    if (arrow_id >= m_topology->arrows.size()) {
+        LOG_WARN(GetLogger()) << "Firing unsuccessful: No arrow exists with id=" << arrow_id << LOG_END;
+        return JArrow::FireResult::NotRunYet;
+    }
     JArrow* arrow = m_topology->arrows[arrow_id];
+    LOG_WARN(GetLogger()) << "Attempting to fire arrow with name=" << arrow->get_name() 
+                          << ", index=" << arrow_id << ", location=" << location_id << LOG_END;
 
     ArrowState& arrow_state = m_arrow_states[arrow_id];
     if (arrow_state.status == ArrowState::Status::Finished) {
+        LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow status is Finished." << arrow_id << LOG_END;
         return JArrow::FireResult::Finished;
     }
     if (!arrow_state.is_parallel && arrow_state.active_tasks != 0) {
+        LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow is sequential and already has an active task." << arrow_id << LOG_END;
         return JArrow::FireResult::NotRunYet;
     }
     arrow_state.active_tasks += 1;
@@ -683,6 +706,17 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     JEvent* event = nullptr;
     if (port != -1) {
         event = arrow->pull(port, location_id);
+        if (event == nullptr) {
+            LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow needs an input event from port " << port << ", but the queue or pool is empty." << LOG_END;
+            arrow_state.active_tasks -= 1;
+            return JArrow::FireResult::NotRunYet;
+        }
+        else {
+            LOG_WARN(GetLogger()) << "Input event #" << event->GetEventNumber() << " from port " << port << LOG_END;
+        }
+    }
+    else {
+        LOG_WARN(GetLogger()) << "No input events" << LOG_END;
     }
     lock.unlock();
 
@@ -690,14 +724,22 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     JArrow::OutputData outputs;
     JArrow::FireResult result = JArrow::FireResult::NotRunYet;
 
-    if (event != nullptr || port == -1) {
-        arrow->fire(event, outputs, output_count, result);
-        lock.lock();
-        arrow->push(outputs, output_count, location_id);
-        arrow_state.active_tasks -= 1;
-        lock.unlock();
+    LOG_WARN(GetLogger()) << "Firing arrow" << LOG_END;
+    arrow->fire(event, outputs, output_count, result);
+    LOG_WARN(GetLogger()) << "Fired arrow with result " << to_string(result) << LOG_END;
+    if (output_count == 0) {
+        LOG_WARN(GetLogger()) << "No output events" << LOG_END;
+    }
+    else {
+        for (size_t i=0; i<output_count; ++i) {
+            LOG_WARN(GetLogger()) << "Output event #" << outputs.at(i).first->GetEventNumber() << " on port " << outputs.at(i).second << LOG_END;
+        }
     }
 
+    lock.lock();
+    arrow->push(outputs, output_count, location_id);
+    arrow_state.active_tasks -= 1;
+    lock.unlock();
     return result;
 }
 
@@ -778,6 +820,7 @@ std::string ToString(JExecutionEngine::RunStatus runstatus) {
         case JExecutionEngine::RunStatus::Pausing: return "Pausing";
         case JExecutionEngine::RunStatus::Draining: return "Draining";
         case JExecutionEngine::RunStatus::Finished: return "Finished";
+        default: return "CorruptedRunStatus";
     }
 }
 
