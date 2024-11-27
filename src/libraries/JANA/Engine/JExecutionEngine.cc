@@ -569,31 +569,36 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
     // so we check whether more are potentially coming. If not, we can pause the topology.
     // Note that our worker threads will still wait at ExchangeTask() until they get
     // shut down separately during Scale().
-
-    bool any_active_source_found = false;
-    bool any_active_task_found = false;
     
-    LOG_DEBUG(GetLogger()) << "Scheduler: No tasks ready" << LOG_END;
+    if (m_runstatus == RunStatus::Running || m_runstatus == RunStatus::Pausing || m_runstatus == RunStatus::Draining) {
+        // We want to avoid scenarios such as where the topology already Finished but then gets reset to Paused
+        // This also leaves a cleaner narrative in the logs. 
 
-    for (size_t arrow_id = 0; arrow_id < m_arrow_states.size(); ++arrow_id) {
-        auto& state = m_arrow_states[arrow_id];
-        any_active_source_found |= (state.status == ArrowState::Status::Running && state.is_source);
-        any_active_task_found |= (state.active_tasks != 0);
-        // A source might have been deactivated by RequestPause, Ctrl-C, etc, and might be inactive even though it still has active tasks
-    }
+        bool any_active_source_found = false;
+        bool any_active_task_found = false;
+        
+        LOG_DEBUG(GetLogger()) << "Scheduler: No tasks ready" << LOG_END;
 
-    if (!any_active_source_found && !any_active_task_found) {
-        // Pause the topology
-        m_time_at_finish = clock_t::now();
-        m_event_count_at_finish = 0;
-        for (auto& arrow_state : m_arrow_states) {
-            if (arrow_state.is_sink) {
-                m_event_count_at_finish += arrow_state.events_processed;
-            }
+        for (size_t arrow_id = 0; arrow_id < m_arrow_states.size(); ++arrow_id) {
+            auto& state = m_arrow_states[arrow_id];
+            any_active_source_found |= (state.status == ArrowState::Status::Running && state.is_source);
+            any_active_task_found |= (state.active_tasks != 0);
+            // A source might have been deactivated by RequestPause, Ctrl-C, etc, and might be inactive even though it still has active tasks
         }
-        LOG_DEBUG(GetLogger()) << "Scheduler: Processing paused" << LOG_END;
-        m_runstatus = RunStatus::Paused;
-        // I think this is the ONLY site where the topology gets paused. Verify this?
+
+        if (!any_active_source_found && !any_active_task_found) {
+            // Pause the topology
+            m_time_at_finish = clock_t::now();
+            m_event_count_at_finish = 0;
+            for (auto& arrow_state : m_arrow_states) {
+                if (arrow_state.is_sink) {
+                    m_event_count_at_finish += arrow_state.events_processed;
+                }
+            }
+            LOG_DEBUG(GetLogger()) << "Scheduler: Processing paused" << LOG_END;
+            m_runstatus = RunStatus::Paused;
+            // I think this is the ONLY site where the topology gets paused. Verify this?
+        }
     }
 
     worker.last_arrow_id = -1;
