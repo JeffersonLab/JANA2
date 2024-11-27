@@ -706,6 +706,17 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     JEvent* event = nullptr;
     if (port != -1) {
         event = arrow->pull(port, location_id);
+        if (event == nullptr) {
+            LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow needs an input event from port " << port << ", but the queue or pool is empty." << LOG_END;
+            arrow_state.active_tasks -= 1;
+            return JArrow::FireResult::NotRunYet;
+        }
+        else {
+            LOG_WARN(GetLogger()) << "Input event #" << event->GetEventNumber() << " from port " << port << LOG_END;
+        }
+    }
+    else {
+        LOG_WARN(GetLogger()) << "No input events" << LOG_END;
     }
     lock.unlock();
 
@@ -713,34 +724,22 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     JArrow::OutputData outputs;
     JArrow::FireResult result = JArrow::FireResult::NotRunYet;
 
-    if (event != nullptr || port == -1) {
-        if (event != nullptr) {
-            LOG_WARN(GetLogger()) << "Input event #" << event->GetEventNumber() << " from port " << port << LOG_END;
-        }
-        else {
-            LOG_WARN(GetLogger()) << "No input events" << LOG_END;
-        }
-        LOG_WARN(GetLogger()) << "Firing arrow" << LOG_END;
-        arrow->fire(event, outputs, output_count, result);
-        LOG_WARN(GetLogger()) << "Fired arrow" << LOG_END;
-        if (output_count == 0) {
-            LOG_WARN(GetLogger()) << "No output events" << LOG_END;
-        }
-        else {
-            for (size_t i=0; i<output_count; ++i) {
-                LOG_WARN(GetLogger()) << "Output event #" << outputs.at(i).first->GetEventNumber() << " on port " << outputs.at(i).second << LOG_END;
-            }
-        }
-
-        lock.lock();
-        arrow->push(outputs, output_count, location_id);
-        arrow_state.active_tasks -= 1;
-        lock.unlock();
+    LOG_WARN(GetLogger()) << "Firing arrow" << LOG_END;
+    arrow->fire(event, outputs, output_count, result);
+    LOG_WARN(GetLogger()) << "Fired arrow with result " << to_string(result) << LOG_END;
+    if (output_count == 0) {
+        LOG_WARN(GetLogger()) << "No output events" << LOG_END;
     }
     else {
-        LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow needs an input event from port " << port << ", but the queue or pool is empty." << LOG_END;
+        for (size_t i=0; i<output_count; ++i) {
+            LOG_WARN(GetLogger()) << "Output event #" << outputs.at(i).first->GetEventNumber() << " on port " << outputs.at(i).second << LOG_END;
+        }
     }
 
+    lock.lock();
+    arrow->push(outputs, output_count, location_id);
+    arrow_state.active_tasks -= 1;
+    lock.unlock();
     return result;
 }
 
