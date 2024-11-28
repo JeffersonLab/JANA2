@@ -25,7 +25,7 @@ public:
     using IteratorType = typename std::vector<T*>::const_iterator;
     using PairType = std::pair<IteratorType, IteratorType>;
 
-    JFactoryT() : JFactory(JTypeInfo::demangle<T>(), ""){
+    JFactoryT(std::string tag="") : JFactory(JTypeInfo::demangle<T>(), tag){
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
 #if JANA2_HAVE_ROOT
