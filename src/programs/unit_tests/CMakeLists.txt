@@ -39,7 +39,7 @@ set(TEST_SOURCES
     Utils/JTablePrinterTests.cc
     Utils/JStatusBitsTests.cc
     Utils/JCallGraphRecorderTests.cc
-
+    Utils/JLoggerTests.cc
     )
 
 if (${USE_PODIO})
