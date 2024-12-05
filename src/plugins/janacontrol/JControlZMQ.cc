@@ -86,7 +86,7 @@ JControlZMQ::JControlZMQ(JApplication *app, int port):_japp(app), _port(port)
 {
     // This is called from jcontrol plugin's InitPlugin() routine
 
-    LOG << "Launching JControlZMQ thread ..." << LOG_END
+    LOG << "Launching JControlZMQ thread ..." << LOG_END;
 
     // Create new zmq context, get the current host name, and launch server thread
     _zmq_context = zmq_ctx_new();
@@ -110,10 +110,10 @@ JControlZMQ::~JControlZMQ()
     // Tell server thread to quit and wait for it to finish
     _done =true;
     if(_thr != nullptr) {
-        LOG << "Joining JControlZMQ thread ..." << LOG_END
+        LOG << "Joining JControlZMQ thread ..." << LOG_END;
         _thr->join();
         delete _thr;
-        LOG << "JControlZMQ thread joined." << LOG_END
+        LOG << "JControlZMQ thread joined." << LOG_END;
     }
 
     // Delete the zmq context
@@ -132,7 +132,7 @@ void JControlZMQ::ServerLoop()
     /// indefinitely until the internal _done member is set to true.
     /// Currently, that is done only by calling the destructor.
 
-    LOG << "JControlZMQ server starting ..." << LOG_END
+    LOG << "JControlZMQ server starting ..." << LOG_END;
 
     // This just makes it easier to identify this thread while debugging.
     // Linux and Mac OS X use different calling signatures for pthread_setname_np
@@ -148,7 +148,7 @@ void JControlZMQ::ServerLoop()
 	void *responder = zmq_socket( _zmq_context, ZMQ_REP );
 	auto ret = zmq_bind( responder, bind_str);
 	if( ret != 0 ){
-		LOG << "JControlZMQ: Unable to bind zeroMQ control socket " << _port << "!" << LOG_END
+		LOG << "JControlZMQ: Unable to bind zeroMQ control socket " << _port << "!" << LOG_END;
 		perror("zmq_bind");
 		return;
 	}
@@ -164,7 +164,7 @@ void JControlZMQ::ServerLoop()
 				std::this_thread::sleep_for(std::chrono::milliseconds(250));
 				continue;
 			}else{
-				LOG << "JControlZMQ: ERROR listening on control socket: errno=" << errno << LOG_END
+				LOG << "JControlZMQ: ERROR listening on control socket: errno=" << errno << LOG_END;
 				_done = true;
 				continue;
 			}
