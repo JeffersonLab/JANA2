@@ -63,10 +63,10 @@ uint32_t GetCpuID() {
 #ifdef __cpuid_count
     GETCPU(cpuid);
 #else  // __cpuid_count
-#warning __cpuid_count is not defined on this system.
+    // cpuid_count is not defined on this system.
+    return 0; 
 #endif // __cpuid_count
     return cpuid;
-    // TODO: Clean this up
 
 #else //__APPLE__
     return sched_getcpu();

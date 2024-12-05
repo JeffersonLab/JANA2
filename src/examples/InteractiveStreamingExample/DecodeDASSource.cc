@@ -21,20 +21,19 @@ DecodeDASSource::~DecodeDASSource() {
 void DecodeDASSource::Open() {
 
     // open the file stream
-    ifs.open(GetName());
-    if (!ifs) throw JException("Unable to open '%s'", GetName().c_str());
+    ifs.open(GetResourceName());
+    if (!ifs) throw JException("Unable to open '%s'", GetResourceName().c_str());
 
 }
 
 void DecodeDASSource::Close() {
     // Close the file/stream here.
-    std::cout << "Closing " << GetName() << std::endl;
+    std::cout << "Closing " << GetResourceName() << std::endl;
     ifs.close();
 }
 
 JEventSource::Result DecodeDASSource::Emit(JEvent& event) {
 
-    // TODO: Put these somewhere that makes sense
     size_t MAX_CHANNELS = 80;
     size_t MAX_SAMPLES  = 1024;
     // open the file stream and parse the data
@@ -59,7 +58,7 @@ JEventSource::Result DecodeDASSource::Emit(JEvent& event) {
             return Result::Success;
         }
         // close file stream when the end of file is reached
-        std::cout << "Reached end of file/stream " << GetName() << std::endl;
+        std::cout << "Reached end of file/stream " << GetResourceName() << std::endl;
     }
     return Result::FailureFinished;
 
