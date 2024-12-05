@@ -14,7 +14,6 @@
 #include <time.h>
 
 
-
 struct JLogger {
     enum class Level { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
     Level level;
@@ -40,8 +39,10 @@ struct JLogger {
     void ShowThreadstamp(bool show) {show_threadstamp = show; }
 };
 
+
 static JLogger default_cout_logger = JLogger(JLogger::Level::TRACE, &std::cout, "JANA");
 static JLogger default_cerr_logger = JLogger(JLogger::Level::TRACE, &std::cerr, "JERR");
+
 
 inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
     switch (l) {
@@ -55,25 +56,20 @@ inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
     }
 }
 
-///
-struct JLogMessage {
 
-    /// Message terminator
-    struct End {};
+class JLogMessage : public std::stringstream {
+private:
+    std::string m_prefix;
 
-    const JLogger& logger;
-    JLogger::Level level;
-    std::ostringstream builder;
+public:
+    JLogMessage(const std::string& prefix="") : m_prefix(prefix){
+    }
 
-
-    JLogMessage(const JLogger& logger = default_cout_logger,
-                JLogger::Level level = JLogger::Level::INFO)
-                : logger(logger), level(level) {
-
+    JLogMessage(const JLogger& logger, JLogger::Level level) {
+        std::ostringstream builder;
         if (logger.show_timestamp) {
             auto now = std::chrono::system_clock::now();
             std::time_t current_time = std::chrono::system_clock::to_time_t(now);
-            
             tm tm_buf;
             localtime_r(&current_time, &tm_buf);
 
@@ -86,8 +82,8 @@ struct JLogMessage {
             switch (level) {
                 case JLogger::Level::TRACE: builder << "[trace] "; break;
                 case JLogger::Level::DEBUG: builder << "[debug] "; break;
-                case JLogger::Level::INFO:  builder << "[info]  "; break;
-                case JLogger::Level::WARN:  builder << "[warn]  "; break;
+                case JLogger::Level::INFO:  builder << " [info] "; break;
+                case JLogger::Level::WARN:  builder << " [warn] "; break;
                 case JLogger::Level::ERROR: builder << "[error] "; break;
                 case JLogger::Level::FATAL: builder << "[fatal] "; break;
                 default: builder << "[?????] ";
@@ -96,48 +92,25 @@ struct JLogMessage {
         if (logger.show_threadstamp) {
             builder << std::this_thread::get_id() << " ";
         }
-        if (logger.show_group) {
-            builder << "[" << logger.group << "] ";
+        if (logger.show_group && !logger.group.empty()) {
+            builder << logger.group << " > ";
         }
+        m_prefix = builder.str();
     }
 
-    // Helper function for truncating long strings to keep our log readable
-    // This should probably live somewhere else
-    std::string ltrunc(std::string original, size_t desired_length) {
-        auto n = original.length();
-        if (n <= desired_length) return original;
-        return "\u2026" + original.substr(n - desired_length, desired_length - 1);
+    virtual ~JLogMessage() {
+        std::string line;
+        std::ostringstream oss;
+        while (std::getline(*this, line)) {
+            oss << m_prefix << line << std::endl;
+        }
+        std::cout << oss.str();
+        std::cout.flush();
+        this->str("");
+        this->clear();
     }
 };
 
-
-/// Stream operators
-
-template <typename T>
-inline JLogMessage operator<<(JLogger& l, const T& t) {
-    JLogMessage m(l);
-    m.builder << t;
-    return m;
-}
-
-template<typename T>
-inline JLogMessage& operator<<(JLogMessage& m, const T& t) {
-    m.builder << t;
-    return m;
-}
-
-template<typename T>
-inline JLogMessage&& operator<<(JLogMessage&& m, const T& t) {
-    m.builder << t;
-    return std::move(m);
-}
-
-inline void operator<<(JLogMessage&& m, JLogMessage::End const&) {
-    std::ostream& dest = *m.logger.destination;
-    m.builder << std::endl;
-    dest << m.builder.str();
-    dest.flush();
-}
 
 /// Macros
 
@@ -145,7 +118,7 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const&) {
 
 #define LOG_IF(predicate) if (predicate) JLogMessage()
 
-#define LOG_END JLogMessage::End();
+#define LOG_END std::endl
 
 #define LOG_AT_LEVEL(logger, msglevel) if ((logger).level <= msglevel) JLogMessage((logger), msglevel)
 
