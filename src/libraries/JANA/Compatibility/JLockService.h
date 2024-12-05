@@ -19,8 +19,6 @@ public:
     }
 
     ~JLockService() override {
-        delete m_app_rw_lock;
-        delete m_root_rw_lock;
         for (const auto& pair : m_rw_locks) {
             delete pair.second;
         }
@@ -70,8 +68,8 @@ public:
 private:
 
     std::map<std::string, pthread_rwlock_t *> m_rw_locks;
-    pthread_rwlock_t *m_app_rw_lock;
-    pthread_rwlock_t *m_root_rw_lock;
+    pthread_rwlock_t *m_app_rw_lock = nullptr;
+    pthread_rwlock_t *m_root_rw_lock = nullptr;
     pthread_rwlock_t m_rw_locks_lock {}; // control access to rw_locks
     pthread_rwlock_t m_root_fill_locks_lock {}; // control access to m_root_fill_rw_lock
     std::map<JEventProcessor *, pthread_rwlock_t *> m_root_fill_rw_lock;

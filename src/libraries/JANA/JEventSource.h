@@ -40,7 +40,6 @@ private:
 
 
 public:
-    [[deprecated]]
     explicit JEventSource(std::string resource_name, JApplication* app = nullptr)
         : m_resource_name(std::move(resource_name)) {
             m_app = app;
