@@ -470,7 +470,7 @@ template <typename T>
 JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name) {
     /// InsertCollection inserts the provided PODIO collection into a JFactoryPodioT<T>. It assumes that the collection pointer
     /// is _already_ owned by the podio::Frame corresponding to this JEvent. This is meant to be used if you are starting out
-    /// with a PODIO frame (e.g. a JEventSource that uses podio::ROOTFrameReader).
+    /// with a PODIO frame (e.g. a JEventSource that uses podio::ROOTReader).
     
     const auto* typed_collection = dynamic_cast<const typename T::collection_type*>(collection);
     if (typed_collection == nullptr) {

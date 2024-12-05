@@ -3,7 +3,16 @@
 // Author: Nathan Brei
 
 #include <JANA/JEventProcessor.h>
+
+#include <podio/podioVersion.h>
+#if podio_VERSION_MAJOR == 0 && podio_VERSION_MINOR < 99
 #include <podio/ROOTFrameWriter.h>
+namespace podio {
+using ROOTWriter = podio::ROOTFrameWriter;
+}
+#else
+#include <podio/ROOTWriter.h>
+#endif
 
 class PodioFileWriter : public JEventProcessor {
 
@@ -23,7 +32,7 @@ private:
         "events",
         "Name of branch to store data in the output file"};
 
-    std::unique_ptr<podio::ROOTFrameWriter> m_writer;
+    std::unique_ptr<podio::ROOTWriter> m_writer;
 
 
 public:
@@ -33,7 +42,7 @@ public:
     }
 
     void Init() override {
-        m_writer = std::make_unique<podio::ROOTFrameWriter>(*m_output_filename);
+        m_writer = std::make_unique<podio::ROOTWriter>(*m_output_filename);
     }
 
     void Finish() override {

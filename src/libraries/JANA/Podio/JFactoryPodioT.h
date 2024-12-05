@@ -165,7 +165,7 @@ void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
     catch (...) {
         if (mCollection == nullptr) {
             // If calling Create() excepts, we still create an empty collection
-            // so that podio::ROOTFrameWriter doesn't segfault on the null mCollection pointer
+            // so that podio::ROOTWriter doesn't segfault on the null mCollection pointer
             SetCollection(CollectionT());
         }
         throw;
@@ -173,7 +173,7 @@ void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
     if (mCollection == nullptr) {
         SetCollection(CollectionT());
         // If calling Process() didn't result in a call to Set() or SetCollection(), we create an empty collection
-        // so that podio::ROOTFrameWriter doesn't segfault on the null mCollection pointer
+        // so that podio::ROOTWriter doesn't segfault on the null mCollection pointer
     }
 }
 
