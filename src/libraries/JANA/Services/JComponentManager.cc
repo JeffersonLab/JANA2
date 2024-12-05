@@ -16,20 +16,32 @@ JComponentManager::JComponentManager() {
 
 JComponentManager::~JComponentManager() {
 
-    for (auto* src : m_evt_srces) {
-        delete src;
-    }
-    for (auto* proc : m_evt_procs) {
-        delete proc;
+    for (auto* src_gen : m_src_gens) {
+        delete src_gen;
     }
     for (auto* fac_gen : m_fac_gens) {
         delete fac_gen;
     }
-    for (auto* src_gen : m_src_gens) {
-        delete src_gen;
+
+    for (auto* src : m_evt_srces) {
+        LOG_TRACE(GetLogger()) << "Destroying source with type=" << src->GetTypeName();
+        delete src;
     }
     for (auto* unfolder : m_unfolders) {
+        LOG_TRACE(GetLogger()) << "Destroying unfolder with type=" << unfolder->GetTypeName();
         delete unfolder;
+    }
+
+    // The order of deletion here sadly matters, because GlueX likes to fill
+    // histograms inside component destructors. Thus event processors must be destroyed after 
+    // all other components, and the last component to be destroyed should be the _first_ event 
+    // processor, because that's the one that is usually provided by the main program and handles 
+    // the ROOT output file. We may eventually want to move all ROOT file operations to a separate
+    // JService which would be closed and destroyed after all other components.
+
+    for (int i=m_evt_procs.size()-1; i >= 0; --i) {
+        LOG_TRACE(GetLogger()) << "Destroying processor with type=" << m_evt_procs[i]->GetTypeName();
+        delete m_evt_procs[i];
     }
 }
 
