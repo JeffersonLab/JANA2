@@ -28,9 +28,6 @@ JTopologyBuilder::~JTopologyBuilder() {
     for (auto pool : pools) {
         delete pool;
     }
-    if (event_pool != nullptr) {
-        delete event_pool;
-    }
 }
 
 std::string JTopologyBuilder::print_topology() {
@@ -91,8 +88,6 @@ void JTopologyBuilder::set_configure_fn(std::function<void(JTopologyBuilder&)> c
 void JTopologyBuilder::create_topology() {
     mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(m_affinity),
                        static_cast<JProcessorMapping::LocalityStrategy>(m_locality));
-
-    event_pool = new JEventPool(m_components, m_max_inflight_events, m_location_count);
 
     if (m_configure_topology) {
         m_configure_topology(*this);
