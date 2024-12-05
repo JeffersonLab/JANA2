@@ -37,16 +37,6 @@ TEST_CASE("JLogMessage_DestructorOrdering") {
 
     std::cout << std::endl;
 
-    JLogMessage m("JANA: ");
-    // This will destruct immediately because we include a LOG_END-style flush
-    m << "5. This is a JLogMsg that is NOT in its own scope, but we will manually flush it at the right time.";
-    m << JLogMessage::Flush();
-    m << "   This is a line that got emitted as part of the same JLogMsg, but after the flush." << std::endl;
-    m << "   It needs one final flush, else it will destruct too late and these lines will be printed out of order.";
-    m << JLogMessage::Flush();
-
-    std::cout << std::endl;
-
     std::cout << "6. This should be the last thing printed, assuming our destructors behave" << std::endl;
 
 }
@@ -71,8 +61,6 @@ TEST_CASE("JLogMessage_Newlines") {
 
     LOG_INFO(logger) << "This message has a trailing newline containing log metadata" << std::endl << std::endl;
     LOG_INFO(logger) << "This message has a trailing newline containing log metadata" << LOG_END << LOG_END;
-
-    LOG_INFO(logger) << "This message does _not_ have a trailing newline containing log metadata " << std::endl << JLogMessage::Flush();
-    LOG_INFO(logger) << "This message has a trailing newline containing log metadata " << std::endl << std::endl << JLogMessage::Flush();
+    LOG_INFO(logger) << "This message has a trailing newline containing log metadata " << std::endl << LOG_END;
 }
 

@@ -58,9 +58,6 @@ inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
 
 
 class JLogMessage : public std::stringstream {
-public:
-    struct Flush {};
-
 private:
     std::string m_prefix;
 
@@ -101,48 +98,19 @@ public:
         m_prefix = builder.str();
     }
 
-    void do_flush() {
+    virtual ~JLogMessage() {
         std::string line;
         std::ostringstream oss;
-        if (this->str().empty()) {
-            // This way, `LOG_INFO(GetLogger()) << LOG_END;` produces a blank line
-            oss << m_prefix << std::endl;
-        }
-        else {
-            while (std::getline(*this, line)) {
-                oss << m_prefix << line << std::endl;
-            }
+        while (std::getline(*this, line)) {
+            oss << m_prefix << line << std::endl;
         }
         std::cout << oss.str();
         std::cout.flush();
         this->str("");
         this->clear();
     }
-
-    virtual ~JLogMessage() {
-        if (!this->str().empty()) {
-            do_flush();
-        }
-    }
 };
 
-
-/// Stream operators
-
-inline JLogMessage& operator<<(JLogMessage& msg, const JLogMessage::Flush&) {
-    // This lets us force a flush
-    msg.do_flush();
-    return msg;
-}
-
-inline std::ostream& operator<<(std::ostream& msg, const JLogMessage::Flush&) {
-    // This lets us force a flush
-    auto* logmsg = dynamic_cast<JLogMessage*>(&msg);
-    if (logmsg != nullptr) {
-        logmsg->do_flush();
-    }
-    return msg;
-}
 
 /// Macros
 
@@ -150,7 +118,7 @@ inline std::ostream& operator<<(std::ostream& msg, const JLogMessage::Flush&) {
 
 #define LOG_IF(predicate) if (predicate) JLogMessage()
 
-#define LOG_END JLogMessage::Flush()
+#define LOG_END std::endl
 
 #define LOG_AT_LEVEL(logger, msglevel) if ((logger).level <= msglevel) JLogMessage((logger), msglevel)
 

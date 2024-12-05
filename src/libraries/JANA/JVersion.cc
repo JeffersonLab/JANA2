@@ -57,7 +57,6 @@ void JVersion::PrintVersionDescription(std::ostream& os) {
         if (JVersion::HasXerces()) os << "Xerces ";
         os << std::endl;
     }
-    os << std::endl;
 }
 
 
