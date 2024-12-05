@@ -6,8 +6,19 @@
 
 #include "PodioDatamodel/EventInfoCollection.h"
 #include "PodioDatamodel/ExampleHitCollection.h"
+#include <podio/podioVersion.h>
+
+#if podio_VERSION_MAJOR == 0 && podio_VERSION_MINOR < 99
 #include <podio/ROOTFrameWriter.h>
 #include <podio/ROOTFrameReader.h>
+namespace podio {
+    using ROOTWriter = podio::ROOTFrameWriter;
+    using ROOTReader = podio::ROOTFrameReader;
+}
+#else
+#include <podio/ROOTWriter.h>
+#include <podio/ROOTReader.h>
+#endif
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
@@ -36,7 +47,7 @@ void create_hits_file() {
     event1.put(std::move(hits1), "hits");
     event1.put(std::move(eventinfos1), "eventinfos");
 
-    podio::ROOTFrameWriter writer("hits.root");
+    podio::ROOTWriter writer("hits.root");
     writer.writeFrame(event1, "events");
 
     MutableEventInfo eventinfo2(8, 0, 22);
@@ -59,7 +70,7 @@ void create_hits_file() {
 }
 
 void verify_clusters_file() {
-    podio::ROOTFrameReader reader;
+    podio::ROOTReader reader;
     reader.openFile("podio_output.root");
     auto event0 = podio::Frame(reader.readEntry("events", 0));
 

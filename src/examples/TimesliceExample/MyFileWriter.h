@@ -4,11 +4,18 @@
 
 #pragma once
 
-#include <podio/ROOTFrameWriter.h>
-#include "CollectionTabulators.h"
 #include <JANA/JEventProcessor.h>
+#include "CollectionTabulators.h"
 
-#include <set>
+#include <podio/podioVersion.h>
+#if podio_VERSION_MAJOR == 0 && podio_VERSION_MINOR < 99
+#include <podio/ROOTFrameWriter.h>
+namespace podio {
+using ROOTWriter = podio::ROOTFrameWriter;
+}
+#else
+#include <podio/ROOTWriter.h>
+#endif
 
 
 
@@ -25,7 +32,7 @@ struct MyFileWriter : public JEventProcessor {
                                               .level = JEventLevel::Timeslice,
                                               .is_optional = true }};
 
-    std::unique_ptr<podio::ROOTFrameWriter> m_writer = nullptr;
+    std::unique_ptr<podio::ROOTWriter> m_writer = nullptr;
     std::mutex m_mutex;
     
     MyFileWriter() {
@@ -34,7 +41,7 @@ struct MyFileWriter : public JEventProcessor {
     }
 
     void Init() {
-        m_writer = std::make_unique<podio::ROOTFrameWriter>("output.root");
+        m_writer = std::make_unique<podio::ROOTWriter>("output.root");
     }
 
     void Process(const JEvent& event) {

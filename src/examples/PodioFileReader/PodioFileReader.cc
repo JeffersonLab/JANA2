@@ -11,7 +11,15 @@
 #include <PodioDatamodel/ExampleHitCollection.h>
 #include <PodioDatamodel/ExampleClusterCollection.h>
 
+#include <podio/podioVersion.h>
+#if podio_VERSION_MAJOR == 0 && podio_VERSION_MINOR < 99
 #include <podio/ROOTFrameReader.h>
+namespace podio {
+    using ROOTReader = podio::ROOTFrameReader;
+}
+#else
+#include <podio/ROOTReader.h>
+#endif
 
 
 
@@ -19,8 +27,8 @@ class PodioFileReader : public JEventSource {
 
 private:
     uint64_t m_entry_count = 0;
-    podio::ROOTFrameReader m_reader;
-    // ROOTFrameReader emits a lot of deprecation warnings, but the supposed replacement
+    podio::ROOTReader m_reader;
+    // ROOTReader emits a lot of deprecation warnings, but the supposed replacement
     // won't actually be a replacement until the next version
 
 public:
