@@ -40,7 +40,6 @@ public:
 
     // Things that probably shouldn't be here
     std::function<void(JTopologyBuilder&)> m_configure_topology;
-    JEventPool* event_pool = nullptr; // TODO: Move into pools eventually
     JProcessorMapping mapping;
 
 public:
