@@ -113,7 +113,7 @@ tools for their projects without being constrained by the framework.
 
 ### Data Identification in JANA2
 
-![Simple Algorithms Flow](_media/data-identification.svg)
+![Data Identification in JANA2](_media/data-identification.svg)
 
 An important aspect is how data is identified within JANA2. JANA2 supports two identifiers:
 
@@ -142,8 +142,8 @@ class is the central hub of the JANA2 framework, orchestrating all aspects of a 
 application. It manages the initialization, configuration, and execution of the data processing workflow, 
 serving as the entry point for interacting with the core components of the system. 
 By providing access to key managers, services, and runtime controls, 
-JApplication ensures that the application operates smoothly from setup to shutdown.
-To illustrate this, here is a code of typical standalone JANA2 application:
+JApplication ensures that the application operates smoothly from setup to shut down.
+To illustrate this, here is a code of a typical standalone JANA2 application:
 
 ```cpp
 int main(int argc, char* argv[]) {
@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
     // Instantiate the JApplication with the parameter manager    
     JApplication app(params);
 
-    // Add predefined plugoms
+    // Add predefined plugins
     app.AddPlugin("my_plugin");
     
     // Register services:
@@ -188,7 +188,7 @@ JANA implements a **factory model**, where data objects are the products, and th
 factories. While there are various types of factories in JANA2 (covered later in this documentation), 
 they all follow the same fundamental concept:
 
-![JANA2 Factory diagram](_media/concepts-factory-diagram.png)
+<img src="_media/concepts-factory-diagram.png" width="600" alt="JANA Factory Diagram" >
 
 This diagram illustrates the analogy to industry. When a specific data object is requested for the current event in JANA, 
 the framework identifies the corresponding algorithm (factory) capable of producing it. 
@@ -219,7 +219,8 @@ fully reconstructing an event within that thread. This minimizes the use of lock
 to coordinate between threads and subsequently degrade performance. Factory sets are maintained in a pool and
 are (optionally) assigned affinity to a specific NUMA group.
 
-![JANA2 Factory diagram](_media/threading-schema.png)
+<img src="_media/threading-schema.png" width="500" alt="JANA2 threading diagram" >
+
 
 With some level of simplification, this diagram shows how sets of factories are created for each thread in the
 working pool. Limited by IO operations, events usually must be read in from the source sequentially(orange)
