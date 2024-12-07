@@ -22,7 +22,7 @@ using namespace std;
 
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Calibrations/JLargeCalibration.h>
-#include "JANA/Compatibility/md5.h"
+#include <md5.h>
 
 
 static pthread_mutex_t resource_manager_mutex = PTHREAD_MUTEX_INITIALIZER;

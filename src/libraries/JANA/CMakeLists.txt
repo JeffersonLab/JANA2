@@ -51,7 +51,6 @@ set(JANA2_SOURCES
     Compatibility/JStreamLogBuffer.cc
     Compatibility/JGeometryManager.cc
     Compatibility/JGeometryXML.cc
-    Compatibility/md5.c
     )
 
 if (${USE_PODIO})
@@ -70,6 +69,7 @@ find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_link_libraries(jana2 PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 target_link_libraries(jana2 PRIVATE VendoredTomlPlusPlus)
+target_link_libraries(jana2 PRIVATE VendoredMD5)
 
 if (${USE_PODIO})
     target_link_libraries(jana2 PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
