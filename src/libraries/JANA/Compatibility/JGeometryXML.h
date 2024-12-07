@@ -13,8 +13,6 @@
 #include <JANA/Calibrations/JCalibration.h>
 #include <JANA/JVersion.h>
 
-#include <JANA/Compatibility/md5.h>
-
 
 #if JANA2_HAVE_XERCES
 #if !defined(__CINT__) && !defined(__CLING__)
