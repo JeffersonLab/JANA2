@@ -51,7 +51,6 @@ set(JANA2_SOURCES
     Compatibility/JStreamLogBuffer.cc
     Compatibility/JGeometryManager.cc
     Compatibility/JGeometryXML.cc
-    Compatibility/md5.c
     )
 
 if (${USE_PODIO})
@@ -70,6 +69,7 @@ find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_link_libraries(jana2 PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 target_link_libraries(jana2 PRIVATE VendoredTomlPlusPlus)
+target_link_libraries(jana2 PRIVATE VendoredMD5) # To pull in the header file
 
 if (${USE_PODIO})
     target_link_libraries(jana2 PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
@@ -79,7 +79,7 @@ endif()
 
 
 # static library, always there
-add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2>)
+add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2> $<TARGET_OBJECTS:VendoredMD5>)
 set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
 target_include_directories(jana2_static_lib PUBLIC $<INSTALL_INTERFACE:include>)
@@ -96,7 +96,7 @@ install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
 # optionally build shared lib
 if (BUILD_SHARED_LIBS)
     message(STATUS "Building both shared and static libraries")
-    add_library(jana2_shared_lib SHARED $<TARGET_OBJECTS:jana2>)
+    add_library(jana2_shared_lib SHARED $<TARGET_OBJECTS:jana2> $<TARGET_OBJECTS:VendoredMD5>)
     set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
     target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)

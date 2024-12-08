@@ -8,14 +8,10 @@
 #pragma once
 #include <iostream>
 
-#include <JANA/Compatibility/jerror.h>
 #include <JANA/Compatibility/JGeometry.h>
 #include <JANA/Compatibility/JStreamLog.h>
 #include <JANA/Calibrations/JCalibration.h>
 #include <JANA/JVersion.h>
-
-#include <JANA/Compatibility/md5.h>
-
 
 
 #if JANA2_HAVE_XERCES
