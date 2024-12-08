@@ -29,7 +29,7 @@ public:
     };
 
 private:
-    Parameter<std::string> m_wirings_input_file {this, "jana:wiring_file", "wiring.toml", 
+    Parameter<std::string> m_wirings_input_file {this, "jana:wiring_file", "", 
         "Path to TOML file containing wiring definitions"};
 
     Parameter<bool> m_strict_inheritance {this, "jana:wiring_strictness", true,

@@ -51,4 +51,4 @@ jobs:
     - name: jana-unit-tests
       run: |
         echo "--- Running jana-unit-tests ------------------------------"
-        ctest --test-dir build -R jana-unit-tests
+        ctest --test-dir build -R jana-unit-tests --rerun-failed --output-on-failure
