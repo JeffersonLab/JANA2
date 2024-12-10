@@ -138,9 +138,8 @@ void JExecutionEngine::ScaleWorkers(size_t nthreads) {
             LOG_DEBUG(GetLogger()) << "Stopping worker " << worker_id << LOG_END;
             m_worker_states[worker_id]->is_stop_requested = true;
         }
-        lock.unlock();
-
         m_condvar.notify_all(); // Wake up all threads so that they can exit the condvar wait loop
+        lock.unlock();
 
         // We join all (eligible) threads _outside_ of the mutex
         for (int worker_id=prev_nthreads-1; worker_id >= (int) nthreads; --worker_id) {
@@ -450,7 +449,6 @@ void JExecutionEngine::ExchangeTask(Task& task, size_t worker_id, bool nonblocki
     }
     m_total_idle_duration += (worker.last_checkout_time - idle_time_start);
 
-    lock.unlock();
     // Notify one worker, who will notify the next, etc, as long as FindNextReadyTaskUnsafe() succeeds.
     // After FindNextReadyTaskUnsafe fails, all threads block until the next returning worker reactivates the
     // notification chain.
