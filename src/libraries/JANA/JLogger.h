@@ -12,6 +12,7 @@
 #include <thread>
 #include <iomanip>
 #include <time.h>
+#include <mutex>
 
 
 struct JLogger {
@@ -99,6 +100,9 @@ public:
     }
 
     virtual ~JLogMessage() {
+        static std::mutex cout_mutex;
+        std::lock_guard<std::mutex> lock(cout_mutex);
+
         std::string line;
         std::ostringstream oss;
         while (std::getline(*this, line)) {
@@ -106,8 +110,6 @@ public:
         }
         std::cout << oss.str();
         std::cout.flush();
-        this->str("");
-        this->clear();
     }
 };
 
