@@ -212,7 +212,7 @@ void JExecutionEngine::RunSupervisor() {
     Perf perf;
     while (true) {
 
-        if (m_enable_timeout) {
+        if (m_enable_timeout && m_timeout_s > 0) {
             CheckTimeout();
         }
 
