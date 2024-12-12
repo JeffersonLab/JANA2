@@ -13,8 +13,9 @@
 
 class JTestTracker : public JFactoryT<JTestTrackData> {
 
+    Parameter<bool> m_except {this, "except", false, "Event #7 always excepts" };
     Parameter<bool> m_segfault {this, "segfault", false, "Event #7 always segfaults" };
-    Parameter<bool> m_timeout {this, "timeout", false, "Event #22 always times out" };
+    Parameter<bool> m_timeout {this, "timeout", false, "Event #7 always times out" };
     Parameter<size_t> m_cputime_ms {this, "cputime_ms", 200, "Time spent during tracking" };
     Parameter<size_t> m_write_bytes {this, "bytes", 1000, "Bytes written during tracking"};
     Parameter<double> m_cputime_spread {this, "cputime_spread", 0.25, "Spread of time spent during tracking"};
@@ -36,20 +37,22 @@ public:
         m_bench_utils.read_memory(ed->buffer);
 
         // Do lots of computation
-        if (*m_timeout) {
-            if (aEvent->GetEventNumber() == 22) {
+        m_bench_utils.consume_cpu_ms(*m_cputime_ms, *m_cputime_spread);
+
+        // Optionally trigger failure scenarios
+        if(aEvent->GetEventNumber() == 7) {
+            // Only one of these can happen, so in principle the param should be an enum
+            if (*m_except) {
+                throw std::runtime_error("Something went wrong");
+            }
+            if (*m_segfault) {
+                // Trigger a segfault on purpose
+                JTestTrackData* d = nullptr;
+                d->buffer[0] = 22;
+            }
+            if (*m_timeout) {
                 m_bench_utils.consume_cpu_ms(1000000);
             }
-        }
-        else {
-            m_bench_utils.consume_cpu_ms(*m_cputime_ms, *m_cputime_spread);
-        }
-
-
-        if(*m_segfault && aEvent->GetEventNumber() == 7) {
-            // Trigger a segfault on purpose
-            JTestTrackData* d = nullptr;
-            d->buffer[0] = 22;
         }
 
         // Write (small) track data
