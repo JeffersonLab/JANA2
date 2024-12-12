@@ -71,6 +71,13 @@ void register_handlers(JApplication* app) {
     // It would be nice to do this in a less unexpected place, and hopefully that will naturally
     // emerge from future refactorings.
 
+    // We capture a dummy backtrace to warm it up before it gets called inside a signal handler.
+    // Because backtrace() dynamically loads libgcc, calling malloc() in the process, it is not
+    // async-signal-safe until this warmup has happened. Thus we prevent a rare deadlock and several
+    // TSAN and Helgrind warnings.
+    JBacktrace backtrace;
+    backtrace.Capture();
+
     //Define signal action
     struct sigaction sSignalAction;
     sSignalAction.sa_sigaction = handle_sigsegv;
