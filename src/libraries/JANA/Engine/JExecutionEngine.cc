@@ -317,7 +317,7 @@ void JExecutionEngine::HandleFailures() {
         if (worker->is_timed_out) {
             GetApplication()->SetExitCode((int) JApplication::ExitCode::Timeout);
             auto ex = JException("Timeout in worker thread");
-            ex.stacktrace = worker->backtrace.ToString();
+            ex.backtrace = worker->backtrace;
             throw ex;
         }
     }
