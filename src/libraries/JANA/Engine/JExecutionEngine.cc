@@ -235,14 +235,18 @@ void JExecutionEngine::RunSupervisor() {
 
         if (m_interrupt_status == InterruptStatus::InspectRequested) {
             if (perf.runstatus == RunStatus::Paused) {
-                PrintFinalReport();
                 LOG_INFO(GetLogger()) << "Entering inspector" << LOG_END;
                 m_enable_timeout = false;
                 m_interrupt_status = InterruptStatus::InspectInProgress;
                 InspectApplication(GetApplication());
                 m_interrupt_status = InterruptStatus::NoInterruptsSupervised;
+
+                // Jump back to the top of the loop so that we have fresh event count data
+                last_measurement_time = clock_t::now();
+                last_event_count = 0;
+                continue; 
             }
-            else {
+            else if (perf.runstatus == RunStatus::Running) {
                 PauseTopology();
             }
         }
@@ -251,9 +255,10 @@ void JExecutionEngine::RunSupervisor() {
         }
 
         if (m_show_ticker) {
-            auto last_measurement_duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(clock_t::now() - last_measurement_time).count();
+            auto next_measurement_time = clock_t::now();
+            auto last_measurement_duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(next_measurement_time - last_measurement_time).count();
             float latest_throughput_hz = (last_measurement_duration_ms == 0) ? 0 : (perf.event_count - last_event_count) * 1000.0 / last_measurement_duration_ms;
-            last_measurement_time = clock_t::now();
+            last_measurement_time = next_measurement_time;
             last_event_count = perf.event_count;
 
             // Print rates
