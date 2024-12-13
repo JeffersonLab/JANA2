@@ -106,19 +106,14 @@ void JParameterManager::PrintParameters() {
 ///                             2: Throw on unused parameters
 void JParameterManager::PrintParameters(int verbosity, int strictness) {
 
-    if (verbosity == 0) {
-        LOG_INFO(m_logger) << "Configuration parameters table hidden. Set jana:parameter_verbosity > 0 to view." << LOG_END;
-        return;
-    }
-
     bool strictness_violation = false;
 
-    // Unused parameters first 
-    // The former might change the table columns and the latter might change the filter verbosity
+    // Check for unused and deprecated parameters first.
+    // If we find a problem, warn about that separately, and also increase the parameter table verbosity to help the user debug
     for (auto& pair : m_parameters) {
         const auto& key = pair.first;
         auto param = pair.second;
-        
+
         if ((strictness > 0) && (!param->IsDefault()) && (!param->IsUsed())) {
             strictness_violation = true;
             LOG_ERROR(m_logger) << "Parameter '" << key << "' appears to be unused. Possible typo?" << LOG_END;
@@ -131,6 +126,11 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
     if (strictness_violation) {
         LOG_WARN(m_logger) << "Printing parameter table with full verbosity due to strictness warning" << LOG_END;
         verbosity = 3; // Crank up verbosity before printing out table
+    }
+
+    if (verbosity == 0) {
+        LOG_INFO(m_logger) << "Configuration parameters table hidden. Set jana:parameter_verbosity > 0 to view." << LOG_END;
+        return;
     }
 
     // Filter table
