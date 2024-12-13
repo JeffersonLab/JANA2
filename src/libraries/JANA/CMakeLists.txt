@@ -12,6 +12,7 @@ set(JANA2_SOURCES
     JService.cc
     JVersion.cc
     JEvent.cc
+    JLogger.cc
 
     Engine/JExecutionEngine.cc
 

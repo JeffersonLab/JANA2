@@ -58,11 +58,6 @@ class JStreamLog : public std::ostream
 
 std::ostream& endMsg(std::ostream& os);
 
-extern JStreamLog jout;
-extern JStreamLog jerr;
-#define jendl std::endl
 
-#define _DBG_ std::cerr<<__FILE__<<":"<<__LINE__<<" "
-#define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
 
 

@@ -7,12 +7,11 @@
 #ifndef _JEventProcessor_regressiontest_
 #define _JEventProcessor_regressiontest_
 
-#include <string>
-#include <map>
-#include <ostream>
-#include <istream>
-
 #include <JANA/JEventProcessor.h>
+
+#include <fstream>
+#include <map>
+#include <string>
 
 
 class JEventProcessor_regressiontest : public JEventProcessor

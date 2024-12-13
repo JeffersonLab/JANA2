@@ -5,9 +5,6 @@
 
 #include "JStreamLog.h"
 
-JStreamLog jout(std::cout, "JANA >>");
-JStreamLog jerr(std::cerr, "JANA ERROR>>");
-
 JStreamLog::JStreamLog(std::streambuf* buf, const char* tag) : std::ostream(new JStreamLogBuffer(buf, tag)), own_rdbuf(true)
 {}
 

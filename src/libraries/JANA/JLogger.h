@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <JANA/Compatibility/JStreamLog.h>
-
 #include <iostream>
 #include <sstream>
 #include <chrono>
@@ -40,9 +38,6 @@ struct JLogger {
     void ShowThreadstamp(bool show) {show_threadstamp = show; }
 };
 
-
-static JLogger default_cout_logger = JLogger(JLogger::Level::TRACE, &std::cout, "JANA");
-static JLogger default_cerr_logger = JLogger(JLogger::Level::TRACE, &std::cerr, "JERR");
 
 
 inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
@@ -146,4 +141,14 @@ JLogMessage operator<<(const JLogger& logger, T&& t) {
 #define LOG_DEBUG(logger) LOG_AT_LEVEL(logger, JLogger::Level::DEBUG)
 #define LOG_TRACE(logger) LOG_AT_LEVEL(logger, JLogger::Level::TRACE)
 
+
+/// Backwards compatibility with JANA1 logger
+
+extern JLogger jout;
+extern JLogger jerr;
+#define jendl std::endl
+#define default_cout_logger jout;
+#define default_cerr_logger jerr;
+#define _DBG_ jerr<<__FILE__<<":"<<__LINE__<<" "
+#define _DBG__ jerr<<__FILE__<<":"<<__LINE__<<std::endl
 

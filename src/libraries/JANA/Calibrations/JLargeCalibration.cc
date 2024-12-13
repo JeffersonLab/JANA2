@@ -5,8 +5,12 @@
 // Creator: davidl (on Darwin eleanor.jlab.org 12.2.0 i386)
 //
 
+#include <JANA/JLogger.h>
+#include <JANA/Services/JParameterManager.h>
+#include <JANA/Calibrations/JLargeCalibration.h>
 
-#include <JANA/Compatibility/JStreamLog.h>
+#include <md5.h>
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -20,9 +24,6 @@ using namespace std;
 #include <curl/curl.h>
 #endif // HAVE_CURL
 
-#include <JANA/Services/JParameterManager.h>
-#include <JANA/Calibrations/JLargeCalibration.h>
-#include <md5.h>
 
 
 static pthread_mutex_t resource_manager_mutex = PTHREAD_MUTEX_INITIALIZER;
