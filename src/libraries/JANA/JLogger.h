@@ -61,16 +61,19 @@ inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
 class JLogMessage : public std::stringstream {
 private:
     std::string m_prefix;
+    std::ostream* m_destination;
 
 public:
-    JLogMessage(const std::string& prefix="") : m_prefix(prefix){
+    JLogMessage(const std::string& prefix="") : m_prefix(prefix), m_destination(&std::cout){
     }
 
     JLogMessage(JLogMessage&& moved_from) : std::stringstream(std::move(moved_from)) {
         m_prefix = moved_from.m_prefix;
+        m_destination = moved_from.m_destination;
     }
 
     JLogMessage(const JLogger& logger, JLogger::Level level) {
+        m_destination = logger.destination;
         std::ostringstream builder;
         if (logger.show_timestamp) {
             auto now = std::chrono::system_clock::now();
@@ -112,8 +115,8 @@ public:
         while (std::getline(*this, line)) {
             oss << m_prefix << line << std::endl;
         }
-        std::cout << oss.str();
-        std::cout.flush();
+        *m_destination << oss.str();
+        m_destination->flush();
     }
 };
 
