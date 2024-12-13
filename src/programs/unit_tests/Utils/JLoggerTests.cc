@@ -64,3 +64,13 @@ TEST_CASE("JLogMessage_Newlines") {
     LOG_INFO(logger) << "This message has a trailing newline containing log metadata " << std::endl << LOG_END;
 }
 
+
+TEST_CASE("JLogMessage_StreamIntoLogger") {
+    JLogger logger {JLogger::Level::ERROR, &std::cout, "jana"};
+    logger.ShowGroup(true);
+    logger << "This is a test. x = " << 22 << std::endl;
+    logger << "This should be the next line" << std::endl << "And another" << std::endl << "And another";
+}
+
+
+

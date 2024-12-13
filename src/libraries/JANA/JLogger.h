@@ -66,6 +66,10 @@ public:
     JLogMessage(const std::string& prefix="") : m_prefix(prefix){
     }
 
+    JLogMessage(JLogMessage&& moved_from) : std::stringstream(std::move(moved_from)) {
+        m_prefix = moved_from.m_prefix;
+    }
+
     JLogMessage(const JLogger& logger, JLogger::Level level) {
         std::ostringstream builder;
         if (logger.show_timestamp) {
@@ -114,6 +118,14 @@ public:
 };
 
 
+template <typename T>
+JLogMessage operator<<(const JLogger& logger, T&& t) {
+    JLogMessage message(logger, logger.level);
+    message << t;
+    return message;
+}
+
+
 /// Macros
 
 #define LOG JLogMessage()
@@ -130,4 +142,5 @@ public:
 #define LOG_INFO(logger)  LOG_AT_LEVEL(logger, JLogger::Level::INFO)
 #define LOG_DEBUG(logger) LOG_AT_LEVEL(logger, JLogger::Level::DEBUG)
 #define LOG_TRACE(logger) LOG_AT_LEVEL(logger, JLogger::Level::TRACE)
+
 
