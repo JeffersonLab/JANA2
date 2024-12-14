@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <JANA/Compatibility/JStreamLog.h>
+
 #include <iostream>
 #include <sstream>
 #include <chrono>
@@ -123,6 +125,12 @@ JLogMessage operator<<(const JLogger& logger, T&& t) {
     return message;
 }
 
+inline JLogMessage operator<<(const JLogger& logger, std::ostream& (*manip)(std::ostream&)) {
+    JLogMessage message(logger, logger.level);
+    message << manip;
+    return message;
+}
+
 
 /// Macros
 
@@ -147,8 +155,8 @@ JLogMessage operator<<(const JLogger& logger, T&& t) {
 extern JLogger jout;
 extern JLogger jerr;
 #define jendl std::endl
-#define default_cout_logger jout;
-#define default_cerr_logger jerr;
+#define default_cout_logger jout
+#define default_cerr_logger jerr
 #define _DBG_ jerr<<__FILE__<<":"<<__LINE__<<" "
 #define _DBG__ jerr<<__FILE__<<":"<<__LINE__<<std::endl
 
