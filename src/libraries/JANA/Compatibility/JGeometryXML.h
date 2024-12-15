@@ -8,8 +8,8 @@
 #pragma once
 #include <iostream>
 
+#include <JANA/JLogger.h>
 #include <JANA/Compatibility/JGeometry.h>
-#include <JANA/Compatibility/JStreamLog.h>
 #include <JANA/Calibrations/JCalibration.h>
 #include <JANA/JVersion.h>
 

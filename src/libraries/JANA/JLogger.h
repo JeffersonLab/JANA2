@@ -38,11 +38,11 @@ struct JLogger {
     void ShowLevel(bool show) {show_level = show; }
     void ShowTimestamp(bool show) {show_timestamp = show; }
     void ShowThreadstamp(bool show) {show_threadstamp = show; }
+
+    [[ deprecated("Use SetGroup() instead")]]
+    void SetTag(std::string tag) {this->group = tag; }
 };
 
-
-static JLogger default_cout_logger = JLogger(JLogger::Level::TRACE, &std::cout, "JANA");
-static JLogger default_cerr_logger = JLogger(JLogger::Level::TRACE, &std::cerr, "JERR");
 
 
 inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
@@ -61,12 +61,19 @@ inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
 class JLogMessage : public std::stringstream {
 private:
     std::string m_prefix;
+    std::ostream* m_destination;
 
 public:
-    JLogMessage(const std::string& prefix="") : m_prefix(prefix){
+    JLogMessage(const std::string& prefix="") : m_prefix(prefix), m_destination(&std::cout){
+    }
+
+    JLogMessage(JLogMessage&& moved_from) : std::stringstream(std::move(moved_from)) {
+        m_prefix = moved_from.m_prefix;
+        m_destination = moved_from.m_destination;
     }
 
     JLogMessage(const JLogger& logger, JLogger::Level level) {
+        m_destination = logger.destination;
         std::ostringstream builder;
         if (logger.show_timestamp) {
             auto now = std::chrono::system_clock::now();
@@ -108,10 +115,24 @@ public:
         while (std::getline(*this, line)) {
             oss << m_prefix << line << std::endl;
         }
-        std::cout << oss.str();
-        std::cout.flush();
+        *m_destination << oss.str();
+        m_destination->flush();
     }
 };
+
+
+template <typename T>
+JLogMessage operator<<(const JLogger& logger, T&& t) {
+    JLogMessage message(logger, logger.level);
+    message << t;
+    return message;
+}
+
+inline JLogMessage operator<<(const JLogger& logger, std::ostream& (*manip)(std::ostream&)) {
+    JLogMessage message(logger, logger.level);
+    message << manip;
+    return message;
+}
 
 
 /// Macros
@@ -130,4 +151,15 @@ public:
 #define LOG_INFO(logger)  LOG_AT_LEVEL(logger, JLogger::Level::INFO)
 #define LOG_DEBUG(logger) LOG_AT_LEVEL(logger, JLogger::Level::DEBUG)
 #define LOG_TRACE(logger) LOG_AT_LEVEL(logger, JLogger::Level::TRACE)
+
+
+/// Backwards compatibility with JANA1 logger
+
+extern JLogger jout;
+extern JLogger jerr;
+#define jendl std::endl
+#define default_cout_logger jout
+#define default_cerr_logger jerr
+#define _DBG_ jerr<<__FILE__<<":"<<__LINE__<<" "
+#define _DBG__ jerr<<__FILE__<<":"<<__LINE__<<std::endl
 

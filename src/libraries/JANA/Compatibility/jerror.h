@@ -8,9 +8,6 @@
 
 #pragma once
 
-#define _DBG_ std::cerr<<__FILE__<<":"<<__LINE__<<" "
-#define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
-
 enum jerror_t{
     NOERROR = 0,
     UNKNOWN_ERROR = -1000,
