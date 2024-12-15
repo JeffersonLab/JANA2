@@ -38,6 +38,9 @@ struct JLogger {
     void ShowLevel(bool show) {show_level = show; }
     void ShowTimestamp(bool show) {show_timestamp = show; }
     void ShowThreadstamp(bool show) {show_threadstamp = show; }
+
+    [[ deprecated("Use SetGroup() instead")]]
+    void SetTag(std::string tag) {this->group = tag; }
 };
 
 
