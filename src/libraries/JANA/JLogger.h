@@ -9,13 +9,16 @@
 #include <iostream>
 #include <sstream>
 #include <chrono>
-#include <thread>
 #include <iomanip>
 #include <time.h>
 #include <mutex>
+#include <atomic>
 
 
 struct JLogger {
+    static thread_local int thread_id;
+    static std::atomic_int next_thread_id;
+
     enum class Level { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
     Level level;
     std::ostream *destination;
@@ -86,6 +89,13 @@ public:
             builder << std::put_time(&tm_buf, "%H:%M:%S.");
             builder << std::setfill('0') << std::setw(3) << milliseconds.count() << std::setfill(' ') << " ";
         }
+        if (logger.show_threadstamp) {
+            if (logger.thread_id == -1) {
+                logger.thread_id = logger.next_thread_id;
+                logger.next_thread_id += 1;
+            }
+            builder << "#" << std::setw(3) << std::setfill('0') << logger.thread_id << " ";
+        }
         if (logger.show_level) {
             switch (level) {
                 case JLogger::Level::TRACE: builder << "[trace] "; break;
@@ -96,9 +106,6 @@ public:
                 case JLogger::Level::FATAL: builder << "[fatal] "; break;
                 default: builder << "[?????] ";
             }
-        }
-        if (logger.show_threadstamp) {
-            builder << std::this_thread::get_id() << " ";
         }
         if (logger.show_group && !logger.group.empty()) {
             builder << logger.group << " > ";
