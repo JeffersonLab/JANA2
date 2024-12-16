@@ -2,16 +2,16 @@
 macro(add_jana_plugin plugin_name)
 
     # Parse remaining arguments
-    set(options LINK_SHARED)
+    set(options LINK_STATIC)
     set(oneValueArgs EXPORT)
     set(multiValueArgs SOURCES PUBLIC_HEADER TESTS)
 
     cmake_parse_arguments(PLUGIN "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (LINK_SHARED)
-        set(PLUGIN_JANA_LIB jana2_shared_lib)
-    else()
+    if (LINK_STATIC)
         set(PLUGIN_JANA_LIB jana2_static_lib)
+    else()
+        set(PLUGIN_JANA_LIB jana2_shared_lib)
     endif()
 
     if (NOT PLUGIN_SOURCES AND NOT PLUGIN_PUBLIC_HEADER AND NOT PLUGIN_TESTS)
