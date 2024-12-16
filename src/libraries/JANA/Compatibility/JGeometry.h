@@ -6,7 +6,6 @@
 //
 
 #pragma once
-#include "jerror.h"
 
 #include <map>
 #include <string>

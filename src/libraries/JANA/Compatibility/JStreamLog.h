@@ -14,6 +14,10 @@
 #include <string>
 #include "JStreamLogBuffer.h"
 
+#include <JANA/JLogger.h> 
+// Quick-and-dirty cyclic dependency to ensure that jout/jerr are
+// provided regardless of whether JLogger.h or JStreamLog.h is included
+
 /// JStreamLog provides an interface for for writing messages
 /// in a way that buffers them by thread to prevent multiple
 /// threads from simultaneously writing to the screen (via
@@ -58,11 +62,6 @@ class JStreamLog : public std::ostream
 
 std::ostream& endMsg(std::ostream& os);
 
-extern JStreamLog jout;
-extern JStreamLog jerr;
-#define jendl std::endl
 
-#define _DBG_ std::cerr<<__FILE__<<":"<<__LINE__<<" "
-#define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
 
 

@@ -3,19 +3,18 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <JANA/JLogger.h>
-#include <JANA/Compatibility/JStreamLog.h>
 #include "JCalibration.h"
 
-#include <unistd.h>
-#include <errno.h>
+#include <cstring>
 #include <dirent.h>
-
+#include <fstream>
 #include <iostream>
 #include <string>
-#include <fstream>
+#include <sys/stat.h>
+#include <unistd.h>
+
 using namespace std;
 
-#include <sys/stat.h>
 
 
 //---------------------------------

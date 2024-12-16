@@ -138,9 +138,8 @@ void JExecutionEngine::ScaleWorkers(size_t nthreads) {
             LOG_DEBUG(GetLogger()) << "Stopping worker " << worker_id << LOG_END;
             m_worker_states[worker_id]->is_stop_requested = true;
         }
-        lock.unlock();
-
         m_condvar.notify_all(); // Wake up all threads so that they can exit the condvar wait loop
+        lock.unlock();
 
         // We join all (eligible) threads _outside_ of the mutex
         for (int worker_id=prev_nthreads-1; worker_id >= (int) nthreads; --worker_id) {
@@ -213,7 +212,7 @@ void JExecutionEngine::RunSupervisor() {
     Perf perf;
     while (true) {
 
-        if (m_enable_timeout) {
+        if (m_enable_timeout && m_timeout_s > 0) {
             CheckTimeout();
         }
 
@@ -236,14 +235,18 @@ void JExecutionEngine::RunSupervisor() {
 
         if (m_interrupt_status == InterruptStatus::InspectRequested) {
             if (perf.runstatus == RunStatus::Paused) {
-                PrintFinalReport();
                 LOG_INFO(GetLogger()) << "Entering inspector" << LOG_END;
                 m_enable_timeout = false;
                 m_interrupt_status = InterruptStatus::InspectInProgress;
                 InspectApplication(GetApplication());
                 m_interrupt_status = InterruptStatus::NoInterruptsSupervised;
+
+                // Jump back to the top of the loop so that we have fresh event count data
+                last_measurement_time = clock_t::now();
+                last_event_count = 0;
+                continue; 
             }
-            else {
+            else if (perf.runstatus == RunStatus::Running) {
                 PauseTopology();
             }
         }
@@ -252,9 +255,10 @@ void JExecutionEngine::RunSupervisor() {
         }
 
         if (m_show_ticker) {
-            auto last_measurement_duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(clock_t::now() - last_measurement_time).count();
+            auto next_measurement_time = clock_t::now();
+            auto last_measurement_duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(next_measurement_time - last_measurement_time).count();
             float latest_throughput_hz = (last_measurement_duration_ms == 0) ? 0 : (perf.event_count - last_event_count) * 1000.0 / last_measurement_duration_ms;
-            last_measurement_time = clock_t::now();
+            last_measurement_time = next_measurement_time;
             last_event_count = perf.event_count;
 
             // Print rates
@@ -318,7 +322,7 @@ void JExecutionEngine::HandleFailures() {
         if (worker->is_timed_out) {
             GetApplication()->SetExitCode((int) JApplication::ExitCode::Timeout);
             auto ex = JException("Timeout in worker thread");
-            ex.stacktrace = worker->backtrace.ToString();
+            ex.backtrace = worker->backtrace;
             throw ex;
         }
     }
@@ -450,7 +454,6 @@ void JExecutionEngine::ExchangeTask(Task& task, size_t worker_id, bool nonblocki
     }
     m_total_idle_duration += (worker.last_checkout_time - idle_time_start);
 
-    lock.unlock();
     // Notify one worker, who will notify the next, etc, as long as FindNextReadyTaskUnsafe() succeeds.
     // After FindNextReadyTaskUnsafe fails, all threads block until the next returning worker reactivates the
     // notification chain.

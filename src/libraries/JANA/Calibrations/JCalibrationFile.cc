@@ -3,7 +3,6 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JCalibrationFile.h"
-#include <JANA/Compatibility/JStreamLog.h>
 #include <JANA/JLogger.h>
 
 #include <dirent.h>

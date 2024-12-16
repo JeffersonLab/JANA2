@@ -2,18 +2,15 @@
 // Created by Nathan Brei on 10/25/21.
 //
 
-
-
 #include "JCallGraphRecorder.h"
 
-#include <sstream>
-#include <JANA/Compatibility/JStreamLog.h>
-#include <queue>
-#include <algorithm>
+#include <JANA/JLogger.h>
 
-using std::vector;
-using std::string;
-using std::endl;
+#include <algorithm>
+#include <map>
+#include <queue>
+#include <sstream>
+
 
 void JCallGraphRecorder::Reset() {
     m_call_graph.clear();
@@ -24,10 +21,10 @@ void JCallGraphRecorder::Reset() {
 void JCallGraphRecorder::PrintErrorCallStack() const {
 
     // Create a list of the call strings while finding the longest one
-    vector<string> routines;
+    std::vector<std::string> routines;
     unsigned int max_length = 0;
     for(unsigned int i=0; i<m_error_call_stack.size(); i++){
-        string routine = m_error_call_stack[i].factory_name;
+        std::string routine = m_error_call_stack[i].factory_name;
         if(m_error_call_stack[i].tag.length()){
             routine = routine + ":" + m_error_call_stack[i].tag;
         }
@@ -36,17 +33,17 @@ void JCallGraphRecorder::PrintErrorCallStack() const {
     }
 
     std::stringstream sstr;
-    sstr<<" Factory Call Stack"<<endl;
-    sstr<<"============================"<<endl;
+    sstr<<" Factory Call Stack"<<std::endl;
+    sstr<<"============================"<<std::endl;
     for(unsigned int i=0; i<m_error_call_stack.size(); i++){
-        string routine = routines[i];
-        sstr<<" "<<routine<<string(max_length+2 - routine.size(),' ');
+        std::string routine = routines[i];
+        sstr<<" "<<routine<<std::string(max_length+2 - routine.size(),' ');
         if(m_error_call_stack[i].filename){
             sstr<<"--  "<<" line:"<<m_error_call_stack[i].line<<"  "<<m_error_call_stack[i].filename;
         }
-        sstr<<endl;
+        sstr<<std::endl;
     }
-    sstr<<"----------------------------"<<endl;
+    sstr<<"----------------------------"<<std::endl;
 
     jout<<sstr.str();
 

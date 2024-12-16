@@ -15,6 +15,28 @@
 #include <iomanip>
 
 
+JBacktrace::JBacktrace(const JBacktrace& other) {
+    m_ready = other.m_ready.load();
+    m_frame_count = other.m_frame_count;
+    m_frames_to_omit = other.m_frames_to_omit;
+    m_buffer = other.m_buffer;
+}
+
+JBacktrace& JBacktrace::operator=(const JBacktrace& other) {
+    m_ready = other.m_ready.load();
+    m_frame_count = other.m_frame_count;
+    m_frames_to_omit = other.m_frames_to_omit;
+    m_buffer = other.m_buffer;
+    return *this;
+}
+
+JBacktrace::JBacktrace(JBacktrace&& other) {
+    m_ready = other.m_ready.load();
+    m_frame_count = other.m_frame_count;
+    m_frames_to_omit = other.m_frames_to_omit;
+    m_buffer = std::move(other.m_buffer);
+}
+
 void JBacktrace::Reset() {
     m_ready = false;
 }
@@ -26,13 +48,13 @@ void JBacktrace::WaitForCapture() const {
 }
 
 void JBacktrace::Capture(int frames_to_omit) {
-    m_frame_count = backtrace(m_buffer, MAX_FRAMES);
+    m_frame_count = backtrace(m_buffer.data(), MAX_FRAMES);
     m_frames_to_omit = frames_to_omit;
     m_ready.store(true, std::memory_order_release);
 }
 
-void JBacktrace::Format(std::ostream& os) {
-    char** symbols = backtrace_symbols(m_buffer, m_frame_count);
+void JBacktrace::Format(std::ostream& os) const {
+    char** symbols = backtrace_symbols(m_buffer.data(), m_frame_count);
     // Skip the first few frames, which are inevitably signal handlers, JBacktrace ctors, or JException ctors
     for (int i=m_frames_to_omit; i<m_frame_count; ++i) {
 
@@ -68,7 +90,7 @@ void JBacktrace::Format(std::ostream& os) {
     free(symbols);
 }
 
-std::string JBacktrace::AddrToLineInfo(const char* filename, size_t offset) {
+std::string JBacktrace::AddrToLineInfo(const char* filename, size_t offset) const {
 
     char backup_line_info[256];
     std::snprintf(backup_line_info, sizeof(backup_line_info), "%s:%zx\n", filename, offset);
@@ -102,7 +124,7 @@ std::string JBacktrace::AddrToLineInfo(const char* filename, size_t offset) {
     return std::string(backup_line_info);
 }
 
-std::string JBacktrace::ToString() {
+std::string JBacktrace::ToString() const {
     std::ostringstream oss;
     Format(oss);
     return oss.str();

@@ -15,11 +15,8 @@ struct JException : public std::exception {
 public:
 
     /// Basic constructor
-    explicit JException(std::string message = "Unknown exception") : message(std::move(message))
-    {
-        JBacktrace backtrace;
+    explicit JException(std::string message = "Unknown exception") : message(std::move(message)) {
         backtrace.Capture(2);
-        stacktrace = backtrace.ToString();
     }
 
     virtual ~JException() = default;
@@ -35,7 +32,7 @@ public:
     }
 
     std::string GetStackTrace() {
-        return stacktrace;
+        return backtrace.ToString();
     }
 
     const char* what() const noexcept {
@@ -63,8 +60,10 @@ public:
         if (ex.plugin_name.length() != 0) {
             os << "  Plugin:   " << ex.plugin_name << std::endl;
         }
-        if (ex.stacktrace.length() != 0 && ex.show_stacktrace) {
-            os << "  Backtrace:" << std::endl << std::endl << ex.stacktrace;
+        if (ex.show_stacktrace) {
+            ex.backtrace.WaitForCapture();
+            ex.backtrace.ToString();
+            os << "  Backtrace:" << std::endl << std::endl << ex.backtrace.ToString();
         }
         return os;
     }
@@ -75,7 +74,7 @@ public:
     std::string type_name;
     std::string function_name;
     std::string instance_name;
-    std::string stacktrace;
+    JBacktrace backtrace;
     std::exception_ptr nested_exception;
     bool show_stacktrace=true;
 
@@ -89,10 +88,7 @@ JException::JException(std::string format_str, Args... args) {
     char cmess[1024];
     snprintf(cmess, 1024, format_str.c_str(), args...);
     message = cmess;
-
-    JBacktrace backtrace;
     backtrace.Capture(2);
-    stacktrace = backtrace.ToString();
 }
 
 
