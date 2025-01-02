@@ -15,9 +15,9 @@ using namespace std;
 
 #include <JANA/JApplication.h>
 #include <JANA/Calibrations/JCalibrationManager.h>
+#include <JANA/Geometry/JGeometryXML.h>
 #include <JANA/Services/JParameterManager.h>
 #include <md5.h>
-#include "JGeometryXML.h"
 
 #if JANA2_HAVE_XERCES
 using namespace xercesc;

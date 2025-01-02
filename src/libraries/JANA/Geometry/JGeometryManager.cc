@@ -6,7 +6,7 @@
 #include "JGeometryManager.h"
 
 #include <JANA/JLogger.h>
-#include <JANA/Compatibility/JGeometryXML.h>
+#include <JANA/Geometry/JGeometryXML.h>
 
 
 JGeometry *JGeometryManager::GetJGeometry(unsigned int run_number) {

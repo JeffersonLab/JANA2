@@ -1,22 +1,11 @@
 
-// Copyright 2020, Jefferson Science Associates, LLC.
-// Subject to the terms in the LICENSE file found in the top-level directory.
-
 #pragma once
-#include <JANA/Services/JServiceLocator.h>
-#include <JANA/Compatibility/JGeometry.h>
+#include <JANA/Geometry/JGeometryManager.h>
 
-#include <mutex>
-#include <vector>
-
-class JGeometryManager: public JService {
-
-    std::mutex m_mutex;
-    std::vector<JGeometry*> geometries;
-
-public:
-    JGeometry* GetJGeometry(unsigned int run_number);
-
-};
+namespace jana::compatibility::jgeometrymanager {
+[[deprecated("Use JANA/Geometry/JGeometryManager.h instead")]]
+constexpr static int header_is_deprecated = 0;
+constexpr static int warn_about_header_deprecation = header_is_deprecated;
+}
 
 
