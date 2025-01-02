@@ -42,7 +42,7 @@ set(JANA2_SOURCES
 
     Calibrations/JCalibration.cc
     Calibrations/JCalibrationFile.cc
-    Calibrations/JLargeCalibration.cc
+    Calibrations/JResource.cc
 
     Geometry/JGeometryManager.cc
     Geometry/JGeometryXML.cc

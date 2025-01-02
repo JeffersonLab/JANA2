@@ -1,13 +1,13 @@
 // $Id$
 //
-//    File: JLargeFile.cc
+//    File: JResource.cc
 // Created: Mon Oct 15 07:36:44 EDT 2012
 // Creator: davidl (on Darwin eleanor.jlab.org 12.2.0 i386)
 //
 
 #include <JANA/JLogger.h>
 #include <JANA/Services/JParameterManager.h>
-#include <JANA/Calibrations/JLargeCalibration.h>
+#include <JANA/Calibrations/JResource.h>
 
 #include <md5.h>
 
@@ -37,9 +37,9 @@ static int mycurl_printprogress(void *clientp, double dltotal, double dlnow, dou
 
 
 //---------------------------------
-// JLargeFile    (Constructor)
+// JResource    (Constructor)
 //---------------------------------
-JLargeCalibration::JLargeCalibration(std::shared_ptr<JParameterManager> params, JCalibration *jcalib, string resource_dir) {
+JResource::JResource(std::shared_ptr<JParameterManager> params, JCalibration *jcalib, string resource_dir) {
     /// Creates a new resource manager. See class description for details
 
     // Record JCalibration object used to get URLs of resources from calibration DB.
@@ -141,9 +141,9 @@ JLargeCalibration::JLargeCalibration(std::shared_ptr<JParameterManager> params, 
 }
 
 //---------------------------------
-// ~JLargeFile    (Destructor)
+// ~JResource    (Destructor)
 //---------------------------------
-JLargeCalibration::~JLargeCalibration() {
+JResource::~JResource() {
     if (jcalibfile) delete jcalibfile;
 
 #ifdef HAVE_CURL
@@ -155,7 +155,7 @@ JLargeCalibration::~JLargeCalibration() {
 //---------------------------------
 // GetResource
 //---------------------------------
-string JLargeCalibration::GetResource(string namepath) {
+string JResource::GetResource(string namepath) {
     string fullpath = GetLocalPathToResource(namepath);
 
     // If a calibration object was specified, then use it to check
@@ -377,7 +377,7 @@ string JLargeCalibration::GetResource(string namepath) {
 //---------------------------------
 // GetLocalPathToResource
 //---------------------------------
-string JLargeCalibration::GetLocalPathToResource(string namepath) {
+string JResource::GetLocalPathToResource(string namepath) {
     string fullpath = resource_dir + "/" + namepath;
     if (jcalib) {
         for (unsigned int i = 0; i < calib_namepaths.size(); i++) {
@@ -399,7 +399,7 @@ string JLargeCalibration::GetLocalPathToResource(string namepath) {
 //---------------------------------
 // ReadResourceInfoFile
 //---------------------------------
-void JLargeCalibration::ReadResourceInfoFile(void) {
+void JResource::ReadResourceInfoFile(void) {
     pthread_mutex_lock(&resource_manager_mutex);
 
     // Clear the resources container so it is empty
@@ -425,7 +425,7 @@ void JLargeCalibration::ReadResourceInfoFile(void) {
 //---------------------------------
 // WriteResourceInfoFile
 //---------------------------------
-void JLargeCalibration::WriteResourceInfoFile(void) {
+void JResource::WriteResourceInfoFile(void) {
     pthread_mutex_lock(&resource_manager_mutex);
 
     // Get full path to resources file
@@ -458,7 +458,7 @@ void JLargeCalibration::WriteResourceInfoFile(void) {
 //---------------------------------
 // GetResourceFromURL
 //---------------------------------
-void JLargeCalibration::GetResourceFromURL(const string &URL, const string &fullpath) {
+void JResource::GetResourceFromURL(const string &URL, const string &fullpath) {
     /// Download the specified file and place it in the location specified
     /// by fullpath. If unsuccessful, a JException will be thrown with
     /// an appropriate error message.
@@ -532,7 +532,7 @@ void JLargeCalibration::GetResourceFromURL(const string &URL, const string &full
 //-----------
 // Get_MD5
 //-----------
-string JLargeCalibration::Get_MD5(string fullpath) {
+string JResource::Get_MD5(string fullpath) {
     ifstream ifs(fullpath.c_str());
     if (!ifs.is_open()) return string("");
 
