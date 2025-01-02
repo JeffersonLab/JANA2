@@ -1,7 +1,7 @@
 
 #include "catch.hpp"
 
-#include <JANA/Compatibility/JStatusBits.h>
+#include <JANA/Utils/JStatusBits.h>
 
 TEST_CASE("JStatusBitsTest_Unscoped") {
 
