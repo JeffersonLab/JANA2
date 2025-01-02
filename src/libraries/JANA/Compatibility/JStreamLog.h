@@ -40,7 +40,7 @@
 ///    jout<<"Hello World!"<<endl;
 ///
 
-class JStreamLog : public std::ostream
+class [[deprecated("JStreamLog will be replaced by JLogger in the next release.")]] JStreamLog : public std::ostream
 {
     public:
         JStreamLog(const std::ostream& os=std::cout, const char* tag="INFO");
