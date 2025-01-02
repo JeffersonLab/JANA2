@@ -1,5 +1,7 @@
-// Copyright 2020, Jefferson Science Associates, LLC.
+
+// Copyright 2007-2025, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
+// Author: David Lawrence
 
 #pragma once
 #include <JANA/Calibrations/JCalibration.h>
@@ -10,12 +12,12 @@
 
 #include <algorithm>
 #include "JANA/Services/JParameterManager.h"
-#include "JLargeCalibration.h"
+#include "JResource.h"
 
 class JCalibrationManager : public JService {
 
     vector<JCalibration *> m_calibrations;
-    vector<JLargeCalibration *> m_resource_managers;
+    vector<JResource *> m_resource_managers;
     vector<JCalibrationGenerator *> m_calibration_generators;
 
     pthread_mutex_t m_calibration_mutex;
@@ -177,10 +179,9 @@ public:
         return calib->Get(namepath, vals, event_number);
     }
 
+    JResource* GetResource(unsigned int run_number = 0) {
 
-    JLargeCalibration *GetLargeCalibration(unsigned int run_number = 0) {
-
-        /// Return a pointer to the JLargeCalibration object for the specified run_number. If no run_number is given or a
+        /// Return a pointer to the JResource object for the specified run_number. If no run_number is given or a
         /// value of 0 is given, then the first element from the list of resource managers is returned. If no managers
         /// currently exist, one will be created using one of the following in order of precedence:
         /// 1. JCalibration corresponding to given run number
@@ -196,9 +197,9 @@ public:
             pthread_mutex_lock(&m_resource_manager_mutex);
             if (m_resource_managers.empty()) {
                 if (m_calibrations.empty()) {
-                    m_resource_managers.push_back(new JLargeCalibration(m_params, nullptr));
+                    m_resource_managers.push_back(new JResource(m_params, nullptr));
                 } else {
-                    m_resource_managers.push_back(new JLargeCalibration(m_params, m_calibrations[0]));
+                    m_resource_managers.push_back(new JResource(m_params, m_calibrations[0]));
                 }
             }
             pthread_mutex_unlock(&m_resource_manager_mutex);
@@ -213,7 +214,7 @@ public:
         }
 
         // No resource manager exists for the JCalibration that corresponds to the given run_number. Create one.
-        JLargeCalibration *resource_manager = new JLargeCalibration(m_params, jcalib);
+        JResource *resource_manager = new JResource(m_params, jcalib);
         pthread_mutex_lock(&m_resource_manager_mutex);
         m_resource_managers.push_back(resource_manager);
         pthread_mutex_unlock(&m_resource_manager_mutex);
@@ -221,6 +222,12 @@ public:
         return resource_manager;
 
     }
+
+    [[deprecated("Replaced with GetResource()")]]
+    JResource *GetLargeCalibration(unsigned int run_number = 0) {
+        return GetResource(run_number);
+    }
+
 };
 
 

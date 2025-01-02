@@ -1,9 +1,7 @@
-// $Id$
-//
-//    File: JGeometryXML.cc
-// Created: Tues Jan 15, 2008
-// Creator: davidl
-//
+
+// Copyright 2008-2025, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+// Author: David Lawrence
 
 #include <unistd.h>
 
@@ -15,9 +13,9 @@ using namespace std;
 
 #include <JANA/JApplication.h>
 #include <JANA/Calibrations/JCalibrationManager.h>
+#include <JANA/Geometry/JGeometryXML.h>
 #include <JANA/Services/JParameterManager.h>
 #include <md5.h>
-#include "JGeometryXML.h"
 
 #if JANA2_HAVE_XERCES
 using namespace xercesc;

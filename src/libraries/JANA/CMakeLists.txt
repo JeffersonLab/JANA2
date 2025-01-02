@@ -42,7 +42,10 @@ set(JANA2_SOURCES
 
     Calibrations/JCalibration.cc
     Calibrations/JCalibrationFile.cc
-    Calibrations/JLargeCalibration.cc
+    Calibrations/JResource.cc
+
+    Geometry/JGeometryManager.cc
+    Geometry/JGeometryXML.cc
 
     CLI/JBenchmarker.cc
     CLI/JSignalHandler.cc
@@ -50,8 +53,6 @@ set(JANA2_SOURCES
 
     Compatibility/JStreamLog.cc
     Compatibility/JStreamLogBuffer.cc
-    Compatibility/JGeometryManager.cc
-    Compatibility/JGeometryXML.cc
     )
 
 if (${USE_PODIO})
@@ -125,6 +126,7 @@ file(GLOB jana_services_headers "Services/*.h*")
 file(GLOB jana_streaming_headers "Streaming/*.h*")
 file(GLOB jana_utils_headers "Utils/*.h*")
 file(GLOB jana_calibs_headers "Calibrations/*.h*")
+file(GLOB jana_geometry_headers "Geometry/*.h*")
 file(GLOB jana_cli_headers "CLI/*.h*")
 file(GLOB jana_compat_headers "Compatibility/*.h*")
 file(GLOB jana_podio_headers "Podio/*.h*")
@@ -137,6 +139,7 @@ install(FILES ${jana_services_headers} DESTINATION include/JANA/Services)
 install(FILES ${jana_streaming_headers} DESTINATION include/JANA/Streaming)
 install(FILES ${jana_utils_headers} DESTINATION include/JANA/Utils)
 install(FILES ${jana_calibs_headers} DESTINATION include/JANA/Calibrations)
+install(FILES ${jana_geometry_headers} DESTINATION include/JANA/Geometry)
 install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
 install(FILES ${jana_compat_headers} DESTINATION include/JANA/Compatibility)
 install(FILES ${jana_component_headers} DESTINATION include/JANA/Components)

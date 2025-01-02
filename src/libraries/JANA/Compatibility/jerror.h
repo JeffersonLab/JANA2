@@ -8,6 +8,12 @@
 
 #pragma once
 
+namespace jana::compatibility::jerror {
+[[deprecated("This will be completely removed from JANA with no replacement. If you still need jerror.h, copy it into your own project.")]]
+constexpr static int header_is_deprecated = 0;
+constexpr static int warn_about_header_deprecation = header_is_deprecated;
+}
+
 enum jerror_t{
     NOERROR = 0,
     UNKNOWN_ERROR = -1000,
