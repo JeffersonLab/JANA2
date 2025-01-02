@@ -1,9 +1,7 @@
-// $Id$
-//
-//    File: JGeometryXML.h
-// Created: Tues Jan 15 2008
-// Creator: davidl
-//
+
+// Copyright 2008-2025, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+// Author: David Lawrence
 
 #pragma once
 #include <iostream>

@@ -1,9 +1,7 @@
-// $Id$
-//
-//    File: JResource.cc
-// Created: Mon Oct 15 07:36:44 EDT 2012
-// Creator: davidl (on Darwin eleanor.jlab.org 12.2.0 i386)
-//
+
+// Copyright 2012-2025, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+// Author: David Lawrence
 
 #include <JANA/JLogger.h>
 #include <JANA/Services/JParameterManager.h>
