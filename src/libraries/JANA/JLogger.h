@@ -14,6 +14,10 @@
 #include <time.h>
 #include <mutex>
 
+#ifndef JANA2_USE_LOGGER_MUTEX
+#define JANA2_USE_LOGGER_MUTEX 0
+#endif
+
 
 struct JLogger {
     enum class Level { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
@@ -107,9 +111,10 @@ public:
     }
 
     virtual ~JLogMessage() {
+#if JANA2_USE_LOGGER_MUTEX
         static std::mutex cout_mutex;
         std::lock_guard<std::mutex> lock(cout_mutex);
-
+#endif
         std::string line;
         std::ostringstream oss;
         while (std::getline(*this, line)) {
