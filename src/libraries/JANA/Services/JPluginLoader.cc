@@ -172,7 +172,7 @@ void JPluginLoader::attach_plugin(std::string name, std::string path) {
 
     // Open shared object
     dlerror(); // Clear any earlier dlerrors
-    void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
+    void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
     if (!handle) {
         std::string err = dlerror();
         LOG_ERROR(m_logger) << "Plugin \"" << name << "\" dlopen() failed: " << err << LOG_END;
