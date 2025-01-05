@@ -1,4 +1,7 @@
 
+#include "JANA/Components/JOmniFactory.h"
+#include "JANA/Components/JOmniFactoryGeneratorT.h"
+#include <PodioDatamodel/ExampleClusterCollection.h>
 #include "JANA/JException.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <JANA/Services/JWiringService.h>
@@ -179,3 +182,65 @@ TEST_CASE("WiringTests_FakeFacGen") {
     REQUIRE(final_wirings[2]->configs["x"] == "27"); // from facgen only
 
 }
+
+struct WiredOmniFac : jana::components::JOmniFactory<WiredOmniFac> {
+    PodioInput<ExampleCluster> m_protoclusters_in {this};
+    PodioOutput<ExampleCluster> m_clusters_out {this};
+
+    Parameter<int> m_x {this, "x", 1, "x"};
+    Parameter<std::string> m_y {this, "y", "silent", "y" };
+
+    void Configure() {
+    }
+
+    void ChangeRun(int32_t /*run_nr*/) {
+    }
+
+    void Execute(int32_t /*run_nr*/, uint64_t /*evt_nr*/) {
+
+        auto cs = std::make_unique<ExampleClusterCollection>();
+        for (auto protocluster : *m_protoclusters_in()) {
+            auto cluster = cs->create();
+            cluster.energy((m_x() * protocluster.energy()) + 1);
+        }
+        m_clusters_out() = std::move(cs);
+    }
+};
+
+TEST_CASE("WiringTests_RealFacGen") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(fake_wiring_file);
+    wiring_svc->AddWirings(table, "testcase");
+
+    auto gen = new jana::components::JOmniFactoryGeneratorT<WiredOmniFac>;
+
+    // One gets overlaid with an existing wiring
+    gen->AddWiring("variantfac", {"protoclusters"}, {"clusters"}, {{"x","42"}});
+
+    // The other is brand new
+    gen->AddWiring("exuberantfac", {"protoclusters"}, {"wackyclusters"}, {{"x","27"}});
+
+    // We should end up with three in total
+
+    app.Add(gen);
+    app.Initialize();
+
+    auto& summary = app.GetComponentSummary();
+    LOG << summary;
+    auto vf = summary.FindComponents("variantfac");
+    REQUIRE(vf.size() == 1);
+    REQUIRE(vf.at(0)->GetOutputs().at(0)->GetName() == "clusters");
+
+    auto ef = summary.FindComponents("exuberantfac");
+    REQUIRE(ef.size() == 1);
+    REQUIRE(ef.at(0)->GetOutputs().at(0)->GetName() == "wackyclusters");
+
+    auto event = std::make_shared<JEvent>(&app);
+    auto facs = event->GetFactorySet()->GetAllMultifactories();
+
+}
+
+

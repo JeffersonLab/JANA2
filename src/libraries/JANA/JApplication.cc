@@ -48,6 +48,8 @@ JApplication::JApplication(JParameterManager* params) {
     ProvideService(m_execution_engine);
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
+    ProvideService(std::make_shared<jana::services::JWiringService>());
+
 }
 
 
@@ -133,9 +135,6 @@ void JApplication::Initialize() {
         JVersion::PrintVersionDescription(oss);
         LOG_WARN(m_logger) << oss.str() << LOG_END;
     }
-
-    // Set up wiring
-    ProvideService(std::make_shared<jana::services::JWiringService>());
 
     // Attach all plugins
     plugin_loader->attach_plugins(component_manager.get());
