@@ -1,7 +1,6 @@
 
 #include "JANA/Components/JOmniFactory.h"
 #include "JANA/Components/JWiredFactoryGeneratorT.h"
-#include <PodioDatamodel/ExampleClusterCollection.h>
 #include "JANA/JException.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <JANA/Services/JWiringService.h>
@@ -183,9 +182,11 @@ TEST_CASE("WiringTests_FakeFacGen") {
 
 }
 
+struct Cluster { double x,y,E; };
+
 struct WiredOmniFac : jana::components::JOmniFactory<WiredOmniFac> {
-    PodioInput<ExampleCluster> m_protoclusters_in {this};
-    PodioOutput<ExampleCluster> m_clusters_out {this};
+    Input<Cluster> m_protoclusters_in {this};
+    Output<Cluster> m_clusters_out {this};
 
     Parameter<int> m_x {this, "x", 1, "x"};
     Parameter<std::string> m_y {this, "y", "silent", "y" };
@@ -198,12 +199,9 @@ struct WiredOmniFac : jana::components::JOmniFactory<WiredOmniFac> {
 
     void Execute(int32_t /*run_nr*/, uint64_t /*evt_nr*/) {
 
-        auto cs = std::make_unique<ExampleClusterCollection>();
-        for (auto protocluster : *m_protoclusters_in()) {
-            auto cluster = cs->create();
-            cluster.energy((m_x() * protocluster.energy()) + 1);
+        for (auto protocluster : *m_protoclusters_in) {
+            m_clusters_out().push_back(new Cluster {protocluster->x, protocluster->y, protocluster->E + 1});
         }
-        m_clusters_out() = std::move(cs);
     }
 };
 
