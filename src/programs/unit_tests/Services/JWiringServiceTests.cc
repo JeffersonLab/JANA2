@@ -1,6 +1,6 @@
 
 #include "JANA/Components/JOmniFactory.h"
-#include "JANA/Components/JOmniFactoryGeneratorT.h"
+#include "JANA/Components/JWiredFactoryGeneratorT.h"
 #include <PodioDatamodel/ExampleClusterCollection.h>
 #include "JANA/JException.h"
 #include "JANA/Utils/JEventLevel.h"
@@ -207,39 +207,60 @@ struct WiredOmniFac : jana::components::JOmniFactory<WiredOmniFac> {
     }
 };
 
+static constexpr std::string_view realfacgen_wiring = R"(
+    [[factory]]
+    type_name = "WiredOmniFac"
+    prefix = "myfac"
+    input_names = ["usual_input"]
+    output_names = ["usual_output"]
+
+        [factory.configs]
+        x = "22"
+        y = "verbose"
+
+    [[factory]]
+    type_name = "WiredOmniFac"
+    prefix = "myfac_modified"
+    input_names = ["different_input"]
+    output_names = ["different_output"]
+
+        [factory.configs]
+        x = "100"
+        y = "silent"
+
+)";
+
 TEST_CASE("WiringTests_RealFacGen") {
 
     JApplication app;
 
     auto wiring_svc = app.GetService<jana::services::JWiringService>();
-    toml::table table = toml::parse(fake_wiring_file);
+    toml::table table = toml::parse(realfacgen_wiring);
     wiring_svc->AddWirings(table, "testcase");
 
-    auto gen = new jana::components::JOmniFactoryGeneratorT<WiredOmniFac>;
-
-    // One gets overlaid with an existing wiring
-    gen->AddWiring("variantfac", {"protoclusters"}, {"clusters"}, {{"x","42"}});
-
-    // The other is brand new
-    gen->AddWiring("exuberantfac", {"protoclusters"}, {"wackyclusters"}, {{"x","27"}});
-
-    // We should end up with three in total
-
+    auto gen = new jana::components::JWiredFactoryGeneratorT<WiredOmniFac>;
     app.Add(gen);
     app.Initialize();
 
     auto& summary = app.GetComponentSummary();
-    LOG << summary;
-    auto vf = summary.FindComponents("variantfac");
+    jout << summary;
+    auto vf = summary.FindComponents("myfac");
     REQUIRE(vf.size() == 1);
-    REQUIRE(vf.at(0)->GetOutputs().at(0)->GetName() == "clusters");
+    REQUIRE(vf.at(0)->GetOutputs().at(0)->GetName() == "usual_output");
 
-    auto ef = summary.FindComponents("exuberantfac");
+    auto ef = summary.FindComponents("myfac_modified");
     REQUIRE(ef.size() == 1);
-    REQUIRE(ef.at(0)->GetOutputs().at(0)->GetName() == "wackyclusters");
+    REQUIRE(ef.at(0)->GetOutputs().at(0)->GetName() == "different_output");
 
-    auto event = std::make_shared<JEvent>(&app);
-    auto facs = event->GetFactorySet()->GetAllMultifactories();
+    // Check that parameter values propagated from wiring file to parameter manager
+    REQUIRE(app.GetParameterValue<int>("myfac:x") == 22);
+    REQUIRE(app.GetParameterValue<std::string>("myfac:y") == "verbose");
+    REQUIRE(app.GetParameterValue<int>("myfac_modified:x") == 100);
+    REQUIRE(app.GetParameterValue<std::string>("myfac_modified:y") == "silent");
+
+    //app.GetJParameterManager()->PrintParameters(2, 0);
+    //auto event = std::make_shared<JEvent>(&app);
+    //auto facs = event->GetFactorySet()->GetAllMultifactories();
 
 }
 
