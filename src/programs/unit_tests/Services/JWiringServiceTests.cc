@@ -1,4 +1,6 @@
 
+#include "JANA/Components/JOmniFactory.h"
+#include "JANA/Components/JWiredFactoryGeneratorT.h"
 #include "JANA/JException.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <JANA/Services/JWiringService.h>
@@ -179,3 +181,85 @@ TEST_CASE("WiringTests_FakeFacGen") {
     REQUIRE(final_wirings[2]->configs["x"] == "27"); // from facgen only
 
 }
+
+struct Cluster { double x,y,E; };
+
+struct WiredOmniFac : jana::components::JOmniFactory<WiredOmniFac> {
+    Input<Cluster> m_protoclusters_in {this};
+    Output<Cluster> m_clusters_out {this};
+
+    Parameter<int> m_x {this, "x", 1, "x"};
+    Parameter<std::string> m_y {this, "y", "silent", "y" };
+
+    void Configure() {
+    }
+
+    void ChangeRun(int32_t /*run_nr*/) {
+    }
+
+    void Execute(int32_t /*run_nr*/, uint64_t /*evt_nr*/) {
+
+        for (auto protocluster : *m_protoclusters_in) {
+            m_clusters_out().push_back(new Cluster {protocluster->x, protocluster->y, protocluster->E + 1});
+        }
+    }
+};
+
+static constexpr std::string_view realfacgen_wiring = R"(
+    [[factory]]
+    type_name = "WiredOmniFac"
+    prefix = "myfac"
+    input_names = ["usual_input"]
+    output_names = ["usual_output"]
+
+        [factory.configs]
+        x = "22"
+        y = "verbose"
+
+    [[factory]]
+    type_name = "WiredOmniFac"
+    prefix = "myfac_modified"
+    input_names = ["different_input"]
+    output_names = ["different_output"]
+
+        [factory.configs]
+        x = "100"
+        y = "silent"
+
+)";
+
+TEST_CASE("WiringTests_RealFacGen") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(realfacgen_wiring);
+    wiring_svc->AddWirings(table, "testcase");
+
+    auto gen = new jana::components::JWiredFactoryGeneratorT<WiredOmniFac>;
+    app.Add(gen);
+    app.Initialize();
+
+    auto& summary = app.GetComponentSummary();
+    jout << summary;
+    auto vf = summary.FindComponents("myfac");
+    REQUIRE(vf.size() == 1);
+    REQUIRE(vf.at(0)->GetOutputs().at(0)->GetName() == "usual_output");
+
+    auto ef = summary.FindComponents("myfac_modified");
+    REQUIRE(ef.size() == 1);
+    REQUIRE(ef.at(0)->GetOutputs().at(0)->GetName() == "different_output");
+
+    // Check that parameter values propagated from wiring file to parameter manager
+    REQUIRE(app.GetParameterValue<int>("myfac:x") == 22);
+    REQUIRE(app.GetParameterValue<std::string>("myfac:y") == "verbose");
+    REQUIRE(app.GetParameterValue<int>("myfac_modified:x") == 100);
+    REQUIRE(app.GetParameterValue<std::string>("myfac_modified:y") == "silent");
+
+    //app.GetJParameterManager()->PrintParameters(2, 0);
+    //auto event = std::make_shared<JEvent>(&app);
+    //auto facs = event->GetFactorySet()->GetAllMultifactories();
+
+}
+
+

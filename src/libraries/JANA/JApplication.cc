@@ -48,6 +48,8 @@ JApplication::JApplication(JParameterManager* params) {
     ProvideService(m_execution_engine);
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
+    ProvideService(std::make_shared<jana::services::JWiringService>());
+
 }
 
 
@@ -134,9 +136,6 @@ void JApplication::Initialize() {
         LOG_WARN(m_logger) << oss.str() << LOG_END;
     }
 
-    // Set up wiring
-    ProvideService(std::make_shared<jana::services::JWiringService>());
-
     // Attach all plugins
     plugin_loader->attach_plugins(component_manager.get());
 
@@ -152,6 +151,10 @@ void JApplication::Initialize() {
 
     topology_builder->create_topology();
     auto execution_engine = m_service_locator->get<JExecutionEngine>();
+
+    // Make sure that Init() is called on any remaining JServices
+    m_service_locator->wire_everything();
+
     m_initialized = true;
     // This needs to be at the end so that m_initialized==false while InitPlugin() is being called
 }

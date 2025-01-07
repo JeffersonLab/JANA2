@@ -72,7 +72,7 @@ void JWiringService::AddWirings(const toml::table& table, const std::string& sou
         }
         auto& f = *fac.as_table();
 
-        wiring->plugin_name = f["plugin_name"].value<std::string>().value();
+        wiring->plugin_name = f["plugin_name"].value<std::string>().value_or("");
         wiring->type_name = f["type_name"].value<std::string>().value();
         wiring->prefix = f["prefix"].value<std::string>().value();
 

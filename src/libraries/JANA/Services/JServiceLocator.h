@@ -46,6 +46,7 @@ public:
         std::lock_guard<std::mutex> lock(mutex);
         auto svc = std::dynamic_pointer_cast<JService>(t);
         assert(svc != nullptr);
+        svc->SetTypeName(JTypeInfo::demangle<T>());
         underlying[std::type_index(typeid(T))] = svc;
     }
 
