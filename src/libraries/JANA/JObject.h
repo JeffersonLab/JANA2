@@ -217,24 +217,25 @@ std::vector<const T*> JObject::Get() const {
     /// Returns a vector of pointers to all associated objects of type T.
 
     std::vector<const T*> results;
-    for (auto obj : associated) {
-        const T* t = dynamic_cast<const T*>(obj);
-        if (t != nullptr) {
-            results.push_back(t);
-        }
-    }
-    if (results.empty()) {
-        // If nothing found, attempt matching by strings.
-        // Why? Because dl and RTTI aren't playing nicely together;
-        // each plugin might assign a different typeid to the same class.
+    // for (auto obj : associated) {
+    //     const T* t = dynamic_cast<const T*>(obj);
+    //     if (t != nullptr) {
+    //         results.push_back(t);
+    //     }
+    // }
+    // if (results.empty()) {
+    //     // If nothing found, attempt matching by strings.
+    //     // Why? Because dl and RTTI aren't playing nicely together;
+    //     // each plugin might assign a different typeid to the same class.
 
-        std::string classname = JTypeInfo::demangle<T>();
-        for (auto obj : associated) {
-            if (obj->className() == classname) {
-                results.push_back(reinterpret_cast<const T*>(obj));
-            }
-        }
-    }
+    //     std::string classname = JTypeInfo::demangle<T>();
+    //     for (auto obj : associated) {
+    //         if (obj->className() == classname) {
+    //             results.push_back(reinterpret_cast<const T*>(obj));
+    //         }
+    //     }
+    // }
+    Get(results);
     return results;
 }
 
