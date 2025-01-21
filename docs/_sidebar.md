@@ -1,7 +1,7 @@
 <!-- docs/_sidebar.md -->
 - [Overview](index.md "JANA2: Multi-threaded HENP Event Reconstruction")
 - [Intallation](install.md)
-- [Concepts](concepts.md)
+- [Concepts](concepts/concepts.md)
 - [Tutorial](tutorial.md)
 - HowTo:  
   * [Benchmarking](howto/benchmarking.md "JANA2: Benchmarking")

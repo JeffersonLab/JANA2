@@ -1,0 +1,19 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+  <diagram name="Page-1" id="XqF6jXGAWMoHd3vs6mjT">
+    <mxGraphModel dx="440" dy="396" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="jfAYyd5IPHRa1RL9PnO3-1" value="&lt;div&gt;&lt;i&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;C++ type&lt;/font&gt;&lt;/i&gt;&lt;/div&gt;&lt;b&gt;&lt;font color=&quot;#ffffff&quot;&gt;DATA TYPE&lt;/font&gt;&lt;/b&gt;&lt;div&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;e.g. tracking::TrackerHit&lt;/font&gt;&lt;/div&gt;" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;align=center;fillColor=#D80073;strokeColor=#660066;" vertex="1" parent="1">
+          <mxGeometry x="40" y="50" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="jfAYyd5IPHRa1RL9PnO3-2" value="&lt;div&gt;&lt;i&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;std::string&lt;/font&gt;&lt;/i&gt;&lt;/div&gt;&lt;b&gt;&lt;font color=&quot;#ffffff&quot;&gt;TAG&lt;/font&gt;&lt;/b&gt;&lt;div&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;e.g. BarrelTracker&lt;/font&gt;&lt;/div&gt;" style="shape=step;perimeter=stepPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#0041C4;strokeColor=#000066;" vertex="1" parent="1">
+          <mxGeometry x="180" y="50" width="130" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="jfAYyd5IPHRa1RL9PnO3-3" value="&lt;i&gt;&lt;font color=&quot;#777777&quot;&gt;Data identification in JANA&lt;/font&gt;&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="130" width="150" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
