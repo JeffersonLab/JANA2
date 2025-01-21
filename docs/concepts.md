@@ -39,6 +39,11 @@ In organizing, managing, and building the codebase, JANA2 provides:
 
 ## Building blocks
 
+While the above concepts are important in terms of how JANA2 works under the hud, the most  
+of the time spent by regular users (scientist) is usually spent in writing and tuning their 
+reconstruction and analysis algorithms, Which means most of the time working with  
+JANA2 building blocks such as Factories, Processors, EventSources and several others. 
+
 The data analysis application flow can be viewed as a chain of algorithms that transform input data into the 
 desired output. A simplified example of such a chain is shown in the diagram below:
 
@@ -83,16 +88,35 @@ To give very brief overview algorithm building blocks, how this flow is organize
 - **JService** - Used to store resources that remain constant across events, such as Geometry descriptions, 
  Magnetic Field Maps, and other shared data. Services are accessible by both algorithms and other services.
 
+- **JApplication** - The JApplication class is the central hub of the JANA2 framework, managing the initialization, 
+  configuration, and execution of the data processing workflow while providing access to key managers, services, 
+  and runtime controls. Typically, a single JApplication instance is created at the start of the application 
+  and manages all phases, including initialization, configuration, execution, and shutdown
 
 We now may redraw the above diagram in terms of JANA2 building blocks:
 
 ![Simple Algorithms Flow](_media/algo_flow_03.svg)
 
+JFactory, JEventSource, and JEventProcessor share a common purpose in that all are designed to implement specific algorithms.
+However, they serve distinct roles within the framework. 
+While detailed explanations are provided later, here is a brief comparison:
+
+- **JFactory**: Responsible for taking objects from memory and producing new objects in memory. 
+  JFactories are multithreaded, processing events in parallel. They are invoked lazily - only when a specific object is needed by another component.
+
+- **JEventProcessor**: Processes objects from memory without producing new objects: analyzes them or writes results to disk. 
+  Users can specify to run specific JEventProcessors multithreaded or in a single thread. The latter is designed to simplifies 
+  resource management for operations like writing to disk. 
+
+- **JEventSource**: Reads data from an external I/O source (such as disk, network, or simulation) and populates objects into memory. 
+  JEventSources are designed to read events or blocks of events. Operates in a single-threaded manner.
+
+
 
 ## Data model
 
 JANA2 alows users to define and select their own event models,
-providing the flexibility to design data structures to specific experimental needs. Taking the above
+providing the flexibility to design data structures to specific needs of an experiment. Taking the above
 diagram as an example, classes such as `RawHits`, `HitClusters`, ... `Tracks` might be just a user defined classes.
 The data structures can be as simple as:
 
@@ -102,8 +126,8 @@ double x,y,z, edep;
 };
 ```
 
-A key feature of JANA2 is that it doesn't require data being passed around 
-to inherit from any specific base class, such as JObject (used in JANA1) or ROOT's TObject. 
+A key feature of JANA2 is that it doesn't require data to inherit from any specific base class, 
+such as JObject (used in JANA1) or ROOT's TObject. 
 While your data classes can inherit from other classes if your data model requires it, 
 JANA2 remains agnostic about this. 
 
@@ -113,7 +137,7 @@ tools for their projects without being constrained by the framework.
 
 ### Data Identification in JANA2
 
-![Simple Algorithms Flow](_media/data-identification.svg)
+![Data Identification in JANA2](_media/data-identification.svg)
 
 An important aspect is how data is identified within JANA2. JANA2 supports two identifiers:
 
@@ -135,49 +159,7 @@ you can choose different strategies for data identification:
 - **Tag-Based Identification**: Use tags as the main data identifier and deduce types automatically whenever possible.
   This approach is used in PODIO data model and EIC reconstruction software.
 
-## JApplication
 
-The [JApplication](https://jeffersonlab.github.io/JANA2/refcpp/class_j_application.html) 
-class is the central hub of the JANA2 framework, orchestrating all aspects of a JANA2-based 
-application. It manages the initialization, configuration, and execution of the data processing workflow, 
-serving as the entry point for interacting with the core components of the system. 
-By providing access to key managers, services, and runtime controls, 
-JApplication ensures that the application operates smoothly from setup to shutdown.
-To illustrate this, here is a code of typical standalone JANA2 application:
-
-```cpp
-int main(int argc, char* argv[]) {
-
-    auto params = new JParameterManager();
-    // ...  usually some processing of argv here adding them to JParameterManager
-
-    // Instantiate the JApplication with the parameter manager    
-    JApplication app(params);
-
-    // Add predefined plugoms
-    app.AddPlugin("my_plugin");
-    
-    // Register services:
-    app.ProvideService(std::make_shared<LogService>());
-    app.ProvideService(std::make_shared<GeometryService>());
-
-    // Register components
-    app.Add(new JFactoryGeneratorT<MyFactoryA>);
-    app.Add(new JFactoryGeneratorT<MyFactoryB>);
-    app.Add(new JEventSourceGeneratorT<MyEventSource>);
-    app.Add(new MyEventProcessor());
-
-    // Initialize and run the application
-    app.Initialize();
-    app.Run();
-
-    // Print the final performance report
-    app.PrintFinalReport();
-
-    // Retrieve and return the exit code
-    return app.GetExitCode();
-}
-```
 
 ## Factories
 
@@ -188,7 +170,7 @@ JANA implements a **factory model**, where data objects are the products, and th
 factories. While there are various types of factories in JANA2 (covered later in this documentation), 
 they all follow the same fundamental concept:
 
-![JANA2 Factory diagram](_media/concepts-factory-diagram.png)
+<img src="_media/concepts-factory-diagram.png" width="600" alt="JANA Factory Diagram" >
 
 This diagram illustrates the analogy to industry. When a specific data object is requested for the current event in JANA, 
 the framework identifies the corresponding algorithm (factory) capable of producing it. 
@@ -219,7 +201,8 @@ fully reconstructing an event within that thread. This minimizes the use of lock
 to coordinate between threads and subsequently degrade performance. Factory sets are maintained in a pool and
 are (optionally) assigned affinity to a specific NUMA group.
 
-![JANA2 Factory diagram](_media/threading-schema.png)
+<img src="_media/threading-schema.png" width="500" alt="JANA2 threading diagram" >
+
 
 With some level of simplification, this diagram shows how sets of factories are created for each thread in the
 working pool. Limited by IO operations, events usually must be read in from the source sequentially(orange)
@@ -399,6 +382,51 @@ generic FactoryGeneratorT code that work for the majority of cases:
 // For JFactories
 
 // For JOmniFactories
+```
+
+
+## JApplication
+
+The [JApplication](https://jeffersonlab.github.io/JANA2/refcpp/class_j_application.html)
+class is the central hub of the JANA2 framework, orchestrating all aspects of a JANA2-based
+application. It manages the initialization, configuration, and execution of the data processing workflow,
+serving as the entry point for interacting with the core components of the system.
+By providing access to key managers, services, and runtime controls,
+JApplication ensures that the application operates smoothly from setup to shut down.
+To illustrate this, here is a code of a typical standalone JANA2 application:
+
+```cpp
+int main(int argc, char* argv[]) {
+
+    auto params = new JParameterManager();
+    // ...  usually some processing of argv here adding them to JParameterManager
+
+    // Instantiate the JApplication with the parameter manager    
+    JApplication app(params);
+
+    // Add predefined plugins
+    app.AddPlugin("my_plugin");
+    
+    // Register services:
+    app.ProvideService(std::make_shared<LogService>());
+    app.ProvideService(std::make_shared<GeometryService>());
+
+    // Register components
+    app.Add(new JFactoryGeneratorT<MyFactoryA>);
+    app.Add(new JFactoryGeneratorT<MyFactoryB>);
+    app.Add(new JEventSourceGeneratorT<MyEventSource>);
+    app.Add(new MyEventProcessor());
+
+    // Initialize and run the application
+    app.Initialize();
+    app.Run();
+
+    // Print the final performance report
+    app.PrintFinalReport();
+
+    // Retrieve and return the exit code
+    return app.GetExitCode();
+}
 ```
 
 
