@@ -116,6 +116,11 @@ public:
     struct ParameterBase {
         std::string m_name;
         std::string m_description;
+        bool m_is_shared = false;
+
+        void SetShared(bool is_shared) { m_is_shared = is_shared; }
+        bool IsShared() { return m_is_shared; }
+
         virtual void Configure(JParameterManager& parman, const std::string& prefix) = 0;
         virtual void Configure(std::map<std::string, std::string> fields) = 0;
     };

@@ -27,7 +27,7 @@ namespace component_unfolder_param_tests {
 struct TestUnfolder : public JEventUnfolder {
 
     Parameter<float> threshold {this, "threshold", 16.0, "The max cutoff threshold [V * A * kg^-1 * m^-2 * sec^-3]"};
-    Parameter<int> bucket_count {this, "bucket_count", 22, "The total number of buckets [dimensionless]"};
+    Parameter<int> bucket_count {this, "bucket_count", 22, "The total number of buckets [dimensionless]", true};
 
     TestUnfolder() {
         SetPrefix("my_unfolder");
@@ -40,18 +40,25 @@ TEST_CASE("JEventUnfolderParametersTests") {
     auto* sut = new TestUnfolder;
     app.Add(sut);
 
-    SECTION("JEventUnfolder using default parameters") {
+    SECTION("DefaultParameters") {
         app.Initialize();
         sut->DoInit();
         REQUIRE(sut->threshold() == 16.0);
         REQUIRE(sut->bucket_count() == 22);
     }
-    SECTION("JEventUnfolder using overridden parameters") {
+    SECTION("OverrideNonSharedParameter") {
         app.SetParameterValue("my_unfolder:threshold", 12.0);
         app.Initialize();
         sut->DoInit();
         REQUIRE(sut->threshold() == 12.0);
         REQUIRE(sut->bucket_count() == 22);
+    }
+    SECTION("OverrideSharedParameter") {
+        app.SetParameterValue("bucket_count", 33);
+        app.Initialize();
+        sut->DoInit();
+        REQUIRE(sut->threshold() == 16.0);
+        REQUIRE(sut->bucket_count() == 33);
     }
 }
 } // component_unfolder_param_tests
@@ -69,6 +76,7 @@ struct TestProc : public JEventProcessor {
 
     TestProc() {
         SetPrefix("my_proc");
+        bucket_count.SetShared(true);
     }
 };
 
@@ -90,6 +98,13 @@ TEST_CASE("JEventProcessorParametersTests") {
         sut->DoInitialize();
         REQUIRE(sut->threshold() == 12.0);
         REQUIRE(sut->bucket_count() == 22);
+    }
+    SECTION("OverrideSharedParameter") {
+        app.SetParameterValue("bucket_count", 33);
+        app.Initialize();
+        sut->DoInitialize();
+        REQUIRE(sut->threshold() == 16.0);
+        REQUIRE(sut->bucket_count() == 33);
     }
 
 }
