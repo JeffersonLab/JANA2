@@ -14,7 +14,7 @@ void InitPlugin(JApplication *app) {
     cluster_gen->AddWiring("clusterizer", 
                            {"protoclusters"},
                            {"clusters"},
-                           {{"offset", "1000"}});
+                           {.offset=1000});
 
     app->Add(cluster_gen);
 

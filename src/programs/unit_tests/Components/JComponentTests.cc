@@ -166,7 +166,7 @@ TEST_CASE("JOmniFactoryParametersTests") {
     SECTION("JOmniFactory using facgen parameters") {
         app.Initialize();
         JOmniFactoryGeneratorT<TestFac> facgen;
-        facgen.AddWiring("my_fac", {}, {"specific_clusters_out"}, {{"bucket_count","444"}});
+        facgen.AddWiring("my_fac", {}, {"specific_clusters_out"}, {.bucket_count=444});
         JFactorySet facset;
         facgen.SetApplication(&app);
         facgen.GenerateFactories(&facset);
@@ -182,7 +182,7 @@ TEST_CASE("JOmniFactoryParametersTests") {
         app.Initialize();
 
         JOmniFactoryGeneratorT<TestFac> facgen;
-        facgen.AddWiring("my_fac", {}, {"specific_clusters_out"}, {{"threshold", "55.5"}});
+        facgen.AddWiring("my_fac", {}, {"specific_clusters_out"}, {.threshold=55.5});
         JFactorySet facset;
         facgen.SetApplication(&app);
         facgen.GenerateFactories(&facset);

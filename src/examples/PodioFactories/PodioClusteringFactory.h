@@ -5,13 +5,18 @@
 #include <PodioDatamodel/ExampleClusterCollection.h>
 
 
-struct PodioClusteringFactory : public JOmniFactory<PodioClusteringFactory> {
+struct PodioClusteringConfig {
+    double scale = 1.0;
+    double offset = 0.0;
+};
+
+struct PodioClusteringFactory : public JOmniFactory<PodioClusteringFactory, PodioClusteringConfig> {
 
     PodioInput<ExampleCluster> m_protoclusters_in {this};
     PodioOutput<ExampleCluster> m_clusters_out {this};
 
-    Parameter<double> m_scale {this, "scale", 1.0, "Scaling factor"};
-    Parameter<double> m_offset {this, "offset", 0.0, "Amount to offset [mm]"};
+    ParameterRef<double> m_scale {this, "scale", config().scale, "Scaling factor"};
+    ParameterRef<double> m_offset {this, "offset", config().offset, "Amount to offset [mm]"};
 
     void Configure() {
     }
