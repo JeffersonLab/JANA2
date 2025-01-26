@@ -24,6 +24,8 @@ public:
         m_data = &slot;
     }
 
+    void SetRef(T* slot) { m_data = slot; }
+
     const T& operator()() { return *m_data; }
     const T& operator*() { return *m_data; }
 
