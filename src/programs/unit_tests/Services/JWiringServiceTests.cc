@@ -262,4 +262,84 @@ TEST_CASE("WiringTests_RealFacGen") {
 
 }
 
+struct WiredOmniFacConfig {
+    int shared = 0;
+    int isolated = 2;
+};
 
+struct WiredOmniFacWithShared : jana::components::JOmniFactory<WiredOmniFacWithShared, WiredOmniFacConfig> {
+    Input<Cluster> m_protoclusters_in {this};
+    Output<Cluster> m_clusters_out {this};
+
+    ParameterRef<int> m_shared {this, "shared", config().shared, "shared", true};
+    ParameterRef<int> m_isolated {this, "isolated", config().isolated, "isolated" };
+
+    void Configure() {
+    }
+
+    void ChangeRun(int32_t /*run_nr*/) {
+    }
+
+    void Execute(int32_t /*run_nr*/, uint64_t /*evt_nr*/) {
+
+        for (auto protocluster : *m_protoclusters_in) {
+            m_clusters_out().push_back(new Cluster {protocluster->x, protocluster->y, protocluster->E + 1});
+        }
+    }
+};
+
+static constexpr std::string_view sharedparam_wiring = R"(
+    [[factory]]
+    type_name = "WiredOmniFacWithShared"
+    prefix = "myfac"
+    input_names = ["usual_input"]
+    output_names = ["usual_output"]
+
+        [factory.configs]
+        isolated = "22"
+        shared = "28"
+
+    [[factory]]
+    type_name = "WiredOmniFacWithShared"
+    prefix = "myfac_modified"
+    input_names = ["different_input"]
+    output_names = ["different_output"]
+
+        [factory.configs]
+        isolated = "100"
+        shared = "28"
+
+)";
+
+TEST_CASE("WiringTests_SharedParam") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(sharedparam_wiring);
+    wiring_svc->AddWirings(table, "testcase");
+
+    auto gen = new jana::components::JWiredFactoryGeneratorT<WiredOmniFacWithShared>;
+    app.Add(gen);
+    app.Initialize();
+
+    auto& summary = app.GetComponentSummary();
+    //jout << summary;
+    auto vf = summary.FindComponents("myfac");
+    REQUIRE(vf.size() == 1);
+    REQUIRE(vf.at(0)->GetOutputs().at(0)->GetName() == "usual_output");
+
+    auto ef = summary.FindComponents("myfac_modified");
+    REQUIRE(ef.size() == 1);
+    REQUIRE(ef.at(0)->GetOutputs().at(0)->GetName() == "different_output");
+
+    // Check that parameter values propagated from wiring file to parameter manager
+    REQUIRE(app.GetParameterValue<int>("shared") == 28);
+    REQUIRE(app.GetParameterValue<int>("myfac:isolated") == 22);
+    REQUIRE(app.GetParameterValue<int>("myfac_modified:isolated") == 100);
+
+    //app.GetJParameterManager()->PrintParameters(2, 0);
+    //auto event = std::make_shared<JEvent>(&app);
+    //auto facs = event->GetFactorySet()->GetAllMultifactories();
+
+}

@@ -32,7 +32,7 @@ public:
 protected:
 
     void Configure(JParameterManager& parman, const std::string& prefix) override {
-        if (prefix.empty()) {
+        if (m_is_shared || prefix.empty()) {
             parman.SetDefaultParameter(this->m_name, *m_data, this->m_description);
         }
         else {
