@@ -15,7 +15,7 @@ void JService::DoInit(JServiceLocator* sl) {
         m_logger = params->GetLogger(GetLoggerName());
 
         for (auto* parameter : m_parameters) {
-            parameter->Configure(*params, m_prefix);
+            parameter->Init(*params, m_prefix);
         }
 
         for (auto* service : m_services) {

@@ -16,31 +16,43 @@ class JComponent::ParameterRef : public JComponent::ParameterBase {
     T* m_data;
 
 public:
-    ParameterRef(JComponent* owner, std::string name, T& slot, std::string description="") {
+    ParameterRef(JComponent* owner, std::string name, T& slot, std::string description="", bool is_shared=false) {
         owner->RegisterParameter(this);
         this->m_name = name;
         this->m_description = description;
+        this->m_is_shared = is_shared;
         m_data = &slot;
     }
+
+    void SetRef(T* slot) { m_data = slot; }
 
     const T& operator()() { return *m_data; }
     const T& operator*() { return *m_data; }
 
 protected:
 
-    void Configure(JParameterManager& parman, const std::string& prefix) override {
-        if (prefix.empty()) {
+    void Init(JParameterManager& parman, const std::string& prefix) override {
+        if (m_is_shared || prefix.empty()) {
             parman.SetDefaultParameter(this->m_name, *m_data, this->m_description);
         }
         else {
             parman.SetDefaultParameter(prefix + ":" + this->m_name, *m_data, this->m_description);
         }
     }
-    void Configure(std::map<std::string, std::string> fields) override {
-        auto it = fields.find(this->m_name);
-        if (it != fields.end()) {
-            const auto& value_str = it->second;
-            JParameterManager::Parse(value_str, *m_data);
+    void Wire(const std::map<std::string, std::string>& isolated, const std::map<std::string, std::string>& shared) override {
+        if (m_is_shared) {
+            auto it = shared.find(this->m_name);
+            if (it != shared.end()) {
+                const auto& value_str = it->second;
+                JParameterManager::Parse(value_str, *m_data);
+            }
+        }
+        else {
+            auto it = isolated.find(this->m_name);
+            if (it != isolated.end()) {
+                const auto& value_str = it->second;
+                JParameterManager::Parse(value_str, *m_data);
+            }
         }
     }
 };
@@ -51,10 +63,11 @@ class JComponent::Parameter : public JComponent::ParameterBase {
     T m_data;
 
 public:
-    Parameter(JComponent* owner, std::string name, T default_value, std::string description) {
+    Parameter(JComponent* owner, std::string name, T default_value, std::string description="", bool is_shared=false) {
         owner->RegisterParameter(this);
         this->m_name = name;
         this->m_description = description;
+        this->m_is_shared = is_shared;
         m_data = default_value;
     }
 
@@ -63,19 +76,28 @@ public:
 
 protected:
 
-    void Configure(JParameterManager& parman, const std::string& prefix) override {
-        if (prefix.empty()) {
+    void Init(JParameterManager& parman, const std::string& prefix) override {
+        if (m_is_shared || prefix.empty()) {
             parman.SetDefaultParameter(this->m_name, m_data, this->m_description);
         }
         else {
             parman.SetDefaultParameter(prefix + ":" + this->m_name, m_data, this->m_description);
         }
     }
-    void Configure(std::map<std::string, std::string> fields) override {
-        auto it = fields.find(this->m_name);
-        if (it != fields.end()) {
-            const auto& value_str = it->second;
-            JParameterManager::Parse(value_str, m_data);
+    void Wire(const std::map<std::string, std::string>& isolated, const std::map<std::string, std::string>& shared) override {
+        if (m_is_shared) {
+            auto it = shared.find(this->m_name);
+            if (it != shared.end()) {
+                const auto& value_str = it->second;
+                JParameterManager::Parse(value_str, m_data);
+            }
+        }
+        else {
+            auto it = isolated.find(this->m_name);
+            if (it != isolated.end()) {
+                const auto& value_str = it->second;
+                JParameterManager::Parse(value_str, m_data);
+            }
         }
     }
 };

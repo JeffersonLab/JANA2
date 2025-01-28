@@ -114,10 +114,20 @@ public:
     // ---------------------
 
     struct ParameterBase {
-        std::string m_name;
+        std::string m_name; // Does NOT include component prefix, which is provided by owner
         std::string m_description;
-        virtual void Configure(JParameterManager& parman, const std::string& prefix) = 0;
-        virtual void Configure(std::map<std::string, std::string> fields) = 0;
+        bool m_is_shared = false;
+
+        void SetName(std::string name) { m_name = name; }
+        void SetDescription(std::string description) { m_description = description; }
+        void SetShared(bool is_shared) { m_is_shared = is_shared; }
+
+        const std::string& GetName() { return m_name; }
+        const std::string& GetDescription() { return m_description; }
+        bool IsShared() { return m_is_shared; }
+
+        virtual void Init(JParameterManager& parman, const std::string& prefix) = 0;
+        virtual void Wire(const std::map<std::string, std::string>& isolated, const std::map<std::string, std::string>& shared) = 0;
     };
 
     template <typename T> 
@@ -141,11 +151,10 @@ public:
         m_services.push_back(service);
     }
 
-    void ConfigureAllParameters(std::map<std::string, std::string> fields) {
-        for (auto* parameter : this->m_parameters) {
-            parameter->Configure(fields);
-        }
+    const std::vector<ParameterBase*> GetAllParameters() const {
+        return this->m_parameters;
     }
+
 };
 
 
