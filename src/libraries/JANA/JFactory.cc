@@ -98,7 +98,7 @@ void JFactory::DoInit() {
         return;
     }
     for (auto* parameter : m_parameters) {
-        parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+        parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
     }
     for (auto* service : m_services) {
         service->Fetch(m_app);

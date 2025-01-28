@@ -35,7 +35,7 @@ public:
     virtual void DoInitialize() {
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto* parameter : m_parameters) {
-            parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+            parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
         }
         for (auto* service : m_services) {
             service->Fetch(m_app);

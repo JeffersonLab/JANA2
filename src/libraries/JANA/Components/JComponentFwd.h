@@ -126,7 +126,7 @@ public:
         const std::string& GetDescription() { return m_description; }
         bool IsShared() { return m_is_shared; }
 
-        virtual void Configure(JParameterManager& parman, const std::string& prefix) = 0;
+        virtual void Init(JParameterManager& parman, const std::string& prefix) = 0;
         virtual void Wire(const std::map<std::string, std::string>& isolated, const std::map<std::string, std::string>& shared) = 0;
     };
 
