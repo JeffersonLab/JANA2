@@ -127,7 +127,7 @@ public:
         bool IsShared() { return m_is_shared; }
 
         virtual void Configure(JParameterManager& parman, const std::string& prefix) = 0;
-        virtual void Configure(std::map<std::string, std::string> fields) = 0;
+        virtual void Wire(const std::map<std::string, std::string>& isolated, const std::map<std::string, std::string>& shared) = 0;
     };
 
     template <typename T> 
@@ -151,11 +151,10 @@ public:
         m_services.push_back(service);
     }
 
-    void ConfigureAllParameters(std::map<std::string, std::string> fields) {
-        for (auto* parameter : this->m_parameters) {
-            parameter->Configure(fields);
-        }
+    const std::vector<ParameterBase*> GetAllParameters() const {
+        return this->m_parameters;
     }
+
 };
 
 

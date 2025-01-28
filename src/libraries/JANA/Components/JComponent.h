@@ -39,11 +39,20 @@ protected:
             parman.SetDefaultParameter(prefix + ":" + this->m_name, *m_data, this->m_description);
         }
     }
-    void Configure(std::map<std::string, std::string> fields) override {
-        auto it = fields.find(this->m_name);
-        if (it != fields.end()) {
-            const auto& value_str = it->second;
-            JParameterManager::Parse(value_str, *m_data);
+    void Wire(const std::map<std::string, std::string>& isolated, const std::map<std::string, std::string>& shared) override {
+        if (m_is_shared) {
+            auto it = shared.find(this->m_name);
+            if (it != shared.end()) {
+                const auto& value_str = it->second;
+                JParameterManager::Parse(value_str, *m_data);
+            }
+        }
+        else {
+            auto it = isolated.find(this->m_name);
+            if (it != isolated.end()) {
+                const auto& value_str = it->second;
+                JParameterManager::Parse(value_str, *m_data);
+            }
         }
     }
 };
@@ -75,11 +84,20 @@ protected:
             parman.SetDefaultParameter(prefix + ":" + this->m_name, m_data, this->m_description);
         }
     }
-    void Configure(std::map<std::string, std::string> fields) override {
-        auto it = fields.find(this->m_name);
-        if (it != fields.end()) {
-            const auto& value_str = it->second;
-            JParameterManager::Parse(value_str, m_data);
+    void Wire(const std::map<std::string, std::string>& isolated, const std::map<std::string, std::string>& shared) override {
+        if (m_is_shared) {
+            auto it = shared.find(this->m_name);
+            if (it != shared.end()) {
+                const auto& value_str = it->second;
+                JParameterManager::Parse(value_str, m_data);
+            }
+        }
+        else {
+            auto it = isolated.find(this->m_name);
+            if (it != isolated.end()) {
+                const auto& value_str = it->second;
+                JParameterManager::Parse(value_str, m_data);
+            }
         }
     }
 };

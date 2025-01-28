@@ -289,6 +289,9 @@ struct WiredOmniFacWithShared : jana::components::JOmniFactory<WiredOmniFacWithS
 };
 
 static constexpr std::string_view sharedparam_wiring = R"(
+    [configs]
+    shared = "28"
+
     [[factory]]
     type_name = "WiredOmniFacWithShared"
     prefix = "myfac"
@@ -297,7 +300,6 @@ static constexpr std::string_view sharedparam_wiring = R"(
 
         [factory.configs]
         isolated = "22"
-        shared = "28"
 
     [[factory]]
     type_name = "WiredOmniFacWithShared"
@@ -307,8 +309,6 @@ static constexpr std::string_view sharedparam_wiring = R"(
 
         [factory.configs]
         isolated = "100"
-        shared = "28"
-
 )";
 
 TEST_CASE("WiringTests_SharedParam") {
@@ -317,6 +317,7 @@ TEST_CASE("WiringTests_SharedParam") {
 
     auto wiring_svc = app.GetService<jana::services::JWiringService>();
     toml::table table = toml::parse(sharedparam_wiring);
+    wiring_svc->AddSharedParameters(table, "testcase");
     wiring_svc->AddWirings(table, "testcase");
 
     auto gen = new jana::components::JWiredFactoryGeneratorT<WiredOmniFacWithShared>;
