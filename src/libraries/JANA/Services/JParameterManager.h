@@ -383,10 +383,24 @@ inline void JParameterManager::Parse(const std::string& value, std::vector<T> &v
     std::stringstream ss(value);
     std::string s;
     val.clear(); // clearing the input vector to ensure no dulication which can be caused due to val.push_back(t);
+      // we find an escape character
+    std::string temp = "";   // creating a temp var allows us to store the string s where the escape character was used
     while (getline(ss, s, ',')) {
         T t;
-        Parse(s, t);
-        val.push_back(t);
+        // Parse(s, t);
+        // val.push_back(t);
+        if (!temp.empty()) {
+            Parse(temp + s, t);
+            val.push_back(t);
+            temp.clear();
+        }
+        if (s.find('\\') != std::string::npos) {
+            temp = s + ',';
+        }
+        else {
+            Parse(s, t);
+            val.push_back(t);
+        }
     }
 }
 

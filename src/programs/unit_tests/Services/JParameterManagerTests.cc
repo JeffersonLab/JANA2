@@ -4,6 +4,7 @@
 
 
 #include <JANA/Services/JParameterManager.h>
+#include <vector>
 #include "catch.hpp"
 
 TEST_CASE("JParameterManager::SetDefaultParameter") {
@@ -185,6 +186,16 @@ TEST_CASE("JParameterManager_VectorParams") {
         REQUIRE(vals[1] == "whitespace in middle");
         REQUIRE(vals[2] == " also with whitespace padding ");
     }
+    SECTION("Reading a vector of functions with commas") {
+        // As of Mon Jan 27, JParameterManager does not allow an escape key to prevent splitting on the next comma)
+        jpm.SetParameter("test", "phi-fmod(phi\\,5), theta-fmod(theta\\,10), omega-fmod(omega\\,15)"); // Issue #380 (Feature request)
+        std::vector<std::string> vals;
+        jpm.GetParameter<std::vector<std::string>>("test", vals);
+
+        REQUIRE(vals[0] == "phi-fmod(phi,5)");
+        REQUIRE(vals[1] == "theta-fmod(theta,5)");
+        REQUIRE(vals[2] == "phi-fmod(phi,5)");
+    }
     SECTION("Writing a vector of strings") {
         std::vector<std::string> inputs;
         inputs.emplace_back("first");
@@ -277,6 +288,7 @@ TEST_CASE("JParameterManager_ArrayParams") {
         REQUIRE(vals[1] == "whitespace in middle");
         REQUIRE(vals[2] == " also with whitespace padding ");
     }
+
     SECTION("Writing a array of strings") {
         std::array<std::string,3> inputs = {"first", "second one" , " third one "};
         jpm.SetDefaultParameter("test", inputs);
