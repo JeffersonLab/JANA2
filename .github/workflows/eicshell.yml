@@ -51,16 +51,16 @@ jobs:
           export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
           echo "ldd bin/jana"
           ldd bin/jana
-          echo "ldd bin/libJANA.so"
+          echo "ldd lib/libJANA.so"
           ldd lib/libJANA.so
-          echo "bin/jana rpath"
-          objdump -x bin/jana | grep PATH
-          echo "lib/libJANA.so rpath"
-          objdump -x lib/libJANA.so | grep PATH
-          echo "lib/JANA/plugins/TimesliceExample.so"
-          objdump -x lib/JANA/plugins/TimesliceExample.so | grep PATH
-          echo "bin/PodioExample"
-          objdump -x bin/PodioExample | grep PATH
+          echo "RPATH of bin/jana:"
+          objdump -x bin/jana | grep PATH || echo "Empty!"
+          echo "RPATH of lib/libJANA.so:"
+          objdump -x lib/libJANA.so | grep PATH || echo "Empty!"
+          echo "RPATH of lib/JANA/plugins/TimesliceExample.so:"
+          objdump -x lib/JANA/plugins/TimesliceExample.so | grep PATH || echo "Empty!"
+          echo "RPATH of bin/PodioExample:"
+          objdump -x bin/PodioExample | grep PATH || echo "Empty!"
 
     - name: Run JTest plugin with 100 events
       uses: eic/run-cvmfs-osg-eic-shell@main
