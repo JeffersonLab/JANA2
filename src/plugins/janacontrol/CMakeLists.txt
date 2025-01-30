@@ -24,8 +24,8 @@ if (${USE_ZEROMQ})
 
     target_include_directories(janacontrol PUBLIC ${ZeroMQ_INCLUDE_DIRS})
     target_link_libraries(janacontrol PUBLIC ${ZeroMQ_LIBRARIES})
-    target_include_directories(janacontrol_tests PUBLIC ${ZeroMQ_INCLUDE_DIRS})
-    target_link_libraries(janacontrol_tests PUBLIC ${ZeroMQ_LIBRARIES})
+    target_include_directories(janacontrol-tests PUBLIC ${ZeroMQ_INCLUDE_DIRS})
+    target_link_libraries(janacontrol-tests PUBLIC ${ZeroMQ_LIBRARIES})
 
 else()
     message(STATUS "Skipping plugins/janacontrol because USE_ZEROMQ=Off")
