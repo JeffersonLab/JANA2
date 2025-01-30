@@ -93,16 +93,16 @@ macro(add_jana_plugin plugin_name)
 
     # Handle tests
     if (PLUGIN_TESTS)
-        add_executable(${plugin_name}_tests ${PLUGIN_TESTS})
-        target_link_libraries(${plugin_name}_tests PRIVATE ${plugin_name} "${JANA_NAMESPACE}VendoredCatch2")
-        set_target_properties(${plugin_name}_tests PROPERTIES
+        add_executable(${plugin_name}-tests ${PLUGIN_TESTS})
+        target_link_libraries(${plugin_name}-tests PRIVATE ${plugin_name} "${JANA_NAMESPACE}VendoredCatch2")
+        set_target_properties(${plugin_name}-tests PROPERTIES
             SKIP_BUILD_RPATH FALSE
             BUILD_WITH_INSTALL_RPATH TRUE
             INSTALL_RPATH_USE_LINK_PATH TRUE
             INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
         )
-        #install(TARGETS ${plugin_name}_tests RUNTIME DESTINATION bin)
-        add_test(NAME ${plugin_name}_tests COMMAND ${plugin_name}_tests)
+        #install(TARGETS ${plugin_name}-tests RUNTIME DESTINATION bin)
+        add_test(NAME ${plugin_name}-tests COMMAND ${plugin_name}-tests)
     endif()
 endmacro()
 
