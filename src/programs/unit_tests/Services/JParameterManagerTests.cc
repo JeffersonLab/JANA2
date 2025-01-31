@@ -186,16 +186,6 @@ TEST_CASE("JParameterManager_VectorParams") {
         REQUIRE(vals[1] == "whitespace in middle");
         REQUIRE(vals[2] == " also with whitespace padding ");
     }
-    SECTION("Reading a vector of functions with commas") {
-        // As of Mon Jan 27, JParameterManager does not allow an escape key to prevent splitting on the next comma)
-        jpm.SetParameter("test", "phi-fmod(phi\\,5), theta-fmod(theta\\,10), omega-fmod(omega\\,15)"); // Issue #380 (Feature request)
-        std::vector<std::string> vals;
-        jpm.GetParameter<std::vector<std::string>>("test", vals);
-
-        REQUIRE(vals[0] == "phi-fmod(phi,5)");
-        REQUIRE(vals[1] == "theta-fmod(theta,5)");
-        REQUIRE(vals[2] == "phi-fmod(phi,5)");
-    }
     SECTION("Writing a vector of strings") {
         std::vector<std::string> inputs;
         inputs.emplace_back("first");
@@ -247,6 +237,28 @@ TEST_CASE("JParameterManager_VectorParams") {
         std::vector<float> outputs;
         auto param = jpm.GetParameter("test", outputs);
         REQUIRE(param->GetValue() == "22,49.2,42");
+    }
+    SECTION("Reading a vector of functions with commas") {
+        // As of Mon Jan 27, JParameterManager does not allow an escape key to prevent splitting on the next comma)
+        jpm.SetParameter("test", "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"); // Issue #380 (Feature request)
+        std::vector<std::string> vals;
+        jpm.GetParameter<std::vector<std::string>>("test", vals);
+
+        REQUIRE(vals[0] == "phi-fmod(phi,5)");
+        REQUIRE(vals[1] == "theta-fmod(theta,10)");
+        REQUIRE(vals[2] == "omega-fmod(omega,15)");
+    }
+    SECTION("Writing a vector of functions with commas") {
+        std::vector<std::string> inputs;
+        inputs.emplace_back("phi-fmod(phi\\,5)");
+        inputs.emplace_back("theta-fmod(theta\\,10)");
+        inputs.emplace_back("omega-fmod(omega\\,15)");
+
+        jpm.SetDefaultParameter("test", inputs);
+        std::vector<std::string> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
+        REQUIRE(inputs.size()==3);
     }
 }
 

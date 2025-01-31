@@ -352,7 +352,10 @@ void JParameterManager::Parse(const std::string& s, T& out) {
 /// The stream operator is not only redundant here, but it also splits the string (see Issue #191)
 template <>
 inline void JParameterManager::Parse(const std::string& value, std::string& out) {
-    out = value;
+    std::string formatted_val = value;
+    if (formatted_val.find('\\') != std::string::npos)
+        formatted_val.erase(formatted_val.find('\\'));
+    out = formatted_val;
 }
 
 
@@ -369,12 +372,30 @@ template<typename T, size_t N>
 inline void JParameterManager::Parse(const std::string& value,std::array<T,N> &val) {
     std::string s;
     std::stringstream ss(value);
+    std::string temp = "";   // creating a temp var allows us to store the string s where the escape character was used
     int indx = 0;
+    // while (getline(ss, s, ',')) {
+    //     T t;
+    //     Parse(s, t);
+    //     val[indx++]= t;
+    // }
     while (getline(ss, s, ',')) {
         T t;
-        Parse(s, t);
-        val[indx++]= t;
-    }    
+        if (s.find('\\') != std::string::npos) {
+            s.erase(s.find('\\'));
+            temp = s + ',';
+            continue;
+        }
+        if (!temp.empty()) {
+            Parse(temp + s, t);
+            val[indx++]= t;
+            temp.clear();
+        }
+        else {
+            Parse(s, t);
+            val[indx++]= t;
+        }
+    }
 }
 
 /// @brief Specialization for std::vector<std::string>
@@ -387,15 +408,15 @@ inline void JParameterManager::Parse(const std::string& value, std::vector<T> &v
     std::string temp = "";   // creating a temp var allows us to store the string s where the escape character was used
     while (getline(ss, s, ',')) {
         T t;
-        // Parse(s, t);
-        // val.push_back(t);
+        if (s.find('\\') != std::string::npos) {
+            s.erase(s.find('\\'));
+            temp = s + ',';
+            continue;
+        }
         if (!temp.empty()) {
             Parse(temp + s, t);
             val.push_back(t);
             temp.clear();
-        }
-        if (s.find('\\') != std::string::npos) {
-            temp = s + ',';
         }
         else {
             Parse(s, t);
