@@ -251,7 +251,7 @@ public:
                variadic_output_count += 1;
             }
         }
-        size_t variadic_output_collection_count = FindVariadicCollectionCount(m_outputs.size(), variadic_output_count, output_collection_names.size(), true);
+        size_t variadic_output_collection_count = FindVariadicCollectionCount(m_outputs.size(), variadic_output_count, output_collection_names.size(), false);
 
         // Set output collection names and create corresponding helper factories
         i = 0;
@@ -279,7 +279,7 @@ public:
 
     void Init() override {
         for (auto* parameter : m_parameters) {
-            parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+            parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
         }
         for (auto* service : m_services) {
             service->Fetch(m_app);

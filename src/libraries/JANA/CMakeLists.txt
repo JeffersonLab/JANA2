@@ -80,7 +80,7 @@ elseif (${USE_ROOT})
 endif()
 
 
-# static library, always there
+# Build static library
 add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2> $<TARGET_OBJECTS:VendoredMD5>)
 set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
@@ -95,27 +95,23 @@ elseif (${USE_ROOT})
 endif()
 install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
 
-# optionally build shared lib
-if (BUILD_SHARED_LIBS)
-    message(STATUS "Building both shared and static libraries")
-    add_library(jana2_shared_lib SHARED $<TARGET_OBJECTS:jana2> $<TARGET_OBJECTS:VendoredMD5>)
-    set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
-    target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
-    target_link_libraries(jana2_shared_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
-    target_link_libraries(jana2_shared_lib PUBLIC VendoredTomlPlusPlus)
+# Build shared library
+add_library(jana2_shared_lib SHARED $<TARGET_OBJECTS:jana2> $<TARGET_OBJECTS:VendoredMD5>)
+set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
-    if (${USE_PODIO})
-        target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
-    elseif (${USE_ROOT})
-        target_link_libraries(jana2_shared_lib PUBLIC ${ROOT_LIBRARIES})
-    endif()
+target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
+target_link_libraries(jana2_shared_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
+target_link_libraries(jana2_shared_lib PUBLIC VendoredTomlPlusPlus)
 
-    install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)
-    set(INSTALL_RPATH_USE_LINK_PATH True)
-else()
-    message(STATUS "Building static library only")
+if (${USE_PODIO})
+    target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+elseif (${USE_ROOT})
+    target_link_libraries(jana2_shared_lib PUBLIC ${ROOT_LIBRARIES})
 endif()
+
+install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)
+set(INSTALL_RPATH_USE_LINK_PATH True)
 
 
 # Install "public" header files

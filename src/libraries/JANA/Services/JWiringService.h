@@ -39,13 +39,17 @@ private:
     std::map<std::string, Wiring*> m_wirings_from_prefix;
     std::map<std::pair<std::string,std::string>, std::vector<Wiring*>> m_wirings_from_type_and_plugin_names;
     std::vector<Wiring*> m_no_wirings;
+    std::map<std::string, std::string> m_shared_parameters;
 
 public:
     void Init() override;
 
     void AddWirings(std::vector<std::unique_ptr<Wiring>>& wirings, const std::string& source);
     void AddWirings(const toml::table& table, const std::string& source);
-    void AddWirings(const std::string& filename);
+    void AddWiringFile(const std::string& filename);
+
+    void AddSharedParameters(const toml::table& table, const std::string& source);
+    const std::map<std::string, std::string>& GetSharedParameters() const;
 
     const Wiring*
     GetWiring(const std::string& prefix) const;

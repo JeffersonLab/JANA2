@@ -24,15 +24,6 @@ public:
         FactoryConfigType configs = {}; /// Must be copyable!
     };
 
-    struct UntypedWiring {
-        std::string tag = "";
-        JEventLevel level = JEventLevel::PhysicsEvent;
-        std::vector<std::string> input_names = {};
-        std::vector<JEventLevel> input_levels = {};
-        std::vector<std::string> output_names = {};
-        std::map<std::string, std::string> configs = {};
-    };
-
 public:
 
     explicit JOmniFactoryGeneratorT() = default;
@@ -66,7 +57,7 @@ public:
     void AddWiring(std::string tag,
                    std::vector<std::string> input_names,
                    std::vector<std::string> output_names,
-                   FactoryConfigType configs) {
+                   FactoryConfigType configs={}) {
 
         m_typed_wirings.push_back({.tag=tag,
                                    .input_names=input_names,
@@ -75,23 +66,6 @@ public:
                                   });
     }
 
-    void AddWiring(std::string tag,
-                   std::vector<std::string> input_names,
-                   std::vector<std::string> output_names,
-                   std::map<std::string, std::string> configs={}) {
-
-        // Create throwaway factory so we can populate its config using our map<string,string>.
-        FactoryT factory;
-        factory.ConfigureAllParameters(configs);
-        auto configs_typed = factory.config();
-
-        m_typed_wirings.push_back({.tag=tag,
-                                   .input_names=input_names,
-                                   .output_names=output_names,
-                                   .configs=configs_typed
-                                  });
-
-    }
 
     void AddWiring(TypedWiring wiring) {
         m_typed_wirings.push_back(wiring);

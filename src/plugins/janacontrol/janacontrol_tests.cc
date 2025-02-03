@@ -24,7 +24,7 @@ TEST_CASE("JANAControlIntegrationTests") {
     app->Add(new JControlEventProcessor);
 
     // Set test parameters
-    app->SetParameterValue("nevents", 10);
+    app->SetParameterValue("jana:nevents", 10);
 
     // Run everything, blocking until finished
     app->Run();

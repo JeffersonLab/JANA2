@@ -15,7 +15,7 @@ void JWiringService::Init() {
     // (recursively) load files
 
     if (!m_wirings_input_file().empty()) {
-        AddWirings(*m_wirings_input_file);
+        AddWiringFile(*m_wirings_input_file);
     }
 }
 
@@ -114,9 +114,10 @@ void JWiringService::AddWirings(const toml::table& table, const std::string& sou
     AddWirings(wirings, source);
 }
 
-void JWiringService::AddWirings(const std::string& filename) {
+void JWiringService::AddWiringFile(const std::string& filename) {
     try {
         auto tbl = toml::parse_file(filename);
+        AddSharedParameters(tbl, filename);
         AddWirings(tbl, filename);
     }
     catch (const toml::parse_error& err) {
@@ -167,6 +168,25 @@ void JWiringService::Overlay(Wiring& above, const Wiring& below) {
     }
 }
 
+
+void JWiringService::AddSharedParameters(const toml::table& table, const std::string& /*source*/) {
+    auto shared_params = table["configs"].as_table();
+    if (shared_params == nullptr) {
+        LOG_INFO(GetLogger()) << "No configs found!" << LOG_END;
+        return;
+    }
+    for (const auto& param : *shared_params) {
+        std::string key(param.first);
+        std::string val = *param.second.value<std::string>();
+        m_shared_parameters[key] = val;
+    }
+}
+
+
+
+const std::map<std::string, std::string>& JWiringService::GetSharedParameters() const {
+    return m_shared_parameters;
+}
 
 
 } // namespace jana::services
