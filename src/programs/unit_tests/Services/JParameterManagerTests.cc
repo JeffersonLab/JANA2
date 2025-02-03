@@ -259,6 +259,10 @@ TEST_CASE("JParameterManager_VectorParams") {
         auto param = jpm.GetParameter("test", outputs);
         REQUIRE(param->GetValue() == "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
         REQUIRE(inputs.size()==3);
+
+        std::vector<std::string> temp;
+        jpm.Parse(jpm.Stringify("phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"), temp);
+        REQUIRE(temp == outputs);
     }
 }
 
@@ -339,6 +343,32 @@ TEST_CASE("JParameterManager_ArrayParams") {
         std::array<float,3> outputs;
         auto param = jpm.GetParameter("test", outputs);
         REQUIRE(param->GetValue() == "22,49.2,42");
+    }
+    SECTION("Reading a array of functions with commas") {
+        // As of Mon Jan 27, JParameterManager does not allow an escape key to prevent splitting on the next comma)
+        jpm.SetParameter("test", "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"); // Issue #380 (Feature request)
+        std::array<std::string, 3> vals;
+        jpm.GetParameter("test", vals);
+
+        REQUIRE(vals[0] == "phi-fmod(phi,5)");
+        REQUIRE(vals[1] == "theta-fmod(theta,10)");
+        REQUIRE(vals[2] == "omega-fmod(omega,15)");
+    }
+    SECTION("Writing a array of functions with commas") {
+        std::array<std::string, 3> inputs = {
+            "phi-fmod(phi\\,5)",
+            "theta-fmod(theta\\,10)",
+            "omega-fmod(omega\\,15)"
+        };
+
+        jpm.SetDefaultParameter("test", inputs);
+        std::array<float,3> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
+
+        std::array<float,3> temp;
+        jpm.Parse(jpm.Stringify("phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"), temp);
+        REQUIRE(temp == outputs);
     }
 }
 
