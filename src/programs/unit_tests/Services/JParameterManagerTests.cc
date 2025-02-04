@@ -304,7 +304,6 @@ TEST_CASE("JParameterManager_ArrayParams") {
         REQUIRE(vals[1] == "whitespace in middle");
         REQUIRE(vals[2] == " also with whitespace padding ");
     }
-
     SECTION("Writing a array of strings") {
         std::array<std::string,3> inputs = {"first", "second one" , " third one "};
         jpm.SetDefaultParameter("test", inputs);
@@ -346,17 +345,17 @@ TEST_CASE("JParameterManager_ArrayParams") {
     }
     SECTION("Reading a array of functions with commas") {
         // As of Mon Jan 27, JParameterManager does not allow an escape key to prevent splitting on the next comma)
-        jpm.SetParameter("test", "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"); // Issue #380 (Feature request)
+        jpm.SetParameter("test", "theta-fmod(phi-fmod(phi\\,5)\\,7),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"); // Issue #380 (Feature request)
         std::array<std::string, 3> vals;
         jpm.GetParameter("test", vals);
 
-        REQUIRE(vals[0] == "phi-fmod(phi,5)");
+        REQUIRE(vals[0] == "theta-fmod(phi-fmod(phi,5),7)");
         REQUIRE(vals[1] == "theta-fmod(theta,10)");
         REQUIRE(vals[2] == "omega-fmod(omega,15)");
     }
     SECTION("Writing a array of functions with commas") {
         std::array<std::string, 3> inputs = {
-            "phi-fmod(phi\\,5)",
+            "theta-fmod(phi-fmod(phi\\,5)\\,7)",
             "theta-fmod(theta\\,10)",
             "omega-fmod(omega\\,15)"
         };
@@ -364,10 +363,10 @@ TEST_CASE("JParameterManager_ArrayParams") {
         jpm.SetDefaultParameter("test", inputs);
         std::array<float,3> outputs;
         auto param = jpm.GetParameter("test", outputs);
-        REQUIRE(param->GetValue() == "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
+        REQUIRE(param->GetValue() == "theta-fmod(phi-fmod(phi\\,5)\\,7),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
 
         std::array<float,3> temp;
-        jpm.Parse(jpm.Stringify("phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"), temp);
+        jpm.Parse(jpm.Stringify("theta-fmod(phi-fmod(phi\\,5)\\,7),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"), temp);
         REQUIRE(temp == outputs);
     }
 }
