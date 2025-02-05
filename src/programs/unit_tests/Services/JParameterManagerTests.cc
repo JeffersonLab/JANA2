@@ -361,11 +361,11 @@ TEST_CASE("JParameterManager_ArrayParams") {
         };
 
         jpm.SetDefaultParameter("test", inputs);
-        std::array<float,3> outputs;
+        std::array<std::string,3> outputs;
         auto param = jpm.GetParameter("test", outputs);
         REQUIRE(param->GetValue() == "theta-fmod(phi-fmod(phi\\,5)\\,7),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
 
-        std::array<float,3> temp;
+        std::array<std::string,3> temp;
         jpm.Parse(jpm.Stringify("theta-fmod(phi-fmod(phi\\,5)\\,7),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"), temp);
         REQUIRE(temp == outputs);
     }
