@@ -120,9 +120,6 @@ public:
     template<typename T>
     static inline void Parse(const std::string& value, std::vector<T>& out);
 
-    template<>
-    static inline void Parse(const std::string& value, std::vector<std::string>& out);
-
     template<typename T, size_t arrSize>
     static inline void Parse(const std::string& value, std::array<T,arrSize>& out); 
 
