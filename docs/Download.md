@@ -10,6 +10,27 @@
 - [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest/index.html)
 - [Download doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest.tar.gz)
 
+### 2.4.0
+
+#### Features
+
+- Externally wired factories using `JWiredFactoryGenerator` (#399, #400)
+
+#### Bugfixes
+
+- Fix parameter strictness check (#394)
+- Fix Podio deprecation warnings (#389)
+- Fix ODR violation (#396)
+- Fix `JFactory::Create()` logic (#383)
+- Fix `JEventProcessor` deletion order (#391)
+- Fix double-free in `JLockService` destructor (#388)
+
+#### Refactoring
+
+- Migrate `JStreamLog` uses to `JLogger` (#390, #395, #398)
+- Reorganize and deprecate `Compatibility/` headers (#392, #397)
+- Refactor arrow execution machinery (#385, #387, #393)
+
 ### 2.3.3
 
 #### Bugfixes
