@@ -373,7 +373,6 @@ template<typename T, size_t N>
 inline void JParameterManager::Parse(const std::string& value,std::array<T,N> &val) {
     std::string s;
     std::stringstream ss(value);
-    std::string temp = "";   // creating a temp var allows us to store the string s where the escape character was used
     int indx = 0;
     while (getline(ss, s, ',')) {
         T t;
@@ -391,8 +390,8 @@ inline void JParameterManager::Parse(const std::string& value,std::array<std::st
     int indx = 0;
     while (getline(ss, s, ',')) {
         std::string t;
-        if (s.find('\\') != std::string::npos) {
-            s.erase(s.find('\\'));
+        if (s.back() == '\\') {
+            s.pop_back();
             temp += s + ',';
             continue;
         }
@@ -414,7 +413,6 @@ inline void JParameterManager::Parse(const std::string& value, std::vector<T> &v
     std::stringstream ss(value);
     std::string s;
     val.clear(); // clearing the input vector to ensure no dulication which can be caused due to val.push_back(t);
-    std::string temp = "";   // creating a temp var allows us to store the string s where the escape character was used
     while (getline(ss, s, ',')) {
         T t;
         Parse(s, t);
@@ -431,8 +429,8 @@ inline void JParameterManager::Parse(const std::string& value, std::vector<std::
     std::string temp = "";   // creating a temp var allows us to store the string s where the escape character was used
     while (getline(ss, s, ',')) {
         std::string t;
-        if (s.find('\\') != std::string::npos) {
-            s.erase(s.find('\\'));
+        if (s.back() == '\\') {
+            s.pop_back();
             temp += s + ',';
             continue;
         }
