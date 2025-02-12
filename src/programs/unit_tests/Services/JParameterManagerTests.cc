@@ -253,6 +253,7 @@ TEST_CASE("JParameterManager_VectorParams") {
         inputs.emplace_back("phi-fmod(phi\\,5)");
         inputs.emplace_back("theta-fmod(theta\\,10)");
         inputs.emplace_back("omega-fmod(omega\\,15)");
+        std::vector<std::string> temp1 = inputs;
 
         jpm.SetDefaultParameter("test", inputs);
         std::vector<std::string> outputs;
@@ -260,9 +261,9 @@ TEST_CASE("JParameterManager_VectorParams") {
         REQUIRE(param->GetValue() == "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
         REQUIRE(inputs.size()==3);
 
-        std::vector<std::string> temp;
-        jpm.Parse(jpm.Stringify("phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"), temp);
-        REQUIRE(temp == outputs);
+        std::vector<std::string> temp2;
+        jpm.Parse(jpm.Stringify(temp1), temp2);
+        REQUIRE(temp2 == outputs);
     }
 }
 
@@ -359,15 +360,16 @@ TEST_CASE("JParameterManager_ArrayParams") {
             "theta-fmod(theta\\,10)",
             "omega-fmod(omega\\,15)"
         };
+        std::array<std::string,3> temp1 = inputs;
 
         jpm.SetDefaultParameter("test", inputs);
         std::array<std::string,3> outputs;
         auto param = jpm.GetParameter("test", outputs);
         REQUIRE(param->GetValue() == "theta-fmod(phi-fmod(phi\\,5)\\,7),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
 
-        std::array<std::string,3> temp;
-        jpm.Parse(jpm.Stringify("theta-fmod(phi-fmod(phi\\,5)\\,7),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"), temp);
-        REQUIRE(temp == outputs);
+        std::array<std::string,3> temp2;
+        jpm.Parse(jpm.Stringify(temp1), temp2);
+        REQUIRE(temp2 == outputs);
     }
 }
 
