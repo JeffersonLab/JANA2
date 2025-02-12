@@ -255,7 +255,13 @@ TEST_CASE("JParameterManager_VectorParams") {
         inputs.emplace_back("omega-fmod(omega\\,15)");
         std::vector<std::string> temp1 = inputs;
 
+
         jpm.SetDefaultParameter("test", inputs);
+        auto stringified = jpm.Stringify(inputs);
+        std::vector<std::string> mangled_inputs;
+        jpm.Parse(stringified, mangled_inputs);
+        REQUIRE(inputs == mangled_inputs);
+
         std::vector<std::string> outputs;
         auto param = jpm.GetParameter("test", outputs);
         REQUIRE(param->GetValue() == "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
@@ -264,6 +270,30 @@ TEST_CASE("JParameterManager_VectorParams") {
         std::vector<std::string> temp2;
         jpm.Parse(jpm.Stringify(temp1), temp2);
         REQUIRE(temp2 == outputs);
+    }
+    SECTION("ParseVectorOfStrings") {
+
+        auto s1 = "This,is,a,test"; // Should have 4 elements in vector
+        std::vector<std::string> v1;
+        jpm.Parse(s1, v1);
+        REQUIRE(v1.size() == 4);
+        REQUIRE(v1.at(0) == "This");
+
+        auto s2 = "This\\,is,a\\,test"; // Should have 2 elements in vector
+        std::vector<std::string> v2;
+        jpm.Parse(s2, v2);
+        REQUIRE(v2.size() == 2);
+        REQUIRE(v2.at(0) == "This,is");
+    }
+    SECTION("StringifyVectorOfStrings") {
+
+        std::vector<std::string> v1 {"This", "is", "a", "test"};
+        auto s1 = jpm.Stringify(v1);
+        REQUIRE(s1 == "This,is,a,test");
+
+        std::vector<std::string> v2 {"This,is", "a,test"};
+        auto s2 = jpm.Stringify(v2);
+        REQUIRE(s2 == "This\\,is,a\\,test");
     }
 }
 
