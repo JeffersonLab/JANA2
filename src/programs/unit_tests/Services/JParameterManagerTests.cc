@@ -4,6 +4,7 @@
 
 
 #include <JANA/Services/JParameterManager.h>
+#include <string>
 #include <vector>
 #include "catch.hpp"
 
@@ -242,7 +243,11 @@ TEST_CASE("JParameterManager_VectorParams") {
         // As of Mon Jan 27, JParameterManager does not allow an escape key to prevent splitting on the next comma)
         jpm.SetParameter("test", "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"); // Issue #380 (Feature request)
         std::vector<std::string> vals;
+        std::cout << "Problem detected" << std::endl;
         jpm.GetParameter<std::vector<std::string>>("test", vals);
+        auto stringification = jpm.Stringify(vals);
+
+        REQUIRE(stringification == "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
 
         REQUIRE(vals[0] == "phi-fmod(phi,5)");
         REQUIRE(vals[1] == "theta-fmod(theta,10)");
