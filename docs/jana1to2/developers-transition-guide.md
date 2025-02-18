@@ -323,30 +323,52 @@ auto showers = event->Get<DBCALShower>("IU");
 
 ## **JEventSource**
 ### Key Differences
-#### **1. Constructor & Source Name Handling**
-In JANA1, the event source name had to be manually defined. In JANA2, the source name is automatically set based on the resource name passed to the constructor.
+#### **1. Type name and Resource name
 
-|**Aspect**|**JANA1**|**JANA2**|
-|---|---|---|
-|**Constructor**|`JEventSource(const char* source_name)`|`JEventSource(std::string resource_name)`|
-|**Setting Source Name**|`static const char* static_className() { return "JEventSource"; }`|Automatically set based on `resource_name`.|
-|**Getting Source Name**|`virtual const char* className() { return static_className(); }`|Use `GetResourceName()` from the base class. No extra setup.|
+JEventSources are identified by both a type name, e.g. "JEventSource_EVIO", and a resource name, e.g. "./hd_rawdata_123456_000.evio". JANA2 handles both of these differently than JANA1.
+
+In JANA1, the user was required to provide the type name manually by providing two callbacks:
+```c++
+virtual const char* className();
+static const char* static_className();
+```
+
+In JANA2, the class name is simply a member variable on the `JEventSource` base class, which the user may access via getters and setters:
+```c++
+void SetTypeName(std::string type_name);
+std::string GetTypeName() const;
+```
+Note that `JEventSourceGeneratorT` will automatically populate the type name. If a custom generator is being used, or no generator is used at all (e.g. for test cases), `SetTypeName()` should be called from inside the `JEventSource` constructor, just like with the other components.
+
+The resource name has similarly evolved.
+In JANA1, the resource name was always passed as a constructor argument and later accessed using `inline const char* GetSourceName()`. In JANA2, the resource name is a member variable accessed by `SetResourceName(std::string)` and `std::string GetResourceName() const`. While JANA2 still optionally accepts the resource name as a constructor argument for backwards compatibility, this is no longer preferred and will eventually be deprecated in favor of having `JEventSources` be default-constructible. `JEventSourceGeneratorT` already supports both constructor styles, and will automatically populate the resource name just like the type name, so the user shouldn't need to manually call `SetResourceName()`.
+
+
 #### **2. Event Retrieval (`GetEvent` & `Emit`)**
-In JANA1, emitting a fresh event into the stream was done using `GetEvent`, which returned a `jerror_t` code to indicate success or failure. JANA2 introduces two ways to retrieve events, each with a different error-handling approach:
-1. **`GetEvent(std::shared_ptr<JEvent> event)`** – This method returns `void` and signals different statuses by throwing exceptions instead of returning an error code. It throws a `RETURN_STATUS` enum value, which includes `kNO_MORE_EVENTS`, `kBUSY`, `kTRY_AGAIN`, `kERROR`, or `kUNKNOWN`.
-2. **`Emit(JEvent &event)`** – An alternative and **recommended** way to retrieve events that does not use exceptions for error handling.  It returns a `Result` enum value: `Success`, `FailureTryAgain`, or `FailureFinished` to show status. To use `Emit`, first set `CallbackStyle` should be set to `ExpertMode` by making a call to `SetCallbackStyle(CallbackStyle::ExpertMode)` in the constructor.
+
+In JANA1, populating and emitting a fresh event into the stream was done using `GetEvent`, which returned a `jerror_t` code to indicate success or failure. 
+
+In JANA2, `jerror_t` has been removed completely, and the `GetEvent` callback has been replaced. JANA2 supports two new callback signatures, with different error-handling approaches. JANA2 will choose which callback to use based off the `callbackStyle` flag. For JEventSources, the available callback styles are `ExpertMode` and `LegacyMode`.
+The purpose of the callback style flag is to enable smooth, gradual migrations in the future: components can opt-in to using new features on their own timetable without
+having to update everything everywhere.
+
+1. **`JEventSource::Result Emit(JEvent &event)`** – This is the preferred replacement for `GetEvent()`. It returns a `Result` enum with the following values: `Success` (indicating that a fresh event was successfully read), `FailureTryAgain` (indicating that no event was found, but more may be coming later), or `FailureFinished` (indicating that the file has or stream has run out of events and is ready to close). To tell JANA2 to use `Emit`, set the callback style to `ExpertMode` by calling `SetCallbackStyle(CallbackStyle::ExpertMode)` in the constructor.
+
+2. `GetEvent(std::shared_ptr<JEvent> event)` – This callback signature will be deprecated in the near future, and so should not be used for new code. However, we are including it here for completeness. This method returns `void` and signals different statuses by throwing exceptions instead of returning an error code. It throws a `RETURN_STATUS` enum value, which includes `kNO_MORE_EVENTS`, `kBUSY`, `kTRY_AGAIN`, `kERROR`, or `kUNKNOWN`. This callback will be called by default, or if you set `SetCallbackStyle(CallbackStyle::LegacyMode)` in the `JEventSource` constructor.
 
 | **Aspect**               | **JANA1**                                                                                                | **JANA2**                                                                                                                                                      |
 | ------------------------ | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`GetEvent`**           | `GetEvent(JEvent &event)` returns a `jerror_t` error code (e.g., `NOERROR`, `NO_MORE_EVENTS_IN_SOURCE`). | `GetEvent(std::shared_ptr<JEvent> event)` returns `void` and signals different statuses by throwing `RETURN_STATUS` enum values as exceptions.                 |
 | **Recommended - `Emit`** | _Not available._                                                                                         | `Emit(JEvent &event)` provides an alternative way to retrieve events. Instead of throwing an exception, it returns one of `Result` enum values to show status. |
+
 #### **3. `GetObjects` Implementation**
 JANA1’s `GetObjects` returned a `jerror_t`.  
-JANA2 replaces this with a `bool` return type. Never return a `jerror_t`, as it could be mistakenly perceived as `true` when the intended meaning is `false`. Always return `true` if objects are found and `false` otherwise.
+JANA2 replaces this with a `bool` return type. Never return a `jerror_t`, as the compiler may mistakenly perceive it as `true` when the intended meaning is `false`. Always return `true` if objects are found and `false` otherwise.
 
 | **Aspect**                    | **JANA1**                                                                 | **JANA2**                                                                                                                                              |
 | ----------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **GetObjects Implementation** | `jerror_t GetObjects(jana::JEvent &event, jana::JFactory_base *factory);` | `bool GetObjects(const std::shared_ptr<const JEvent> &event, JFactory* factory) override;` `bool` (return `true` if objects found, otherwise `false`). |
+
 #### **4. Enabling `GetObjects` Call**
 In **JANA1**, `GetObjects` was always called, leading to unnecessary performance overhead.  
 In **JANA2**, `GetObjects` is **disabled by default**. If the source file contains objects that should be used instead of being generated by factories, enable it in the event source constructor:
@@ -358,6 +380,7 @@ EnableGetObjects(true);
 |**Aspect**|**JANA1**|**JANA2**|
 |---|---|---|
 |**Enabling `GetObjects` Call**|Called by default for every event.|Disabled by default. Must be enabled with `EnableGetObjects(true)`.|
+
 #### **5. Calling `FinishEvent`**
 In **JANA1**, `FreeEvent` was always called automatically after an event was processed, but this required acquiring/releasing locks, adding performance overhead. In **JANA2**, `FinishEvent` replaces `FreeEvent` and is **disabled by default** for efficiency. If additional logic should run at the end of each event, enable it manually in the event source constructor:
 
@@ -368,13 +391,14 @@ EnableFinishEvent(true);
 |**Aspect**|**JANA1**|**JANA2**|
 |---|---|---|
 |**Calling `FinishEvent`**|`FreeEvent` was always called automatically.|`FinishEvent` is disabled by default to improve performance.|
-#### **6. Lifecycle Handling (`Open()` and `Close()`)**
-In **JANA1**, initialization of params and opening of event source was done inside constructor and closing of source was done inside destructor.  
-In **JANA2**, the lifecycle is **explicitly managed** using `Init()`, `Open()` and `Close()`.
+
+#### 6. Resource lifetimes (`Open()` and `Close()`)
+
+In **JANA1**, the initialization of parameters and opening of the file or socket was done inside the constructor, and the closing of the file or socket was done inside the destructor. In **JANA2**, the lifecycle is **explicitly managed** using the `Init()`, `Open()` and `Close()` callbacks:
 
 | **Aspect**           | **JANA1**                   | **JANA2**                                                                    |
 | -------------------- | --------------------------- | ---------------------------------------------------------------------------- |
-| **Initialization**   | Handled in the constructor. | `Init()` should be used for parameter setup.                                 |
+| **Initialization**   | Handled in the constructor. | `Init()` should be used for obtaining parameters and services. |
 | **Opening a Source** | Handled in the constructor. | `Open()` is called when JANA is ready to accept events from the event source |
 | **Closing a Source** | Handled in the destructor.  | `Close()` is called when the source is done processing events.               |
 
@@ -390,6 +414,8 @@ void JEventSource_Sample::Close() {
  // Release resources (e.g., close files, disconnect)
 }
 ```
+
+
 ### **JEventSource Header Files**
 ##### **JANA1**
 ```cpp
@@ -443,7 +469,6 @@ public:
     void Close() override;
     void FinishEvent(JEvent& event) override;
     Result Emit(JEvent& event) override;
-    // void GetEvent(std::shared_ptr<JEvent> event) override;
     bool GetObjects(const std::shared_ptr<const JEvent>& event, JFactory* factory) override;
 };
 ```
