@@ -1,0 +1,91 @@
+
+Generating code skeletons
+=========================
+
+JANA provides a script, `$JANA_HOME/bin/jana-generate.py`, which generates code skeletons for 
+different kinds of JANA components, but also entire project structures. These are intended to 
+compile and run with zero or minimal modification, to provide all of the boilerplate needed, and
+to include comments explaining what each piece of boilerplate does and what the user is expected
+to add. The aim is to demonstrate idiomatic usage of the JANA framework and reduce the learning
+curve as much as possible.
+
+#### Complete projects
+The 'project' skeleton lays out the recommended structure for a complex experiment with multiple 
+plugins, a domain model which is shared between plugins, and a custom executable. In general, 
+each experiment is expected to have one project.
+
+```jana-generate.py project ProjectName```
+
+#### Project plugins
+Project plugins are used to modularize some functionality within the context of an existing project.
+Not only does this help separate concerns, so that many members of a collaboration can work together
+without interfering with another, but it also helps manage the complexity arising from build dependencies.
+Some scientific software stubbornly refuses to build on certain platforms, and plugins are a much cleaner
+solution than the traditional mix of environment variables, build system variables, and preprocessor macros.
+Project plugins include one JEventProcessor by default.
+
+```jana-generate.py ProjectPlugin PluginNameInCamelCase```
+
+
+#### Mini plugins
+Mini plugins are project plugins which have been stripped down to a single `cc` file. They are useful
+when someone wants to do a quick analysis and doesn't need or want the additional boilerplate. They
+include one JEventProcessor with support for ROOT histograms. There are two options: 
+
+```
+jana-generate.py MiniStandalonePlugin PluginNameInCamelCase
+jana-generate.py MiniProjectPlugin PluginNameInCamelCase
+```
+
+#### Standalone plugins 
+Standalone plugins are useful for getting started quickly. They are also effective when someone wishes to 
+integrate with an existing project, but want their analyses to live in a separate repository.
+
+```jana-generate.py StandalonePlugin PluginNameInCamelCase```
+  
+#### Executables
+Executables are useful when using the provided `$JANA_HOME/bin/jana` is inconvenient. This may be
+because the project is sufficiently simple that multiple plugins aren't even needed, or because the project is 
+sufficiently complex that specialized configuration is needed before loading any other plugins.
+
+```jana-generate.py Executable ExecutableNameInCamelCase```
+
+#### JEventSources
+
+```jana-generate.py JEventSource NameInCamelCase```
+
+#### JEventProcessors
+
+```jana-generate.py JEventProcessor NameInCamelCase```
+
+#### JEventProcessors which output to ROOT
+
+This JEventProcessor includes the boilerplate for creating a ROOT histogram in a specific
+virtual subdirectory of a TFile. If this TFile is shared among different `JEventProcessors`,
+it should be encapsulated in a JService. Otherwise, it can be specified as a simple parameter.
+We recommend naming the subdirectory after the plugin name. E.g. a `trk_eff` plugin contains 
+a `TrackingEfficiencyProcessor` which writes all of its results to the `trk_eff` subdirectory 
+of the TFile. 
+ 
+```jana-generate.py RootEventProcessor ProcessorNameInCamelCase directory_name_in_snake_case```
+
+Note that this script, like the others, does not update your `CMakeLists.txt`. Not only will you 
+need to add the file to `PluginName_PLUGIN_SOURCES`, but you may need to add ROOT as a 
+dependency if your project hasn't yet:
+
+```
+find_package(ROOT)
+include_directories(${ROOT_INCLUDE_DIRS})
+link_directories(${ROOT_LIBRARY_DIR})
+target_link_libraries(${PLUGIN_NAME} ${ROOT_LIBRARIES})
+``` 
+
+#### JFactories
+
+Because JFactories are templates parameterized by the type of JObjects they produce, we need two arguments
+to generate them. The naming convention is left up to the user, but the following is recommended. If the 
+JObject name is 'RecoTrack', and the factory uses Genfit under the hood, the factory name should be
+'RecoTrackFactory_Genfit'. 
+
+```jana-generate.py JFactory JFactoryNameInCamelCase JObjectNameInCamelCase```
+
