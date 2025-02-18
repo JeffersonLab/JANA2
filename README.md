@@ -14,7 +14,7 @@ check it out and give feedback to help us improve it.
 
 Just to whet your appetite a little, the code snippet below is the most common signature of JANA. A large fraction of end users won't really need to know much more than this.
 
-```
+```c++
 auto tracks = jevent->Get<DTrack>();
 
 for(auto t : tracks){
@@ -22,14 +22,17 @@ for(auto t : tracks){
 }
 ```
 
-To quickly build and install, run:
+To quickly download, build, install, and test on your system:
+
 ```bash
+git clone https://github.com/JeffersonLab/JANA2
+cd JANA2
 mkdir build
-mkdir install
-export JANA_HOME=`pwd`/install
-cmake -S . -B build
-cmake --build build -j 10 --target install
-install/bin/jana -Pplugins=JTest
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=`pwd`
+cmake --build build --target install -j 8
+bin/jana -Pplugins=JTest -Pjana:nevents=100
 ```
 
-For detailed instructions, see the [howto guide](https://jeffersonlab.github.io/JANA2/Installation.html).
+For a closer look, see our [tutorial](https://jeffersonlab.github.io/JANA2/#/tutorial).
+
+
