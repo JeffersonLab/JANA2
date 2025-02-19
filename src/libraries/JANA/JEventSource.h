@@ -139,17 +139,9 @@ public:
     
     std::string GetResourceName() const { return m_resource_name; }
 
-    [[deprecated]]
-    uint64_t GetEventCount() const { return m_events_emitted; };
     uint64_t GetEmittedEventCount() const { return m_events_emitted; };
     uint64_t GetSkippedEventCount() const { return m_events_skipped; };
     uint64_t GetProcessedEventCount() const { return m_events_processed; };
-
-    [[deprecated]]
-    virtual std::string GetType() const { return m_type_name; }
-
-    [[deprecated]]
-    std::string GetName() const { return m_resource_name; }
 
     bool IsGetObjectsEnabled() const { return m_enable_get_objects; }
     bool IsFinishEventEnabled() const { return m_enable_finish_event; }
@@ -182,9 +174,6 @@ public:
 
     // Internal
 
-    [[deprecated("Replaced by JEventSource::DoOpen()")]]
-    void DoInitialize();
-    
     virtual void DoInit();
 
     void DoOpen(bool with_lock=true);
