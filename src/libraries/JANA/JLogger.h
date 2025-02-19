@@ -11,11 +11,13 @@
 #include <chrono>
 #include <iomanip>
 #include <time.h>
-#include <mutex>
 #include <atomic>
 
 #ifndef JANA2_USE_LOGGER_MUTEX
 #define JANA2_USE_LOGGER_MUTEX 0
+#endif
+#if JANA2_USE_LOGGER_MUTEX
+#include <mutex>
 #endif
 
 
