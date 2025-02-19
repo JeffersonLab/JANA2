@@ -262,7 +262,7 @@ void JExecutionEngine::RunSupervisor() {
             last_event_count = perf.event_count;
 
             // Print rates
-            LOG_WARN(m_logger) << "Status: " << perf.event_count << " events processed at "
+            LOG_INFO(m_logger) << "Status: " << perf.event_count << " events processed at "
                             << JTypeInfo::to_string_with_si_prefix(latest_throughput_hz) << "Hz ("
                             << JTypeInfo::to_string_with_si_prefix(perf.throughput_hz) << "Hz avg)" << LOG_END;
         }
@@ -662,7 +662,7 @@ void JExecutionEngine::PrintFinalReport() {
 
     LOG_INFO(GetLogger()) << LOG_END;
 
-    LOG_WARN(GetLogger()) << "Final report: " << event_count << " events processed at "
+    LOG_INFO(GetLogger()) << "Final report: " << event_count << " events processed at "
                           << JTypeInfo::to_string_with_si_prefix(throughput_hz) << "Hz" << LOG_END;
 
 }
