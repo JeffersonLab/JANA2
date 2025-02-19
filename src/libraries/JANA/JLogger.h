@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <JANA/Compatibility/JStreamLog.h>
-
 #include <iostream>
 #include <sstream>
 #include <chrono>

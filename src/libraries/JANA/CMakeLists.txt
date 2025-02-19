@@ -50,9 +50,6 @@ set(JANA2_SOURCES
     CLI/JBenchmarker.cc
     CLI/JSignalHandler.cc
     CLI/JMain.cc
-
-    Compatibility/JStreamLog.cc
-    Compatibility/JStreamLogBuffer.cc
     )
 
 if (${USE_PODIO})
@@ -124,7 +121,6 @@ file(GLOB jana_utils_headers "Utils/*.h*")
 file(GLOB jana_calibs_headers "Calibrations/*.h*")
 file(GLOB jana_geometry_headers "Geometry/*.h*")
 file(GLOB jana_cli_headers "CLI/*.h*")
-file(GLOB jana_compat_headers "Compatibility/*.h*")
 file(GLOB jana_podio_headers "Podio/*.h*")
 file(GLOB jana_component_headers "Components/*.h*")
 file(GLOB jana_topology_headers "Topology/*.h*")
@@ -137,7 +133,6 @@ install(FILES ${jana_utils_headers} DESTINATION include/JANA/Utils)
 install(FILES ${jana_calibs_headers} DESTINATION include/JANA/Calibrations)
 install(FILES ${jana_geometry_headers} DESTINATION include/JANA/Geometry)
 install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
-install(FILES ${jana_compat_headers} DESTINATION include/JANA/Compatibility)
 install(FILES ${jana_component_headers} DESTINATION include/JANA/Components)
 install(FILES ${jana_topology_headers} DESTINATION include/JANA/Topology)
 
