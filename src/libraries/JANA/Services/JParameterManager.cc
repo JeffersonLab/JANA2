@@ -124,7 +124,7 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
     }
 
     if (strictness_violation) {
-        LOG_WARN(m_logger) << "Printing parameter table with full verbosity due to strictness warning" << LOG_END;
+        LOG_INFO(m_logger) << "Printing parameter table with full verbosity due to strictness warning" << LOG_END;
         verbosity = 3; // Crank up verbosity before printing out table
     }
 
@@ -157,16 +157,16 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
         return;
     }
 
-    LOG_WARN(m_logger) << "Configuration Parameters" << LOG_END;
+    LOG_INFO(m_logger) << "Configuration Parameters" << LOG_END;
     for (JParameter* p: params_to_print) {
 
-        LOG_WARN(m_logger) << LOG_END;
-        LOG_WARN(m_logger) << " - key:         " << p->GetKey() << LOG_END;
+        LOG_INFO(m_logger) << LOG_END;
+        LOG_INFO(m_logger) << " - key:         " << p->GetKey() << LOG_END;
         if (!p->IsDefault()) {
-            LOG_WARN(m_logger) << "   value:       " << p->GetValue() << LOG_END;
+            LOG_INFO(m_logger) << "   value:       " << p->GetValue() << LOG_END;
         }
         if (p->HasDefault()) {
-            LOG_WARN(m_logger) << "   default:     " << p->GetDefault() << LOG_END;
+            LOG_INFO(m_logger) << "   default:     " << p->GetDefault() << LOG_END;
         }
         if (!p->GetDescription().empty()) {
             std::istringstream iss(p->GetDescription());
@@ -183,22 +183,22 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
             }
         }
         if (p->IsConflicted()) {
-            LOG_WARN(m_logger) << "   warning:     Conflicting defaults" << LOG_END;
+            LOG_WARN(m_logger) << "   warning:     " << p->GetKey() << ": Conflicting defaults" << LOG_END;
         }
         if (p->IsDeprecated()) {
-            LOG_WARN(m_logger) << "   warning:     Deprecated" << LOG_END;
+            LOG_WARN(m_logger) << "   warning:     " << p->GetKey() << ": Deprecated" << LOG_END;
             // If deprecated, it no longer matters whether it is advanced or not. If unused, won't show up here anyway.
         }
         if (!p->IsUsed()) {
             // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
             // Can't be both advanced and unused, since JANA only finds out that it is advanced by trying to use it
-            LOG_WARN(m_logger) << "   warning:     Unused" << LOG_END;
+            LOG_WARN(m_logger) << "   warning:     " << p->GetKey() << ": Unused" << LOG_END;
         }
         if (p->IsAdvanced()) {
-            LOG_WARN(m_logger) << "   warning:     Advanced" << LOG_END;
+            LOG_WARN(m_logger) << "   warning:     " << p->GetKey() << ": Advanced" << LOG_END;
         }
     }
-    LOG_WARN(m_logger) << LOG_END;
+    LOG_INFO(m_logger) << LOG_END;
 
     // Now that we've printed the table, we can throw an exception if we are being super strict
     if (strictness_violation && strictness > 1) {
