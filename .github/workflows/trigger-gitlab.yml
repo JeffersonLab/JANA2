@@ -8,6 +8,10 @@ on:
 jobs:
   trigger-gitlab-job:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
     steps:
       - uses: eic/trigger-gitlab-ci@v3
         id: trigger
