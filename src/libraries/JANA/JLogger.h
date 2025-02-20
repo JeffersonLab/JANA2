@@ -4,18 +4,18 @@
 
 #pragma once
 
-#include <JANA/Compatibility/JStreamLog.h>
-
 #include <iostream>
 #include <sstream>
 #include <chrono>
 #include <iomanip>
 #include <time.h>
-#include <mutex>
 #include <atomic>
 
 #ifndef JANA2_USE_LOGGER_MUTEX
 #define JANA2_USE_LOGGER_MUTEX 0
+#endif
+#if JANA2_USE_LOGGER_MUTEX
+#include <mutex>
 #endif
 
 
@@ -45,9 +45,6 @@ struct JLogger {
     void ShowLevel(bool show) {show_level = show; }
     void ShowTimestamp(bool show) {show_timestamp = show; }
     void ShowThreadstamp(bool show) {show_threadstamp = show; }
-
-    [[ deprecated("Use SetGroup() instead")]]
-    void SetTag(std::string tag) {this->group = tag; }
 };
 
 
@@ -172,6 +169,11 @@ extern JLogger jerr;
 #define jendl std::endl
 #define default_cout_logger jout
 #define default_cerr_logger jerr
+
+#ifndef _DBG_
 #define _DBG_ jerr<<__FILE__<<":"<<__LINE__<<" "
+#endif
+#ifndef _DBG__
 #define _DBG__ jerr<<__FILE__<<":"<<__LINE__<<std::endl
+#endif
 

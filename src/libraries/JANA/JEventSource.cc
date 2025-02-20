@@ -16,10 +16,6 @@ void JEventSource::DoInit() {
     LOG_INFO(GetLogger()) << "Initialized JEventSource '" << GetTypeName() << "' ('" << GetResourceName() << "')" << LOG_END;
 }
 
-void JEventSource::DoInitialize() {
-    DoOpen();
-}
-
 void JEventSource::DoOpen(bool with_lock) {
     if (with_lock) {
         std::lock_guard<std::mutex> lock(m_mutex);
