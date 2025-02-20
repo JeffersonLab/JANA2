@@ -33,7 +33,7 @@ jobs:
             /repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha || github.sha }} \
             -f state="pending" \
             -f target_url="${{ join(steps.trigger.outputs.*, '\n') }}" \
-            -f context="GitLab JANA2-CI"
+            -f context="GitLab JANA2-CI" \
             -f description="Triggered... $(TZ=America/New_York date)" \
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
