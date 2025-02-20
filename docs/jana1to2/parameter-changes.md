@@ -2,6 +2,11 @@
 
 This guide outlines the key parameter changes from JANA1 to JANA2, helping you adjust your configurations and usage as needed.
 
+### Loading Configuration
+
+**JANA1:** hd_root `--config=my_file.config` input.evio
+**JANA2:** hd_root `--loadconfigs my_file.config` input.evio
+
 ### Commonly Used JANA Parameters
 
 The following table compares commonly used JANA parameters between JANA1 and JANA2. Parameters that remain unchanged in JANA2 are marked with `-`. In the "Possible Input" column, `-` means that they are the same as in JANA1. Changes are listed where applicable.
