@@ -32,8 +32,8 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             /repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha || github.sha }} \
             -f state="pending" \
-            -f target_url="${{ steps.trigger.outputs.web_url }}" \
+            -f target_url="${{ join(steps.trigger.outputs.*, '\n') }}" \
+            -f context="GitLab JANA2-CI"
             -f description="Triggered... $(TZ=America/New_York date)" \
-            -f context="nbrei/jana2-ci"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
