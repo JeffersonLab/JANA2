@@ -4,9 +4,7 @@
 
 #pragma once
 
-#include <cstdio>
 #include <limits>
-#include <sstream>
 #include <string>
 #include <algorithm>
 #include <vector>
@@ -374,7 +372,7 @@ inline void JParameterManager::Parse(const std::string& value, bool& val) {
 }
 
 // @brief Template to parse a string and return in an array
-template <typename T, size_t N>
+template<typename T, size_t N>
 inline void JParameterManager::Parse(const std::string& value,std::array<T,N> &val) {
     std::string s;
     std::stringstream ss(value);
@@ -387,7 +385,7 @@ inline void JParameterManager::Parse(const std::string& value,std::array<T,N> &v
 }
 
 // @brief Template to parse a string and return in an array of strings
-template <size_t N>
+template<size_t N>
 inline void JParameterManager::Parse(const std::string& value,std::array<std::string,N> &val) {
     std::string s;
     std::stringstream ss(value);
@@ -413,7 +411,7 @@ inline void JParameterManager::Parse(const std::string& value,std::array<std::st
 }
 
 /// @brief Specialization for std::vector<std::string>
-template <typename T>
+template<typename T>
 inline void JParameterManager::Parse(const std::string& value, std::vector<T> &val) {
     std::stringstream ss(value);
     std::string s;
@@ -426,7 +424,7 @@ inline void JParameterManager::Parse(const std::string& value, std::vector<T> &v
 }
 
 /// @brief Specialization for std::vector<std::string> with escape commas
-template <>
+template<>
 inline void JParameterManager::Parse(const std::string& value, std::vector<std::string> &val) {
     std::stringstream ss(value);
     std::string s;
@@ -608,21 +606,29 @@ inline std::string JParameterManager::Stringify(const std::array<std::string,N> 
     size_t len = values.size();
     std::stringstream ssv;
     for (size_t i = 0; i < len; ++i) {
-        std::stringstream ss(values[i]);
-        std::string s;
-        std::string temp;
-        while (getline(ss, s, ',')) {
-            if (s.back() == '\\') {
-                s.pop_back();
-                temp += s + ',';
+        if (values[i].find(',') != std::string::npos) {
+            std::stringstream ss(values[i]);
+            std::string s;
+            std::string s_end = values[i].substr(values[i].rfind(',')+1);
+            while (getline(ss, s, ',')) {
+                if (s == s_end) {
+                    ssv << s;
+                    if (i != len-1) {
+                        ssv << ',';
+                    }
+                    break;
+                }
+                ssv << s;
+                if (s.back() != '\\') {
+                    ssv << '\\';
+                }
+                ssv << ',';
                 continue;
             }
-            if (!temp.empty()) {
-                ssv << temp + s;
-                temp.clear();
-            }
-            else {
-                ssv << s;
+        } else {
+            ssv << values[i];
+            if (i != len-1) {
+                ssv << ',';
             }
         }
     }

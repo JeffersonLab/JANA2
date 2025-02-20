@@ -340,7 +340,7 @@ TEST_CASE("JParameterManager_ArrayParams") {
         REQUIRE(vals[1] == "whitespace in middle");
         REQUIRE(vals[2] == " also with whitespace padding ");
     }
-    SECTION("Writing a array of strings") {
+    SECTION("Writing an array of strings") {
         std::array<std::string,3> inputs = {"first", "second one" , " third one "};
         jpm.SetDefaultParameter("test", inputs);
         std::array<std::string,3> outputs;
@@ -405,6 +405,30 @@ TEST_CASE("JParameterManager_ArrayParams") {
         std::array<std::string,3> temp2;
         jpm.Parse(jpm.Stringify(temp1), temp2);
         REQUIRE(temp2 == outputs);
+    }
+    SECTION("ParseArrayOfStrings") {
+
+        auto s1 = "This,is,a,test"; // Should have 4 elements in vector
+        std::array<std::string,4> v1;
+        jpm.Parse(s1, v1);
+        REQUIRE(v1.size() == 4);
+        REQUIRE(v1.at(0) == "This");
+
+        auto s2 = "This\\,is,a\\,test"; // Should have 2 elements in vector
+        std::array<std::string, 2> v2;
+        jpm.Parse(s2, v2);
+        REQUIRE(v2.size() == 2);
+        REQUIRE(v2.at(0) == "This,is");
+    }
+    SECTION("StringifyArrayOfStrings") {
+
+        std::array<std::string, 4> v1 {"This", "is", "a", "test"};
+        auto s1 = jpm.Stringify(v1);
+        REQUIRE(s1 == "This,is,a,test");
+
+        std::array<std::string, 2> v2 {"This,is", "a,test"};
+        auto s2 = jpm.Stringify(v2);
+        REQUIRE(s2 == "This\\,is,a\\,test");
     }
 }
 
