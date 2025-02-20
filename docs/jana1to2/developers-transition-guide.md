@@ -997,6 +997,31 @@ To reduce boilerplate:
 DEvent::GetLockService(locEvent)->ReadLock("app"); 
 DEvent::GetLockService(locEvent)->Unlock("app");
 ```
+## Deprecated Headers & Functions
+
+### Why Do These Warnings Appear?
+When building a plugin ported to JANA2, you may see deprecation warnings (deprecated headers etc.). These headers and functions exist in JANA2 only for backward compatibility with JANA1 and are marked as deprecated to discourage their use, as they may be removed in the future.
+
+### Can These Warnings Be Ignored?
+Yes, as long as your plugin compiles without crashes. They don't have any immediate impact on functionality. However, it’s better to update to the latest headers and functions because:
+- Deprecated headers and functions may be removed completely in future JANA2 versions.
+- Using them can slightly slow down compilation.
+### How to Remove These Warnings?
+Replace deprecated headers and functions in your plugin code with alternatives provided in following table:
+
+| **Deprecated** | **Use Instead** |  
+|--------------------------|---------------------------|  
+| `#include <JANA/Compatibility/JLockService.h>` | `#include <JANA/Services/JLockService.h>` |  
+| `#include <JANA/Compatibility/JGeometry.h>` | `#include <JANA/Geometry/JGeometry.h>` |  
+| `#include <JANA/Calibrations/JLargeCalibration.h>` | `#include <JANA/Calibrations/JResource.h>` |  
+| `auto *jlargecalib = DEvent::GetJLargeCalibration(event);` | `auto *res = DEvent::GetJResource(event);` |  
+| `jlargecalib->GetResource(dedx_i_theta_file_name["file_name"]);` | `res->GetResource(dedx_i_theta_file_name["file_name"]);` |  
+| `JLargeCalibration *jresman;` | `JResource *jresman;` |  
+| `jresman = calib_svc->GetLargeCalibration(runnumber);` | `jresman = calib_svc->GetResource(runnumber);` |  
+| `#include <JANA/Compatibility/JGeometryXML.h>` | `#include <JANA/Geometry/JGeometryXML.h>` |  
+| `#include <JANA/Compatibility/JGeometryManager.h>` | `#include <JANA/Geometry/JGeometryManager.h>` |  
+| `#include <JANA/Compatibility/JStatusBits.h>` | `#include <JANA/Utils/JStatusBits.h>` |  
+| `#include <JANA/Compatibility/jerror.h>` | `#include <DANA/jerror.h>` |  
 
 
 ## Rarely Used Features
