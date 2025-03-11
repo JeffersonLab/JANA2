@@ -567,11 +567,7 @@ inline std::string JParameterManager::Stringify(const std::vector<std::string> &
                     }
                     break;
                 }
-                ssv << s;
-                if (s.back() != '\\') {
-                    ssv << '\\';
-                }
-                ssv << ',';
+                ssv << s << "\\,";
                 continue;
             }
         } else {
@@ -618,11 +614,7 @@ inline std::string JParameterManager::Stringify(const std::array<std::string,N> 
                     }
                     break;
                 }
-                ssv << s;
-                if (s.back() != '\\') {
-                    ssv << '\\';
-                }
-                ssv << ',';
+                ssv << s << "\\,";
                 continue;
             }
         } else {

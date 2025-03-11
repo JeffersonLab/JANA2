@@ -255,9 +255,9 @@ TEST_CASE("JParameterManager_VectorParams") {
     }
     SECTION("Writing a vector of functions with commas") {
         std::vector<std::string> inputs;
-        inputs.emplace_back("phi-fmod(phi\\,5)");
-        inputs.emplace_back("theta-fmod(theta\\,10)");
-        inputs.emplace_back("omega-fmod(omega\\,15)");
+        inputs.emplace_back("phi-fmod(phi,5)");
+        inputs.emplace_back("theta-fmod(theta,10)");
+        inputs.emplace_back("omega-fmod(omega,15)");
         std::vector<std::string> temp1 = inputs;
 
 
@@ -289,6 +289,12 @@ TEST_CASE("JParameterManager_VectorParams") {
         jpm.Parse(s2, v2);
         REQUIRE(v2.size() == 2);
         REQUIRE(v2.at(0) == "This,is");
+        
+        auto s3 = "This\\,is,a\\\\,test"; // Should have 2 elements in vector
+        std::vector<std::string> v3;
+        jpm.Parse(s3, v3);
+        REQUIRE(v3.size() == 2);
+        REQUIRE(v3.at(1) == "a\\,test");
     }
     SECTION("StringifyVectorOfStrings") {
 
@@ -299,6 +305,10 @@ TEST_CASE("JParameterManager_VectorParams") {
         std::vector<std::string> v2 {"This,is", "a,test"};
         auto s2 = jpm.Stringify(v2);
         REQUIRE(s2 == "This\\,is,a\\,test");
+        
+        std::vector<std::string> v3 {"This,is", "a\\,test"};
+        auto s3 = jpm.Stringify(v3);
+        REQUIRE(s3 == "This\\,is,a\\\\,test");
     }
 }
 
@@ -417,6 +427,12 @@ TEST_CASE("JParameterManager_ArrayParams") {
         jpm.Parse(s2, v2);
         REQUIRE(v2.size() == 2);
         REQUIRE(v2.at(0) == "This,is");
+
+        auto s3 = "This\\,is,a\\\\,test"; // Should have 2 elements in vector
+        std::array<std::string, 2> v3;
+        jpm.Parse(s3, v3);
+        REQUIRE(v3.size() == 2);
+        REQUIRE(v3.at(1) == "a\\,test");
     }
     SECTION("StringifyArrayOfStrings") {
 
@@ -427,6 +443,10 @@ TEST_CASE("JParameterManager_ArrayParams") {
         std::array<std::string, 2> v2 {"This,is", "a,test"};
         auto s2 = jpm.Stringify(v2);
         REQUIRE(s2 == "This\\,is,a\\,test");
+
+        std::array<std::string, 2> v3 {"This,is", "a\\,test"};
+        auto s3 = jpm.Stringify(v3);
+        REQUIRE(s3 == "This\\,is,a\\\\,test");
     }
 }
 
