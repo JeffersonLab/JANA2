@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <time.h>
 #include <atomic>
+#include <fstream>
 
 #ifndef JANA2_USE_LOGGER_MUTEX
 #define JANA2_USE_LOGGER_MUTEX 0
