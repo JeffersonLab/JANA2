@@ -391,20 +391,18 @@ TEST_CASE("JParameterManager_ArrayParams") {
     }
     SECTION("Writing a array of functions with commas") {
         std::array<std::string, 3> inputs = {
-            "theta-fmod(phi-fmod(phi\\,5)\\,7)",
-            "theta-fmod(theta\\,10)",
-            "omega-fmod(omega\\,15)"
+            "theta-fmod(phi-fmod(phi,5),7)",
+            "theta-fmod(theta,10)",
+            "omega-fmod(omega,15)"
         };
-        std::array<std::string,3> temp1 = inputs;
 
         jpm.SetDefaultParameter("test", inputs);
         std::array<std::string,3> outputs;
-        auto param = jpm.GetParameter("test", outputs);
-        REQUIRE(param->GetValue() == "theta-fmod(phi-fmod(phi\\,5)\\,7),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
 
-        std::array<std::string,3> temp2;
-        jpm.Parse(jpm.Stringify(temp1), temp2);
-        REQUIRE(temp2 == outputs);
+        auto param = jpm.GetParameter("test", outputs);
+
+        REQUIRE(outputs == inputs);
+        REQUIRE(param->GetValue() == "theta-fmod(phi-fmod(phi\\,5)\\,7),theta-fmod(theta\\,10),omega-fmod(omega\\,15)");
     }
     SECTION("ParseArrayOfStrings") {
 
