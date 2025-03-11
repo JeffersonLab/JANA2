@@ -6,6 +6,10 @@
 
 #include <JANA/JEventSource.h>
 
+struct EventData : public JObject {
+    int event_nr=0;
+    EventData(int event_nr) : event_nr(event_nr){}
+};
 
 struct NEventNSkipBoundedSource : public JEventSource {
 
@@ -19,11 +23,14 @@ struct NEventNSkipBoundedSource : public JEventSource {
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
-    Result Emit(JEvent&) override {
+    Result Emit(JEvent& event) override {
+
+        REQUIRE(event.Get<EventData>("", false).size() == 0);
         if (event_count >= event_bound) {
             return Result::FailureFinished;
         }
         event_count += 1;
+        event.Insert(new EventData {event_count});
         events_emitted.push_back(event_count);
         return Result::Success;
     }
