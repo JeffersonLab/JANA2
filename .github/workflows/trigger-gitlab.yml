@@ -1,0 +1,39 @@
+name: trigger-gitlab
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  trigger-gitlab-job:
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - uses: eic/trigger-gitlab-ci@v3
+        id: trigger
+        with:
+          url: https://code.jlab.org
+          project_id: 218
+          token: ${{ secrets.GITLAB_TOKEN }}
+          ref_name: main
+          variables: |
+            GITHUB_REPOSITORY=${{ github.repository }}
+            GITHUB_SHA=${{ github.event.pull_request.head.sha || github.sha }}
+            GITHUB_PR=${{ github.event.pull_request.number }}
+            JANA_VERSION="${{ github.event.pull_request.head.ref || github.ref_name }}"
+            PIPELINE_NAME=${{ github.repository }}: ${{ github.event.pull_request.title || github.ref_name }}
+
+      - name: Post a GitHub CI status
+        run: |
+          gh api \
+             --method POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha || github.sha }} \
+            -f state="pending" \
+            -f target_url="${{ steps.trigger.outputs.web_url }}" \
+            -f context="GitLab JANA2-CI" \
+            -f description="Triggered... $(TZ=America/New_York date)"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
