@@ -8,24 +8,40 @@ import sys
 import toml
 import numpy as np
 import matplotlib
-import seaborn
+import seaborn as sns
+
+
+# In order to run with latex typesetting, you need:
+# sudo dnf install texlive texlive-type1cm dvipng
 
 def make_plot(plot_spec):
+
+    matplotlib.use('Agg')
+    # matplotlib.pyplot must be imported AFTER matplotlib.use(...) is called
+    import matplotlib.pyplot as plt
+
+    if 'use_latex' in plot_spec:
+        if plot_spec['use_latex']:
+            plt.rcParams['text.usetex'] = True
 
     plt.title(plot_spec['title'])
     plt.xlabel('Nthreads')
     plt.ylabel('Rate (Hz)')
-    #plt.rcParams['text.usetex'] = True
     plt.grid(True)
+    colors = sns.color_palette("deep")
+    colors_dark = sns.color_palette("dark")
 
     legend = []
+    color_idx = 0
     for subplot in plot_spec["test"]:
 
-        # Load data using numpy
+        color = colors[color_idx]
+        dark_color = colors_dark[color_idx]
+        color_idx += 1
+
         nthreads,avg_rate,rms_rate = np.loadtxt(subplot['datafile'], skiprows=1, usecols=(0,1,2), unpack=True)
         minnthreads = nthreads.min()
         maxnthreads = nthreads.max()
-        #plt.xlim(minnthreads-1.0, 10) #maxnthreads+1.0)
 
         tpar = subplot['t_par']
         tseq = subplot['t_seq']
@@ -34,11 +50,15 @@ def make_plot(plot_spec):
         par_bottleneck = 1000 * nthreads / tpar
         amdahl_ys = 1000 / (tseq + (tpar/nthreads))
         tputs = np.minimum(par_bottleneck, seq_bottleneck)
-        print(tputs)
 
         # Create plot using matplotlib
-        plt.errorbar(nthreads, avg_rate, rms_rate, linestyle='', ecolor='gray', elinewidth=2, capthick=3, marker='o', ms=4, markeredgecolor=subplot['color'], markerfacecolor=subplot['color'], label=subplot['key'])
-        plt.plot(nthreads, tputs, linestyle=":", color=subplot['color'])
+        plt.plot(nthreads, tputs, linestyle="-", color=color)
+        plt.errorbar(nthreads, avg_rate, rms_rate, 
+                     linestyle='',
+                     marker='o',
+                     ecolor=dark_color, elinewidth=1, capsize=0, capthick=0,
+                     markersize=2, markeredgewidth=1,
+                     markeredgecolor=dark_color, markerfacecolor=color, label=subplot['key'])
 
     plt.legend()
     return plt
@@ -46,21 +66,18 @@ def make_plot(plot_spec):
 
 if __name__ == "__main__":
 
-    fname = 'plot.toml'
-    no_window = False
-    make_png = False
-
-    if '-nowin' in sys.argv[1:] : no_window = True
-    if '-png'   in sys.argv[1:] : make_png = True
+    input_filename = 'plot.toml'
+    if len(sys.argv) > 1:
+        input_filename = sys.argv[1]
 
     # Make sure the rates.dat file exists and print usage statement otherwise
-    if not os.path.exists(fname):
+    if not os.path.exists(input_filename):
         print()
-        print('Cannot find file: ' + fname + '!')
+        print('Cannot find file: ' + input_filename)
         print('''
 
     Usage:
-        jana-plot-scaletests.py [-png] [-nowin] TOMLFILE
+        jana-plot-scaletests.py TOMLFILE
 
     This script can be used to plot the results of running the
     built in JANA scaling test. This test will automatically
@@ -96,24 +113,13 @@ if __name__ == "__main__":
         ''')
         sys.exit(0)
 
-    if no_window:
-        matplotlib.use('Agg')
-        make_png = True  # Always make PNG file if user specifies not to open a graphics window
-
-    # matplotlib.pyplot must be imported AFTER matplotlib.use(...) is called
-    import matplotlib.pyplot as plt
-
-    spec = toml.load(fname)
+    spec = toml.load(input_filename)
     plt = make_plot(spec)
-
-    if make_png:
-        png_filename = 'rate_vs_nthreads.png'
-        print('Saving plot to: ' + png_filename)
-        plt.savefig(png_filename)
-
-    if not no_window:
-        plt.show()
-
+    output_filename = 'rate_vs_nthreads.pdf'
+    if 'output_filename' in spec:
+        output_filename = spec['output_filename']
+    plt.savefig(output_filename)
+    print('Saved plot to: ' + output_filename)
 
 
 
