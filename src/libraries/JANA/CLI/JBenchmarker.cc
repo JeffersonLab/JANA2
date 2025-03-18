@@ -8,6 +8,8 @@
 
 #include <fstream>
 #include <cmath>
+#include <iomanip>
+#include <ios>
 #include <sys/stat.h>
 #include <iostream>
 #include <vector>
@@ -18,7 +20,7 @@ JBenchmarker::JBenchmarker(JApplication* app) : m_app(app) {
 
     auto params = app->GetJParameterManager();
 
-    m_logger = params->GetLogger("JBenchmarker");
+    m_logger = params->GetLogger("benchmark");
 
     params->SetParameter("jana:nevents", 0);
     // Prevent users' choice of nevents from interfering with everything
@@ -82,6 +84,16 @@ void JBenchmarker::RunUntilFinished() {
                        << "    benchmark:nsamples = " << m_nsamples << std::endl
                        << "    benchmark:resultsdir = " << m_output_dir << std::endl;
 
+
+    mkdir(m_output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    std::ofstream samples_file(m_output_dir + "/samples.dat");
+    samples_file << "# nthreads     rate" << std::endl;
+
+    std::ofstream rates_file(m_output_dir + "/rates.dat");
+    rates_file << "# nthreads  avg_rate       rms" << std::endl;
+
+
     std::vector<size_t> nthreads_space;
     if (m_use_log_scale) {
         for (size_t i=m_min_threads; i<m_max_threads; i *= m_thread_step) {
@@ -111,16 +123,12 @@ void JBenchmarker::RunUntilFinished() {
             break;
         }
     }
-    // Loop over all thread settings in set
-    std::map<uint32_t, std::vector<double> > samples;
-    std::map<uint32_t, std::pair<double, double> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
 
     for (size_t nthreads: nthreads_space) {
         if (m_app->IsQuitting()) {
             break;
         }
 
-        LOG_INFO(m_logger) << "Setting nthreads = " << nthreads << " ..." << LOG_END;
         m_app->Scale(nthreads);
 
         // Loop for at most 60 seconds waiting for the number of threads to update
@@ -129,55 +137,51 @@ void JBenchmarker::RunUntilFinished() {
             if (m_app->GetNThreads() == nthreads) break;
         }
 
-        // Acquire mNsamples instantaneous rate measurements. The
-        // GetInstantaneousRate method will only update every 0.5
-        // seconds so we just wait for 1 second between samples to
-        // ensure independent measurements.
+        // Accumulate avg and rms rates for all samples for each nthreads
+        double avg = 0;
+        double rms = 0;
         double sum = 0;
         double sum2 = 0;
+
         for (uint32_t isample = 0; isample < m_nsamples && !m_app->IsQuitting(); isample++) {
+            // Acquire mNsamples instantaneous rate measurements. The
+            // GetInstantaneousRate method will only update every 0.5
+            // seconds so we just wait for 1 second between samples to
+            // ensure independent measurements.
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             auto rate = m_app->GetInstantaneousRate();
-            samples[nthreads].push_back(rate);
 
             sum += rate;
             sum2 += rate * rate;
             double N = (double) (isample + 1);
-            double avg = sum / N;
-            double rms = sqrt((sum2 + N * avg * avg - 2.0 * avg * sum) / N);
-            rates[nthreads].first = avg;  // overwrite with updated value after each sample
-            rates[nthreads].second = rms;  // overwrite with updated value after each sample
+            avg = sum / N; // Overwrite with updated value after each sample
+            rms = sqrt((sum2 + N * avg * avg - 2.0 * avg * sum) / N);
 
-            LOG_INFO(m_logger) << "nthreads=" << m_app->GetNThreads() << "  rate=" << rate << "Hz"
-                       << "  (avg = " << avg << " +/- " << rms / sqrt(N) << " Hz)" << LOG_END;
+            LOG_INFO(m_logger)
+                << std::setprecision(2) << std::fixed
+                << "nthreads=" << m_app->GetNThreads()
+                << "  rate=" << rate << "Hz"
+                << "  (avg = " << avg << " +/- " << rms / sqrt(N) << " Hz)" << LOG_END;
+
+            // Write line in sample file
+            samples_file << std::setw(7) << nthreads << " "
+                         << std::setw(12) << std::setprecision(2) << std::fixed << rate << std::endl;
+            samples_file.flush();
         }
+
+        // Write line in rates file
+        rates_file << std::setw(7) << nthreads << " "
+                   << std::setw(12) << std::setprecision(2) << std::fixed << avg << " "
+                   << std::setw(10) << std::setprecision(2) << std::fixed << rms << std::endl;
+        rates_file.flush();
     }
 
-    // Write results to files
-    LOG_INFO(m_logger) << "Writing test results to: " << m_output_dir << LOG_END;
-    mkdir(m_output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    // Close files
+    // Hopefully, because we called flush(), the files will be partially filled even if we are SIGKILLed
+    // before we reach this point.
 
-    std::ofstream ofs1(m_output_dir + "/samples.dat");
-    ofs1 << "# nthreads     rate" << std::endl;
-    for (auto p : samples) {
-        auto nthreads = p.first;
-        for (auto rate: p.second)
-            ofs1 << std::setw(7) << nthreads << " " << std::setw(12) << std::setprecision(1) << std::fixed << rate
-                 << std::endl;
-    }
-    ofs1.close();
-
-    std::ofstream ofs2(m_output_dir + "/rates.dat");
-    ofs2 << "# nthreads  avg_rate       rms" << std::endl;
-    for (auto p : rates) {
-        auto nthreads = p.first;
-        auto avg_rate = p.second.first;
-        auto rms = p.second.second;
-        ofs2 << std::setw(7) << nthreads << " ";
-        ofs2 << std::setw(12) << std::setprecision(1) << std::fixed << avg_rate << " ";
-        ofs2 << std::setw(10) << std::setprecision(1) << std::fixed << rms << std::endl;
-    }
-    ofs2.close();
+    samples_file.close();
+    rates_file.close();
 
     if (m_copy_script) {
         copy_to_output_dir("${JANA_HOME}/bin/jana-plot-scaletest.py");
