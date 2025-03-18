@@ -1,8 +1,32 @@
 
 import re
-import svgwrite
 from datetime import datetime, timedelta
 from collections import defaultdict
+
+
+class Drawing:
+    def __init__(self, width, height, profile="tiny"):
+        self.lines = [
+            f"""<?xml version="1.0" encoding="utf-8" ?>\n""",
+            f"""<svg baseProfile="{profile}" width="{width}" height="{height}" version="1.2" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink"><defs />"""
+        ]
+
+    def write(self, output_filename="timeline.svg"):
+        self.lines.append("</svg>")
+        output_file = open(output_filename, 'w')
+        output_file.writelines(self.lines)
+        output_file.close()
+
+    def add_rect(self, x, y, width, height, fill="lightgray", stroke="darkgray", stroke_width=1, mouseover_text=""):
+        if not mouseover_text:
+            self.lines.append(f"""<rect fill="{fill}" height="{height}" stroke="{stroke}" stroke-width="{stroke_width}" width="{width}" x="{x}" y="{y}" />\n""")
+        else:
+            self.lines.append(f"""<rect fill="{fill}" height="{height}" stroke="{stroke}" stroke-width="{stroke_width}" width="{width}" x="{x}" y="{y}">\n""")
+            self.lines.append(f"""    <title>{mouseover_text}</title>\n""")
+            self.lines.append(f"""</rect>\n\n""")
+
+    def add_text(self, text, x, y, fill="black", font_size=8):
+        self.lines.append(f"""<text fill="{fill}" font-size="{font_size}" x="{x}" y="{y}">{text}</text>\n\n""")
 
 
 def parse_logfile():
@@ -123,8 +147,7 @@ def create_svg(all_thread_history, barrier_history):
 
 
     # Create the SVG drawing
-    dwg = svgwrite.Drawing("timeline.svg", profile='tiny', size=(width, height))
-    #dwg.add(dwg.rect(insert=(0,0),size=(width,height),stroke="red",fill="white"))
+    dwg = Drawing(width=width, height=height)
 
     # Draw a rectangle for each processor run on each thread's timeline
     y_position = thread_y_padding
@@ -136,15 +159,12 @@ def create_svg(all_thread_history, barrier_history):
         else:
             rect_width = (barrier_end-barrier_start)*x_scale
 
-        rect = dwg.rect(insert=(rect_start, 0), 
-                            size=(rect_width, height),
-                            fill="red",
-                            stroke="none",
-                            stroke_width=1)
-        dwg.add(rect)
+        dwg.add_rect(x=rect_start, y=0,
+                     width=rect_width, height=height,
+                     fill="red", stroke="none", stroke_width=1)
 
     for thread_id, intervals in all_thread_history.items():
-        dwg.add(dwg.rect(insert=(0,y_position),size=(1000,thread_height),stroke="lightgray",fill="lightgray"))
+        dwg.add_rect(x=0, y=y_position, width=1000, height=thread_height, stroke="lightgray", fill="lightgray")
         for start_time, end_time, processor_name, event_nr, result in intervals:
             # Calculate the position and width of the rectangle
             # Assign a unique color to each processor name
@@ -164,24 +184,23 @@ def create_svg(all_thread_history, barrier_history):
                 rect_stroke_color = "gray"
 
 
-            rect = dwg.rect(insert=(rect_start, y_position), 
-                             size=(rect_width, thread_height),
-                             fill=processor_colors[processor_name],
-                             stroke=rect_stroke_color,
-                             stroke_width=1)
             mouseover = "Arrow: " + processor_name + "\nEvent nr: " + str(event_nr) + "\nResult: " + result + "\nTime: "+ str(end_time-start_time) + "ms"
-            rect.add(svgwrite.base.Title(mouseover))
-            dwg.add(rect)
+
+            dwg.add_rect(x=rect_start, y=y_position,
+                         width=rect_width, height=thread_height,
+                         fill=processor_colors[processor_name],
+                         stroke=rect_stroke_color, stroke_width=1,
+                         mouseover_text=mouseover)
+
             if (event_nr is not None):
-                text = dwg.text(str(event_nr), insert=(rect_start+1, y_position+thread_height-1), fill="white", font_size=8)
-                dwg.add(text)
+                dwg.add_text(str(event_nr), x=rect_start+1, y=y_position+thread_height-1, fill="white", font_size=8)
 
         # Move the y position for the next thread
         y_position += (thread_y_padding + thread_height)
 
 
     # Save the SVG file
-    dwg.save()
+    dwg.write("timeline.svg")
 
 
 
