@@ -14,14 +14,14 @@ def parse_logfile():
     start_times = {}  # Key: (thread_id, processor_name), Value: start_time
 
     # Define a regular expression to parse the log lines
-    source_start_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) \[debug\] (\d+) Executing arrow (\w+)$")
-    source_finish_noemit_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) \[debug\] (\d+) Executed arrow (\w+) with result (\w+)$")
-    source_finish_emit_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) \[debug\] (\d+) Executed arrow (\w+) with result (\w+), emitting event# (\d+)$")
-    source_finish_pending_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) \[debug\] (\d+) Executed arrow (\w+) with result (\w+), holding back barrier event# (\d+)$")
-    processor_start_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) \[debug\] (\d+) Executing arrow (\w+) for event# (\d+)$")
-    processor_finish_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) \[debug\] (\d+) Executed arrow (\w+) for event# (\d+)$")
-    barrier_inflight_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) \[debug\] (\d+) JEventSourceArrow: Barrier event is in-flight$")
-    barrier_finished_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) \[debug\] (\d+) JEventSourceArrow: Barrier event finished, returning to normal operation$")
+    source_start_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) #(\d+) \[debug\] Executing arrow (\w+)$")
+    source_finish_noemit_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) #(\d+) \[debug\] Executed arrow (\w+) with result (\w+)$")
+    source_finish_emit_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) #(\d+) \[debug\] Executed arrow (\w+) with result (\w+), emitting event# (\d+)$")
+    source_finish_pending_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) #(\d+) \[debug\] Executed arrow (\w+) with result (\w+), holding back barrier event# (\d+)$")
+    processor_start_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) #(\d+) \[debug\] Executing arrow (\w+) for event# (\d+)$")
+    processor_finish_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) #(\d+) \[debug\] Executed arrow (\w+) for event# (\d+)$")
+    barrier_inflight_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) #(\d+) \[debug\] JEventSourceArrow: Barrier event is in-flight$")
+    barrier_finished_pattern = re.compile(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3}) #(\d+) \[debug\] JEventSourceArrow: Barrier event finished, returning to normal operation$")
 
     with open("log.txt", "r") as log_file:
         for line in log_file:
@@ -97,6 +97,15 @@ def parse_logfile():
 
 
 def create_svg(all_thread_history, barrier_history):
+
+    if not all_thread_history:
+        print("Error: No thread history found")
+        print()
+        print("Make sure you use the following parameters:")
+        print("  jana:loglevel=debug")
+        print("  jana:log:show_threadstamp=1")
+        return
+
     # Assign colors to processors
     processor_colors = {}
     color_palette = ['#004E64', '#00A5CF', '#9FFFCB', '#25A18E', '#7AE582', '#FF69B4']
