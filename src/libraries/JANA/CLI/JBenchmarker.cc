@@ -10,6 +10,7 @@
 #include <cmath>
 #include <sys/stat.h>
 #include <iostream>
+#include <vector>
 
 JBenchmarker::JBenchmarker(JApplication* app) : m_app(app) {
 
@@ -38,6 +39,16 @@ JBenchmarker::JBenchmarker(JApplication* app) : m_app(app) {
             "Maximum number of threads for benchmark test");
 
     params->SetDefaultParameter(
+            "benchmark:use_log_scale",
+            m_use_log_scale,
+            "Use log scale (instead of linear)");
+
+    if (m_use_log_scale) {
+        // A thread step of 1 won't work for log scale, so in this case we default to 2
+        m_thread_step = 2;
+    }
+
+    params->SetDefaultParameter(
             "benchmark:threadstep",
             m_thread_step,
             "Delta number of threads between each benchmark test");
@@ -52,6 +63,7 @@ JBenchmarker::JBenchmarker(JApplication* app) : m_app(app) {
             m_copy_script,
             "Copy plotting script to results dir");
 
+
     params->SetParameter("nthreads", m_max_threads);
     // Otherwise JApplication::Scale() doesn't scale up. This is an interesting bug. TODO: Remove me when fixed.
 }
@@ -62,12 +74,29 @@ JBenchmarker::~JBenchmarker() {}
 
 void JBenchmarker::RunUntilFinished() {
 
-    LOG_INFO(m_logger) << "Running benchmarker with the following settings:\n"
-                       << "    benchmark:minthreads = " << m_min_threads << "\n"
-                       << "    benchmark:maxthreads = " << m_max_threads << "\n"
-                       << "    benchmark:threadstep = " << m_thread_step << "\n"
-                       << "    benchmark:nsamples = " << m_nsamples << "\n"
-                       << "    benchmark:resultsdir = " << m_output_dir << LOG_END;
+    LOG_INFO(m_logger) << "Running benchmarker with the following settings:" << std::endl
+                       << "    benchmark:minthreads = " << m_min_threads << std::endl
+                       << "    benchmark:maxthreads = " << m_max_threads << std::endl
+                       << "    benchmark:threadstep = " << m_thread_step << std::endl
+                       << "    benchmark:use_log_scale = " << m_use_log_scale << std::endl
+                       << "    benchmark:nsamples = " << m_nsamples << std::endl
+                       << "    benchmark:resultsdir = " << m_output_dir << std::endl;
+
+    std::vector<size_t> nthreads_space;
+    if (m_use_log_scale) {
+        for (size_t i=m_min_threads; i<m_max_threads; i *= m_thread_step) {
+            nthreads_space.push_back(i);
+        }
+    }
+    else {
+        // Use linear scale
+        for (size_t i=m_min_threads; i<m_max_threads; i += m_thread_step) {
+            nthreads_space.push_back(i);
+        }
+    }
+    if (nthreads_space.back() != m_max_threads) {
+        nthreads_space.push_back(m_max_threads);
+    }
 
     m_app->SetTicker(false);
     m_app->Run(false);
@@ -85,7 +114,11 @@ void JBenchmarker::RunUntilFinished() {
     // Loop over all thread settings in set
     std::map<uint32_t, std::vector<double> > samples;
     std::map<uint32_t, std::pair<double, double> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
-    for (uint32_t nthreads = m_min_threads; nthreads <= m_max_threads && !m_app->IsQuitting(); nthreads += m_thread_step) {
+
+    for (size_t nthreads: nthreads_space) {
+        if (m_app->IsQuitting()) {
+            break;
+        }
 
         LOG_INFO(m_logger) << "Setting nthreads = " << nthreads << " ..." << LOG_END;
         m_app->Scale(nthreads);
