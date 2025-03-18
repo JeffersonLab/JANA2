@@ -63,5 +63,8 @@ cmake-build*/
 .cache
 compile_commands.json
 
+# JANA-generated files
+JANA_Test_Results/
+
 # Drawio backups
 *.bkp
