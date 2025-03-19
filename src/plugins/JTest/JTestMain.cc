@@ -9,6 +9,7 @@
 
 #include "JTestParser.h"
 #include "JTestPlotter.h"
+#include "JTestPlotterLegacy.h"
 #include "JTestDisentangler.h"
 #include "JTestTracker.h"
 
@@ -18,9 +19,16 @@ void InitPlugin(JApplication *app){
 
 	InitJANAPlugin(app);
     app->Add(new JTestParser);
-    app->Add(new JTestPlotter);
 	app->Add(new JFactoryGeneratorT<JTestDisentangler>());
 	app->Add(new JFactoryGeneratorT<JTestTracker>());
+
+    bool use_legacy_plotter = app->RegisterParameter("jtest:use_legacy_plotter", false);
+    if (use_legacy_plotter) {
+        app->Add(new JTestPlotterLegacy);
+    }
+    else {
+        app->Add(new JTestPlotter);
+    }
 
     bool except_on_loading = app->RegisterParameter("jtest:except_on_loading", false);
     if (except_on_loading) {
