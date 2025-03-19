@@ -34,7 +34,7 @@ struct BarrierSource : public JEventSource {
         else {
             LOG_INFO(GetLogger()) << "Emitting non-barrier event " << event_nr << LOG_END;
         }
-        bench.consume_cpu_ms(50, 0, false);
+        bench.consume_cpu_ms(50, 0);
         return Result::Success;
     }
 };
@@ -48,7 +48,7 @@ struct LegacyBarrierProcessor : public JEventProcessor {
 
     void Process(const std::shared_ptr<const JEvent>& event) override {
         
-        bench.consume_cpu_ms(200, 0, true);
+        bench.consume_cpu_ms(200, 0);
 
         std::lock_guard<std::mutex> lock(m_my_mutex);
 
@@ -61,7 +61,7 @@ struct LegacyBarrierProcessor : public JEventProcessor {
             LOG_INFO(GetLogger()) << "Processing non-barrier event = " << event->GetEventNumber() << ", reading global var = " << global_resource << LOG_END;
             REQUIRE(global_resource == (event->GetEventNumber() / 10));
         }
-        bench.consume_cpu_ms(100, 0, true);
+        bench.consume_cpu_ms(100, 0);
     }
 };
 
@@ -74,7 +74,7 @@ struct BarrierProcessor : public JEventProcessor {
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
     void ProcessParallel(const JEvent&) override {
-        bench.consume_cpu_ms(200, 0, false);
+        bench.consume_cpu_ms(200, 0);
     }
 
     void Process(const JEvent& event) override {
@@ -88,7 +88,7 @@ struct BarrierProcessor : public JEventProcessor {
             LOG_INFO(GetLogger()) << "Processing non-barrier event = " << event.GetEventNumber() << ", reading global var = " << global_resource << LOG_END;
             REQUIRE(global_resource == (event.GetEventNumber() / 10));
         }
-        bench.consume_cpu_ms(100, 0, false);
+        bench.consume_cpu_ms(100, 0);
     }
 };
 
