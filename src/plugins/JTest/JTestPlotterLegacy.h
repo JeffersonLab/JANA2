@@ -26,6 +26,8 @@ public:
 
     void Process(const std::shared_ptr<const JEvent>& event) override {
 
+        LOG_INFO(GetLogger()) << "Entering region jtest:plotter:par for event# " << event->GetEventNumber();
+
         m_bench_utils.set_seed(event->GetEventNumber(), typeid(*this).name());
 
         // Produce and acquire the track data
@@ -34,8 +36,12 @@ public:
         // Produce and acquire the track aux data
         auto tad = event->Get<JTestTrackAuxilliaryData>();
 
+        LOG_INFO(GetLogger()) << "Exited region jtest:plotter:par for event# " << event->GetEventNumber();
+
         // Everything that happens after here is in a critical section
         std::lock_guard<std::mutex> lock(m_mutex);
+
+        LOG_INFO(GetLogger()) << "Entering region jtest:plotter:seq for event# " << event->GetEventNumber();
 
         // Read the track data
         m_bench_utils.read_memory(td->buffer);
@@ -47,6 +53,8 @@ public:
         auto hd = new JTestHistogramData;
         m_bench_utils.write_memory(hd->buffer, *m_write_bytes, *m_write_spread);
         event->Insert(hd);
+
+        LOG_INFO(GetLogger()) << "Exited region jtest:plotter:seq for event# " << event->GetEventNumber();
     }
 
 };
