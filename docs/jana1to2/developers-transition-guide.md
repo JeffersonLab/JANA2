@@ -63,11 +63,11 @@ auto dapp = GetApplication()->GetService<DApplication>();
 ##### **JANA1**
 
 ```cpp
-gPARMS->GetParameter("OUTPUT_FILENAME", dOutputFileName);
+gPARMS->SetDefaultParameter("component_prefix:value_name", ref_to_member_var);
 ```
 
 ##### **JANA2**
-You should obtain parameters as shown below. 
+You should set parameters as shown below. 
 
 ```cpp
 auto app = GetApplication();
@@ -82,6 +82,24 @@ We strongly recommend you register all parameters from inside the `Init()` callb
 - Inspect the exact parameter values used by a factory
 
 If you register parameters in other contexts, this machinery might not work and you might get incomplete parameter lists and missing or spurious error messages. Worse, your code might not see the parameter values you expect it to see. Registering parameters from inside constructors is less problematic but still discouraged because it won't work with some upcoming new features.
+
+### Getting Parameters
+
+##### **JANA1**
+
+```cpp
+gPARMS->GetParameter("component_prefix:value_name", ref_to_member_var);
+```
+
+##### **JANA2**
+```cpp
+auto app = GetApplication();
+// Method 1
+app->GetParameter("component_prefix:value_name", member_var);
+// Method 2
+member_var = app->GetParameterValue<value_type>("component_prefix:value_name");
+```
+
 
 ### Getting Parameter Maps
 
