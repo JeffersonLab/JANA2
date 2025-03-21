@@ -17,7 +17,53 @@
 # and helps document the settings when JANA was built so there is
 # the possibility of reusing them if needed when building against
 # this JANA installation.
-BMS_OSNAME="@BMS_OSNAME@"
+
+# usage prints the help message
+usage() {
+    cat <<EOF
+
+Usage:
+     jana-config [--help,-h] [--version,-v] [--jana-only] [--cflags] [--libs] [--cxxstandard] [--osname]
+
+Print compiler options useful to help build programs using this "
+JANA installation.
+
+  --help, -h    Display this help message.
+
+  --version,-v  Display JANA2 version.
+
+  --jana-only   Don't include arguments from packages JANA was built
+                to include support for. Use this if you wish to specify
+                these yourself. If you do include this option, it must
+                come first in the arugment list as it will only affect
+                options that follow it.
+
+  --cxxflags    print flags needed to compile (not necessarily link)
+                a program against this installation of JANA.
+
+  --cflags      (same as --cxxflags)
+
+  --libs        print flags needed to link a program against this
+                installation of JANA.
+
+  --cxxstandard print the c++ standard used to build JANA2
+
+  --installdir  print install directory for JANA2 build
+
+EOF
+}
+
+# If no argument is passed, or help is requested, show usage
+if [ "$#" -eq 0 ]; then
+    usage
+    exit 0
+fi
+
+
+CMAKE_INSTALL_PREFIX="@CMAKE_INSTALL_PREFIX@"
+CMAKE_CXX_STANDARD="@CMAKE_CXX_STANDARD@"
+
+JANA_VERSION="@PROJECT_VERSION@"
 
 HAVE_MYSQL="@HAVE_MYSQL@"
 JANA2_HAVE_XERCES="@JANA2_HAVE_XERCES@"
@@ -69,49 +115,36 @@ fi
 while test $# -gt 0; do
 
 	case $1 in
-		--cflags)
+		--cflags|--cxxflags)
 			mess="$mess -I${JANA_INSTALL_DIR}/include ${CPPFLAGS}"
 			;;
-	esac
-	case $1 in
+		--version|-v)
+			mess="${JANA_VERSION}"
+			;;
 		--libs)
 			mess="$mess -Wl,-rpath,${JANA_INSTALL_DIR}/lib -L${JANA_INSTALL_DIR}/lib -lJANA ${LDFLAGS} ${JANA_ONLY_LIBS} ${LIBS}"
 			;;
-	esac
-	case $1 in
 		--static-libs)
 			mess="$mess ${JANA_INSTALL_DIR}/lib/libJANA.a ${LDFLAGS} ${JANA_ONLY_LIBS} ${LIBS}"
 			;;
-	esac
-	case $1 in
 		--jana-only)
 			CPPFLAGS=""
 			LDFLAGS=""
 			LIBS=""
 			;;
-	esac
-	case $1 in
-		--help)
-			echo " "
-			echo "Usage: "
-			echo "     jana-config [--jana-only] [--cflags] [--libs] "
-			echo " "
-			echo "Print compiler options useful to help build programs using this "
-			echo "JANA installation. "
-			echo " "
-			echo " --jana-only  Don't include arguments from packages JANA was built "
-			echo "              to include support for. Use this if you wish to specify "
-			echo "              these yourself. If you do include this option, it must "
-			echo "              come first in the arugment list as it will only affect "
-			echo "              options that follow it. "
-			echo " "
-			echo " --cflags     print flags needed to compile (not necessarily link) "
-			echo "              a program against this installation of JANA. "
-			echo " "
-			echo " --libs       print flags needed to link a program against this "
-			echo "              installation of JANA. "
-			mess=" "
+		--help|-h)
+			usage
+			exit 0
 			;;
+		--cxxstandard)
+			mess="$mess ${CMAKE_CXX_STANDARD}"
+			;;
+		--installdir)
+			mess="$mess ${CMAKE_INSTALL_PREFIX}"
+			;;
+		*)
+        	mess="Unknown option: $1" >&2
+        ;;
 	esac
 	shift
 done
