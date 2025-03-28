@@ -719,13 +719,15 @@ bool JExecutionEngine::IsTimeoutEnabled() const {
 
 JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 
+    Task task;
+
     std::unique_lock<std::mutex> lock(m_mutex);
     if (arrow_id >= m_topology->arrows.size()) {
         LOG_WARN(GetLogger()) << "Firing unsuccessful: No arrow exists with id=" << arrow_id << LOG_END;
         return JArrow::FireResult::NotRunYet;
     }
-    JArrow* arrow = m_topology->arrows[arrow_id];
-    LOG_WARN(GetLogger()) << "Attempting to fire arrow with name=" << arrow->get_name() 
+    task.arrow = m_topology->arrows[arrow_id];
+    LOG_WARN(GetLogger()) << "Attempting to fire arrow with name=" << task.arrow->get_name() 
                           << ", index=" << arrow_id << ", location=" << location_id << LOG_END;
 
     ArrowState& arrow_state = m_arrow_states[arrow_id];
@@ -739,17 +741,17 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     }
     arrow_state.active_tasks += 1;
 
-    auto port = arrow->get_next_port_index();
+    task.input_port = task.arrow->get_next_port_index();
     JEvent* event = nullptr;
-    if (port != -1) {
-        event = arrow->pull(port, location_id);
+    if (task.input_port != -1) {
+        event = task.arrow->pull(task.input_port, location_id);
         if (event == nullptr) {
-            LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow needs an input event from port " << port << ", but the queue or pool is empty." << LOG_END;
+            LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow needs an input event from port " << task.input_port << ", but the queue or pool is empty." << LOG_END;
             arrow_state.active_tasks -= 1;
             return JArrow::FireResult::NotRunYet;
         }
         else {
-            LOG_WARN(GetLogger()) << "Input event #" << event->GetEventNumber() << " from port " << port << LOG_END;
+            LOG_WARN(GetLogger()) << "Input event #" << event->GetEventNumber() << " from port " << task.input_port << LOG_END;
         }
     }
     else {
@@ -757,25 +759,27 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     }
     lock.unlock();
 
-    size_t output_count;
-    JArrow::OutputData outputs;
-    JArrow::FireResult result = JArrow::FireResult::NotRunYet;
+    WorkerState worker;
+    worker.last_arrow_id = arrow_id;
+    worker.location_id = location_id;
 
     LOG_WARN(GetLogger()) << "Firing arrow" << LOG_END;
-    arrow->fire(event, outputs, output_count, result);
-    LOG_WARN(GetLogger()) << "Fired arrow with result " << to_string(result) << LOG_END;
-    if (output_count == 0) {
+    task.arrow->fire(event, task.outputs, task.output_count, task.status);
+    LOG_WARN(GetLogger()) << "Fired arrow with result " << to_string(task.status) << LOG_END;
+    if (task.output_count == 0) {
         LOG_WARN(GetLogger()) << "No output events" << LOG_END;
     }
     else {
-        for (size_t i=0; i<output_count; ++i) {
-            LOG_WARN(GetLogger()) << "Output event #" << outputs.at(i).first->GetEventNumber() << " on port " << outputs.at(i).second << LOG_END;
+        for (size_t i=0; i<task.output_count; ++i) {
+            LOG_WARN(GetLogger()) << "Output event #" << task.outputs.at(i).first->GetEventNumber() << " on port " << task.outputs.at(i).second << LOG_END;
         }
     }
 
+    auto checkin_time = std::chrono::steady_clock::now();
+    JArrow::FireResult result = task.status;
+
     lock.lock();
-    arrow->push(outputs, output_count, location_id);
-    arrow_state.active_tasks -= 1;
+    CheckinCompletedTask_Unsafe(task, worker, checkin_time);
     lock.unlock();
     return result;
 }
