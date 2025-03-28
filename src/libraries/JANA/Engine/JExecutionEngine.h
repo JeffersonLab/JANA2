@@ -106,7 +106,6 @@ private:
     size_t m_next_arrow_id=0;
 
     // Metrics
-    size_t m_event_count_at_start = 0;
     size_t m_event_count_at_finish = 0;
     clock_t::time_point m_time_at_start;
     clock_t::time_point m_time_at_finish;

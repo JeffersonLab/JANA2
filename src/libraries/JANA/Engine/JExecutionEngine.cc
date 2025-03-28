@@ -81,13 +81,17 @@ void JExecutionEngine::RunTopology() {
 
     // Set start time and event count
     m_time_at_start = clock_t::now();
-    m_event_count_at_start = m_event_count_at_finish;
+    m_event_count_at_finish = 0;
 
     // Reactivate topology
     for (auto& arrow: m_arrow_states) {
         if (arrow.status == ArrowState::Status::Paused) {
             arrow.status = ArrowState::Status::Running;
         }
+        // Reset event count and processing duration when we run/resume processing
+        // Note that processing durations are NOT comparable when nthreads changes if the components lock their own mutexes
+        arrow.events_processed = 0;
+        arrow.total_processing_duration = std::chrono::milliseconds(0);
     }
 
     m_runstatus = RunStatus::Running;
@@ -105,7 +109,7 @@ void JExecutionEngine::RunTopologyForOneEvent(JEventLevel level) {
 
     // Set start time and event count
     m_time_at_start = clock_t::now();
-    m_event_count_at_start = m_event_count_at_finish;
+    m_event_count_at_finish = 0;
 
     std::ostringstream ss;
     ss << level << "Source";
@@ -114,6 +118,10 @@ void JExecutionEngine::RunTopologyForOneEvent(JEventLevel level) {
     size_t source_arrow_id = 0;
     size_t arrow_id=0;
     for (auto& arrow: m_arrow_states) {
+        // Reset event count and processing duration when we run/resume processing
+        // Note that processing durations are NOT comparable when nthreads changes if the components lock their own mutexes
+        arrow.events_processed = 0;
+        arrow.total_processing_duration = std::chrono::milliseconds(0);
         if (m_topology->arrows[arrow_id]->get_name() == source_arrow_name) {
             source_arrow_id = arrow_id;
         }
@@ -386,18 +394,17 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
     std::unique_lock<std::mutex> lock(m_mutex);
     Perf result;
     if (m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Failed) {
-        result.event_count = m_event_count_at_finish - m_event_count_at_start;
+        result.event_count = m_event_count_at_finish;
         result.uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_time_at_finish - m_time_at_start).count();
     }
     else {
         // Obtain current event count
-        size_t current_event_count = 0;
+        result.event_count = 0;
         for (auto& state : m_arrow_states) {
             if (state.is_sink) {
-                current_event_count += state.events_processed;
+                result.event_count += state.events_processed;
             }
         }
-        result.event_count = current_event_count - m_event_count_at_start;
         result.uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(clock_t::now() - m_time_at_start).count();
     }
     result.runstatus = m_runstatus;
@@ -651,7 +658,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
 void JExecutionEngine::PrintFinalReport() {
 
     std::unique_lock<std::mutex> lock(m_mutex);
-    auto event_count = m_event_count_at_finish - m_event_count_at_start;
+    auto event_count = m_event_count_at_finish;
     auto uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_time_at_finish - m_time_at_start).count();
     auto thread_count = m_worker_states.size();
     auto throughput_hz = (event_count * 1000.0) / uptime_ms;

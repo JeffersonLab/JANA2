@@ -197,6 +197,7 @@ void JApplication::Run(bool wait_until_stopped, bool finish) {
     LOG_WARN(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
     m_execution_engine->ScaleWorkers(m_desired_nthreads);
     m_execution_engine->RunTopology();
+    GetInstantaneousRate(); // Reset the inst rate counter
 
     if (!wait_until_stopped) {
         return;
@@ -218,6 +219,7 @@ void JApplication::Scale(int nthreads) {
     LOG_WARN(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
     m_execution_engine->ScaleWorkers(nthreads);
     m_execution_engine->RunTopology();
+    GetInstantaneousRate(); // Reset the inst rate counter
 }
 
 void JApplication::Inspect() {
