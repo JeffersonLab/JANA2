@@ -128,6 +128,7 @@ public:
     void Init() override;
 
     void RunTopology();
+    void RunTopologyForOneEvent(JEventLevel level=JEventLevel::PhysicsEvent);
     void PauseTopology();
     void DrainTopology();
     void FinishTopology();

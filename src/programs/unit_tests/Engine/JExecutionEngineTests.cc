@@ -185,7 +185,7 @@ TEST_CASE("JExecutionEngine_ScaleWorkers") {
 }
 
 
-TEST_CASE("JExecutionEngine_RunSingleEvent") {
+TEST_CASE("JExecutionEngine_RunTopology") {
     JApplication app;
     app.SetParameterValue("jana:nevents", 3);
     app.SetParameterValue("jana:loglevel", "debug");
@@ -232,6 +232,117 @@ TEST_CASE("JExecutionEngine_RunSingleEvent") {
         REQUIRE(sut->GetPerf().thread_count == 0);
     }
 }
+
+TEST_CASE("JExecutionEngine_RunTopologyForOneEvent") {
+    JApplication app;
+    app.SetParameterValue("jana:nevents", 4);
+    app.SetParameterValue("jana:loglevel", "debug");
+    app.SetParameterValue("jana:log:show_threadstamp", true);
+    app.Add(new TestSource());
+    app.Add(new TestProc());
+    app.Initialize();
+    auto sut = app.GetService<JExecutionEngine>();
+
+    SECTION("SingleWorker") {
+
+        REQUIRE(sut->GetPerf().thread_count == 0);
+
+        sut->ScaleWorkers(1);
+        REQUIRE(sut->GetPerf().thread_count == 1);
+
+        sut->RunTopologyForOneEvent();
+        sut->RunSupervisor();
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->RunTopologyForOneEvent();
+        sut->RunSupervisor();
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->FinishTopology();
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Finished);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->ScaleWorkers(0);
+        REQUIRE(sut->GetPerf().thread_count == 0);
+    }
+
+    SECTION("MultipleWorker") {
+
+        REQUIRE(sut->GetPerf().thread_count == 0);
+
+        sut->ScaleWorkers(4);
+        REQUIRE(sut->GetPerf().thread_count == 4);
+
+        sut->RunTopologyForOneEvent();
+        sut->RunSupervisor();
+        REQUIRE(sut->GetPerf().thread_count == 4);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->RunTopologyForOneEvent();
+        sut->RunSupervisor();
+        REQUIRE(sut->GetPerf().thread_count == 4);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->FinishTopology();
+        REQUIRE(sut->GetPerf().thread_count == 4);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Finished);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->ScaleWorkers(0);
+        REQUIRE(sut->GetPerf().thread_count == 0);
+    }
+
+    SECTION("RunsOutOfEvents") {
+
+        sut->ScaleWorkers(1);
+
+        sut->RunTopologyForOneEvent();
+        sut->RunSupervisor();
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->RunTopologyForOneEvent();
+        sut->RunSupervisor();
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->RunTopologyForOneEvent();
+        sut->RunSupervisor();
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->RunTopologyForOneEvent();
+        sut->RunSupervisor();
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().event_count == 1);
+
+        sut->RunTopologyForOneEvent();
+        sut->RunSupervisor();
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(sut->GetPerf().event_count == 0);
+
+        sut->FinishTopology();
+        REQUIRE(sut->GetPerf().thread_count == 1);
+        REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Finished);
+        REQUIRE(sut->GetPerf().event_count == 0);
+
+        sut->ScaleWorkers(0);
+        REQUIRE(sut->GetPerf().thread_count == 0);
+    }
+}
+
 
 TEST_CASE("JExecutionEngine_ExternalPause") {
     JApplication app;

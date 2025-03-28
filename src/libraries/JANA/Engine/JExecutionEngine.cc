@@ -96,6 +96,40 @@ void JExecutionEngine::RunTopology() {
     m_condvar.notify_one();
 }
 
+void JExecutionEngine::RunTopologyForOneEvent(JEventLevel level) {
+    std::unique_lock<std::mutex> lock(m_mutex);
+
+    if (m_runstatus != RunStatus::Paused) {
+        throw JException("Cannot switch topology runstatus to Running until it is Paused");
+    }
+
+    // Set start time and event count
+    m_time_at_start = clock_t::now();
+    m_event_count_at_start = m_event_count_at_finish;
+
+    std::ostringstream ss;
+    ss << level << "Source";
+    std::string source_arrow_name = ss.str();
+
+    size_t source_arrow_id = 0;
+    size_t arrow_id=0;
+    for (auto& arrow: m_arrow_states) {
+        if (m_topology->arrows[arrow_id]->get_name() == source_arrow_name) {
+            source_arrow_id = arrow_id;
+        }
+        else if (arrow.status == ArrowState::Status::Paused) {
+            // Reactivate all arrows except source arrow
+            arrow.status = ArrowState::Status::Running;
+        }
+        arrow_id += 1;
+    }
+    m_runstatus = RunStatus::Running;
+
+    lock.unlock();
+    Fire(source_arrow_id); // This runs the source in the current (non-worker) thread.
+    m_condvar.notify_one();
+}
+
 void JExecutionEngine::ScaleWorkers(size_t nthreads) {
     // We both create and destroy the pool of workers here. They all sleep until they 
     // receive work from the scheduler, which won't happen until the runstatus <- {Running, 
