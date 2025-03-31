@@ -215,6 +215,52 @@ void JApplication::Run(bool wait_until_stopped, bool finish) {
 }
 
 
+/// @brief Run the application for a single event
+/// 
+/// This tells the event source at the given level to emit exactly one event, but otherwise stay inactive.
+/// The other arrows/components are activated as usual and the topology is processed in parallel just like
+/// JApplication::Run(). When processing for the one event finishes, the topology status reverts to Paused.
+/// It can be restarted by calling either RunOneEvent() again or Run(). 
+///
+/// Parameters:
+///
+///   - level:              Controls which event source should emit exactly one event. Other event sources
+///                         are unaffected and will continue to emit events as needed for processing to continue.
+///                         This is important for multi-level topologies, e.g. those using Timeslices or Subevents
+///
+///   - wait_until_stopped: Controls whether this method blocks or immediately returns. If it immediately returns,
+///                         it won't supervise the processing, e.g. show the ticker or handle crashes, or finish
+///                         the topology (see below).
+///
+///   - finish:             Controls whether all JEventProcessors are closed (i.e. all output data is written)
+///                         if the event source runs out. If set to false, the user must call JApplication::Stop(finish=true)
+///                         in order to write everything out immediately, or JApplication::Run(finish=true) to 
+///                         finish processing everything in the file and then write it out.
+///
+/// Returns: bool indicating that an event was emitted successfully
+///
+bool JApplication::RunOneEvent(JEventLevel level, bool wait_until_stopped, bool finish) {
+    m_execution_engine->ScaleWorkers(1);
+
+    auto result = m_execution_engine->RunTopologyForOneEvent(level); // Does NOT block
+    GetInstantaneousRate(); // Reset the inst rate counter
+
+    if (wait_until_stopped) {
+        m_execution_engine->RunSupervisor(); // Blocks until event processing finishes and topology pauses
+        if ((result == JArrow::FireResult::Finished) && finish) { 
+            // FireResult::Finished indicates that the emit failed and no more events are coming
+            // The user indicated that in this case, we should finish the topology
+            m_execution_engine->FinishTopology();
+            if (!m_skip_join) {
+                m_execution_engine->ScaleWorkers(0);
+            }
+            return false;
+        }
+    }
+    return (result == JArrow::FireResult::KeepGoing);
+}
+
+
 void JApplication::Scale(int nthreads) {
     LOG_WARN(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
     m_execution_engine->ScaleWorkers(nthreads);

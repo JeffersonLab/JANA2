@@ -72,6 +72,7 @@ public:
 
     void Initialize(void);
     void Run(bool wait_until_stopped=true, bool finish=true);
+    bool RunOneEvent(JEventLevel level=JEventLevel::PhysicsEvent, bool wait_until_stopped=true, bool finish=true);
     void Scale(int nthreads);
     void Stop(bool wait_until_stopped=false, bool finish=true);
     void Inspect();

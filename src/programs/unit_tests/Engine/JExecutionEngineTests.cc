@@ -27,8 +27,11 @@ struct TestSource : public JEventSource {
 };
 struct TestProc : public JEventProcessor {
     JBenchUtils bench;
-    TestProc() {
+    std::vector<int>* events_seen;
+
+    TestProc(std::vector<int>* destination=nullptr) {
         SetCallbackStyle(CallbackStyle::ExpertMode);
+        events_seen = destination;
     }
     void ProcessParallel(const JEvent& event) override {
         JBenchUtils local_bench;
@@ -40,6 +43,9 @@ struct TestProc : public JEventProcessor {
         bench.consume_cpu_ms(200);
         auto map_x = event.Get<TestData>("map").at(0)->x;
         REQUIRE(map_x == (int)event.GetEventNumber()*2 + 1);
+        if (events_seen != nullptr) {
+            events_seen->push_back(event.GetEventNumber());
+        }
     }
 };
 
@@ -352,6 +358,48 @@ TEST_CASE("JExecutionEngine_RunTopologyForOneEvent") {
 
         sut->ScaleWorkers(0);
         REQUIRE(sut->GetPerf().thread_count == 0);
+    }
+}
+
+
+TEST_CASE("JApplication_RunForOneEvent") {
+    JApplication app;
+    std::vector<int> event_nrs_seen;
+    app.SetParameterValue("jana:nevents", 4);
+    app.Add(new TestSource());
+    app.Add(new TestProc(&event_nrs_seen));
+    app.Initialize();
+
+    SECTION("SingleWorker") {
+
+        bool result = app.RunOneEvent(JEventLevel::PhysicsEvent, true, false);
+        REQUIRE(result == true);
+        REQUIRE(app.GetNEventsProcessed() == 1);
+        REQUIRE(event_nrs_seen.size() == 1);
+        REQUIRE(event_nrs_seen.at(0) == 0);
+        
+        result = app.RunOneEvent(JEventLevel::PhysicsEvent, true, false);
+        REQUIRE(result == true);
+        REQUIRE(app.GetNEventsProcessed() == 1);
+        REQUIRE(event_nrs_seen.size() == 2);
+        REQUIRE(event_nrs_seen.at(1) == 1);
+        
+        result = app.RunOneEvent(JEventLevel::PhysicsEvent, true, false);
+        REQUIRE(result == true);
+        REQUIRE(app.GetNEventsProcessed() == 1);
+        REQUIRE(event_nrs_seen.size() == 3);
+        REQUIRE(event_nrs_seen.at(2) == 2);
+
+        result = app.RunOneEvent(JEventLevel::PhysicsEvent, true, false);
+        REQUIRE(result == true);
+        REQUIRE(app.GetNEventsProcessed() == 1);
+        REQUIRE(event_nrs_seen.size() == 4);
+        REQUIRE(event_nrs_seen.at(3) == 3);
+        
+        result = app.RunOneEvent(JEventLevel::PhysicsEvent, true, false);
+        REQUIRE(result == false);
+        REQUIRE(app.GetNEventsProcessed() == 0);
+        REQUIRE(event_nrs_seen.size() == 4);
     }
 }
 
