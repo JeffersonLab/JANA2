@@ -1,5 +1,6 @@
 
 #include "JExecutionEngine.h"
+#include <JANA/JException.h>
 #include <JANA/Utils/JApplicationInspector.h>
 
 #include <chrono>
@@ -101,40 +102,52 @@ void JExecutionEngine::RunTopology() {
 }
 
 JArrow::FireResult JExecutionEngine::RunTopologyForOneEvent(JEventLevel level) {
-    std::unique_lock<std::mutex> lock(m_mutex);
 
-    if (m_runstatus != RunStatus::Paused) {
-        throw JException("Cannot switch topology runstatus to Running until it is Paused");
-    }
-
-    // Set start time and event count
-    m_time_at_start = clock_t::now();
-    m_event_count_at_finish = 0;
-
+    // Our only link between event level and arrow is via the arrow name
     std::ostringstream ss;
     ss << level << "Source";
     std::string source_arrow_name = ss.str();
 
-    size_t source_arrow_id = 0;
-    size_t arrow_id=0;
-    for (auto& arrow: m_arrow_states) {
-        // Reset event count and processing duration when we run/resume processing
-        // Note that processing durations are NOT comparable when nthreads changes if the components lock their own mutexes
-        arrow.events_processed = 0;
-        arrow.total_processing_duration = std::chrono::milliseconds(0);
+    // First we have to find the correct arrow to run
+    std::unique_lock<std::mutex> lock(m_mutex);
+    int source_arrow_id = -1;
+    for (size_t arrow_id=0; arrow_id < m_topology->arrows.size(); ++arrow_id) {
         if (m_topology->arrows[arrow_id]->get_name() == source_arrow_name) {
             source_arrow_id = arrow_id;
         }
-        else if (arrow.status == ArrowState::Status::Paused) {
+    }
+    if (source_arrow_id == -1) {
+        throw JException("Arrow with name %s not found!", source_arrow_name.c_str());
+    }
+    lock.unlock();
+
+
+    // Now we can fire that arrow
+    auto fire_result = Fire(source_arrow_id); // This runs the source in the current (non-worker) thread.
+
+
+    // Now we can turn processing on, confident that it won't terminate until it has fully processed the one emitted event
+    lock.lock();
+    if (m_runstatus != RunStatus::Paused) {
+        throw JException("Cannot switch topology runstatus to Running until it is Paused");
+    }
+    for (size_t arrow_id=0; arrow_id < m_topology->arrows.size(); ++arrow_id) {
+        // Reset event count and processing duration when we run/resume processing
+        // Note that processing durations are NOT comparable when nthreads changes if the components lock their own mutexes
+        auto& arrow = m_arrow_states[arrow_id];
+        arrow.events_processed = 0;
+        arrow.total_processing_duration = std::chrono::milliseconds(0);
+        if (arrow_id != (size_t) source_arrow_id && arrow.status == ArrowState::Status::Paused) {
             // Reactivate all arrows except source arrow
             arrow.status = ArrowState::Status::Running;
         }
-        arrow_id += 1;
     }
     m_runstatus = RunStatus::Running;
-
+    m_time_at_start = clock_t::now();
+    m_event_count_at_finish = 0;
     lock.unlock();
-    auto fire_result = Fire(source_arrow_id); // This runs the source in the current (non-worker) thread.
+
+    // Finally we reawaken a worker thread to kick off the rest of processing
     m_condvar.notify_one();
     return fire_result;
 }
