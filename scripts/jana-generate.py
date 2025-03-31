@@ -365,7 +365,7 @@ plugin_cmakelists_txt = """
 if(true)
   # Automatically determine source file list.
   file(GLOB mysourcefiles *.cpp *.cc *.c  *.hpp *.hh *.h)
-  set( JANAGPUTest_PLUGIN_SOURCES ${{mysourcefiles}} )    
+  set( {name}_PLUGIN_SOURCES ${{mysourcefiles}} )    
 else()
   # Manually manage source file list
   set ({name}_PLUGIN_SOURCES
