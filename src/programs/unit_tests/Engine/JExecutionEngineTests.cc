@@ -240,12 +240,13 @@ TEST_CASE("JExecutionEngine_RunTopology") {
 }
 
 TEST_CASE("JExecutionEngine_RunTopologyForOneEvent") {
+    std::vector<int> event_log;
     JApplication app;
     app.SetParameterValue("jana:nevents", 4);
-    app.SetParameterValue("jana:loglevel", "debug");
+    app.SetParameterValue("jana:loglevel", "trace");
     app.SetParameterValue("jana:log:show_threadstamp", true);
     app.Add(new TestSource());
-    app.Add(new TestProc());
+    app.Add(new TestProc(&event_log));
     app.Initialize();
     auto sut = app.GetService<JExecutionEngine>();
 
@@ -260,12 +261,14 @@ TEST_CASE("JExecutionEngine_RunTopologyForOneEvent") {
         sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 1);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(event_log.size() == 1);
         REQUIRE(sut->GetPerf().event_count == 1);
 
         sut->RunTopologyForOneEvent();
         sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 1);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(event_log.size() == 2);
         REQUIRE(sut->GetPerf().event_count == 1);
 
         sut->FinishTopology();
@@ -288,12 +291,14 @@ TEST_CASE("JExecutionEngine_RunTopologyForOneEvent") {
         sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 4);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(event_log.size() == 1);
         REQUIRE(sut->GetPerf().event_count == 1);
 
         sut->RunTopologyForOneEvent();
         sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 4);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
+        REQUIRE(event_log.size() == 2);
         REQUIRE(sut->GetPerf().event_count == 1);
 
         sut->FinishTopology();
