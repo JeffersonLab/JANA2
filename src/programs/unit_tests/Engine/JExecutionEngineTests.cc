@@ -303,31 +303,43 @@ TEST_CASE("JExecutionEngine_RunTopologyForOneEvent") {
 
         sut->ScaleWorkers(1);
 
-        sut->RunTopologyForOneEvent();
+        JArrow::FireResult result = JArrow::FireResult::NotRunYet;
+
+        result = sut->RunTopologyForOneEvent();
+        REQUIRE(result == JArrow::FireResult::KeepGoing);
+
         sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 1);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
         REQUIRE(sut->GetPerf().event_count == 1);
 
-        sut->RunTopologyForOneEvent();
+        result = sut->RunTopologyForOneEvent();
+        REQUIRE(result == JArrow::FireResult::KeepGoing);
+
         sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 1);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
         REQUIRE(sut->GetPerf().event_count == 1);
 
-        sut->RunTopologyForOneEvent();
+        result = sut->RunTopologyForOneEvent();
+        REQUIRE(result == JArrow::FireResult::KeepGoing);
+
         sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 1);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
         REQUIRE(sut->GetPerf().event_count == 1);
 
-        sut->RunTopologyForOneEvent();
+        result = sut->RunTopologyForOneEvent();
+        REQUIRE(result == JArrow::FireResult::KeepGoing);
+
         sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 1);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);
         REQUIRE(sut->GetPerf().event_count == 1);
 
-        sut->RunTopologyForOneEvent();
+        result = sut->RunTopologyForOneEvent();
+        REQUIRE(result == JArrow::FireResult::Finished);
+
         sut->RunSupervisor();
         REQUIRE(sut->GetPerf().thread_count == 1);
         REQUIRE(sut->GetPerf().runstatus == JExecutionEngine::RunStatus::Paused);

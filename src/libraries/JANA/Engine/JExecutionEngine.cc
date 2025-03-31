@@ -100,7 +100,7 @@ void JExecutionEngine::RunTopology() {
     m_condvar.notify_one();
 }
 
-void JExecutionEngine::RunTopologyForOneEvent(JEventLevel level) {
+JArrow::FireResult JExecutionEngine::RunTopologyForOneEvent(JEventLevel level) {
     std::unique_lock<std::mutex> lock(m_mutex);
 
     if (m_runstatus != RunStatus::Paused) {
@@ -134,8 +134,9 @@ void JExecutionEngine::RunTopologyForOneEvent(JEventLevel level) {
     m_runstatus = RunStatus::Running;
 
     lock.unlock();
-    Fire(source_arrow_id); // This runs the source in the current (non-worker) thread.
+    auto fire_result = Fire(source_arrow_id); // This runs the source in the current (non-worker) thread.
     m_condvar.notify_one();
+    return fire_result;
 }
 
 void JExecutionEngine::ScaleWorkers(size_t nthreads) {
