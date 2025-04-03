@@ -1,6 +1,4 @@
 
-# Docker image for testing JANA with all options enabled except CUDA
-
 FROM rootproject/root:latest
 # This is an Ubuntu >= 22.04
 
@@ -21,13 +19,6 @@ RUN cd /app/podio \
     && cd build \
     && cmake -DCMAKE_INSTALL_PREFIX=../install -DUSE_EXTERNAL_CATCH2=OFF .. \
     && make -j4 install
-
-ENV JANA_HOME /app/JANA2/install
-
-# RUN cd /app/JANA2 \
-#    && mkdir build install \
-#    && cmake -S . -B build \
-#    && cmake --build build -j 10 --target install
 
 CMD bash
 
