@@ -6,6 +6,7 @@
 #pragma once
 #include <stdint.h>
 #include <string>
+#include <JANA/JApplication.h>
 
 class JCalibration;
 
@@ -43,10 +44,15 @@ class JCalibrationGenerator{
         JCalibrationGenerator(){}
         virtual ~JCalibrationGenerator(){}
 
+        void SetApplication(JApplication *app) { this->app = app; }
+        JApplication* GetApplication() { return app; }
+    
         virtual const char* Description(void)=0; ///< Get string indicating type of calibration this handles
         virtual double CheckOpenable(std::string url, int32_t run, std::string context)=0; ///< Test probability of opening the given calibration
         virtual JCalibration* MakeJCalibration(std::string url, int32_t run, std::string context)=0; ///< Instantiate an JCalibration object (subclass)
-
+    
+    private:
+        JApplication *app;
 };
 
 
