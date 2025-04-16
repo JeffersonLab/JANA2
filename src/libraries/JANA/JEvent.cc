@@ -108,8 +108,8 @@ void JEvent::Release() {
     }
 }
 
-void JEvent::Clear() {
-    if (mEventSource != nullptr) {
+void JEvent::Clear(bool processed_successfully) {
+    if (processed_successfully && mEventSource != nullptr) {
         mEventSource->DoFinishEvent(*this);
     }
     mFactorySet->Clear();

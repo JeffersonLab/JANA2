@@ -96,7 +96,7 @@ public:
     void Release();
 
     // Lifecycle
-    void Clear();
+    void Clear(bool processed_successfully=true);
     void Finish();
 
     JFactory* GetFactory(const std::string& object_name, const std::string& tag) const;
