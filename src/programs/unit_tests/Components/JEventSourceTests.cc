@@ -22,11 +22,11 @@ struct MyEventSource : public JEventSource {
     Result Emit(JEvent&) override {
         emit_count++;
         REQUIRE(GetApplication() != nullptr);
-        if (GetEmittedEventCount() >= events_in_file) {
-            LOG_INFO(GetLogger()) << "Emit() called, returning FailureFinished" << LOG_END;
+        if (emit_count > events_in_file) {
+            LOG_INFO(GetLogger()) << "Emit() called, iteration " << emit_count << ", returning FailureFinished" << LOG_END;
             return Result::FailureFinished;
         }
-        LOG_INFO(GetLogger()) << "Emit() called, returning Success" << LOG_END;
+        LOG_INFO(GetLogger()) << "Emit() called, iteration " << emit_count << ", returning Success" << LOG_END;
         return Result::Success;
     }
     void Close() override {
@@ -82,6 +82,7 @@ TEST_CASE("JEventSource_ExpertMode_EmitCount") {
         REQUIRE(sut->close_count == 1);
         REQUIRE(sut->finish_event_count == 2);        // TODO: Should be 5 because every event that is Emit()ted must be FinishEvent()ted
         REQUIRE(sut->GetFinishedEventCount() == 2);   // Only two events were successfully processed, the rest were skipped
+        REQUIRE(sut->GetSkippedEventCount() == 3);    // First 3 events skipped out of 5 total
     }
 }
 
