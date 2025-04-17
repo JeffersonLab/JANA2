@@ -25,7 +25,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
     if (m_barrier_active) {
 
         auto emitted_event_count = m_sources[m_current_source]->GetEmittedEventCount();
-        auto finished_event_count = m_sources[m_current_source]->GetFinishedEventCount();
+        auto finished_event_count = m_sources[m_current_source]->GetProcessedEventCount();
 
         // A barrier event has been emitted by the source.
         if (m_pending_barrier_event != nullptr) {

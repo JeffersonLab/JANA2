@@ -58,7 +58,7 @@ TEST_CASE("JEventSource_ExpertMode_EmitCount") {
         REQUIRE(sut->GetEmittedEventCount() == 5);  // Emits 5 events successfully
         REQUIRE(sut->close_count == 1);
         REQUIRE(sut->finish_event_count == 5);  // All emitted events were finished
-        REQUIRE(sut->GetFinishedEventCount() == 5); // This is reflected in the finished count
+        REQUIRE(sut->GetProcessedEventCount() == 5); // This is reflected in the finished count
     }
 
     SECTION("LimitedByNEvents") {
@@ -77,12 +77,12 @@ TEST_CASE("JEventSource_ExpertMode_EmitCount") {
         app.SetParameterValue("jana:nskip", 3);
         app.Run();
         REQUIRE(sut->open_count == 1);
-        REQUIRE(sut->emit_count == 6);        // Emit called 5 times successfully and fails on the 6th
-        REQUIRE(sut->GetEmittedEventCount() == 5);   // 5 events successfully emitted, 3 of which were (presumably) skipped
+        REQUIRE(sut->emit_count == 6);                // Emit was called 5 times successfully and failed on the 6th
+        REQUIRE(sut->GetEmittedEventCount() == 2);    // The first 3 were skipped, so only 2 entered the topology
         REQUIRE(sut->close_count == 1);
-        REQUIRE(sut->finish_event_count == 2);        // TODO: Should be 5 because every event that is Emit()ted must be FinishEvent()ted
-        REQUIRE(sut->GetFinishedEventCount() == 2);   // Only two events were successfully processed, the rest were skipped
-        REQUIRE(sut->GetSkippedEventCount() == 3);    // First 3 events skipped out of 5 total
+        REQUIRE(sut->finish_event_count == 5);        // FinishEvent() was called for both emitted and skipped events
+        REQUIRE(sut->GetProcessedEventCount() == 2);  // The 2 emitted events were both successfully processed
+        REQUIRE(sut->GetSkippedEventCount() == 3);    // The first 3 events were skipped, out of 5 total
     }
 }
 
