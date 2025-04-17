@@ -209,7 +209,7 @@ JEventSource::Result JEventSource::DoNext(std::shared_ptr<JEvent> event) {
 
 void JEventSource::DoFinishEvent(JEvent& event) {
 
-    m_events_finished.fetch_add(1);
+    m_events_processed.fetch_add(1);
     if (m_enable_finish_event) {
         std::lock_guard<std::mutex> lock(m_mutex);
         CallWithJExceptionWrapper("JEventSource::FinishEvent", [&](){
@@ -251,14 +251,13 @@ std::pair<JEventSource::Result, size_t> JEventSource::Skip(JEvent& event, size_t
             }
             event.GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
             // We need to call FinishEvent, but we don't want to call it from inside JEvent::Clear() because we are already inside the lock.
-            // So instead, we call it ourselves out here. This has the added benefit of letting us avoid updating m_events_finished.
+            // So instead, we call it ourselves out here. This has the added benefit of letting us avoid updating m_events_processed.
             if (m_enable_finish_event) {
                 CallWithJExceptionWrapper("JEventSource::FinishEvent", [&](){ FinishEvent(event); });
             }
             event.Clear(false);
             events_skipped += 1;
             events_to_skip -= 1;
-            m_events_emitted += 1; // For now skipped events count towards our emit count, but not our finished count.
         }
         catch (RETURN_STATUS rs) {
 

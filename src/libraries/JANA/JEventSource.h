@@ -32,7 +32,7 @@ private:
     std::string m_resource_name;
     std::atomic_ullong m_events_emitted {0};
     std::atomic_ullong m_events_skipped {0};
-    std::atomic_ullong m_events_finished {0};
+    std::atomic_ullong m_events_processed {0};
     uint64_t m_nskip = 0;
     uint64_t m_nevents = 0;
     bool m_enable_finish_event = false;
@@ -143,7 +143,7 @@ public:
     uint64_t GetEventCount() const { return m_events_emitted; };
     uint64_t GetEmittedEventCount() const { return m_events_emitted; };
     uint64_t GetSkippedEventCount() const { return m_events_skipped; };
-    uint64_t GetFinishedEventCount() const { return m_events_finished; };
+    uint64_t GetProcessedEventCount() const { return m_events_processed; };
 
     [[deprecated]]
     virtual std::string GetType() const { return m_type_name; }
