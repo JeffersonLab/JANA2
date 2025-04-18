@@ -185,6 +185,7 @@ protected:
     std::string mTag;
     uint32_t mFlags = WRITE_TO_OUTPUT;
     int32_t mPreviousRunNumber = -1;
+    bool mInsideCreate = false; // Use this to detect cycles in factory dependencies
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
 
     mutable Status mStatus = Status::Uninitialized;

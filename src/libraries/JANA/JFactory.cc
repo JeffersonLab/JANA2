@@ -8,7 +8,24 @@
 #include <JANA/Utils/JTypeInfo.h>
 
 
+class FlagGuard {
+    bool* m_flag;
+public:
+    FlagGuard(bool* flag) : m_flag(flag) {
+        *m_flag = true;
+    }
+    ~FlagGuard() {
+        *m_flag = false;
+    }
+};
+
+
 void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
+
+    if (mInsideCreate) {
+        throw JException("Encountered a cycle in the factory dependency graph! Hint: Maybe this data was supposed to be inserted in the JEventSource");
+    }
+    FlagGuard insideCreateFlagGuard (&mInsideCreate); // No matter how we exit from Create() (particularly with exceptions) mInsideCreate will be set back to false
 
     if (m_app == nullptr && event->GetJApplication() != nullptr) {
         // These are usually set by JFactoryGeneratorT, but some user code has custom JFactoryGenerators which don't!
