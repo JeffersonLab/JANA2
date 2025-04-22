@@ -18,7 +18,7 @@ jobs:
     - name: cmake
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         run: |
           mkdir -p $GITHUB_WORKSPACE/build
           cd $GITHUB_WORKSPACE/build
@@ -36,7 +36,7 @@ jobs:
     - name: make install
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         run: |
           cd $GITHUB_WORKSPACE/build
           make -j4 install
@@ -44,7 +44,7 @@ jobs:
     - name: Examine JANA2 dynamic linking
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         run: |
           export JANA_HOME=$GITHUB_WORKSPACE
           export JANA_PLUGIN_PATH=$JANA_HOME/plugins
@@ -65,7 +65,7 @@ jobs:
     - name: Run JTest plugin with 100 events
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         run: |
             export JANA_HOME=$GITHUB_WORKSPACE
             export JANA_PLUGIN_PATH=$JANA_HOME/plugins
@@ -75,7 +75,7 @@ jobs:
     - name: Run jana-unit-tests
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         run: |
           export JANA_HOME=$GITHUB_WORKSPACE
           export JANA_PLUGIN_PATH=$JANA_HOME/plugins
@@ -85,7 +85,7 @@ jobs:
     - name: Run TimesliceExample with simple (physics event) topology
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         run: |
           echo "--- Running TimesliceExample with simple topology ------------------------------"
           export JANA_HOME=$GITHUB_WORKSPACE
@@ -99,7 +99,7 @@ jobs:
     - name: Run TimesliceExample with complex (timeslice) topology
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         run: |
           echo "--- Running TimesliceExample with simple topology ------------------------------"
           export JANA_HOME=$GITHUB_WORKSPACE
@@ -111,7 +111,7 @@ jobs:
     - name: Compile EICrecon
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         run: |
           echo "--- Compiling EICrecon ---"
           export JANA_HOME=$GITHUB_WORKSPACE
@@ -125,7 +125,7 @@ jobs:
     - name: Examine EICrecon dynamic linking
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         run: |
           export JANA_HOME=$GITHUB_WORKSPACE
           export JANA_PLUGIN_PATH=$JANA_HOME/plugins
@@ -141,7 +141,7 @@ jobs:
     - name: Generate EICrecon input data
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         setup: "/opt/detector/epic-main/bin/thisepic.sh"
         run: |
           echo "--- Generating EICrecon input data ---"
@@ -153,7 +153,7 @@ jobs:
     - name: Run EICrecon
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
-        platform-release: "jug_xl:nightly"
+        platform-release: "eic_xl:nightly"
         setup: "/opt/detector/epic-main/bin/thisepic.sh"
         run: |
           export JANA_HOME=$GITHUB_WORKSPACE
