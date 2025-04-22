@@ -22,7 +22,7 @@ void dummy_publisher_loop() {
 
     JBenchUtils bench_utils = JBenchUtils();
     bench_utils.set_seed(6, "ZmqMain.cc:dummy_publisher_loop");
-    bench_utils.consume_cpu_ms(3000, 0, false);
+    bench_utils.consume_cpu_ms(3000, 0);
 
     auto transport = ZmqTransport("tcp://127.0.0.1:5555", true);
     transport.initialize();
@@ -41,7 +41,7 @@ void dummy_publisher_loop() {
 
         transport.send(message);
         std::cout << "Send: " << message << "(" << message.get_buffer_capacity() << " bytes)" << std::endl;
-        bench_utils.consume_cpu_ms(1000, 0, false);
+        bench_utils.consume_cpu_ms(1000, 0);
     }
 
     // Send end-of-stream message so that JANA knows to shut down

@@ -4,6 +4,7 @@
 
 
 #include "JBenchUtils.h"
+#include <chrono>
 
 
 void JBenchUtils::set_seed(size_t event_number, std::string caller_name)
@@ -36,32 +37,19 @@ float JBenchUtils::randfloat(float min, float max) {
     return dist(m_generator);
 }
 
-uint64_t JBenchUtils::consume_cpu_ms(uint64_t millisecs, double spread, bool fix_flops) {
+uint64_t JBenchUtils::consume_cpu_ms(uint64_t millisecs, double spread) {
 
     uint64_t sampled = rand_size(millisecs, spread);
     uint64_t result = 0;
 
-    if (fix_flops) {
-        // Perform a fixed amount of work in a variable time
-        const uint64_t appx_iters_per_millisec = 14000;
-        sampled *= appx_iters_per_millisec;
+    // Perform a variable amount of work in a fixed time
+    auto duration = std::chrono::milliseconds(sampled);
+    auto start_time = std::chrono::steady_clock::now();
+    while ((std::chrono::steady_clock::now() - start_time) < duration) {
 
-        for (uint64_t i=0; i<sampled; ++i) {
-            double a = (m_generator)();
-            double b = sqrt(a * pow(1.23, -a)) / a;
-            result += long(b);
-        }
-    }
-    else {
-        // Perform a variable amount of work in a fixed time
-        auto duration = std::chrono::milliseconds(sampled);
-        auto start_time = std::chrono::steady_clock::now();
-        while ((std::chrono::steady_clock::now() - start_time) < duration) {
-
-            double a = (m_generator)();
-            double b = sqrt(a * pow(1.23, -a)) / a;
-            result += long(b);
-        }
+        double a = (m_generator)();
+        double b = sqrt(a * pow(1.23, -a)) / a;
+        result += long(b);
     }
     return result;
 }

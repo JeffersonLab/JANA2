@@ -1,17 +1,8 @@
 
-How to build a CUDA GPU enabled Singularity container
-that can be used with JANA2.
+# Working with development containers <!-- {docsify-ignore-all} -->
 
+## Building a CUDA Singularity container
 
-These are some pretty specific instructions for building
-a Singularity container that can be used to build and run
-a JANA2 program that can access Nvidia GPUs via CUDA on
-the host computer. These have not been tested across OS
-flavors/versions or other software versions.
-
-
-Building the Singularity container
------------------------------------
 These instructions involve creating a Docker
 image locally and then producing a Singularity image from
 that. These instructions were developed on a computer running
@@ -26,13 +17,14 @@ use ROOT or ZeroMQ support in JANA2, then you can skip building
 your own Docker image and just pull the one supplied by Nvida
 into a Singularity image directly with:
 
-  singularity build cuda_11.4.2-devel-ubuntu20.04.sif docker://nvidia/cuda:11.4.2-devel-ubuntu20.04
-
+```bash
+singularity build cuda_11.4.2-devel-ubuntu20.04.sif docker://nvidia/cuda:11.4.2-devel-ubuntu20.04
+```
 
 The Dockerfile in this directory can be used to build an image
 that will allow building JANA2 with support for both ROOT and
 ZeroMQ. To build the Singularity image, execute the two commands
-below. 
+below.
 
 NOTE: This will result in a Singularity image that is about
 3GB. Docker claims its image takes 5.5GB. Make sure you have
@@ -46,15 +38,14 @@ on the computer where you create this image(s). You can transfer
 the image to a computer with one or more GPUs and the CUDA
 drivers installed to actually use it.
 
-
+```bash
 docker build -f Dockerfile -t epsci/cuda:11.4.2-devel-ubuntu20.04 .
 
 singularity build epsci_cuda_11.4.2-devel-ubuntu20.04.sif docker-daemon://epsci/cuda:11.4.2-devel-ubuntu20.04
+```
 
+## Building ROOT
 
-
-Building ROOT
-------------------
 If you are interested in building root with the container, then
 here are some instructions. If you don't need ROOT then skip
 this section.
@@ -64,18 +55,19 @@ The following commands will checkout, build and install root
 version 6.26.02 in the local working directory. Note that you
 may be able to build this *much* faster on a ramdisk if you have
 enough memory. Just make sure to adjust the install location to
-to somewhere more permenant.
+to somewhere more permanent.
 
-
+```bash
 singularity run epsci_cuda_11.4.2-devel-ubuntu20.04.sif
 git clone --branch v6-26-02 https://github.com/root-project/root.git root-6.26.02
 mkdir root-build/
 cd root-build/
 cmake -DCMAKE_INSTALL_PREFIX=../root-6.26.02-install -DCMAKE_CXX_STANDARD=14 ../root-6.26.02
 make -j48 install
+```
 
 
-TROUBLESHOOTING:
+### TROUBLESHOOTING
 
 Some centralized installations of Singularity may be configured
 at a system level to automatically mount one or more network drives.
@@ -87,6 +79,7 @@ it could be built using a ramdisk for the build and a network mounted
 directory, /gapps for the install (this assumes a ramdisk already
 mounted under /media/ramdisk):
 
+```bash
 singularity run -c -B /media/ramdisk,/gapps epsci_cuda_11.4.2-devel-ubuntu20.04.sif
 cd /media/ramdisk
 git clone --branch v6-26-02 https://github.com/root-project/root.git root-6.26.02
@@ -98,23 +91,25 @@ cmake \
     ../root-6.26.02
 
 make -j48 install
+```
 
 
-X11:
+### X11
 
 If you run this ROOT from the container and can't open any graphics
 windows it may be because you ran singularity with the "-c" option
 and your ~/.Xauthority directory is not available. Just start the container
 again with this explictly bound. For example:
 
+```bash
 singularity run -c -B /gapps,${HOME}/.Xauthority epsci_cuda_11.4.2-devel-ubuntu20.04.sif
 source /gapps/root/Linux_Ubuntu20.04-x86_64-gcc9.3.0/root-6.26.02/bin/thisroot.sh
 root
 root [0] TCanvas c("c","", 400, 400)
+```
 
 
-Building JANA2 with CUDA and libtorch:
----------------------------------------
+## Building JANA2 with CUDA and libtorch
 
 Singularity makes it really easy to access Nvidia GPU's from within
 a container by just adding the "-nv" option. Create a singlularity
@@ -123,7 +118,7 @@ for the rest of these instructions. Note that some of these directories
 and versions represent a specific example so adjust for your specific
 system as appropriate.
 
-
+```
 setenv SINGIMG /gapps/singularity/epsci_cuda_11.4.2-devel-ubuntu20.04.sif
 singularity run -c -B /media/ramdisk,/gapps,/gluonwork1,${HOME}/.Xauthority --nv ${SINGIMG}
 
@@ -256,7 +251,7 @@ make -j48 install
 # Test the plugin. You should see a message with values from the libtorch
 # tensor followed by 6 Hello World messages from the CUDA kernel.
 jana -PPLUGINS=JTestRoot,JANAGPUTest -PAUTOACTIVATE=GPUPID
-
+```
 
 Note: You can confirm that this is using the GPU by checking the
 output of "nvidia-smi" while running. The jana program should be
