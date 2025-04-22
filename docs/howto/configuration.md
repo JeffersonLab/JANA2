@@ -21,7 +21,6 @@ The following configuration options are used most commonly:
 | jana:global_loglevel | string | Set the default log level (trace,debug,info,warn,error,fatal,off) for all loggers |
 | jana:show_ticker          | bool    | Controls whether the status ticker is shown |
 | jana:ticker_interval          | int     | Controls how often the status ticker updates (in ms)  |
-| jana:extended_report       | bool    | Controls whether to show extra details in the status ticker and final report |
 
 JANA automatically provides each component with its own logger. You can control the logging verbosity of individual components
 just like any other parameter. For instance, if your component prefixes its parameters with `BCAL:tracking`,
