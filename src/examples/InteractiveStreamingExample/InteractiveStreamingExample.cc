@@ -56,7 +56,7 @@ void dummy_publisher_loop(JApplication* app) {
         //LOG_DEBUG(logger) << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << LOG_END;
         std::cout << "dummy_producer_loop: Sending '" << message << "' (" << message.get_buffer_size() << " bytes)" << std::endl;
         transport.send(message);
-        bench_utils.consume_cpu_ms(delay_ms, 0, false);
+        bench_utils.consume_cpu_ms(delay_ms, 0);
         std::this_thread::yield();
     }
 
