@@ -49,6 +49,11 @@ public:
         m_params->SetDefaultParameter("JANA:CALIB_URL", m_url, "URL used to access calibration constants");
         m_params->SetDefaultParameter("JANA:CALIB_CONTEXT", m_context,
                                     "Calibration context to pass on to concrete JCalibration derived class");
+        m_params->RegisterParameter("ccdb:cache", true, "Enable CCDB Caching");
+
+        for(auto generator:m_calibration_generators) {
+            generator->SetApplication(GetApplication());
+        }
     }
 
     void AddCalibrationGenerator(JCalibrationGenerator *generator) {
