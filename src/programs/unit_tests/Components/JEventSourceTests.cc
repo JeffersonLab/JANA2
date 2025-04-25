@@ -27,7 +27,7 @@ struct MyEventSource : public JEventSource {
             event.SetSequential(true);
         }
         REQUIRE(GetApplication() != nullptr);
-        if (emit_count > events_in_file) {
+        if (emit_count > (int) events_in_file) {
             LOG_INFO(GetLogger()) << "Emit() called, iteration " << emit_count << ", returning FailureFinished" << LOG_END;
             return Result::FailureFinished;
         }
@@ -40,7 +40,7 @@ struct MyEventSource : public JEventSource {
             event->SetSequential(true);
         }
         REQUIRE(GetApplication() != nullptr);
-        if (emit_count > events_in_file) {
+        if (emit_count > (int) events_in_file) {
             LOG_INFO(GetLogger()) << "GetEvent() called, iteration " << emit_count << ", returning FailureFinished" << LOG_END;
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
         }
@@ -51,7 +51,7 @@ struct MyEventSource : public JEventSource {
         LOG_INFO(GetLogger()) << "Close() called" << LOG_END;
         close_count++;
     }
-    void FinishEvent(JEvent& event) override {
+    void FinishEvent(JEvent&) override {
         LOG_INFO(GetLogger()) << "FinishEvent() called" << LOG_END;
         finish_event_count++;
     }
