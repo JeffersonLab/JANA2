@@ -35,7 +35,7 @@ set(TEST_SOURCES
     Engine/TimeoutTests.cc
     Engine/JExecutionEngineTests.cc
 
-    Utils/JAutoactivableTests.cc
+    Utils/JAutoActivatorTests.cc
     Utils/JEventGroupTests.cc
     Utils/JTablePrinterTests.cc
     Utils/JStatusBitsTests.cc
