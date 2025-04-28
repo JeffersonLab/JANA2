@@ -17,7 +17,7 @@ public:
     static std::pair<std::string, std::string> Split(std::string factory_name);
     void AddAutoActivatedFactory(string factory_name, string factory_tag);
     void Init() override;
-    void Process(const JEvent&) override;
+    void ProcessParallel(const JEvent&) override;
 
 private:
     vector<pair<string,string>> m_auto_activated_factories;

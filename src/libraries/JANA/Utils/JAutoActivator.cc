@@ -7,6 +7,7 @@
 
 JAutoActivator::JAutoActivator() {
     SetTypeName("JAutoActivator");
+    SetLoggerName("jana"); // We want this controlled by jana:loglevel
     SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
@@ -70,12 +71,13 @@ void JAutoActivator::Init() {
     }
 }
 
-void JAutoActivator::Process(const JEvent& event) {
+void JAutoActivator::ProcessParallel(const JEvent& event) {
     for (const auto &pair: m_auto_activated_factories) {
         auto name = pair.first;
         auto tag = pair.second;
         auto factory = event.GetFactory(name, tag);
         if (factory != nullptr) {
+            LOG_DEBUG(GetLogger()) << "Autoactivating factory with typename=" << name << ", tag=" << tag << LOG_END;
             factory->Create(event.shared_from_this()); // This will do nothing if factory is already created
         }
         else {
