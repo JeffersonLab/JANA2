@@ -238,7 +238,6 @@ std::pair<JEventSource::Result, size_t> JEventSource::Skip(JEvent& event, size_t
 
     // Return values
     Result result = Result::Success;
-    size_t events_skipped = 0;
 
     while (events_to_skip > 0 && result == Result::Success) {
         try {
@@ -256,7 +255,6 @@ std::pair<JEventSource::Result, size_t> JEventSource::Skip(JEvent& event, size_t
                 CallWithJExceptionWrapper("JEventSource::FinishEvent", [&](){ FinishEvent(event); });
             }
             event.Clear(false);
-            events_skipped += 1;
             events_to_skip -= 1;
         }
         catch (RETURN_STATUS rs) {
