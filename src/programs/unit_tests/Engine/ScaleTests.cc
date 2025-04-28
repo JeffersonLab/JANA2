@@ -6,6 +6,20 @@
 
 #include "ScaleTests.h"
 
+TEST_CASE("MissingEventSource") {
+    JApplication app;
+    app.Initialize();
+    // Initialize succeeds
+    try {
+        app.Run();
+        // Run() throws
+        REQUIRE(0 == 1);
+    }
+    catch (JException& e) {
+        REQUIRE(e.GetMessage() == "Cannot execute an empty topology! Hint: Have you provided an event source?");
+    }
+}
+
 TEST_CASE("NThreads") {
 
     JApplication app;
