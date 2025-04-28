@@ -1,6 +1,5 @@
 
-Generating code skeletons
-=========================
+# Generating code skeletons
 
 JANA provides a script, `$JANA_HOME/bin/jana-generate.py`, which generates code skeletons for 
 different kinds of JANA components, but also entire project structures. These are intended to 
