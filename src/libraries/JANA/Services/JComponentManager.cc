@@ -66,7 +66,8 @@ void JComponentManager::configure_components() {
 
     // Look for factories to auto-activate
     if (!m_autoactivate.empty()) {
-        add(new JAutoActivator);
+        m_evt_procs.insert(m_evt_procs.begin(), new JAutoActivator);
+        // We add this to the _front_ of the evt_procs vector so that it is run _first_
         // JAutoActivator will re-parse the autoactivate list by itself
     }
 
