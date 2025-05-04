@@ -95,6 +95,8 @@ TEST_CASE("JExecutionEngine_StateMachine") {
 TEST_CASE("JExecutionEngine_ExternalWorkers") {
     JApplication app;
     app.SetParameterValue("jana:nevents", 1);
+    app.SetParameterValue("jana:max_inflight_events", 2);
+
     app.Add(new TestSource());
     app.Add(new TestProc());
     app.Initialize();
@@ -236,6 +238,7 @@ TEST_CASE("JExecutionEngine_RunSingleEvent") {
 TEST_CASE("JExecutionEngine_ExternalPause") {
     JApplication app;
     app.SetParameterValue("jana:loglevel", "info");
+    app.SetParameterValue("jana:max_inflight_events", 4);
     app.Add(new TestSource());
     app.Add(new TestProc());
     app.Initialize();
