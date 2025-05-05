@@ -34,7 +34,7 @@ void JEventMapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_cou
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventSource* source : m_sources) {
         JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), source->GetTypeName()); // times execution until this goes out of scope
-        source->Preprocess(*event);
+        source->ProcessParallel(*event);
     }
     for (JEventUnfolder* unfolder : m_unfolders) {
         JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), unfolder->GetTypeName()); // times execution until this goes out of scope
