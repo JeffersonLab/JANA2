@@ -16,6 +16,7 @@ set(JANA2_SOURCES
     Engine/JExecutionEngine.cc
 
     Topology/JArrow.cc
+    Topology/JEventPool.cc
     Topology/JEventSourceArrow.cc
     Topology/JEventMapArrow.cc
     Topology/JEventTapArrow.cc
