@@ -282,7 +282,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // --------------------------
     bool have_parallel_sources = false;
     for (JEventSource* source: sources_at_level) {
-        have_parallel_sources |= source->IsPreprocessEnabled();
+        have_parallel_sources |= source->IsProcessParallelEnabled();
     }
     bool have_unfolder = !unfolders_at_level.empty();
     JEventMapArrow* map1_arrow = nullptr;
@@ -291,7 +291,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     if (need_map1) {
         map1_arrow = new JEventMapArrow(level_str+"Map1");
         for (JEventSource* source: sources_at_level) {
-            if (source->IsPreprocessEnabled()) {
+            if (source->IsProcessParallelEnabled()) {
                 map1_arrow->add_source(source);
             }
         }

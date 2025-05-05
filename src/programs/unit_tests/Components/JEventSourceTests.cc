@@ -1,4 +1,5 @@
 
+#include "JANA/JApplicationFwd.h"
 #include "catch.hpp"
 
 #include <JANA/JEventSource.h>
@@ -7,6 +8,7 @@ struct MyEventSource : public JEventSource {
     int open_count = 0;
     int emit_count = 0;
     int close_count = 0;
+    mutable std::atomic_int process_parallel_count {0};
     int finish_event_count = 0;
     size_t events_in_file = 5;
     int events_per_barrier = 0;
@@ -45,6 +47,9 @@ struct MyEventSource : public JEventSource {
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
         }
         LOG_INFO(GetLogger()) << "GetEvent() called, iteration " << emit_count << ", returning Success" << LOG_END;
+    }
+    void ProcessParallel(JEvent&) const override {
+        process_parallel_count += 1;
     }
     void Close() override {
         REQUIRE(GetApplication() != nullptr);
@@ -238,4 +243,17 @@ TEST_CASE("JEventSource_EmitCount") {
         REQUIRE(sut->GetSkippedEventCount() == 10);    // The first 10 events were skipped, out of 50 total
     }
 }
+
+
+TEST_CASE("JEventSource_ProcessParallel") {
+    auto sut = new MyEventSource;
+    sut->EnableProcessParallel(true);
+    JApplication app;
+    app.SetParameterValue("nthreads", 4);
+    app.Add(sut);
+    app.Run();
+    REQUIRE(sut->emit_count == 6);
+    REQUIRE(sut->process_parallel_count == 5);
+}
+
 

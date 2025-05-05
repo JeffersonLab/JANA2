@@ -37,7 +37,7 @@ private:
     uint64_t m_nevents = 0;
     bool m_enable_finish_event = false;
     bool m_enable_get_objects = false;
-    bool m_enable_preprocess = false;
+    bool m_enable_process_parallel = false;
 
 
 public:
@@ -75,9 +75,12 @@ public:
     virtual Result Emit(JEvent&) { return Result::Success; };
 
 
-    /// For work that should be done in parallel on a JEvent, but is tightly coupled to the JEventSource for some reason. 
-    /// Called after Emit() by JEventMapArrow
-    virtual void Preprocess(const JEvent&) const {};
+    /// For work that should be done in parallel on a JEvent, but is tightly coupled to the JEventSource for some reason.
+    /// Called after Emit() by JEventMapArrow, but only if EnableProcessParallel(true) is set. Note that the JEvent& is not
+    /// const here, because we need to be able to call event.Insert() from here. Also note that `this` IS const, because
+    /// it is not safe to access any state in parallel from here. Note that this includes things like calibration constants.
+    /// If you need to safely access state, put use a JFactory instead.
+    virtual void ProcessParallel(JEvent&) const {};
 
 
     /// `FinishEvent` is used to notify the `JEventSource` that an event has been completely processed. This is the final
@@ -145,8 +148,8 @@ public:
 
     bool IsGetObjectsEnabled() const { return m_enable_get_objects; }
     bool IsFinishEventEnabled() const { return m_enable_finish_event; }
-    bool IsPreprocessEnabled() const { return m_enable_preprocess; }
-    
+    bool IsProcessParallelEnabled() const { return m_enable_process_parallel; }
+
     uint64_t GetNSkip() { return m_nskip; }
     uint64_t GetNEvents() { return m_nevents; }
 
@@ -156,7 +159,7 @@ public:
 
 
     // Setters
-   
+
     void SetResourceName(std::string resource_name) { m_resource_name = resource_name; }
 
     /// EnableFinishEvent() is intended to be called by the user in the constructor in order to
@@ -166,7 +169,7 @@ public:
     /// which will hurt performance. Conceptually, FinishEvent isn't great, and so should be avoided when possible.
     void EnableFinishEvent(bool enable=true) { m_enable_finish_event = enable; }
     void EnableGetObjects(bool enable=true) { m_enable_get_objects = enable; }
-    void EnablePreprocess(bool enable=true) { m_enable_preprocess = enable; }
+    void EnableProcessParallel(bool enable=true) { m_enable_process_parallel = enable; }
 
     void SetNEvents(uint64_t nevents) { m_nevents = nevents; };
     void SetNSkip(uint64_t nskip) { m_nskip = nskip; };
