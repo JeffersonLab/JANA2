@@ -16,7 +16,8 @@ TEST_CASE("TimeslicesTests_FineGrained") {
     JApplication app;
     app.SetParameterValue("jana:loglevel", "trace");
     app.SetParameterValue("jana:nevents", "5");
-    
+    app.SetParameterValue("jana:max_inflight_events", "4");
+
     app.Add(new MyTimesliceSource);
     app.Add(new MyTimesliceUnfolder);
     app.Add(new MyEventProcessor);
