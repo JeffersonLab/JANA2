@@ -226,21 +226,16 @@ public:
                 for (size_t j = 0; j<(variadic_input_collection_count/variadic_input_count); ++j) {
                     input->names.push_back(input_collection_names[i++]);
                     if (!input_collection_levels.empty()) {
-                        input->levels.push_back(input_collection_levels[i++]);
+                        input->level = input_collection_levels[i++]; // Last one wins. TODO: Assert that these are all the same
                     }
                     else {
-                        input->levels.push_back(level);
+                        input->level = level;
                     }
                 }
             }
             else {
                 input->names.push_back(input_collection_names[i++]);
-                if (!input_collection_levels.empty()) {
-                    input->levels.push_back(input_collection_levels[i++]);
-                }
-                else {
-                    input->levels.push_back(level);
-                }
+                input->level = level;
             }
         }
 
@@ -331,7 +326,7 @@ public:
         for (const auto* input : m_inputs) {
             size_t subinput_count = input->names.size();
             for (size_t i=0; i<subinput_count; ++i) {
-                mfs->AddInput(new JComponentSummary::Collection("", input->names[i], input->type_name, input->levels[i]));
+                mfs->AddInput(new JComponentSummary::Collection("", input->names[i], input->type_name, input->level));
             }
         }
         for (const auto* output : m_outputs) {
