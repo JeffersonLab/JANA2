@@ -111,12 +111,12 @@ void JEvent::Release() {
 void JEvent::Clear(bool processed_successfully) {
     if (processed_successfully && mEventSource != nullptr) {
         mEventSource->DoFinishEvent(*this);
+        mIsWarmedUp = true;
     }
     mFactorySet->Clear();
     mInspector.Reset();
     mCallGraph.Reset();
     mReferenceCount = 1;
-    mIsWarmedUp = true;
 }
 
 void JEvent::Finish() {
