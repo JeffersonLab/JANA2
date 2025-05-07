@@ -103,7 +103,7 @@ protected:
             }
             size_t i = 0;
             for (auto& coll_name : this->collection_names) {
-                event.InsertCollection(std::move(*(m_data[i++])), coll_name);
+                event.InsertCollection<PodioT>(std::move(*(m_data[i++])), coll_name);
             }
         }
 
