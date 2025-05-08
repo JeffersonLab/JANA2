@@ -21,6 +21,7 @@ set(TEST_SOURCES
     Components/JFactoryDefTagsTests.cc
     Components/JFactoryTests.cc
     Components/JFactoryGeneratorTests.cc
+    Components/JHasInputsTests.cc
     Components/JMultiFactoryTests.cc
     Components/JServiceTests.cc
     Components/UnfoldTests.cc
