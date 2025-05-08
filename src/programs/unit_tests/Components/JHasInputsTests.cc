@@ -66,9 +66,9 @@ struct TestProc : public JEventProcessor {
 
     TestProc() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
-        m_det_a_hits_in.Configure({.name = "detector_a_hits"});
-        m_det_c_hits_in.Configure({.name = "detector_c_hits"});
-        m_det_de_hits_in.ConfigureVariadic({.names = {"detector_d_hits", "detector_e_hits"}});
+        m_det_a_hits_in.SetTag("detector_a_hits");
+        m_det_c_hits_in.SetCollectionName("detector_c_hits");
+        m_det_de_hits_in.SetCollectionNames({"detector_d_hits", "detector_e_hits"});
     }
 
     void Process(const JEvent&) override {

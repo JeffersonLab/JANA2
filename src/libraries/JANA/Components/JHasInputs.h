@@ -37,12 +37,19 @@ protected:
     struct InputBase {
         std::string type_name;
         std::vector<std::string> names;
-        JEventLevel level;
+        JEventLevel level = JEventLevel::None;
         bool is_variadic = false;
         bool is_optional = false;
         //bool is_shortcircuiting = false;
         //bool contains_single_item = false;
 
+        void SetOptional(bool isOptional) {
+            this->is_optional = isOptional;
+        }
+
+        void SetLevel(JEventLevel level) {
+            this->level = level;
+        }
 
         void Configure(const InputOptions& options) {
             this->names.clear();
@@ -85,6 +92,11 @@ protected:
             owner->RegisterInput(this);
             this->type_name = JTypeInfo::demangle<T>();
             Configure(options);
+        }
+
+        void SetTag(std::string tag) {
+            this->names.clear();
+            this->names.push_back(tag);
         }
 
         const std::vector<const T*>& operator()() { return m_data; }
@@ -150,6 +162,16 @@ protected:
             return m_data;
         }
 
+        void SetCollectionName(std::string name) {
+            this->names.clear();
+            this->names.push_back(name);
+        }
+
+        void SetTag(std::string tag) {
+            this->names.clear();
+            this->names.push_back(type_name + ":" + tag);
+        }
+
         void GetCollection(const JEvent& event) {
             auto& level = this->level;
             auto& name = this->names[0];
@@ -198,6 +220,10 @@ protected:
 
         const std::vector<const typename PodioT::collection_type*> operator()() {
             return m_data;
+        }
+
+        void SetCollectionNames(std::vector<std::string> names) {
+            this->names = std::move(names);
         }
 
         void GetCollection(const JEvent& event) {
