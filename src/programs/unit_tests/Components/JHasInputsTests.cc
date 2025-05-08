@@ -64,11 +64,22 @@ struct TestProc : public JEventProcessor {
 
     VariadicPodioInput<ExampleHit> m_det_de_hits_in {this};
 
+    // These test the IsOptional functionality: detector_f_hits do not exist
+    PodioInput<ExampleHit> m_det_f_hits_in {this};
+    VariadicPodioInput<ExampleHit> m_det_def_hits_in {this};
+
+
     TestProc() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
         m_det_a_hits_in.SetTag("detector_a_hits");
         m_det_c_hits_in.SetCollectionName("detector_c_hits");
         m_det_de_hits_in.SetCollectionNames({"detector_d_hits", "detector_e_hits"});
+
+        m_det_f_hits_in.SetCollectionName("detector_f_hits");
+        m_det_f_hits_in.SetOptional(true);
+
+        m_det_def_hits_in.SetCollectionNames({"detector_d_hits", "detector_e_hits", "detector_f_hits"});
+        m_det_def_hits_in.SetOptional(true);
     }
 
     void Process(const JEvent&) override {
@@ -83,6 +94,11 @@ struct TestProc : public JEventProcessor {
 
         REQUIRE(m_det_de_hits_in().at(1)->size() == 1);
         REQUIRE(m_det_de_hits_in().at(1)->at(0).energy() == 77.0);
+
+        REQUIRE(m_det_f_hits_in() == nullptr);
+
+        REQUIRE(m_det_def_hits_in().at(1)->at(0).energy() == 77.0);
+        REQUIRE(m_det_def_hits_in().at(2) == nullptr);
     }
 };
 
