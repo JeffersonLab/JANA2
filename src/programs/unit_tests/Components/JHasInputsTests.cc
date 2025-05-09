@@ -4,7 +4,9 @@
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
 
+#if JANA2_HAVE_PODIO
 #include <PodioDatamodel/ExampleHitCollection.h>
+#endif
 
 namespace jana2::components::hasinputstests {
 
@@ -36,6 +38,7 @@ struct TestEventSource : public JEventSource {
         det_b_hits.push_back(new TestHit(3, 0, 22.8));
         event.Insert(det_b_hits, "detector_b_hits");
 
+#if JANA2_HAVE_PODIO
         ExampleHitCollection det_c_hits;
         det_c_hits.push_back(MutableExampleHit(14, 0.0, 1.1, 2.2, 52.2, 0));
         event.InsertCollection<ExampleHit>(std::move(det_c_hits), "detector_c_hits");
@@ -49,6 +52,7 @@ struct TestEventSource : public JEventSource {
         ExampleHitCollection det_e_hits;
         det_e_hits.push_back(MutableExampleHit(4, 10.0, 10.0, 10.0, 77.0, 3));
         event.InsertCollection<ExampleHit>(std::move(det_e_hits), "detector_e_hits");
+#endif
 
         return Result::Success;
     }
@@ -60,18 +64,20 @@ struct TestProc : public JEventProcessor {
 
     //VariadicInput<TestHit> m_det_a_hits_in {this};
 
+#if JANA2_HAVE_PODIO
     PodioInput<ExampleHit> m_det_c_hits_in {this};
-
     VariadicPodioInput<ExampleHit> m_det_de_hits_in {this};
 
     // These test the IsOptional functionality: detector_f_hits do not exist
     PodioInput<ExampleHit> m_det_f_hits_in {this};
     VariadicPodioInput<ExampleHit> m_det_def_hits_in {this};
-
+#endif
 
     TestProc() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
         m_det_a_hits_in.SetTag("detector_a_hits");
+
+#if JANA2_HAVE_PODIO
         m_det_c_hits_in.SetCollectionName("detector_c_hits");
         m_det_de_hits_in.SetCollectionNames({"detector_d_hits", "detector_e_hits"});
 
@@ -80,12 +86,14 @@ struct TestProc : public JEventProcessor {
 
         m_det_def_hits_in.SetCollectionNames({"detector_d_hits", "detector_e_hits", "detector_f_hits"});
         m_det_def_hits_in.SetOptional(true);
+#endif
     }
 
     void Process(const JEvent&) override {
         REQUIRE(m_det_a_hits_in->size() == 3);
         REQUIRE(m_det_a_hits_in->at(2)->cell_col == 4);
 
+#if JANA2_HAVE_PODIO
         REQUIRE(m_det_c_hits_in->size() == 1);
         REQUIRE(m_det_c_hits_in->at(0).energy() == 52.2);
 
@@ -99,6 +107,7 @@ struct TestProc : public JEventProcessor {
 
         REQUIRE(m_det_def_hits_in().at(1)->at(0).energy() == 77.0);
         REQUIRE(m_det_def_hits_in().at(2) == nullptr);
+#endif
     }
 };
 
@@ -111,3 +120,4 @@ TEST_CASE("JHasInputs_BasicTests") {
 };
 
 }
+
