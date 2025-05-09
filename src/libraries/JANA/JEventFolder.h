@@ -147,7 +147,7 @@ public:
         for (const auto* input : m_inputs) {
             size_t subinput_count = input->names.size();
             for (size_t i=0; i<subinput_count; ++i) {
-                us->AddInput(new JComponentSummary::Collection("", input->names[i], input->type_name, input->levels[i]));
+                us->AddInput(new JComponentSummary::Collection("", input->names[i], input->type_name, input->level));
             }
         }
         for (const auto* output : m_outputs) {
