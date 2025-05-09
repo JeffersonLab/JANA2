@@ -150,6 +150,9 @@ void JApplication::Initialize() {
     }
 
     topology_builder->create_topology();
+
+    m_params->SetDefaultParameter("jana:inspect", m_inspect, "Controls whether to drop immediately into the Inspector upon Run()");
+
     auto execution_engine = m_service_locator->get<JExecutionEngine>();
 
     // Make sure that Init() is called on any remaining JServices
@@ -196,7 +199,12 @@ void JApplication::Run(bool wait_until_stopped, bool finish) {
 
     LOG_WARN(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
     m_execution_engine->ScaleWorkers(m_desired_nthreads);
-    m_execution_engine->RunTopology();
+    if (m_inspect) {
+        m_execution_engine->RequestInspector();
+    }
+    else {
+        m_execution_engine->RunTopology();
+    }
 
     if (!wait_until_stopped) {
         return;

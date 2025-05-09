@@ -139,6 +139,7 @@ private:
     std::shared_ptr<JComponentManager> m_component_manager;
     std::shared_ptr<JExecutionEngine> m_execution_engine;
 
+    bool m_inspect = false;
     bool m_inspecting = false;
     bool m_quitting = false;
     bool m_skip_join = false;
