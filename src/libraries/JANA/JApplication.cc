@@ -228,13 +228,6 @@ void JApplication::Scale(int nthreads) {
     m_execution_engine->RunTopology();
 }
 
-void JApplication::Inspect() {
-    ::InspectApplication(this);
-    // While we are inside InspectApplication, any SIGINTs will lead to shutdown.
-    // Once we exit InspectApplication, one SIGINT will pause processing and reopen InspectApplication.
-    m_sigint_count = 0; 
-    m_inspecting = false;
-}
 
 void JApplication::Stop(bool wait_until_stopped, bool finish) {
     if (!m_initialized) {
