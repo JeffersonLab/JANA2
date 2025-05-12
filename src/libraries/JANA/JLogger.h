@@ -172,6 +172,10 @@ extern JLogger jerr;
 #define jendl std::endl
 #define default_cout_logger jout
 #define default_cerr_logger jerr
+#ifndef _DBG_
 #define _DBG_ jerr<<__FILE__<<":"<<__LINE__<<" "
+#endif
+#ifndef _DBG__
 #define _DBG__ jerr<<__FILE__<<":"<<__LINE__<<std::endl
+#endif
 
