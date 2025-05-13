@@ -22,17 +22,6 @@ void InitPlugin(JApplication *app){
 }
 } // "C"
 
-// Tokenize a string
-static inline void Tokenize(string str, vector<string> &tokens, const char delim=' ')
-{
-	tokens.clear();
-	unsigned int cutAt;
-	while( (cutAt = str.find(delim)) != (unsigned int)str.npos ){
-		if(cutAt > 0)tokens.push_back(str.substr(0,cutAt));
-		str = str.substr(cutAt+1);
-	}
-	if(str.length() > 0)tokens.push_back(str);
-}
 
 //-----------------------------------------
 // JEventProcessor_janaroot (constructor)
