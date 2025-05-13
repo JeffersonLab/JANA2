@@ -62,10 +62,14 @@ void JComponentManager::configure_components() {
     m_params->SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
     m_params->SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
     m_params->SetDefaultParameter("autoactivate", m_autoactivate, "List of factories to activate regardless of what the event processors request. Format is typename:tag,typename:tag");
+
+
+    bool output_processed_event_numbers = false;
+    m_params->SetDefaultParameter("jana:output_processed_event_numbers", output_processed_event_numbers, "Write the sequence of processed event numbers to file");
     m_params->FilterParameters(m_default_tags, "DEFTAG:");
 
     // Look for factories to auto-activate
-    if (!m_autoactivate.empty()) {
+    if (!m_autoactivate.empty() || output_processed_event_numbers) {
         m_evt_procs.insert(m_evt_procs.begin(), new JAutoActivator);
         // We add this to the _front_ of the evt_procs vector so that it is run _first_
         // JAutoActivator will re-parse the autoactivate list by itself
