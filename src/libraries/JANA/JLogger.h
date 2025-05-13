@@ -11,11 +11,14 @@
 #include <chrono>
 #include <iomanip>
 #include <time.h>
-#include <mutex>
 #include <atomic>
+#include <fstream>
 
 #ifndef JANA2_USE_LOGGER_MUTEX
 #define JANA2_USE_LOGGER_MUTEX 0
+#endif
+#if JANA2_USE_LOGGER_MUTEX
+#include <mutex>
 #endif
 
 
@@ -172,6 +175,10 @@ extern JLogger jerr;
 #define jendl std::endl
 #define default_cout_logger jout
 #define default_cerr_logger jerr
+#ifndef _DBG_
 #define _DBG_ jerr<<__FILE__<<":"<<__LINE__<<" "
+#endif
+#ifndef _DBG__
 #define _DBG__ jerr<<__FILE__<<":"<<__LINE__<<std::endl
+#endif
 

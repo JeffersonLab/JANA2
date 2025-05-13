@@ -16,7 +16,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: build
       run: |
-        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=`pwd` \
+        cmake -S . -B build \
+          -DCMAKE_INSTALL_PREFIX=`pwd` \
           -DUSE_PYTHON=ON \
           -DUSE_ROOT=ON \
           -DUSE_PODIO=ON \
