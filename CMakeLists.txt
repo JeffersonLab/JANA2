@@ -212,7 +212,6 @@ add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/unit_tests)
 add_subdirectory(src/programs/perf_tests)
 add_subdirectory(src/python)
-add_subdirectory(src/examples_2)
 
 #---------------------------------------------------------------------------------------
 
