@@ -1,2 +1,4 @@
 
+add_subdirectory(tutorial_with_lightweight_datamodel)
+add_subdirectory(tutorial_with_podio_datamodel)
 add_subdirectory(misc)
