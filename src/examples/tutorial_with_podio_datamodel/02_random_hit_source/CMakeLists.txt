@@ -1,5 +1,5 @@
 
-#add_jana_plugin(podio_random_hit_source)
+add_jana_plugin(podio_random_hit_source)
 
-#target_link_libraries(podio_random_hit_source PUBLIC podio_datamodel)
+target_link_libraries(podio_random_hit_source PUBLIC jana2_tutorial_podio_datamodel)
 

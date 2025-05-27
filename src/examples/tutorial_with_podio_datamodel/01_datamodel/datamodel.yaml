@@ -2,7 +2,7 @@
 schema_version: 1
 options:
   # should getters / setters be prefixed with get / set?
-  getSyntax: False
+  getSyntax: True
   # should POD members be exposed with getters/setters in classes that have them as members?
   exposePODMembers: True
   includeSubfolder: True
@@ -20,23 +20,25 @@ datatypes :
     Description : "A simple calorimeter hit"
     Author : "N. Brei"
     Members:
-      - uint64_t cellID   // cellID
-      - double x          // x coordinate of cell center
-      - double y          // y coordinate of cell center
-      - double z          // z coordinate of cell center
-      - double energy     // Measured energy deposit
-      - uint64_t time     // Ticks since start of timeframe
+      - uint64_t cell_id  // Cell ID
+      - uint64_t row      // Cell row (zero-indexed)
+      - uint64_t col      // Cell column (zero-indexed)
+      - double x          // x coordinate of cell center [cm]
+      - double y          // y coordinate of cell center [cm]
+      - double z          // z coordinate of cell center [cm]
+      - double energy     // Measured energy deposit [GeV]
+      - uint64_t time     // Time [ns]
 
   CalorimeterCluster:
     Description : "A simple calorimeter cluster"
     Author : "N. Brei"
     Members:
-      - double x_center     // x location of cluster center
-      - double y_center     // y location of cluster center
-      - double z_center     // z location of cluster center
+      - double x_center     // x location of cluster center [cm]
+      - double y_center     // y location of cluster center [cm]
+      - double z_center     // z location of cluster center [cm]
       - double energy       // Total energy deposited [GeV]
-      - uint64_t time_begin // Timestamp of earliest hit [ticks since timeframe start]
-      - uint64_t time_end   // Timestamp of latest hit [ticks since timeframe start]
+      - uint64_t time_begin // Timestamp of earliest hit [ns]
+      - uint64_t time_end   // Timestamp of latest hit [ns]
     OneToManyRelations:
       - CalorimeterHit hits          // hits that comprise this cluster
       - CalorimeterCluster clusters  // (proto) clusters that comprise this cluster
@@ -59,6 +61,6 @@ datatypes :
       - uint32_t slot      // DAQ slot index
       - uint32_t channel   // DAQ channel index
       - uint32_t energy    // Energy measured
-      - uint32_t timestamp // Timestamp [ticks since timeframe start]
+      - uint32_t timestamp // Timestamp [ns]
 
 
