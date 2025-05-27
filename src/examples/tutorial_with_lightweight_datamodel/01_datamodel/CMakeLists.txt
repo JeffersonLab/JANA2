@@ -11,5 +11,7 @@ file(GLOB lw_datamodel_headers "*.h")
 install(FILES ${lw_datamodel_headers}
     DESTINATION include/jana2_tutorial_lightweight/datamodel)
 
+install(TARGETS lw_datamodel
+        EXPORT jana2_targets)
 
 
