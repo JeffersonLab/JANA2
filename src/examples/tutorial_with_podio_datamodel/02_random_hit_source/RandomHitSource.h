@@ -11,7 +11,7 @@ class RandomHitSource : public JEventSource {
 
     Parameter<int> m_seed {this, "seed", 0, "Random seed"};
     Parameter<uint32_t> m_event_width_ns {this, "event_width", 20, "Event width [ns]"};
-    Parameter<uint32_t> m_expected_clusters_per_event {this, "m_expected_clusters_per_event", 10, "Expected clusters per event"};
+    Parameter<uint32_t> m_expected_clusters_per_event {this, "expected_clusters_per_event", 10, "Expected clusters per event"};
     Parameter<int> m_cell_cols {this, "cell_cols", 20, "Number of columns in the detector"};
     Parameter<int> m_cell_rows {this, "cell_rows", 10, "Number of rows in the detector"};
 

@@ -7,14 +7,21 @@
 
 #include <jana2_tutorial_podio_datamodel/CalorimeterHitCollection.h>
 #include <random>
+#include <algorithm>
 
 
 RandomHitSource::RandomHitSource() : JEventSource() {
     SetTypeName(NAME_OF_THIS);
+    SetPrefix("random_hit_source");
     SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
 void RandomHitSource::Init() {
+    if (*m_expected_clusters_per_event < 1) {
+        throw JException("expected_clusters_per_event must be >= 1. Actual value=%d", *m_expected_clusters_per_event);
+    }
+
+    LOG_INFO(GetLogger()) << "RandomHitSource is using seed=" << *m_seed;
     m_rng.seed(*m_seed);
 }
 
@@ -24,9 +31,9 @@ JEventSource::Result RandomHitSource::Emit(JEvent& event) {
     /// read and write state on the JEventSource without causing race conditions.
     /// In this case, the shared state that we update is the random number generator m_rng
 
-    std::uniform_int_distribution<> hit_row_distribution(0, *m_cell_rows-1);
-    std::uniform_int_distribution<> hit_col_distribution(0, *m_cell_cols-1);
-    std::uniform_int_distribution<> intercluster_time_distribution(0, 2 * (*m_event_width_ns) / (*m_expected_clusters_per_event));
+    std::uniform_int_distribution<> hit_row_distribution(0, *m_cell_rows-2);
+    std::uniform_int_distribution<> hit_col_distribution(0, *m_cell_cols-2);
+    std::uniform_int_distribution<> intercluster_time_distribution(1, std::max<int>(2, 2 * (*m_event_width_ns) / (*m_expected_clusters_per_event)));
     std::normal_distribution<> energy_distribution(100, 10);
 
     uint64_t event_finish_time_ns = m_event_start_timestamp_ns + *m_event_width_ns;

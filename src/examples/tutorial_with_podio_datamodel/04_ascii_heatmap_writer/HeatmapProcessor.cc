@@ -3,7 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "HeatmapProcessor.h"
-#include "CalorimeterHit.h"
+#include <jana2_tutorial_podio_datamodel/CalorimeterHitCollection.h>
 
 HeatmapProcessor::HeatmapProcessor() {
     SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
@@ -16,8 +16,8 @@ void HeatmapProcessor::Init() {
 
     m_heatmap = std::make_unique<double[]>(m_cell_cols() * m_cell_rows());
 
-    for (int i=0; i < m_cell_rows(); ++i) {
-        for (int j=0; j < m_cell_cols(); ++j) {
+    for (size_t i=0; i < m_cell_rows(); ++i) {
+        for (size_t j=0; j < m_cell_cols(); ++j) {
             m_heatmap[i* m_cell_cols() + j] = 0;
         }
     }
@@ -28,19 +28,19 @@ void HeatmapProcessor::Process(const std::shared_ptr<const JEvent>& event) {
 
     /// Do everything we can in parallel
     /// Warning: We are only allowed to use local variables and `event` here
-    auto hits = event->Get<CalorimeterHit>("raw");
+    auto hits = event->GetCollection<CalorimeterHit>("CalorimeterHit:raw");
 
     /// Lock mutex
     std::lock_guard<std::mutex>lock(m_mutex);
 
     /// Do the rest sequentially
     /// Now we are free to access shared state such as m_heatmap
-    for (const CalorimeterHit* hit : hits) {
-        if (hit->row < m_cell_rows() && hit->col < m_cell_cols()) {
-            m_heatmap[hit->row* m_cell_cols() + hit->col] = hit->energy;
+    for (const auto hit : *hits) {
+        if (hit.getRow() < m_cell_rows() && hit.getCol() < m_cell_cols()) {
+            m_heatmap[hit.getRow() * m_cell_cols() + hit.getCol()] = hit.getEnergy();
         }
         else {
-            LOG_WARN(GetLogger()) << "Hit at row=" << hit->row << ", col=" << hit->col << " does not fit on heatmap";
+            LOG_WARN(GetLogger()) << "Hit at row=" << hit.getRow() << ", col=" << hit.getCol() << " does not fit on heatmap";
         }
     }
 }
