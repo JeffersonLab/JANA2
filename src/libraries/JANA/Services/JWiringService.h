@@ -42,6 +42,7 @@ private:
     std::map<std::string, std::string> m_shared_parameters;
 
 public:
+    JWiringService();
     void Init() override;
 
     void AddWirings(std::vector<std::unique_ptr<Wiring>>& wirings, const std::string& source);
