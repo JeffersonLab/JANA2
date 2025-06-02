@@ -20,6 +20,8 @@ public:
         JEventLevel level = JEventLevel::PhysicsEvent;
         std::vector<std::string> input_names = {};
         std::vector<JEventLevel> input_levels = {};
+        std::vector<std::vector<std::string>> variadic_input_names = {};
+        std::vector<JEventLevel> variadic_input_levels = {};
         std::vector<std::string> output_names = {};
         FactoryConfigType configs = {}; /// Must be copyable!
     };
@@ -85,7 +87,7 @@ public:
             // Specifically, it needs valid input/output tags, a valid logger, and
             // valid default values in its Config object
             factory->PreInit(wiring.tag, wiring.level, wiring.input_names, wiring.input_levels, 
-                             {}, {}, wiring.output_names);
+                             wiring.variadic_input_names, wiring.variadic_input_levels, wiring.output_names);
 
             // Factory is ready
             factory_set->Add(factory);

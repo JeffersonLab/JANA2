@@ -23,6 +23,8 @@ public:
         JEventLevel level = JEventLevel::None;
         std::vector<std::string> input_names;
         std::vector<JEventLevel> input_levels;
+        std::vector<std::vector<std::string>> variadic_input_names;
+        std::vector<JEventLevel> variadic_input_levels;
         std::vector<std::string> output_names;
         std::vector<JEventLevel> output_levels;
         std::map<std::string, std::string> configs;
