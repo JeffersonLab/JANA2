@@ -49,6 +49,8 @@ public:
                              wiring->level,
                              wiring->input_names,
                              wiring->input_levels,
+                             wiring->variadic_input_names,
+                             wiring->variadic_input_levels,
                              wiring->output_names);
 
             factory_set->Add(factory);

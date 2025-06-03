@@ -84,7 +84,8 @@ public:
             // Set up all of the wiring prereqs so that Init() can do its thing
             // Specifically, it needs valid input/output tags, a valid logger, and
             // valid default values in its Config object
-            factory->PreInit(wiring.tag, wiring.level, wiring.input_names, wiring.input_levels, wiring.output_names);
+            factory->PreInit(wiring.tag, wiring.level, wiring.input_names, wiring.input_levels, 
+                             {}, {}, wiring.output_names);
 
             // Factory is ready
             factory_set->Add(factory);

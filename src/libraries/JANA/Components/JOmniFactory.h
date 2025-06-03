@@ -11,6 +11,7 @@
  */
 
 #include "JANA/Services/JParameterManager.h"
+#include "JANA/Utils/JEventLevel.h"
 #include <JANA/JEvent.h>
 #include <JANA/JMultifactory.h>
 #include <JANA/JVersion.h>
@@ -199,7 +200,10 @@ public:
                         JEventLevel level,
                         std::vector<std::string> input_collection_names,
                         std::vector<JEventLevel> input_collection_levels,
-                        std::vector<std::string> output_collection_names ) {
+                        std::vector<std::vector<std::string>> variadic_input_collection_names,
+                        std::vector<JEventLevel> variadic_input_collection_levels, 
+                        std::vector<std::string> output_collection_names
+                        ) {
 
         m_prefix = (this->GetPluginName().empty()) ? tag : this->GetPluginName() + ":" + tag;
         m_level = level;
@@ -210,32 +214,76 @@ public:
         m_app->SetDefaultParameter(m_prefix + ":OutputTags", output_collection_names, "Output collection names");
 
         // Figure out variadic inputs
+        size_t nonvariadic_input_count = 0;
         size_t variadic_input_count = 0;
         for (auto* input : m_inputs) {
             if (input->is_variadic) {
                variadic_input_count += 1;
             }
+            else {
+                nonvariadic_input_count += 1;
+            }
         }
-        size_t variadic_input_collection_count = FindVariadicCollectionCount(m_inputs.size(), variadic_input_count, input_collection_names.size(), true);
+        if (variadic_input_count > 0 && variadic_input_collection_names.empty()) {
+            // Obtain all input collection names the old way
+            size_t variadic_input_collection_count = FindVariadicCollectionCount(m_inputs.size(), variadic_input_count, input_collection_names.size(), true);
 
-        // Set input collection names
-        size_t i = 0;
-        for (auto* input : m_inputs) {
-            input->names.clear();
-            if (input->is_variadic) {
-                for (size_t j = 0; j<(variadic_input_collection_count/variadic_input_count); ++j) {
-                    input->names.push_back(input_collection_names[i++]);
-                    if (!input_collection_levels.empty()) {
-                        input->level = input_collection_levels[i++]; // Last one wins. TODO: Assert that these are all the same
-                    }
-                    else {
-                        input->level = level;
+            // Set input collection names
+            size_t i = 0;
+            for (auto* input : m_inputs) {
+                input->names.clear();
+                if (input->is_variadic) {
+                    for (size_t j = 0; j<(variadic_input_collection_count/variadic_input_count); ++j) {
+                        input->names.push_back(input_collection_names[i++]);
+                        if (!input_collection_levels.empty()) {
+                            input->level = input_collection_levels[i++]; // Last one wins. TODO: Assert that these are all the same
+                        }
+                        else {
+                            input->level = level;
+                        }
                     }
                 }
+                else {
+                    input->names.push_back(input_collection_names[i++]);
+                    input->level = level;
+                }
             }
-            else {
-                input->names.push_back(input_collection_names[i++]);
-                input->level = level;
+        }
+        else {
+            // Obtain all input collection names the new, better way
+            // Check that we have the right sizes
+            if (input_collection_names.size() != nonvariadic_input_count) {
+                throw JException("Wrong number of (nonvariadic) input collection names! Expected %d, found %d", nonvariadic_input_count, input_collection_names.size());
+            }
+            if (variadic_input_collection_names.size() != variadic_input_count) {
+                throw JException("Wrong number of variadic input collection names! Expected %d, found %d", variadic_input_count, variadic_input_collection_names.size());
+            }
+
+            size_t nonvariadic_index = 0;
+            size_t variadic_index = 0;
+
+            for (auto* input : m_inputs) {
+                input->names.clear();
+                if (!input->is_variadic) {
+                    input->names.push_back(input_collection_names.at(nonvariadic_index));
+                    if (input_collection_levels.empty()) {
+                        input->level = level;
+                    }
+                    else {
+                        input->level = input_collection_levels.at(nonvariadic_index);
+                    }
+                    nonvariadic_index += 1;
+                }
+                else {
+                    input->names = variadic_input_collection_names.at(variadic_index);
+                    if (variadic_input_collection_levels.empty()) {
+                        input->level = level;
+                    }
+                    else {
+                        input->level = variadic_input_collection_levels.at(variadic_index);
+                    }
+                    variadic_index += 1;
+                }
             }
         }
 
@@ -249,7 +297,7 @@ public:
         size_t variadic_output_collection_count = FindVariadicCollectionCount(m_outputs.size(), variadic_output_count, output_collection_names.size(), false);
 
         // Set output collection names and create corresponding helper factories
-        i = 0;
+        size_t i = 0;
         for (auto* output : m_outputs) {
             output->collection_names.clear();
             if (output->is_variadic) {
