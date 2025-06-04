@@ -97,6 +97,7 @@ struct TestProc : public JEventProcessor {
         REQUIRE(m_det_c_hits_in->size() == 1);
         REQUIRE(m_det_c_hits_in->at(0).energy() == 52.2);
 
+        REQUIRE(m_det_de_hits_in.GetDatabundleNames().size() == 2);
         REQUIRE(m_det_de_hits_in().at(0)->size() == 3);
         REQUIRE(m_det_de_hits_in().at(0)->at(0).energy() == 1000.1);
 

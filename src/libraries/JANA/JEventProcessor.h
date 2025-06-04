@@ -53,6 +53,9 @@ public:
         for (auto* input : m_inputs) {
             input->PrefetchCollection(event);
         }
+        for (auto* variadic_input : m_variadic_inputs) {
+            variadic_input->PrefetchCollection(event);
+        }
         if (m_callback_style == CallbackStyle::ExpertMode) {
             ProcessParallel(event);
         }
@@ -83,6 +86,9 @@ public:
             // We do this before ChangeRun() just in case we will need to pull data out of
             // a begin-of-run event.
             input->GetCollection(event);
+        }
+        for (auto* variadic_input : m_variadic_inputs) {
+            variadic_input->GetCollection(event);
         }
         auto run_number = event.GetRunNumber();
         if (m_last_run_number != run_number) {
@@ -161,9 +167,12 @@ public:
             "Processor", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
-            size_t subinput_count = input->names.size();
+            result->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->type_name, input->level));
+        }
+        for (const auto* input : m_variadic_inputs) {
+            size_t subinput_count = input->GetDatabundleNames().size();
             for (size_t i=0; i<subinput_count; ++i) {
-                result->AddInput(new JComponentSummary::Collection("", input->names[i], input->type_name, input->level));
+                result->AddInput(new JComponentSummary::Collection("", input->GetDatabundleNames()[i], input->type_name, input->level));
             }
         }
         summary.Add(result);
