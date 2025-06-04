@@ -84,15 +84,19 @@ void JWiringService::AddWirings(const toml::table& table, const std::string& sou
 
         auto input_names = f["input_names"].as_array();
         if (input_names != nullptr) {
-            for (const auto& input_name : *f["input_names"].as_array()) {
+            for (const auto& input_name : *input_names) {
                 wiring->input_names.push_back(input_name.value<std::string>().value());
             }
         }
 
-        auto output_names = f["output_names"].as_array();
-        if (output_names != nullptr) {
-            for (const auto& output_name : *f["output_names"].as_array()) {
-                wiring->output_names.push_back(output_name.value<std::string>().value());
+        auto variadic_input_names = f["variadic_input_names"].as_array();
+        if (variadic_input_names != nullptr) {
+            for (const auto& input_name_vec : *variadic_input_names) {
+                std::vector<std::string> temp;
+                for (const auto& input_name : *(input_name_vec.as_array())) {
+                    temp.push_back(input_name.as_string()->get());
+                }
+                wiring->variadic_input_names.push_back(temp);
             }
         }
 
@@ -100,6 +104,20 @@ void JWiringService::AddWirings(const toml::table& table, const std::string& sou
         if (input_levels != nullptr) {
             for (const auto& input_level : *input_levels) {
                 wiring->input_levels.push_back(parseEventLevel(input_level.value<std::string>().value()));
+            }
+        }
+
+        auto variadic_input_levels = f["variadic_input_levels"].as_array();
+        if (variadic_input_levels != nullptr) {
+            for (const auto& input_level : *variadic_input_levels) {
+                wiring->variadic_input_levels.push_back(parseEventLevel(input_level.value<std::string>().value()));
+            }
+        }
+
+        auto output_names = f["output_names"].as_array();
+        if (output_names != nullptr) {
+            for (const auto& output_name : *f["output_names"].as_array()) {
+                wiring->output_names.push_back(output_name.value<std::string>().value());
             }
         }
 
