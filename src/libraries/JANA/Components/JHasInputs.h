@@ -81,11 +81,15 @@ protected:
     };
 
     class VariadicInputBase {
+    public:
+        enum class EmptyInputPolicy { IncludeNothing, IncludeEverything };
+
     protected:
         std::string m_type_name;
         std::vector<std::string> m_databundle_names;
         JEventLevel m_level = JEventLevel::None;
         bool m_is_optional = false;
+        EmptyInputPolicy m_empty_input_policy = EmptyInputPolicy::IncludeNothing;
 
     public:
 
@@ -99,6 +103,10 @@ protected:
 
         void SetDatabundleNames(std::vector<std::string> names) {
             m_databundle_names = names;
+        }
+
+        void SetEmptyInputPolicy(EmptyInputPolicy policy) {
+            m_empty_input_policy = policy;
         }
 
         const std::string& GetTypeName() const {
