@@ -3,6 +3,7 @@
 // Created by Nathan Brei
 
 #pragma once
+#include "JANA/Podio/JFactoryPodioT.h"
 #include <JANA/JEvent.h>
 
 
@@ -86,7 +87,8 @@ protected:
 
     protected:
         std::string m_type_name;
-        std::vector<std::string> m_databundle_names;
+        std::vector<std::string> m_requested_databundle_names;
+        std::vector<std::string> m_realized_databundle_names;
         JEventLevel m_level = JEventLevel::None;
         bool m_is_optional = false;
         EmptyInputPolicy m_empty_input_policy = EmptyInputPolicy::IncludeNothing;
@@ -101,8 +103,8 @@ protected:
             m_level = level;
         }
 
-        void SetDatabundleNames(std::vector<std::string> names) {
-            m_databundle_names = names;
+        void SetRequestedDatabundleNames(std::vector<std::string> names) {
+            m_requested_databundle_names = names;
         }
 
         void SetEmptyInputPolicy(EmptyInputPolicy policy) {
@@ -113,8 +115,12 @@ protected:
             return m_type_name;
         }
 
-        const std::vector<std::string>& GetDatabundleNames() const {
-            return m_databundle_names;
+        const std::vector<std::string>& GetRequestedDatabundleNames() const {
+            return m_requested_databundle_names;
+        }
+
+        const std::vector<std::string>& GetRealizedDatabundleNames() const {
+            return m_realized_databundle_names;
         }
 
         JEventLevel GetLevel() const {
@@ -122,7 +128,7 @@ protected:
         }
 
         void Configure(const VariadicInputOptions& options) {
-            m_databundle_names = options.names;
+            m_requested_databundle_names = options.names;
             m_level = options.level;
             m_is_optional = options.is_optional;
         }
@@ -272,9 +278,9 @@ protected:
 
         void SetTags(std::vector<std::string> tags) {
             m_tags = std::move(tags);
-            m_databundle_names.clear();
+            m_requested_databundle_names.clear();
             for (auto& tag : tags) {
-                m_databundle_names.push_back(m_type_name + ":" + tag);
+                m_requested_databundle_names.push_back(m_type_name + ":" + tag);
             }
         }
 
@@ -347,31 +353,61 @@ protected:
             return m_datas;
         }
 
-        void SetCollectionNames(std::vector<std::string> names) {
-            m_databundle_names = std::move(names);
+        void SetRequestedCollectionNames(std::vector<std::string> names) {
+            m_requested_databundle_names = std::move(names);
         }
 
         void GetCollection(const JEvent& event) {
             m_datas.clear();
-            for (auto& coll_name : m_databundle_names) {
-                if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                    m_datas.push_back(event.GetCollection<PodioT>(coll_name, !m_is_optional));
+            if (!m_requested_databundle_names.empty()) {
+                for (auto& coll_name : m_requested_databundle_names) {
+                    if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
+                        auto coll = event.GetCollection<PodioT>(coll_name, !m_is_optional);
+                        if (coll != nullptr) {
+                            m_realized_databundle_names.push_back(coll_name);
+                            m_datas.push_back(coll);
+                        }
+                    }
+                    else {
+                        if (m_is_optional && !event.HasParent(m_level)) return;
+                        auto coll = event.GetParent(m_level).template GetCollection<PodioT>(coll_name, !m_is_optional);
+                        if (coll != nullptr) {
+                            m_realized_databundle_names.push_back(coll_name);
+                            m_datas.push_back(coll);
+                        }
+                    }
                 }
-                else {
-                    if (m_is_optional && !event.HasParent(m_level)) return;
-                    m_datas.push_back(event.GetParent(m_level).template GetCollection<PodioT>(coll_name, !m_is_optional));
+            }
+            else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
+                auto facs = event.GetFactorySet()->GetAllFactories<PodioT>();
+                for (auto* fac : facs) {
+                    JFactoryPodioT<PodioT>* podio_fac = dynamic_cast<JFactoryPodioT<PodioT>*>(fac);
+                    if (podio_fac == nullptr) {
+                        throw JException("Found factory which is NOT a podio factory!");
+                    }
+                    auto typed_collection = dynamic_cast<const PodioT::collection_type*>(podio_fac->GetCollection());
+                    m_datas.push_back(typed_collection);
+                    m_realized_databundle_names.push_back(podio_fac->GetTag());
                 }
             }
         }
 
         void PrefetchCollection(const JEvent& event) {
-            for (auto& coll_name : m_databundle_names) {
-                if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                    event.GetCollection<PodioT>(coll_name, !m_is_optional);
+            if (!m_requested_databundle_names.empty()) {
+                for (auto& coll_name : m_requested_databundle_names) {
+                    if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
+                        event.GetCollection<PodioT>(coll_name, !m_is_optional);
+                    }
+                    else {
+                        if (m_is_optional && !event.HasParent(m_level)) return;
+                        event.GetParent(m_level).template GetCollection<PodioT>(coll_name, !m_is_optional);
+                    }
                 }
-                else {
-                    if (m_is_optional && !event.HasParent(m_level)) return;
-                    event.GetParent(m_level).template GetCollection<PodioT>(coll_name, !m_is_optional);
+            }
+            else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
+                auto facs = event.GetFactorySet()->GetAllFactories<PodioT>();
+                for (auto* fac : facs) {
+                    fac->Create(event.shared_from_this());
                 }
             }
         }

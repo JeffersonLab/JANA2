@@ -236,7 +236,7 @@ public:
 
         i = 0;
         for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->SetDatabundleNames(variadic_input_collection_names.at(i));
+            variadic_input->SetRequestedDatabundleNames(variadic_input_collection_names.at(i));
             if (variadic_input_collection_levels.empty()) {
                 variadic_input->SetLevel(level);
             }
@@ -337,7 +337,7 @@ public:
             mfs->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->GetTypeName(), input->GetLevel()));
         }
         for (const auto* input : m_variadic_inputs) {
-            for (auto& databundle_name : input->GetDatabundleNames()) {
+            for (auto& databundle_name : input->GetRequestedDatabundleNames()) {
                 mfs->AddInput(new JComponentSummary::Collection("", databundle_name, input->GetTypeName(), input->GetLevel()));
             }
         }

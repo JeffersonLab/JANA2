@@ -22,11 +22,10 @@ private:
     friend class JMultifactory;
     void SetFrame(podio::Frame* frame) { mFrame = frame; }
 
-    // Meant to be called internally, from JEvent:
-    friend class JEvent;
+public:
+    // Meant to be called from JEvent or VariadicPodioInput
     const podio::CollectionBase* GetCollection() { return mCollection; }
 
-public:
     // Meant to be called from ctor, or externally, if we are creating a dummy factory such as a multifactory helper
     void SetSubsetCollection(bool isSubsetCollection=true) { mIsSubsetCollection = isSubsetCollection; }
 };

@@ -79,12 +79,12 @@ struct TestProc : public JEventProcessor {
 
 #if JANA2_HAVE_PODIO
         m_det_c_hits_in.SetCollectionName("detector_c_hits");
-        m_det_de_hits_in.SetCollectionNames({"detector_d_hits", "detector_e_hits"});
+        m_det_de_hits_in.SetRequestedCollectionNames({"detector_d_hits", "detector_e_hits"});
 
         m_det_f_hits_in.SetCollectionName("detector_f_hits");
         m_det_f_hits_in.SetOptional(true);
 
-        m_det_def_hits_in.SetCollectionNames({"detector_d_hits", "detector_e_hits", "detector_f_hits"});
+        m_det_def_hits_in.SetRequestedCollectionNames({"detector_d_hits", "detector_e_hits", "detector_f_hits"});
         m_det_def_hits_in.SetOptional(true);
 #endif
     }
@@ -97,7 +97,7 @@ struct TestProc : public JEventProcessor {
         REQUIRE(m_det_c_hits_in->size() == 1);
         REQUIRE(m_det_c_hits_in->at(0).energy() == 52.2);
 
-        REQUIRE(m_det_de_hits_in.GetDatabundleNames().size() == 2);
+        REQUIRE(m_det_de_hits_in.GetRequestedDatabundleNames().size() == 2);
         REQUIRE(m_det_de_hits_in().at(0)->size() == 3);
         REQUIRE(m_det_de_hits_in().at(0)->at(0).energy() == 1000.1);
 
