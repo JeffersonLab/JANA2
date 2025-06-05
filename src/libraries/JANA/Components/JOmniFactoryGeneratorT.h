@@ -75,6 +75,15 @@ public:
 
     void GenerateFactories(JFactorySet *factory_set) override {
 
+        if (m_typed_wirings.size() == 0) {
+            FactoryT *factory = new FactoryT;
+            factory->SetApplication(GetApplication());
+            factory->SetPluginName(this->GetPluginName());
+            factory->SetTypeName(JTypeInfo::demangle<FactoryT>());
+            factory->SetLogger(GetApplication()->template GetService<JParameterManager>()->GetLogger(factory->GetPrefix()));
+            factory_set->Add(factory);
+        }
+
         for (const auto& wiring : m_typed_wirings) {
 
             FactoryT *factory = new FactoryT;
