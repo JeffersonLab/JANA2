@@ -147,12 +147,12 @@ public:
             "Folder", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
-            us->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->type_name, input->level));
+            us->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->GetTypeName(), input->GetLevel()));
         }
         for (const auto* input : m_variadic_inputs) {
             size_t subinput_count = input->GetDatabundleNames().size();
             for (size_t i=0; i<subinput_count; ++i) {
-                us->AddInput(new JComponentSummary::Collection("", input->GetDatabundleNames().at(i), input->type_name, input->level));
+                us->AddInput(new JComponentSummary::Collection("", input->GetDatabundleNames().at(i), input->GetTypeName(), input->GetLevel()));
             }
         }
         for (const auto* output : m_outputs) {

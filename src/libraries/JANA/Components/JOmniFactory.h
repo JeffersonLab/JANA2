@@ -226,10 +226,10 @@ public:
         for (auto* input : m_inputs) {
             input->SetDatabundleName(input_collection_names.at(i));
             if (input_collection_levels.empty()) {
-                input->level = level;
+                input->SetLevel(level);
             }
             else {
-                input->level = input_collection_levels.at(i);
+                input->SetLevel(input_collection_levels.at(i));
             }
             i += 1;
         }
@@ -238,10 +238,10 @@ public:
         for (auto* variadic_input : m_variadic_inputs) {
             variadic_input->SetDatabundleNames(variadic_input_collection_names.at(i));
             if (variadic_input_collection_levels.empty()) {
-                variadic_input->level = level;
+                variadic_input->SetLevel(level);
             }
             else {
-                variadic_input->level = variadic_input_collection_levels.at(i);
+                variadic_input->SetLevel(variadic_input_collection_levels.at(i));
             }
             i += 1;
         }
@@ -334,11 +334,11 @@ public:
             "OmniFactory", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
-            mfs->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->type_name, input->level));
+            mfs->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->GetTypeName(), input->GetLevel()));
         }
         for (const auto* input : m_variadic_inputs) {
             for (auto& databundle_name : input->GetDatabundleNames()) {
-                mfs->AddInput(new JComponentSummary::Collection("", databundle_name, input->type_name, input->level));
+                mfs->AddInput(new JComponentSummary::Collection("", databundle_name, input->GetTypeName(), input->GetLevel()));
             }
         }
         for (const auto* output : m_outputs) {
