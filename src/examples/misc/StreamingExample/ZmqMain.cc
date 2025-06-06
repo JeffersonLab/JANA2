@@ -59,10 +59,8 @@ void InitPlugin(JApplication *app) {
     auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport("tcp://127.0.0.1:5555"));
     app->Add(new JStreamingEventSource<ReadoutMessageAuto>(std::move(transport)));
 
-    app->Add(new AHitAnomalyDetector(app, 5000));
+    app->Add(new AHitAnomalyDetector(5000));
     app->Add(new JFactoryGeneratorT<AHitParser>());
-
-    app->SetParameterValue("jana:extended_report", 0);
 
     new std::thread(dummy_publisher_loop);
 }

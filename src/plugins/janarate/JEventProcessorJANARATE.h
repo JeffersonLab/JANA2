@@ -13,8 +13,6 @@ class JEventProcessorJANARATE:public JEventProcessor
 {
 	public:
 
-	JEventProcessorJANARATE(JApplication* app): JEventProcessor(app) {}
-
 	virtual void Init(void);
 	virtual void Process(const std::shared_ptr<const JEvent>& aEvent);
 	virtual void Finish(void);

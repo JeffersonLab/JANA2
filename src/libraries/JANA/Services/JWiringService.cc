@@ -7,6 +7,10 @@
 
 namespace jana::services {
 
+JWiringService::JWiringService() {
+    SetPrefix("jana");
+}
+
 void JWiringService::Init() {
     LOG_INFO(GetLogger()) << "Initializing JWiringService" << LOG_END;
     // User is _only_ allowed to specify wiring file via parameter

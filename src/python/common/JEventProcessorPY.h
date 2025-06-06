@@ -250,7 +250,7 @@ class JEventProcessorPY {
 class JEventProcessorPYTrampoline: public JEventProcessor {
 
 public:
-    JEventProcessorPYTrampoline(JApplication *japp, JEventProcessorPY *jevent_proc):JEventProcessor(japp),jevent_proc_py(jevent_proc){
+    JEventProcessorPYTrampoline(JEventProcessorPY *jevent_proc):jevent_proc_py(jevent_proc){
         SetTypeName(jevent_proc->class_name);
         jevent_proc_py->SetJApplication(japp); // copy JApplication pointer to our JEventProcessorPY
     }

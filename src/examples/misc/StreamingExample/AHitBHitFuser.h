@@ -8,16 +8,15 @@
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
-#include <JANA/JBenchUtils.h>
+#include <JANA/Utils/JBenchUtils.h>
 #include "AHit.h"
+#include "BHit.h"
 
 /// AHitBHitFuser
 class AHitBHitFuser : public JEventProcessor {
 
 public:
-    AHitAnomalyDetector(JApplication* app = nullptr, size_t delay_ms=1000)
-        : JEventProcessor(app)
-        , m_delay_ms(delay_ms) {
+    AHitBHitFuser(size_t delay_ms=1000) : m_delay_ms(delay_ms) {
             SetCallbackStyle(CallbackStyle::ExpertMode);
         };
 
@@ -48,11 +47,11 @@ public:
 
 
         std::cout << "Processing event #" << event.GetEventNumber() << std::endl;
-        Serializer<AHit> serializer;
+        //Serializer<AHit> serializer;
         for (auto & hit : raw_hits) {
-            AHit* calibrated_hit = new DetectorAHit(*hit);
-            calibrated_hit->V += 7;
-            std::cout << serializer.serialize(*calibrated_hit) << std::endl;
+            AHit* calibrated_hit = new AHit(*hit);
+            calibrated_hit->E += 7;
+            //std::cout << serializer.serialize(*calibrated_hit) << std::endl;
         }
         m_bench_utils.consume_cpu_ms(m_delay_ms);
     }

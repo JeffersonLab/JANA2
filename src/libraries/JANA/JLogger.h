@@ -60,7 +60,7 @@ inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
         case JLogger::Level::TRACE: return s << "trace";
         case JLogger::Level::DEBUG: return s << "debug";
         case JLogger::Level::INFO:  return s << "info";
-        case JLogger::Level::WARN:  return s << "warn ";
+        case JLogger::Level::WARN:  return s << "warn";
         case JLogger::Level::ERROR: return s << "error";
         case JLogger::Level::FATAL: return s << "fatal";
         default:               return s << "off";

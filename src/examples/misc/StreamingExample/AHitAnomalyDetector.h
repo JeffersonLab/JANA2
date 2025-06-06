@@ -14,9 +14,7 @@
 class AHitAnomalyDetector : public JEventProcessor {
 
 public:
-    AHitAnomalyDetector(JApplication* app = nullptr, size_t delay_ms=1000)
-        : JEventProcessor(app)
-        , m_delay_ms(delay_ms) {
+    AHitAnomalyDetector(size_t delay_ms=1000) : m_delay_ms(delay_ms) {
             SetCallbackStyle(CallbackStyle::ExpertMode);
         };
 

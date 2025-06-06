@@ -100,7 +100,7 @@ inline void janapy_AddProcessor(py::object &pyproc ) {
 
     if (pyjapp != nullptr) {
         cout << "[INFO] Adding JEventProcessorPY" << endl;
-        pyjapp->Add( new JEventProcessorPYTrampoline(pyjapp, proc) );
+        pyjapp->Add( new JEventProcessorPYTrampoline(proc) );
     }else {
         cerr << "[ERROR] pyjapp not set before call to janapy_AddProcessor() !!" << endl;
     }

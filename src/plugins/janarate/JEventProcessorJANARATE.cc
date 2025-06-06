@@ -23,7 +23,7 @@ mutex mtxroot;
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
-	app->Add(new JEventProcessorJANARATE(app));
+	app->Add(new JEventProcessorJANARATE());
 }
 } // "C"
 

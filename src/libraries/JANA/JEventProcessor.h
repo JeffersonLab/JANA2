@@ -21,7 +21,7 @@ public:
     JEventProcessor() = default;
     virtual ~JEventProcessor() = default;
 
-    // TODO: Deprecate
+    [[deprecated]]
     explicit JEventProcessor(JApplication* app) {
         m_app = app;
     }
