@@ -3,7 +3,9 @@
 // Created by Nathan Brei
 
 #pragma once
+#if JANA2_HAVE_PODIO
 #include "JANA/Podio/JFactoryPodioT.h"
+#endif
 #include <JANA/JEvent.h>
 
 
