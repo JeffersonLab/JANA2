@@ -299,20 +299,56 @@ protected:
 
         void GetCollection(const JEvent& event) {
             m_datas.clear();
-            if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                size_t i=0;
-                for (auto& tag : m_tags) {
-                    m_datas.push_back({});
-                    event.Get<T>(m_datas.at(i++), tag, !m_is_optional);
+            if (!m_requested_databundle_names.empty()) {
+                // We have a nonempty input, so we provide the user exactly the inputs they asked for (some of these may be null IF is_optional=true)
+                if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
+                    size_t i=0;
+                    for (auto& tag : m_tags) {
+                        m_datas.push_back({});
+                        event.Get<T>(m_datas.at(i++), tag, !m_is_optional);
+                    }
+                }
+                else {
+                    if (m_is_optional && !event.HasParent(m_level)) return;
+                    auto& parent = event.GetParent(m_level);
+                    size_t i=0;
+                    for (auto& tag : m_tags) {
+                        m_datas.push_back({});
+                        parent.template Get<T>(m_datas.at(i++), tag, !m_is_optional);
+                    }
                 }
             }
-            else {
-                if (m_is_optional && !event.HasParent(m_level)) return;
-                auto& parent = event.GetParent(m_level);
-                size_t i=0;
-                for (auto& tag : m_tags) {
-                    m_datas.push_back({});
-                    parent.template Get<T>(m_datas.at(i++), tag, !m_is_optional);
+            else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
+                // We have an empty input and a nontrivial empty input policy
+                m_realized_databundle_names.clear();
+
+                if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
+                    // We are fetching from the JEvent we already have
+                    auto facs = event.GetFactorySet()->template GetAllFactories<T>();
+                    size_t i=0;
+                    for (auto* fac : facs) {
+                        m_datas.push_back({});                                   // Create a destination for this factory's data
+                        auto iters = fac->CreateAndGetData(event.shared_from_this());
+                        auto& dest = m_datas.at(i);
+                        dest.insert(dest.end(), iters.first, iters.second);
+                        m_realized_databundle_names.push_back(fac->GetTag());
+                        i += 1;
+                    }
+                }
+                else {
+                    // We are fetching from a parent event
+                    if (m_is_optional && !event.HasParent(m_level)) return;      // Short-circuit if optional and parent missing
+                    auto& parent = event.GetParent(m_level);                     // GetParent throws if parent missing
+                    auto facs = parent.GetFactorySet()->template GetAllFactories<T>();
+                    size_t i=0;
+                    for (auto* fac : facs) {
+                        m_datas.push_back({});                                   // Create a destination for this factory's data
+                        auto iters = fac->CreateAndGetData(event.shared_from_this());
+                        auto& dest = m_datas.at(i);
+                        dest.insert(dest.end(), iters.first, iters.second);
+                        m_realized_databundle_names.push_back(fac->GetTag());
+                        i += 1;
+                    }
                 }
             }
         }
