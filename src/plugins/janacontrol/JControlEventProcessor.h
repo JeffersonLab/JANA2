@@ -42,7 +42,7 @@ class JControlEventProcessor : public JEventProcessor {
 
 public:
 
-    JControlEventProcessor(JApplication *japp=nullptr);
+    JControlEventProcessor();
     virtual ~JControlEventProcessor() = default;
 
     void Init() override;

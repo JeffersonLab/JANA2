@@ -5,13 +5,11 @@
 #include "JControlEventProcessor.h"
 #include <JANA/JLogger.h>
 
-#include <sstream>
-
 
 //-------------------------------------------------------------
 // JControlEventProcessor
 //-------------------------------------------------------------
-JControlEventProcessor::JControlEventProcessor(JApplication *japp):JEventProcessor(japp),jstringification(new JStringification) {
+JControlEventProcessor::JControlEventProcessor():jstringification(new JStringification) {
     SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
 }
 

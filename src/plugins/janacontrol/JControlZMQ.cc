@@ -98,7 +98,7 @@ JControlZMQ::JControlZMQ(JApplication *app, int port):_japp(app), _port(port)
     // This is used to access event info via JEvent. It is also
     // used when in debug_mode to step through events one at a
     // time.
-    _jproc = new JControlEventProcessor(_japp);
+    _jproc = new JControlEventProcessor();
     _japp->Add(_jproc);
 }
 
