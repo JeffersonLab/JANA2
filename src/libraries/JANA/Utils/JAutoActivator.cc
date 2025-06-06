@@ -92,7 +92,9 @@ void JAutoActivator::ProcessParallel(const JEvent& event) {
             throw JException("AutoActivator could not find factory with typename=%s, tag=%s", name.c_str(), tag.c_str());
         }
     }
+}
 
+void JAutoActivator::Process(const JEvent& event) {
     if (m_output_processed_event_numbers) {
         std::string name = event.GetJEventSource()->GetResourceName();
         if (name.empty()) {
