@@ -391,7 +391,7 @@ protected:
                     if (podio_fac == nullptr) {
                         throw JException("Found factory which is NOT a podio factory!");
                     }
-                    auto typed_collection = dynamic_cast<const PodioT::collection_type*>(podio_fac->GetCollection());
+                    auto typed_collection = dynamic_cast<const typename PodioT::collection_type*>(podio_fac->GetCollection());
                     m_datas.push_back(typed_collection);
                     if (need_dynamic_realized_databundle_names) {
                         m_realized_databundle_names.push_back(podio_fac->GetTag());
