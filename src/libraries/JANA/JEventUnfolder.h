@@ -86,6 +86,9 @@ public:
         for (auto* input : m_inputs) {
             input->PrefetchCollection(parent);
         }
+        for (auto* variadic_input : m_variadic_inputs) {
+            variadic_input->PrefetchCollection(parent);
+        }
         if (m_callback_style != CallbackStyle::DeclarativeMode) {
             CallWithJExceptionWrapper("JEventUnfolder::Preprocess", [&](){
                 Preprocess(parent);
@@ -124,6 +127,9 @@ public:
                 // TODO: This requires that all inputs come from the parent.
                 //       However, eventually we will want to support inputs 
                 //       that come from the child.
+            }
+            for (auto* variadic_input : m_variadic_inputs) {
+                variadic_input->GetCollection(parent);
             }
             for (auto* output : m_outputs) {
                 output->Reset();
@@ -169,9 +175,12 @@ public:
             "Unfolder", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
-            size_t subinput_count = input->names.size();
+            us->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->GetTypeName(), input->GetLevel()));
+        }
+        for (const auto* input : m_variadic_inputs) {
+            size_t subinput_count = input->GetRequestedDatabundleNames().size();
             for (size_t i=0; i<subinput_count; ++i) {
-                us->AddInput(new JComponentSummary::Collection("", input->names[i], input->type_name, input->level));
+                us->AddInput(new JComponentSummary::Collection("", input->GetRequestedDatabundleNames().at(i), input->GetTypeName(), input->GetLevel()));
             }
         }
         for (const auto* output : m_outputs) {

@@ -20,6 +20,8 @@ public:
         JEventLevel level = JEventLevel::PhysicsEvent;
         std::vector<std::string> input_names = {};
         std::vector<JEventLevel> input_levels = {};
+        std::vector<std::vector<std::string>> variadic_input_names = {};
+        std::vector<JEventLevel> variadic_input_levels = {};
         std::vector<std::string> output_names = {};
         FactoryConfigType configs = {}; /// Must be copyable!
     };
@@ -73,6 +75,15 @@ public:
 
     void GenerateFactories(JFactorySet *factory_set) override {
 
+        if (m_typed_wirings.size() == 0) {
+            FactoryT *factory = new FactoryT;
+            factory->SetApplication(GetApplication());
+            factory->SetPluginName(this->GetPluginName());
+            factory->SetTypeName(JTypeInfo::demangle<FactoryT>());
+            factory->SetLogger(GetApplication()->template GetService<JParameterManager>()->GetLogger(factory->GetPrefix()));
+            factory_set->Add(factory);
+        }
+
         for (const auto& wiring : m_typed_wirings) {
 
             FactoryT *factory = new FactoryT;
@@ -84,7 +95,8 @@ public:
             // Set up all of the wiring prereqs so that Init() can do its thing
             // Specifically, it needs valid input/output tags, a valid logger, and
             // valid default values in its Config object
-            factory->PreInit(wiring.tag, wiring.level, wiring.input_names, wiring.input_levels, wiring.output_names);
+            factory->PreInit(wiring.tag, wiring.level, wiring.input_names, wiring.input_levels, 
+                             wiring.variadic_input_names, wiring.variadic_input_levels, wiring.output_names);
 
             // Factory is ready
             factory_set->Add(factory);
