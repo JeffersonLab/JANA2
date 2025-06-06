@@ -198,11 +198,6 @@ public:
     virtual void Finish() {}
 
 
-    [[deprecated]]
-    virtual std::string GetType() const {
-        return m_type_name;
-    }
-
 protected:
 
     // The following are meant to be called by the user from the constructor in order to

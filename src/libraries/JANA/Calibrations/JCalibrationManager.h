@@ -228,11 +228,6 @@ public:
 
     }
 
-    [[deprecated("Replaced with GetResource()")]]
-    JResource *GetLargeCalibration(unsigned int run_number = 0) {
-        return GetResource(run_number);
-    }
-
 };
 
 

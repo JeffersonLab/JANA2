@@ -169,4 +169,3 @@ bool JResource::Get(string namepath, T &vals, int event_number) {
 }
 
 
-using JLargeCalibration [[deprecated("Renamed to JResource")]]= JResource;

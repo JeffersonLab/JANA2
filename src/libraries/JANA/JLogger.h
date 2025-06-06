@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <JANA/Compatibility/JStreamLog.h>
-
 #include <iostream>
 #include <sstream>
 #include <chrono>
@@ -48,9 +46,6 @@ struct JLogger {
     void ShowLevel(bool show) {show_level = show; }
     void ShowTimestamp(bool show) {show_timestamp = show; }
     void ShowThreadstamp(bool show) {show_threadstamp = show; }
-
-    [[ deprecated("Use SetGroup() instead")]]
-    void SetTag(std::string tag) {this->group = tag; }
 };
 
 
