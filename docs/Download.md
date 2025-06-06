@@ -10,6 +10,32 @@
 - [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest/index.html)
 - [Download doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest.tar.gz)
 
+### 2.4.2
+
+#### Behavior changes
+- `jana:max_inflight_events` now defaults `nthreads` regardless of whether `nthreads` was explicitly set. Previously it defaulted to 4 when `nthreads` was unset, and otherwise defaulted to `nthreads`. (Issue #443)
+- `JEventSource::GetEventCount()` is deprecated and replaced by `GetSkippedCount()`, `GetEmittedEventCount()`, and `GetProcessedEventCount()`. These behave intuitively when `nskip` is used. (Issue #428)
+
+#### Features
+- Added `jana:output_processed_event_numbers` parameter to assist with debugging (Issue #425)
+- Ported `janaroot` plugin from JANA1
+- JFactory detects and excepts on cycles (Issue #423)
+- Improved scale test visualizations, including plotting multiple scaling tests on the same plot and supporting log scaled axes.
+
+#### Bugfixes
+- Missing template argument in VariadicPodioOutput
+- JEvent was being marked as warmed up prematurely
+- JAutoactivator was being called last instead of first (Issue #440)
+- If the user attempted to run without providing a JEventSource, processing would crash with an ArithmeticException instead of a helpful error message (Issue #437)
+- `JEventSource::FinishEvent()` was being called spuriously (Issue #424)
+
+#### Refactoring
+- Preliminary support for random-access JEventSources is provided via `JEventSource::Skip()`. This feature should be considered experimental for now because it doesn't work with barrier events yet. (Issue #422)
+
+### 2.4.1
+
+This release enables CCDB caching, significantly improving performance and reducing memory usage for applications that frequently access calibration constants.
+
 ### 2.4.0
 
 #### Features
