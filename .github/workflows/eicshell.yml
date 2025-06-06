@@ -133,10 +133,6 @@ jobs:
           cd ../EICrecon
           echo "ldd bin/eicrecon"
           ldd bin/eicrecon
-          echo "ldd lib/libreco.so"
-          ldd lib/libreco.so
-          echo "ldd lib/EICrecon/plugins/tracking.so"
-          ldd lib/EICrecon/plugins/tracking.so
 
     - name: Generate EICrecon input data
       uses: eic/run-cvmfs-osg-eic-shell@main
