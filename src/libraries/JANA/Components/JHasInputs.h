@@ -105,6 +105,7 @@ protected:
 
         void SetRequestedDatabundleNames(std::vector<std::string> names) {
             m_requested_databundle_names = names;
+            m_realized_databundle_names = names;
         }
 
         void SetEmptyInputPolicy(EmptyInputPolicy policy) {
@@ -354,27 +355,30 @@ protected:
         }
 
         void SetRequestedCollectionNames(std::vector<std::string> names) {
-            m_requested_databundle_names = std::move(names);
+            m_requested_databundle_names = names;
+            m_realized_databundle_names = std::move(names);
+        }
+
+        const std::vector<std::string>& GetRealizedCollectionNames() {
+            return GetRealizedDatabundleNames();
         }
 
         void GetCollection(const JEvent& event) {
+            bool need_dynamic_realized_databundle_names = (m_requested_databundle_names.empty()) && (m_empty_input_policy != EmptyInputPolicy::IncludeNothing);
+            if (need_dynamic_realized_databundle_names) {
+                m_realized_databundle_names.clear();
+            }
             m_datas.clear();
             if (!m_requested_databundle_names.empty()) {
                 for (auto& coll_name : m_requested_databundle_names) {
                     if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
                         auto coll = event.GetCollection<PodioT>(coll_name, !m_is_optional);
-                        if (coll != nullptr) {
-                            m_realized_databundle_names.push_back(coll_name);
-                            m_datas.push_back(coll);
-                        }
+                        m_datas.push_back(coll);
                     }
                     else {
                         if (m_is_optional && !event.HasParent(m_level)) return;
                         auto coll = event.GetParent(m_level).template GetCollection<PodioT>(coll_name, !m_is_optional);
-                        if (coll != nullptr) {
-                            m_realized_databundle_names.push_back(coll_name);
-                            m_datas.push_back(coll);
-                        }
+                        m_datas.push_back(coll);
                     }
                 }
             }
@@ -387,7 +391,9 @@ protected:
                     }
                     auto typed_collection = dynamic_cast<const PodioT::collection_type*>(podio_fac->GetCollection());
                     m_datas.push_back(typed_collection);
-                    m_realized_databundle_names.push_back(podio_fac->GetTag());
+                    if (need_dynamic_realized_databundle_names) {
+                        m_realized_databundle_names.push_back(podio_fac->GetTag());
+                    }
                 }
             }
         }
