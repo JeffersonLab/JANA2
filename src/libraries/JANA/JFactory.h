@@ -9,6 +9,7 @@
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasDatabundleOutputs.h>
 
 #include <string>
 #include <typeindex>
@@ -22,7 +23,8 @@ class JEvent;
 class JObject;
 class JApplication;
 
-class JFactory : public jana::components::JComponent {
+class JFactory : public jana::components::JComponent, 
+                 public jana::components::JHasDatabundleOutputs {
 public:
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Finished};

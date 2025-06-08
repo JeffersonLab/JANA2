@@ -8,6 +8,7 @@
 #include <typeindex>
 #include <map>
 
+#include <JANA/Components/JDatabundle.h>
 #include <JANA/JFactoryT.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Components/JComponentSummary.h>
@@ -26,6 +27,7 @@ class JFactorySet {
 
         bool Add(JFactory* aFactory);
         bool Add(JMultifactory* multifactory);
+        void Add(JDatabundle* databundle);
         void Print() const;
         void Clear();
         void Finish();
@@ -36,16 +38,20 @@ class JFactorySet {
         std::vector<JMultifactory*> GetAllMultifactories() const;
         template<typename T> std::vector<JFactoryT<T>*> GetAllFactories() const;
 
+        std::vector<std::string> GetAllDatabundleUniqueNames() const;
+        JDatabundle* GetDatabundle(const std::string& unique_name) const;
+
         JEventLevel GetLevel() const { return mLevel; }
         void SetLevel(JEventLevel level) { mLevel = level; }
 
     protected:
+
+        std::map<std::string, JDatabundle*> mDatabundlesFromUniqueName;
         std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
         std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
         std::vector<JMultifactory*> mMultifactories;
         bool mIsFactoryOwner = true;
         JEventLevel mLevel = JEventLevel::PhysicsEvent;
-        
 };
 
 
