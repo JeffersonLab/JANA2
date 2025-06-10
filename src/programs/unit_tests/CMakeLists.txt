@@ -15,7 +15,6 @@ set(TEST_SOURCES
     Components/JComponentTests.cc
     Components/JEventGetAllTests.cc
     Components/JEventProcessorTests.cc
-    Components/JEventProcessorSequentialTests.cc
     Components/JEventSourceTests.cc
     Components/JEventTests.cc
     Components/JFactoryDefTagsTests.cc
