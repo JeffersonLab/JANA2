@@ -67,7 +67,7 @@ struct ProcessorWithTimeout : public JEventProcessor {
 
     void Init() override {}
 
-    void Process(const JEvent&) override {
+    void ProcessSequential(const JEvent&) override {
         processed_count += 1;
         if (processed_count == 1) {
             std::this_thread::sleep_for(std::chrono::milliseconds(first_event_delay_ms));

@@ -60,7 +60,7 @@ struct FlakyProcessor : public JEventProcessor {
         }
     };
 
-    void Process(const JEvent&) override {
+    void ProcessSequential(const JEvent&) override {
         if (process_excepts) {
             throw JException("Unable to process!");
         }

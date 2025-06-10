@@ -66,7 +66,7 @@ public:
         }
     }
 
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
 
         // Sequentially, read the collections we requested earlier, and write them to file.
         // Everything inside this callback happens inside a lock; unlike earlier versions

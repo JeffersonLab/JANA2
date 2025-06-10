@@ -40,11 +40,11 @@ struct MyFileWriter : public JEventProcessor {
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
-    void Init() {
+    void Init() override {
         m_writer = std::make_unique<podio::ROOTWriter>("output.root");
     }
 
-    void Process(const JEvent& event) {
+    void ProcessSequential(const JEvent& event) override {
 
         std::lock_guard<std::mutex> guard(m_mutex);
         if (event.HasParent(JEventLevel::Timeslice)) {
@@ -75,7 +75,7 @@ struct MyFileWriter : public JEventProcessor {
 
     }
 
-    void Finish() {
+    void Finish() override {
         m_writer->finish();
     }
 };

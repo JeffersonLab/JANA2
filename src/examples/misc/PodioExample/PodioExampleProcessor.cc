@@ -47,7 +47,7 @@ PodioExampleProcessor::PodioExampleProcessor() {
     SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
-void PodioExampleProcessor::Process(const JEvent& event) {
+void PodioExampleProcessor::ProcessSequential(const JEvent& event) {
 
     // Obtain a typed collection just like you would in a JFactory
     auto hits = event.GetCollection<ExampleHit>("hits");

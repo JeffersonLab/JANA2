@@ -25,10 +25,10 @@ struct MyEventProcessor : public JEventProcessor {
         LOG_INFO(GetLogger()) << "Init() called" << LOG_END;
         init_count++;
     }
-    void Process(const JEvent&) override {
+    void ProcessSequential(const JEvent&) override {
         REQUIRE(GetApplication() != nullptr);
         process_count++;
-        LOG_INFO(GetLogger()) << "Process() called" << LOG_END;
+        LOG_INFO(GetLogger()) << "ProcessSequential() called" << LOG_END;
     }
     void Finish() override {
         REQUIRE(GetApplication() != nullptr);

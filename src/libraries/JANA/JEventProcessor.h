@@ -99,12 +99,12 @@ public:
             CallWithJExceptionWrapper("JEventProcessor::ChangeRun", [&](){ ChangeRun(event); });
         }
         if (m_callback_style == CallbackStyle::DeclarativeMode) {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ 
-                Process(event.GetRunNumber(), event.GetEventNumber(), event.GetEventIndex());
+            CallWithJExceptionWrapper("JEventProcessor::ProcessSequential", [&](){ 
+                ProcessSequential(event.GetRunNumber(), event.GetEventNumber(), event.GetEventIndex());
             });
         }
         else if (m_callback_style == CallbackStyle::ExpertMode) {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(event); });
+            CallWithJExceptionWrapper("JEventProcessor::ProcessSequential", [&](){ ProcessSequential(event); });
         }
         m_event_count += 1;
     }
@@ -192,7 +192,7 @@ public:
     virtual void ProcessParallel(const JEvent& /*event*/) {
     }
 
-    virtual void Process(const JEvent& /*event*/) {
+    virtual void ProcessSequential(const JEvent& /*event*/) {
     }
 
     // DeclarativeMode-specific callbacks
@@ -200,7 +200,7 @@ public:
     virtual void ProcessParallel(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
     }
 
-    virtual void Process(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
+    virtual void ProcessSequential(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
     }
 
 

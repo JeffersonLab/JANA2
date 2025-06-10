@@ -89,7 +89,7 @@ struct TestProc : public JEventProcessor {
 #endif
     }
 
-    void Process(const JEvent&) override {
+    void ProcessSequential(const JEvent&) override {
         REQUIRE(m_det_a_hits_in->size() == 3);
         REQUIRE(m_det_a_hits_in->at(2)->cell_col == 4);
 

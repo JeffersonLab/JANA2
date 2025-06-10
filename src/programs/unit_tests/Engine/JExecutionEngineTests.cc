@@ -36,7 +36,7 @@ struct TestProc : public JEventProcessor {
         auto src_x = event.Get<TestData>("src").at(0)->x;
         event.Insert<TestData>(new TestData {.x=src_x + 1}, "map");
     }
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
         bench.consume_cpu_ms(200);
         auto map_x = event.Get<TestData>("map").at(0)->x;
         REQUIRE(map_x == (int)event.GetEventNumber()*2 + 1);

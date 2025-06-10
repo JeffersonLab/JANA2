@@ -23,7 +23,7 @@ public:
     void AddAutoActivatedFactory(string factory_name, string factory_tag);
     void Init() override;
     void ProcessParallel(const JEvent&) override;
-    void Process(const JEvent&) override;
+    void ProcessSequential(const JEvent&) override;
     void Finish() override;
 
 };
