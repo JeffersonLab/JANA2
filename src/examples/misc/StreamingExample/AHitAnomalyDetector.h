@@ -21,7 +21,7 @@ public:
     void Init() override {
 
     }
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
 
         auto a_hits = event.Get<AHit>();
         std::stringstream ss;

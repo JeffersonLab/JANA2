@@ -17,7 +17,7 @@ void DstExampleProcessor::Init() {
     // Open TFiles, set up TTree branches, etc
 }
 
-void DstExampleProcessor::Process(const JEvent& event) {
+void DstExampleProcessor::ProcessSequential(const JEvent& event) {
     LOG << "DstExampleProcessor::Process, Event #" << event.GetEventNumber() << LOG_END;
 
     /// Note that GetAllChildren won't trigger any new computations, it will only

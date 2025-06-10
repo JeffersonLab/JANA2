@@ -75,7 +75,7 @@ struct TestProcExpert : public JEventProcessor {
         SetTypeName("TestProcExpert");
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
         LOG_INFO(GetLogger()) << "Running TestProcExpert";
         auto fac = event.GetFactory<TestData>();
         REQUIRE(fac->GetStatus() == JFactory::Status::Processed);

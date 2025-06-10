@@ -93,7 +93,7 @@ struct MyEventProcessor : public JEventProcessor {
         init_called_count++;
     }
 
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
         process_called_count++;
         LOG_INFO(GetLogger()) << "MyEventProcessor: Processing " << event.GetEventNumber() << LOG_END;
         auto clusters = event.Get<MyCluster>("evt");
