@@ -16,8 +16,8 @@ void HeatmapProcessor::Init() {
 
     m_heatmap = std::make_unique<double[]>(m_cell_cols() * m_cell_rows());
 
-    for (int i=0; i < m_cell_rows(); ++i) {
-        for (int j=0; j < m_cell_cols(); ++j) {
+    for (size_t i=0; i < m_cell_rows(); ++i) {
+        for (size_t j=0; j < m_cell_cols(); ++j) {
             m_heatmap[i* m_cell_cols() + j] = 0;
         }
     }
@@ -36,7 +36,7 @@ void HeatmapProcessor::Process(const std::shared_ptr<const JEvent>& event) {
     /// Do the rest sequentially
     /// Now we are free to access shared state such as m_heatmap
     for (const CalorimeterHit* hit : hits) {
-        if (hit->row < m_cell_rows() && hit->col < m_cell_cols()) {
+        if (hit->row < (int) m_cell_rows() && hit->col < (int) m_cell_cols()) {
             m_heatmap[hit->row* m_cell_cols() + hit->col] = hit->energy;
         }
         else {
