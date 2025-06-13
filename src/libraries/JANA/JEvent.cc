@@ -101,11 +101,13 @@ JEvent* JEvent::ReleaseParent(JEventLevel level) {
     }
 }
 
-void JEvent::Release() {
-    auto remaining_refs = mReferenceCount.fetch_sub(1);
+int JEvent::Release() {
+    int remaining_refs = mReferenceCount.fetch_sub(1);
+    remaining_refs += 1; // fetch_sub post increments
     if (remaining_refs < 0) {
         throw JException("JEvent's own refcount has gone negative!");
     }
+    return remaining_refs;
 }
 
 void JEvent::Clear(bool processed_successfully) {

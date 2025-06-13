@@ -93,7 +93,7 @@ public:
     const JEvent& GetParent(JEventLevel level) const;
     void SetParent(JEvent* parent);
     JEvent* ReleaseParent(JEventLevel level);
-    void Release();
+    int Release();
 
     // Lifecycle
     void Clear(bool processed_successfully=true);
