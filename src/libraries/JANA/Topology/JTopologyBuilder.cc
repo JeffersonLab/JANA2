@@ -163,11 +163,10 @@ void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downst
 }
 
 
-void JTopologyBuilder::connect_to_first_available(JArrow* upstream, std::vector<JArrow*> downstreams) {
+void JTopologyBuilder::connect_to_first_available(JArrow* upstream, std::vector<JArrow*> downstreams, size_t up_index, size_t down_index) {
     for (JArrow* downstream : downstreams) {
         if (downstream != nullptr) {
-            // Arrows at the same level all connect at index 0 (even the input for the parent JFoldArrow)
-            connect(upstream, 0, downstream, 0);
+            connect(upstream, up_index, downstream, down_index);
             return;
         }
     }
@@ -346,6 +345,9 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     }
     if (map1_arrow != nullptr) {
         connect_to_first_available(map1_arrow, {unfold_arrow, map2_arrow, tap_arrow, parent_folder});
+    }
+    if (unfold_arrow != nullptr) {
+        connect_to_first_available(unfold_arrow, {map2_arrow, tap_arrow, parent_folder}, 1, 0);
     }
     if (fold_arrow != nullptr) {
         connect_to_first_available(fold_arrow, {map2_arrow, tap_arrow, parent_folder});
