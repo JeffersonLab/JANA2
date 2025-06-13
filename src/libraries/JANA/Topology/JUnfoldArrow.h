@@ -81,10 +81,10 @@ public:
         if (result == JEventUnfolder::Result::KeepChildNextParent) {
             // KeepChildNextParent is a little more complicated because we have to handle the case of the parent having no children.
             // In this case the parent obviously doesn't get shared among any children, and instead it is sent to the REJECTED_PARENT_OUT port.
-            int refcount = m_parent_event->Release(); // Decrement the reference count so that this can be recycled
-            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
+            int child_count = m_parent_event->Release(); // Decrement the reference count so that this can be recycled
+            LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << " (" << child_count << " children emitted)";
 
-            if (refcount > 0) {
+            if (child_count > 0) {
                 // Parent DOES have children even though this particular child isn't one of them
                 m_parent_event = nullptr;
                 output_count = 0;
