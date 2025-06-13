@@ -188,11 +188,17 @@ protected:
         }
         void PrefetchCollection(const JEvent& event) {
             if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                event.GetFactory<T>(m_tag, !m_is_optional)->Create(event.shared_from_this());
+                auto fac = event.GetFactory<T>(m_tag, !m_is_optional);
+                if (fac != nullptr) {
+                    fac->Create(event.shared_from_this());
+                }
             }
             else {
                 if (m_is_optional && !event.HasParent(m_level)) return;
-                event.GetParent(m_level).template GetFactory<T>(m_tag, !m_is_optional)->Create(event.shared_from_this());
+                auto fac = event.GetParent(m_level).template GetFactory<T>(m_tag, !m_is_optional);
+                if (fac != nullptr) {
+                    fac->Create(event.shared_from_this());
+                }
             }
         }
     };
@@ -263,7 +269,6 @@ protected:
     class VariadicInput : public VariadicInputBase {
 
         std::vector<std::vector<const T*>> m_datas;
-        std::vector<std::string> m_tags;
 
     public:
 
@@ -280,11 +285,7 @@ protected:
         }
 
         void SetTags(std::vector<std::string> tags) {
-            m_tags = std::move(tags);
-            m_requested_databundle_names.clear();
-            for (auto& tag : tags) {
-                m_requested_databundle_names.push_back(m_type_name + ":" + tag);
-            }
+            m_requested_databundle_names = tags;
         }
 
         const std::vector<std::vector<const T*>>& operator()() { return m_datas; }
@@ -303,7 +304,7 @@ protected:
                 // We have a nonempty input, so we provide the user exactly the inputs they asked for (some of these may be null IF is_optional=true)
                 if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
                     size_t i=0;
-                    for (auto& tag : m_tags) {
+                    for (auto& tag : m_requested_databundle_names) {
                         m_datas.push_back({});
                         event.Get<T>(m_datas.at(i++), tag, !m_is_optional);
                     }
@@ -312,7 +313,7 @@ protected:
                     if (m_is_optional && !event.HasParent(m_level)) return;
                     auto& parent = event.GetParent(m_level);
                     size_t i=0;
-                    for (auto& tag : m_tags) {
+                    for (auto& tag : m_requested_databundle_names) {
                         m_datas.push_back({});
                         parent.template Get<T>(m_datas.at(i++), tag, !m_is_optional);
                     }
@@ -354,14 +355,14 @@ protected:
         }
         void PrefetchCollection(const JEvent& event) {
             if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                for (auto& tag : m_tags) {
+                for (auto& tag : m_requested_databundle_names) {
                     event.GetFactory<T>(tag, !m_is_optional)->Create(event.shared_from_this());
                 }
             }
             else {
                 if (m_is_optional && !event.HasParent(m_level)) return;
                 auto& parent = event.GetParent(m_level);
-                for (auto& tag : m_tags) {
+                for (auto& tag : m_requested_databundle_names) {
                     parent.template GetFactory<T>(tag, !m_is_optional)->Create(event.shared_from_this());
                 }
             }
