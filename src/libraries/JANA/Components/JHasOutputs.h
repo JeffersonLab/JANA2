@@ -47,14 +47,15 @@ protected:
 
         std::vector<T*>& operator()() { return m_data; }
 
+        void SetNotOwnerFlag(bool not_owner=true) { is_not_owner = not_owner; }
+
     protected:
         void InsertCollection(JEvent& event) override {
             auto fac = event.Insert(m_data, this->collection_names[0]);
-            fac->SetIsNotOwnerFlag(is_not_owner);
+            fac->SetNotOwnerFlag(is_not_owner);
         }
         void Reset() override { }
 
-        void SetIsNotOwnerFlag(bool not_owner=true) { is_not_owner = not_owner; }
     };
 
 
