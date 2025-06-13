@@ -190,14 +190,14 @@ protected:
             if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
                 auto fac = event.GetFactory<T>(m_tag, !m_is_optional);
                 if (fac != nullptr) {
-                    fac->Create(event.shared_from_this());
+                    fac->Create(event);
                 }
             }
             else {
                 if (m_is_optional && !event.HasParent(m_level)) return;
                 auto fac = event.GetParent(m_level).template GetFactory<T>(m_tag, !m_is_optional);
                 if (fac != nullptr) {
-                    fac->Create(event.shared_from_this());
+                    fac->Create(event);
                 }
             }
         }
@@ -330,7 +330,7 @@ protected:
                     size_t i=0;
                     for (auto* fac : facs) {
                         m_datas.push_back({});                                   // Create a destination for this factory's data
-                        auto iters = fac->CreateAndGetData(event.shared_from_this());
+                        auto iters = fac->CreateAndGetData(event);
                         auto& dest = m_datas.at(i);
                         dest.insert(dest.end(), iters.first, iters.second);
                         m_realized_databundle_names.push_back(fac->GetTag());
@@ -345,7 +345,7 @@ protected:
                     size_t i=0;
                     for (auto* fac : facs) {
                         m_datas.push_back({});                                   // Create a destination for this factory's data
-                        auto iters = fac->CreateAndGetData(event.shared_from_this());
+                        auto iters = fac->CreateAndGetData(event);
                         auto& dest = m_datas.at(i);
                         dest.insert(dest.end(), iters.first, iters.second);
                         m_realized_databundle_names.push_back(fac->GetTag());
@@ -357,14 +357,14 @@ protected:
         void PrefetchCollection(const JEvent& event) {
             if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
                 for (auto& tag : m_requested_databundle_names) {
-                    event.GetFactory<T>(tag, !m_is_optional)->Create(event.shared_from_this());
+                    event.GetFactory<T>(tag, !m_is_optional)->Create(event);
                 }
             }
             else {
                 if (m_is_optional && !event.HasParent(m_level)) return;
                 auto& parent = event.GetParent(m_level);
                 for (auto& tag : m_requested_databundle_names) {
-                    parent.template GetFactory<T>(tag, !m_is_optional)->Create(event.shared_from_this());
+                    parent.template GetFactory<T>(tag, !m_is_optional)->Create(event);
                 }
             }
         }
@@ -454,7 +454,7 @@ protected:
             else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
                 auto facs = event.GetFactorySet()->GetAllFactories<PodioT>();
                 for (auto* fac : facs) {
-                    fac->Create(event.shared_from_this());
+                    fac->Create(event);
                 }
             }
         }
