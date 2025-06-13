@@ -103,7 +103,7 @@ JEvent* JEvent::ReleaseParent(JEventLevel level) {
 
 int JEvent::Release() {
     int remaining_refs = mReferenceCount.fetch_sub(1);
-    remaining_refs += 1; // fetch_sub post increments
+    remaining_refs -= 1; // fetch_sub post increments
     if (remaining_refs < 0) {
         throw JException("JEvent's own refcount has gone negative!");
     }

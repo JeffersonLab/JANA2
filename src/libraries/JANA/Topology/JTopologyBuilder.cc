@@ -137,24 +137,33 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
 
 void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downstream, size_t down_index) {
 
-    auto queue = new JEventQueue(m_max_inflight_events, mapping.get_loc_count());
-    queues.push_back(queue);
+    JEventQueue* queue = nullptr;
 
     size_t i = 0;
-    for (JArrow::Port& port : upstream->m_ports) {
-        if (!port.is_input) {
-            if (i++ == up_index) {
-                // Found the correct output
-                port.queue = queue;
-                port.pool = nullptr;
-            }
-        }
-    }
-    i = 0;
     for (JArrow::Port& port : downstream->m_ports) {
         if (port.is_input) {
             if (i++ == down_index) {
                 // Found the correct input
+                if (port.queue != nullptr) {
+                    // If the queue already exists, use that!
+                    queue = port.queue;
+                }
+                else {
+                    // Create a new queue
+                    queue = new JEventQueue(m_max_inflight_events, mapping.get_loc_count());
+                    port.queue = queue;
+                    queues.push_back(queue);
+                }
+                port.pool = nullptr;
+            }
+        }
+    }
+
+    i = 0;
+    for (JArrow::Port& port : upstream->m_ports) {
+        if (!port.is_input) {
+            if (i++ == up_index) {
+                // Found the correct output
                 port.queue = queue;
                 port.pool = nullptr;
             }
