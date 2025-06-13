@@ -217,7 +217,7 @@ JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->CreateAndGetData(this->shared_from_this());
+    auto iterators = factory->CreateAndGetData(*this);
     if (std::distance(iterators.first, iterators.second) == 0) {
         *destination = nullptr;
     }
@@ -234,7 +234,7 @@ JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string&
     auto factory = GetFactory<T>(tag, strict);
     if (factory == nullptr) return nullptr; // Will have thrown already if strict==true
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->CreateAndGetData(this->shared_from_this());
+    auto iterators = factory->CreateAndGetData(*this);
     for (auto it=iterators.first; it!=iterators.second; it++) {
         destination.push_back(*it);
     }
@@ -247,7 +247,7 @@ template<class T>
 void JEvent::GetAll(std::vector<const T*>& destination) const {
     auto factories = GetFactoryAll<T>(true);
     for (auto factory : factories) {
-        auto iterators = factory->CreateAndGetData(this->shared_from_this());
+        auto iterators = factory->CreateAndGetData(*this);
         for (auto it = iterators.first; it != iterators.second; it++) {
             destination.push_back(*it);
         }
@@ -268,7 +268,7 @@ void JEvent::GetAll(std::vector<const T*>& destination) const {
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->CreateAndGetData(this->shared_from_this());
+    auto iterators = factory->CreateAndGetData(*this);
     if (std::distance(iterators.first, iterators.second) == 0) {
         return nullptr;
     }
@@ -286,7 +286,7 @@ template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
 template<class T> const T* JEvent::GetSingleStrict(const std::string& tag) const {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->CreateAndGetData(this->shared_from_this());
+    auto iterators = factory->CreateAndGetData(*this);
     if (std::distance(iterators.first, iterators.second) == 0) {
         JException ex("GetSingle failed due to missing %d", NAME_OF(T));
         ex.show_stacktrace = false;
@@ -308,7 +308,7 @@ std::vector<const T*> JEvent::Get(const std::string& tag, bool strict) const {
     std::vector<const T*> vec;
     if (factory == nullptr) return vec; // Will have thrown already if strict==true
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iters = factory->CreateAndGetData(this->shared_from_this());
+    auto iters = factory->CreateAndGetData(*this);
     for (auto it=iters.first; it!=iters.second; ++it) {
         vec.push_back(*it);
     }
@@ -319,7 +319,7 @@ template<class T>
 typename JFactoryT<T>::PairType JEvent::GetIterators(const std::string& tag) const {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iters = factory->CreateAndGetData(this->shared_from_this());
+    auto iters = factory->CreateAndGetData(*this);
     return iters;
 }
 
@@ -330,7 +330,7 @@ std::vector<const T*> JEvent::GetAll() const {
     auto factories = GetFactoryAll<T>(true);
 
     for (auto factory : factories) {
-        auto iters = factory->CreateAndGetData(this->shared_from_this());
+        auto iters = factory->CreateAndGetData(*this);
         std::vector<const T*> vec;
         for (auto it = iters.first; it != iters.second; ++it) {
             vec.push_back(*it);
@@ -435,7 +435,7 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, 
         throw JException("Factory with tag '%s' does not inherit from JFactoryPodio!", name.c_str());
     }
     JCallGraphEntryMaker cg_entry(mCallGraph, it->second); // times execution until this goes out of scope
-    it->second->Create(this->shared_from_this());
+    it->second->Create(*this);
     return factory->GetCollection();
 }
 
@@ -460,7 +460,7 @@ template <typename T>
 JFactoryPodioT<T>* JEvent::InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name) {
     /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JFactoryPodioT<T>
 
-    auto frame = GetOrCreateFrame(shared_from_this());
+    auto frame = GetOrCreateFrame(*this);
     const auto& owned_collection = frame->put(std::move(collection), name);
     return InsertCollectionAlreadyInFrame<T>(&owned_collection, name);
 }

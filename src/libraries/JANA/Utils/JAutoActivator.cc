@@ -85,7 +85,7 @@ void JAutoActivator::ProcessParallel(const JEvent& event) {
         auto factory = event.GetFactory(name, tag);
         if (factory != nullptr) {
             LOG_DEBUG(GetLogger()) << "Autoactivating factory with typename=" << name << ", tag=" << tag << LOG_END;
-            factory->Create(event.shared_from_this()); // This will do nothing if factory is already created
+            factory->Create(event); // This will do nothing if factory is already created
         }
         else {
             LOG_ERROR(GetLogger()) << "Could not find factory with typename=" << name << ", tag=" << tag << LOG_END;

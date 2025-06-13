@@ -55,6 +55,11 @@ public:
     /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
     /// called if and only if the run number changes, etc.
     PairType CreateAndGetData(const std::shared_ptr<const JEvent>& event) {
+        Create(*event.get());
+        return std::make_pair(mData.cbegin(), mData.cend());
+    }
+
+    PairType CreateAndGetData(const JEvent& event) {
         Create(event);
         return std::make_pair(mData.cbegin(), mData.cend());
     }
