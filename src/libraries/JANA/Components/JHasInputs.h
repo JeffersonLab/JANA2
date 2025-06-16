@@ -263,6 +263,7 @@ protected:
             }
         }
     };
+#endif
 
 
     template <typename T>
@@ -371,6 +372,7 @@ protected:
 
 
 
+#if JANA2_HAVE_PODIO
     template <typename PodioT>
     class VariadicPodioInput : public VariadicInputBase {
 
