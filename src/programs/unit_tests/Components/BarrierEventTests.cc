@@ -77,7 +77,7 @@ struct BarrierProcessor : public JEventProcessor {
         bench.consume_cpu_ms(200, 0);
     }
 
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
 
         if (event.GetSequential()) {
             LOG_INFO(GetLogger()) << "Processing barrier event = " << event.GetEventNumber() << ", writing global var = " << global_resource+1 << LOG_END;

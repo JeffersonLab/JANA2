@@ -1,5 +1,6 @@
 
 #include <catch.hpp>
+#include <JANA/JEventProcessor.h>
 #include <JANA/Topology/JUnfoldArrow.h>
 #include <JANA/Topology/JFoldArrow.h>
 
@@ -194,6 +195,60 @@ TEST_CASE("FoldArrowTests") {
     }
 
 
+}
+
+
+class NoOpUnfolder : public JEventUnfolder {
+public:
+    NoOpUnfolder() {
+        SetParentLevel(JEventLevel::Timeslice);
+        SetChildLevel(JEventLevel::PhysicsEvent);
+    }
+    Result Unfold(const JEvent&, JEvent&, int) {
+        return Result::KeepChildNextParent;
+    }
+};
+
+class PhysEvtProc : public JEventProcessor {
+    int m_events_seen = 0;
+public:
+    PhysEvtProc() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+    void ProcessSequential(const JEvent&) {
+        m_events_seen += 1;
+    }
+    void Finish() {
+        REQUIRE(m_events_seen == 0);
+    }
+};
+
+class TimesliceProc : public JEventProcessor {
+    int m_events_seen = 0;
+public:
+    TimesliceProc() {
+        SetLevel(JEventLevel::Timeslice);
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+    void ProcessSequential(const JEvent&) {
+        m_events_seen += 1;
+    }
+    void Finish() {
+        REQUIRE(m_events_seen == 10);
+    }
+};
+
+TEST_CASE("NoOpUnfolder_Tests") {
+    JApplication app;
+    auto source = new JEventSource();
+    source->SetLevel(JEventLevel::Timeslice);
+    app.Add(source);
+    app.Add(new NoOpUnfolder);
+    app.Add(new PhysEvtProc);
+    app.Add(new TimesliceProc);
+    app.SetParameterValue("jana:nevents", 10);
+    app.SetParameterValue("jana:loglevel", "debug");
+    app.Run();
 }
 
     

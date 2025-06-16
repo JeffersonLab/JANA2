@@ -29,7 +29,7 @@ public:
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
 
         m_bench_utils.set_seed(event.GetEventNumber(), typeid(*this).name());
 

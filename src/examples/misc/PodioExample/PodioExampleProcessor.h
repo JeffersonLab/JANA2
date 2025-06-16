@@ -11,7 +11,7 @@
 class PodioExampleProcessor : public JEventProcessor {
 public:
     PodioExampleProcessor();
-    void Process(const JEvent&) override;
+    void ProcessSequential(const JEvent&) override;
 };
 
 

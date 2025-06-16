@@ -15,7 +15,7 @@ public:
     JTestRootProcessor();
     virtual ~JTestRootProcessor() = default;
 
-    void Process(const JEvent&) override;
+    void ProcessSequential(const JEvent&) override;
 };
 
 

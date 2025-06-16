@@ -19,7 +19,7 @@ JTestRootProcessor::JTestRootProcessor() {
     SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
-void JTestRootProcessor::Process(const JEvent& event) {
+void JTestRootProcessor::ProcessSequential(const JEvent& event) {
     // Get the cluster objects
     auto clusters = event.Get<Cluster>();
 

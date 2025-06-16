@@ -61,7 +61,7 @@ public:
         }
     }
 
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
 
         auto* frame = event.GetSingle<podio::Frame>();
         // This will throw if no PODIO frame is found. 

@@ -19,7 +19,7 @@ public:
     virtual ~DstExampleProcessor() = default;
 
     void Init() override;
-    void Process(const JEvent&) override;
+    void ProcessSequential(const JEvent&) override;
     void Finish() override;
 
 };

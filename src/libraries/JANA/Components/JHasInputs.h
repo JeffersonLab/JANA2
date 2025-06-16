@@ -188,11 +188,17 @@ protected:
         }
         void PrefetchCollection(const JEvent& event) {
             if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                event.GetFactory<T>(m_tag, !m_is_optional)->Create(event.shared_from_this());
+                auto fac = event.GetFactory<T>(m_tag, !m_is_optional);
+                if (fac != nullptr) {
+                    fac->Create(event);
+                }
             }
             else {
                 if (m_is_optional && !event.HasParent(m_level)) return;
-                event.GetParent(m_level).template GetFactory<T>(m_tag, !m_is_optional)->Create(event.shared_from_this());
+                auto fac = event.GetParent(m_level).template GetFactory<T>(m_tag, !m_is_optional);
+                if (fac != nullptr) {
+                    fac->Create(event);
+                }
             }
         }
     };
@@ -257,13 +263,13 @@ protected:
             }
         }
     };
+#endif
 
 
     template <typename T>
     class VariadicInput : public VariadicInputBase {
 
         std::vector<std::vector<const T*>> m_datas;
-        std::vector<std::string> m_tags;
 
     public:
 
@@ -280,11 +286,7 @@ protected:
         }
 
         void SetTags(std::vector<std::string> tags) {
-            m_tags = std::move(tags);
-            m_requested_databundle_names.clear();
-            for (auto& tag : tags) {
-                m_requested_databundle_names.push_back(m_type_name + ":" + tag);
-            }
+            m_requested_databundle_names = tags;
         }
 
         const std::vector<std::vector<const T*>>& operator()() { return m_datas; }
@@ -299,34 +301,70 @@ protected:
 
         void GetCollection(const JEvent& event) {
             m_datas.clear();
-            if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                size_t i=0;
-                for (auto& tag : m_tags) {
-                    m_datas.push_back({});
-                    event.Get<T>(m_datas.at(i++), tag, !m_is_optional);
+            if (!m_requested_databundle_names.empty()) {
+                // We have a nonempty input, so we provide the user exactly the inputs they asked for (some of these may be null IF is_optional=true)
+                if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
+                    size_t i=0;
+                    for (auto& tag : m_requested_databundle_names) {
+                        m_datas.push_back({});
+                        event.Get<T>(m_datas.at(i++), tag, !m_is_optional);
+                    }
+                }
+                else {
+                    if (m_is_optional && !event.HasParent(m_level)) return;
+                    auto& parent = event.GetParent(m_level);
+                    size_t i=0;
+                    for (auto& tag : m_requested_databundle_names) {
+                        m_datas.push_back({});
+                        parent.template Get<T>(m_datas.at(i++), tag, !m_is_optional);
+                    }
                 }
             }
-            else {
-                if (m_is_optional && !event.HasParent(m_level)) return;
-                auto& parent = event.GetParent(m_level);
-                size_t i=0;
-                for (auto& tag : m_tags) {
-                    m_datas.push_back({});
-                    parent.template Get<T>(m_datas.at(i++), tag, !m_is_optional);
+            else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
+                // We have an empty input and a nontrivial empty input policy
+                m_realized_databundle_names.clear();
+
+                if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
+                    // We are fetching from the JEvent we already have
+                    auto facs = event.GetFactorySet()->template GetAllFactories<T>();
+                    size_t i=0;
+                    for (auto* fac : facs) {
+                        m_datas.push_back({});                                   // Create a destination for this factory's data
+                        auto iters = fac->CreateAndGetData(event);
+                        auto& dest = m_datas.at(i);
+                        dest.insert(dest.end(), iters.first, iters.second);
+                        m_realized_databundle_names.push_back(fac->GetTag());
+                        i += 1;
+                    }
+                }
+                else {
+                    // We are fetching from a parent event
+                    if (m_is_optional && !event.HasParent(m_level)) return;      // Short-circuit if optional and parent missing
+                    auto& parent = event.GetParent(m_level);                     // GetParent throws if parent missing
+                    auto facs = parent.GetFactorySet()->template GetAllFactories<T>();
+                    size_t i=0;
+                    for (auto* fac : facs) {
+                        m_datas.push_back({});                                   // Create a destination for this factory's data
+                        auto iters = fac->CreateAndGetData(event);
+                        auto& dest = m_datas.at(i);
+                        dest.insert(dest.end(), iters.first, iters.second);
+                        m_realized_databundle_names.push_back(fac->GetTag());
+                        i += 1;
+                    }
                 }
             }
         }
         void PrefetchCollection(const JEvent& event) {
             if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                for (auto& tag : m_tags) {
-                    event.GetFactory<T>(tag, !m_is_optional)->Create(event.shared_from_this());
+                for (auto& tag : m_requested_databundle_names) {
+                    event.GetFactory<T>(tag, !m_is_optional)->Create(event);
                 }
             }
             else {
                 if (m_is_optional && !event.HasParent(m_level)) return;
                 auto& parent = event.GetParent(m_level);
-                for (auto& tag : m_tags) {
-                    parent.template GetFactory<T>(tag, !m_is_optional)->Create(event.shared_from_this());
+                for (auto& tag : m_requested_databundle_names) {
+                    parent.template GetFactory<T>(tag, !m_is_optional)->Create(event);
                 }
             }
         }
@@ -334,6 +372,7 @@ protected:
 
 
 
+#if JANA2_HAVE_PODIO
     template <typename PodioT>
     class VariadicPodioInput : public VariadicInputBase {
 
@@ -415,7 +454,7 @@ protected:
             else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
                 auto facs = event.GetFactorySet()->GetAllFactories<PodioT>();
                 for (auto* fac : facs) {
-                    fac->Create(event.shared_from_this());
+                    fac->Create(event);
                 }
             }
         }

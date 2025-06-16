@@ -62,11 +62,11 @@ public:
                 // If the factory is not found, throw an exception immediately and exit
                 throw JException("Factory not found! typename=%s, tag=%s", type_name.c_str(), tag.c_str());
             }
-            fac->Create(event.shared_from_this());
+            fac->Create(event);
         }
     }
 
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
 
         // Sequentially, read the collections we requested earlier, and write them to file.
         // Everything inside this callback happens inside a lock; unlike earlier versions

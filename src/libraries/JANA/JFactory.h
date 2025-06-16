@@ -9,6 +9,7 @@
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasDatabundleOutputs.h>
 
 #include <string>
 #include <typeindex>
@@ -22,7 +23,8 @@ class JEvent;
 class JObject;
 class JApplication;
 
-class JFactory : public jana::components::JComponent {
+class JFactory : public jana::components::JComponent, 
+                 public jana::components::JHasDatabundleOutputs {
 public:
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Finished};
@@ -166,6 +168,8 @@ public:
     /// Create() calls JFactory::Init,BeginRun,Process in an invariant-preserving way without knowing the exact
     /// type of object contained. In order to access these objects when all you have is a JFactory*, use JFactory::GetAs().
     virtual void Create(const std::shared_ptr<const JEvent>& event);
+    virtual void Create(const JEvent& event);
+
     void DoInit();
     void DoFinish();
     void Summarize(JComponentSummary& summary) const override;
