@@ -3,6 +3,7 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/Topology/JUnfoldArrow.h>
 #include <JANA/Topology/JFoldArrow.h>
+#include <PodioDatamodel/ExampleHitCollection.h>
 
 namespace jana {
 namespace unfoldtests {
@@ -199,6 +200,10 @@ TEST_CASE("FoldArrowTests") {
 
 
 class NoOpUnfolder : public JEventUnfolder {
+    PodioOutput<ExampleHit> m_hits_out {this}; 
+    // We never insert these hits, and that should be fine 
+    // because they should never get pushed to the frame
+
 public:
     NoOpUnfolder() {
         SetParentLevel(JEventLevel::Timeslice);
@@ -251,7 +256,7 @@ TEST_CASE("NoOpUnfolder_Tests") {
     app.Run();
 }
 
-    
+
 } // namespace arrowtests
 } // namespace jana
 
