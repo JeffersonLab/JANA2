@@ -12,6 +12,8 @@
 #include "JFoldArrow.h"
 #include <JANA/JEventProcessor.h>
 #include <JANA/Utils/JTablePrinter.h>
+#include <string>
+#include <vector>
 
 
 JTopologyBuilder::JTopologyBuilder() {
@@ -181,6 +183,31 @@ void JTopologyBuilder::connect_to_first_available(JArrow* upstream, std::vector<
     }
 }
 
+std::pair<JEventTapArrow*, JEventTapArrow*> JTopologyBuilder::create_tap_chain(std::vector<JEventProcessor*>& procs, std::string level) {
+
+    JEventTapArrow* first = nullptr;
+    JEventTapArrow* last = nullptr;
+
+    int i=1;
+    std::string arrow_name = level + "Tap";
+    for (JEventProcessor* proc : procs) {
+        if (procs.size() > 1) {
+            arrow_name += std::to_string(i++);
+        }
+        JEventTapArrow* current = new JEventTapArrow(arrow_name);
+        current->add_processor(proc);
+        arrows.push_back(current);
+        if (first == nullptr) {
+            first = current;
+        }
+        if (last != nullptr) {
+            connect(last, 0, current, 0);
+        }
+        last = current;
+    }
+    return {first, last};
+}
+
 
 void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder) {
     std::stringstream ss;
@@ -296,6 +323,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     bool need_unfold = have_unfolder;
     if (need_unfold) {
         unfold_arrow = new JUnfoldArrow(level_str+"Unfold", unfolders_at_level[0]);
+        unfold_arrow->attach(pool_at_level, JUnfoldArrow::REJECTED_PARENT_OUT); 
         arrows.push_back(unfold_arrow);
     }
 
@@ -328,16 +356,13 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // --------------------------
     // 6. Tap
     // --------------------------
-    JEventTapArrow* tap_arrow = nullptr;
+    JEventTapArrow* first_tap_arrow = nullptr;
+    JEventTapArrow* last_tap_arrow = nullptr;
     bool need_tap = !tappable_procs_at_level.empty();
     if (need_tap) {
-        tap_arrow = new JEventTapArrow(level_str+"Tap");
-        for (JEventProcessor* proc : tappable_procs_at_level) {
-            tap_arrow->add_processor(proc);
-            tap_arrow->attach(pool_at_level, JEventTapArrow::EVENT_IN);
-            tap_arrow->attach(pool_at_level, JEventTapArrow::EVENT_OUT);
-        }
-        arrows.push_back(tap_arrow);
+        std::tie(first_tap_arrow, last_tap_arrow) = create_tap_chain(tappable_procs_at_level, level_str);
+        first_tap_arrow->attach(pool_at_level, JEventTapArrow::EVENT_IN);
+        last_tap_arrow->attach(pool_at_level, JEventTapArrow::EVENT_OUT);
     }
 
 
@@ -347,25 +372,25 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // --------------------------
     if (parent_unfolder != nullptr) {
         parent_unfolder->attach(pool_at_level, JUnfoldArrow::CHILD_IN);
-        connect_to_first_available(parent_unfolder, {map1_arrow, unfold_arrow, map2_arrow, tap_arrow, parent_folder});
+        connect_to_first_available(parent_unfolder, {map1_arrow, unfold_arrow, map2_arrow, first_tap_arrow, parent_folder});
     }
     if (src_arrow != nullptr) {
-        connect_to_first_available(src_arrow, {map1_arrow, unfold_arrow, map2_arrow, tap_arrow, parent_folder});
+        connect_to_first_available(src_arrow, {map1_arrow, unfold_arrow, map2_arrow, first_tap_arrow, parent_folder});
     }
     if (map1_arrow != nullptr) {
-        connect_to_first_available(map1_arrow, {unfold_arrow, map2_arrow, tap_arrow, parent_folder});
+        connect_to_first_available(map1_arrow, {unfold_arrow, map2_arrow, first_tap_arrow, parent_folder});
     }
     if (unfold_arrow != nullptr) {
-        connect_to_first_available(unfold_arrow, {map2_arrow, tap_arrow, parent_folder}, 1, 0);
+        connect_to_first_available(unfold_arrow, {map2_arrow, first_tap_arrow, parent_folder}, 1, 0);
     }
     if (fold_arrow != nullptr) {
-        connect_to_first_available(fold_arrow, {map2_arrow, tap_arrow, parent_folder});
+        connect_to_first_available(fold_arrow, {map2_arrow, first_tap_arrow, parent_folder});
     }
     if (map2_arrow != nullptr) {
-        connect_to_first_available(map2_arrow, {tap_arrow, parent_folder});
+        connect_to_first_available(map2_arrow, {first_tap_arrow, parent_folder});
     }
-    if (tap_arrow != nullptr) {
-        connect_to_first_available(tap_arrow, {parent_folder});
+    if (last_tap_arrow != nullptr) {
+        connect_to_first_available(last_tap_arrow, {parent_folder});
     }
     if (parent_folder != nullptr) {
         parent_folder->attach(pool_at_level, JFoldArrow::CHILD_OUT);
@@ -379,8 +404,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     else {
         // This is the lowest level
         // TODO: Improve logic for determining event counts for multilevel topologies
-        if (tap_arrow != nullptr) {
-            tap_arrow->set_is_sink(true);
+        if (last_tap_arrow != nullptr) {
+            last_tap_arrow->set_is_sink(true);
         }
         else if (map2_arrow != nullptr) {
             map2_arrow->set_is_sink(true);
