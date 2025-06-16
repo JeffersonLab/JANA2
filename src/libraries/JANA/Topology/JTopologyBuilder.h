@@ -59,8 +59,8 @@ public:
     void create_topology();
 
     void attach_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder);
-    void connect_to_first_available(JArrow* upstream, std::vector<JArrow*> downstreams, size_t up_index=0, size_t down_index=0);
-    void connect(JArrow* upstream, size_t upstream_index, JArrow* downstream, size_t downstream_index);
+    void connect_to_first_available(JArrow* upstream, size_t upstream_port_id, std::vector<std::pair<JArrow*, size_t>> downstreams);
+    void connect(JArrow* upstream, size_t upstream_port_id, JArrow* downstream, size_t downstream_port_id);
     std::pair<JEventTapArrow*, JEventTapArrow*> create_tap_chain(std::vector<JEventProcessor*>& procs, std::string name);
 
     std::string print_topology();

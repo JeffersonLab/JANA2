@@ -137,47 +137,33 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
 };
 
 
-void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downstream, size_t down_index) {
+void JTopologyBuilder::connect(JArrow* upstream, size_t upstream_port_id, JArrow* downstream, size_t downstream_port_id) {
 
     JEventQueue* queue = nullptr;
 
-    size_t i = 0;
-    for (JArrow::Port& port : downstream->m_ports) {
-        if (port.is_input) {
-            if (i++ == down_index) {
-                // Found the correct input
-                if (port.queue != nullptr) {
-                    // If the queue already exists, use that!
-                    queue = port.queue;
-                }
-                else {
-                    // Create a new queue
-                    queue = new JEventQueue(m_max_inflight_events, mapping.get_loc_count());
-                    port.queue = queue;
-                    queues.push_back(queue);
-                }
-                port.pool = nullptr;
-            }
-        }
+    JArrow::Port& downstream_port = downstream->m_ports.at(downstream_port_id);
+    if (downstream_port.queue != nullptr) {
+        // If the queue already exists, use that!
+        queue = downstream_port.queue;
     }
+    else {
+        // Create a new queue
+        queue = new JEventQueue(m_max_inflight_events, mapping.get_loc_count());
+        downstream_port.queue = queue;
+        queues.push_back(queue);
+    }
+    downstream_port.pool = nullptr;
 
-    i = 0;
-    for (JArrow::Port& port : upstream->m_ports) {
-        if (!port.is_input) {
-            if (i++ == up_index) {
-                // Found the correct output
-                port.queue = queue;
-                port.pool = nullptr;
-            }
-        }
-    }
+    JArrow::Port& upstream_port = upstream->m_ports.at(upstream_port_id);
+    upstream_port.queue = queue;
+    upstream_port.pool = nullptr;
 }
 
 
-void JTopologyBuilder::connect_to_first_available(JArrow* upstream, std::vector<JArrow*> downstreams, size_t up_index, size_t down_index) {
-    for (JArrow* downstream : downstreams) {
+void JTopologyBuilder::connect_to_first_available(JArrow* upstream, size_t upstream_port, std::vector<std::pair<JArrow*, size_t>> downstreams) {
+    for (auto& [downstream, downstream_port_id] : downstreams) {
         if (downstream != nullptr) {
-            connect(upstream, up_index, downstream, down_index);
+            connect(upstream, upstream_port, downstream, downstream_port_id);
             return;
         }
     }
@@ -201,7 +187,7 @@ std::pair<JEventTapArrow*, JEventTapArrow*> JTopologyBuilder::create_tap_chain(s
             first = current;
         }
         if (last != nullptr) {
-            connect(last, 0, current, 0);
+            connect(last, JEventTapArrow::EVENT_OUT, current, JEventTapArrow::EVENT_IN);
         }
         last = current;
     }
@@ -372,25 +358,32 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // --------------------------
     if (parent_unfolder != nullptr) {
         parent_unfolder->attach(pool_at_level, JUnfoldArrow::CHILD_IN);
-        connect_to_first_available(parent_unfolder, {map1_arrow, unfold_arrow, map2_arrow, first_tap_arrow, parent_folder});
+        connect_to_first_available(parent_unfolder, JUnfoldArrow::CHILD_OUT,
+                                   {{map1_arrow, JEventMapArrow::EVENT_IN}, {unfold_arrow, JUnfoldArrow::PARENT_IN}, {map2_arrow, JEventMapArrow::EVENT_IN}, {first_tap_arrow, JEventTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (src_arrow != nullptr) {
-        connect_to_first_available(src_arrow, {map1_arrow, unfold_arrow, map2_arrow, first_tap_arrow, parent_folder});
+        connect_to_first_available(src_arrow, JEventSourceArrow::EVENT_OUT,
+                                   {{map1_arrow, JEventMapArrow::EVENT_IN}, {unfold_arrow, JUnfoldArrow::PARENT_IN}, {map2_arrow, JEventMapArrow::EVENT_IN}, {first_tap_arrow, JEventTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (map1_arrow != nullptr) {
-        connect_to_first_available(map1_arrow, {unfold_arrow, map2_arrow, first_tap_arrow, parent_folder});
+        connect_to_first_available(map1_arrow, JEventMapArrow::EVENT_OUT,
+                                   {{unfold_arrow, JUnfoldArrow::PARENT_IN}, {map2_arrow, JEventMapArrow::EVENT_IN}, {first_tap_arrow, JEventTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (unfold_arrow != nullptr) {
-        connect_to_first_available(unfold_arrow, {map2_arrow, first_tap_arrow, parent_folder}, 1, 0);
+        connect_to_first_available(unfold_arrow, JUnfoldArrow::REJECTED_PARENT_OUT,
+                                   {{map2_arrow, JEventMapArrow::EVENT_IN}, {first_tap_arrow, JEventTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (fold_arrow != nullptr) {
-        connect_to_first_available(fold_arrow, {map2_arrow, first_tap_arrow, parent_folder});
+        connect_to_first_available(fold_arrow, JFoldArrow::CHILD_OUT,
+                                   {{map2_arrow, JEventMapArrow::EVENT_IN}, {first_tap_arrow, JEventTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (map2_arrow != nullptr) {
-        connect_to_first_available(map2_arrow, {first_tap_arrow, parent_folder});
+        connect_to_first_available(map2_arrow, JEventMapArrow::EVENT_OUT,
+                                   {{first_tap_arrow, JEventTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (last_tap_arrow != nullptr) {
-        connect_to_first_available(last_tap_arrow, {parent_folder});
+        connect_to_first_available(last_tap_arrow, JEventTapArrow::EVENT_OUT,
+                                   {{parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (parent_folder != nullptr) {
         parent_folder->attach(pool_at_level, JFoldArrow::CHILD_OUT);
