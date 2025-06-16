@@ -603,7 +603,7 @@ inline std::string JParameterManager::Stringify(const std::array<std::string,N> 
     std::stringstream ssv;
     for (size_t i = 0; i < len; ++i) {
         if (values[i].find(',') != std::string::npos) {
-            std::stringstream ss(Stringify(values[i]));
+            std::stringstream ss(values[i]);
             std::string s;
             std::string s_end = values[i].substr(values[i].rfind(',')+1);
             while (getline(ss, s, ',')) {
