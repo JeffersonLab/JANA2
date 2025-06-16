@@ -12,7 +12,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
-#include <optional>
+//#include <optional>
 
 
 class JFactory;
@@ -26,10 +26,10 @@ private:
     // Fields
     Status m_status = Status::Empty;
     std::string m_unique_name;
-    std::optional<std::string> m_short_name;
+    //std::optional<std::string> m_short_name;
     std::string m_type_name;
     JFactory* m_factory = nullptr;
-    std::optional<std::type_index> m_inner_type_index;
+    //std::optional<std::type_index> m_inner_type_index;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE;
 
 protected:
@@ -45,16 +45,16 @@ public:
     // Getters
     Status GetStatus() const { return m_status; }
     std::string GetUniqueName() const { return m_unique_name; }
-    std::optional<std::string> GetShortName() const { return m_short_name; }
+    //std::optional<std::string> GetShortName() const { return m_short_name; }
     std::string GetTypeName() const { return m_type_name; }
-    std::optional<std::type_index> GetTypeIndex() const { return m_inner_type_index; }
+    //std::optional<std::type_index> GetTypeIndex() const { return m_inner_type_index; }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
     JFactory* GetFactory() const { return m_factory; }
 
     // Setters
     void SetStatus(Status s) { m_status = s;}
     void SetUniqueName(std::string unique_name) { m_unique_name = unique_name; }
-    void SetShortName(std::string short_name) { m_short_name = short_name; }
+    //void SetShortName(std::string short_name) { m_short_name = short_name; }
     void SetTypeName(std::string type_name) { m_type_name = type_name; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
     void SetFactory(JFactory* fac) { m_factory = fac; }
