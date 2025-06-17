@@ -16,6 +16,7 @@
 #include <JANA/JMultifactory.h>
 #include <JANA/JVersion.h>
 #include <JANA/Components/JHasInputs.h>
+#include <JANA/Components/JHasOutputs.h>
 
 #include <string>
 #include <vector>
@@ -25,146 +26,11 @@ namespace jana::components {
 struct EmptyConfig {};
 
 template <typename AlgoT, typename ConfigT=EmptyConfig>
-class JOmniFactory : public JMultifactory, public jana::components::JHasInputs {
-public:
-
-    /// =========================
-    /// Handle output collections
-    /// =========================
-
-    struct OutputBase {
-        std::string type_name;
-        std::vector<std::string> collection_names;
-        bool is_variadic = false;
-
-        virtual void CreateHelperFactory(JOmniFactory& fac) = 0;
-        virtual void SetCollection(JOmniFactory& fac) = 0;
-        virtual void Reset() = 0;
-    };
-
-    template <typename T>
-    class Output : public OutputBase {
-        std::vector<T*> m_data;
-
-    public:
-        Output(JOmniFactory* owner, std::string default_tag_name="") {
-            owner->RegisterOutput(this);
-            this->collection_names.push_back(default_tag_name);
-            this->type_name = JTypeInfo::demangle<T>();
-        }
-
-        std::vector<T*>& operator()() { return m_data; }
-
-    private:
-        friend class JOmniFactory;
-
-        void CreateHelperFactory(JOmniFactory& fac) override {
-            fac.DeclareOutput<T>(this->collection_names[0]);
-        }
-
-        void SetCollection(JOmniFactory& fac) override {
-            fac.SetData<T>(this->collection_names[0], this->m_data);
-        }
-
-        void Reset() override { }
-    };
-
-
-#if JANA2_HAVE_PODIO
-    template <typename PodioT>
-    class PodioOutput : public OutputBase {
-
-        std::unique_ptr<typename PodioT::collection_type> m_data;
-
-    public:
-
-        PodioOutput(JOmniFactory* owner, std::string default_collection_name="") {
-            owner->RegisterOutput(this);
-            this->collection_names.push_back(default_collection_name);
-            this->type_name = JTypeInfo::demangle<PodioT>();
-        }
-
-        std::unique_ptr<typename PodioT::collection_type>& operator()() { return m_data; }
-
-    private:
-        friend class JOmniFactory;
-
-        void CreateHelperFactory(JOmniFactory& fac) override {
-            fac.DeclarePodioOutput<PodioT>(this->collection_names[0]);
-        }
-
-        void SetCollection(JOmniFactory& fac) override {
-            if (m_data == nullptr) {
-                throw JException("JOmniFactory: SetCollection failed due to missing output collection '%s'", this->collection_names[0].c_str());
-                // Otherwise this leads to a PODIO segfault
-            }
-            fac.SetCollection<PodioT>(this->collection_names[0], std::move(this->m_data));
-        }
-
-        void Reset() override {
-            m_data = std::move(std::make_unique<typename PodioT::collection_type>());
-        }
-    };
-
-
-    template <typename PodioT>
-    class VariadicPodioOutput : public OutputBase {
-
-        std::vector<std::unique_ptr<typename PodioT::collection_type>> m_data;
-
-    public:
-
-        VariadicPodioOutput(JOmniFactory* owner, std::vector<std::string> default_collection_names={}) {
-            owner->RegisterOutput(this);
-            this->collection_names = default_collection_names;
-            this->type_name = JTypeInfo::demangle<PodioT>();
-            this->is_variadic = true;
-        }
-
-        std::vector<std::unique_ptr<typename PodioT::collection_type>>& operator()() { return m_data; }
-
-    private:
-        friend class JOmniFactory;
-
-        void CreateHelperFactory(JOmniFactory& fac) override {
-            for (auto& coll_name : this->collection_names) {
-                fac.DeclarePodioOutput<PodioT>(coll_name);
-            }
-        }
-
-        void SetCollection(JOmniFactory& fac) override {
-            if (m_data.size() != this->collection_names.size()) {
-                throw JException("JOmniFactory: VariadicPodioOutput SetCollection failed: Declared %d collections, but provided %d.", this->collection_names.size(), m_data.size());
-                // Otherwise this leads to a PODIO segfault
-            }
-            size_t i = 0;
-            for (auto& coll_name : this->collection_names) {
-                fac.SetCollection<PodioT>(coll_name, std::move(this->m_data[i++]));
-            }
-        }
-
-        void Reset() override {
-            m_data.clear();
-            for (auto& coll_name : this->collection_names) {
-                m_data.push_back(std::make_unique<typename PodioT::collection_type>());
-            }
-        }
-    };
-#endif
-
-    void RegisterOutput(OutputBase* output) {
-        m_outputs.push_back(output);
-    }
-
-
-public:
-    std::vector<OutputBase*> m_outputs;
-
+class JOmniFactory : public JMultifactory, 
+                     public jana::components::JHasInputs,
+                     public jana::components::JHasOutputs {
 private:
-    /// Current logger
-    JLogger m_logger;
 
-    /// Configuration
     ConfigT m_config;
 
 public:

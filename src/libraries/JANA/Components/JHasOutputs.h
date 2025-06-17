@@ -5,6 +5,7 @@
 #pragma once
 
 #include <JANA/JEvent.h>
+#include <JANA/JMultifactory.h>
 
 namespace jana::components {
 
@@ -24,6 +25,8 @@ protected:
         std::vector<std::string> collection_names;
         bool is_variadic = false;
 
+        virtual void CreateHelperFactory(JMultifactory& fac) = 0;
+        virtual void SetCollection(JMultifactory& fac) = 0;
         virtual void InsertCollection(JEvent& event) = 0;
         virtual void Reset() = 0;
     };
@@ -50,6 +53,15 @@ protected:
         void SetNotOwnerFlag(bool not_owner=true) { is_not_owner = not_owner; }
 
     protected:
+
+        void CreateHelperFactory(JMultifactory& fac) override {
+            fac.DeclareOutput<T>(this->collection_names[0]);
+        }
+
+        void SetCollection(JMultifactory& fac) override {
+            fac.SetData<T>(this->collection_names[0], this->m_data);
+        }
+
         void InsertCollection(JEvent& event) override {
             auto fac = event.Insert(m_data, this->collection_names[0]);
             fac->SetNotOwnerFlag(is_not_owner);
@@ -81,9 +93,23 @@ protected:
         }
 
     protected:
+
+        void CreateHelperFactory(JMultifactory& fac) override {
+            fac.DeclarePodioOutput<PodioT>(this->collection_names[0]);
+        }
+
+        void SetCollection(JMultifactory& fac) override {
+            if (m_data == nullptr) {
+                throw JException("JOmniFactory: SetCollection failed due to missing output collection '%s'", this->collection_names[0].c_str());
+                // Otherwise this leads to a PODIO segfault
+            }
+            fac.SetCollection<PodioT>(this->collection_names[0], std::move(this->m_data));
+        }
+
         void InsertCollection(JEvent& event) override {
             event.InsertCollection<PodioT>(std::move(*m_data), this->collection_names[0]);
         }
+
         void Reset() override {
             m_data = std::move(std::make_unique<typename PodioT::collection_type>());
         }
@@ -111,6 +137,24 @@ protected:
         }
 
     protected:
+
+        void CreateHelperFactory(JMultifactory& fac) override {
+            for (auto& coll_name : this->collection_names) {
+                fac.DeclarePodioOutput<PodioT>(coll_name);
+            }
+        }
+
+        void SetCollection(JMultifactory& fac) override {
+            if (m_data.size() != this->collection_names.size()) {
+                throw JException("JOmniFactory: VariadicPodioOutput SetCollection failed: Declared %d collections, but provided %d.", this->collection_names.size(), m_data.size());
+                // Otherwise this leads to a PODIO segfault
+            }
+            size_t i = 0;
+            for (auto& coll_name : this->collection_names) {
+                fac.SetCollection<PodioT>(coll_name, std::move(this->m_data[i++]));
+            }
+        }
+
         void InsertCollection(JEvent& event) override {
             if (m_data.size() != this->collection_names.size()) {
                 throw JException("VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", this->collection_names.size(), m_data.size());
