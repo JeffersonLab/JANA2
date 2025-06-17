@@ -22,4 +22,15 @@ Databundles are not required to own their contents -- Podio specifically forbids
 ![UML diagram of JFactory machinery, before and after databundles](_media/databundles.png)
 
 
+### Component inputs and outputs
+
+Components may inherit from JHasInputs and/or JHasOutputs. Specifically: JMultifactories, unfolders, and folders inherit from both, (old) JFactories and processors only inherit from JHasInputs, and eventually sources will inherit from HasOutputs. These enable the component writer to declare inputs and outputs respectively, bypassing the (old) JEvent interface.
+
+Different flavors of inputs and outputs are provided. Each input or output is either single (i.e. it corresponds to exactly one databundle) or variadic (i.e. it corresponds to a list of databundles all of the same type and event level). This abstraction allows the component to be externally wired (e.g. by using JOmniFactoryGenerator or JWiredFactoryGenerator). To configure these inputs, the caller needs to provide:
+
+- A vector of databundle names for the single inputs/outputs, assigned in declaration order.
+- A vector of vectors of databundle names for the variadic inputs/outputs, assigned in declaration order.
+
+
+
 

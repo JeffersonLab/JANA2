@@ -27,6 +27,7 @@ public:
         std::vector<JEventLevel> variadic_input_levels;
         std::vector<std::string> output_names;
         std::vector<JEventLevel> output_levels;
+        std::vector<std::vector<std::string>> variadic_output_names;
         std::map<std::string, std::string> configs;
     };
 

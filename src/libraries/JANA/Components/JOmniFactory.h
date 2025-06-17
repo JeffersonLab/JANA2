@@ -202,7 +202,8 @@ public:
                         std::vector<JEventLevel> input_collection_levels,
                         std::vector<std::vector<std::string>> variadic_input_collection_names,
                         std::vector<JEventLevel> variadic_input_collection_levels, 
-                        std::vector<std::string> output_collection_names
+                        std::vector<std::string> output_collection_names,
+                        std::vector<std::vector<std::string>> variadic_output_collection_names
                         ) {
 
         m_prefix = (this->GetPluginName().empty()) ? tag : this->GetPluginName() + ":" + tag;
@@ -246,26 +247,16 @@ public:
             i += 1;
         }
 
-        // Figure out variadic outputs
-        size_t variadic_output_count = 0;
-        for (auto* output : m_outputs) {
-            if (output->is_variadic) {
-               variadic_output_count += 1;
-            }
-        }
-        size_t variadic_output_collection_count = FindVariadicCollectionCount(m_outputs.size(), variadic_output_count, output_collection_names.size(), false);
+        size_t single_output_index = 0;
+        size_t variadic_output_index = 0;
 
-        // Set output collection names and create corresponding helper factories
-        i = 0;
         for (auto* output : m_outputs) {
             output->collection_names.clear();
             if (output->is_variadic) {
-                for (size_t j = 0; j<(variadic_output_collection_count/variadic_output_count); ++j) {
-                    output->collection_names.push_back(output_collection_names[i++]);
-                }
+                output->collection_names = variadic_output_collection_names.at(variadic_output_index++);
             }
             else {
-                output->collection_names.push_back(output_collection_names[i++]);
+                output->collection_names.push_back(output_collection_names.at(single_output_index++));
             }
             output->CreateHelperFactory(*this);
         }
