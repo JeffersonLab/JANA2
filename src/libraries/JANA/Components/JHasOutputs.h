@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "JANA/Components/JComponentSummary.h"
+#include "JANA/Utils/JEventLevel.h"
 #include <JANA/JEvent.h>
 #include <JANA/JMultifactory.h>
 
@@ -23,6 +25,7 @@ protected:
     struct OutputBase {
         std::string type_name;
         std::vector<std::string> collection_names;
+        JEventLevel level = JEventLevel::None;
         bool is_variadic = false;
 
         virtual void CreateHelperFactory(JMultifactory& fac) = 0;
@@ -174,6 +177,32 @@ protected:
         }
     };
 #endif
+
+
+    void WireOutputs(JEventLevel component_level, const std::vector<std::string>& single_output_databundle_names, const std::vector<std::vector<std::string>>& variadic_output_databundle_names) {
+        size_t single_output_index = 0;
+        size_t variadic_output_index = 0;
+
+        for (auto* output : m_outputs) {
+            output->collection_names.clear();
+            output->level = component_level;
+            if (output->is_variadic) {
+                output->collection_names = variadic_output_databundle_names.at(variadic_output_index++);
+            }
+            else {
+                output->collection_names.push_back(single_output_databundle_names.at(single_output_index++));
+            }
+        }
+    }
+
+    void SummarizeOutputs(JComponentSummary::Component& summary) const {
+        for (const auto* output : m_outputs) {
+            size_t suboutput_count = output->collection_names.size();
+            for (size_t i=0; i<suboutput_count; ++i) {
+                summary.AddOutput(new JComponentSummary::Collection("", output->collection_names[i], output->type_name, output->level));
+            }
+        }
+    }
 
 };
 
