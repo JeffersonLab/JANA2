@@ -70,7 +70,7 @@ public:
     }
 
     /// Please use the typed setters instead whenever possible
-    // TODO: Deprecate this!
+    [[deprecated]]
     void Set(const std::vector<JObject*>& aData) override {
         std::vector<T*> data;
         for (auto obj : aData) {
@@ -82,7 +82,7 @@ public:
     }
 
     /// Please use the typed setters instead whenever possible
-    // TODO: Deprecate this!
+    [[deprecated]]
     void Insert(JObject* aDatum) override {
         T* casted = dynamic_cast<T*>(aDatum);
         assert(casted != nullptr);
