@@ -12,6 +12,7 @@
 #include <JANA/JObject.h>
 #include <JANA/JVersion.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <JANA/Components/JLightweightOutput.h>
 
 #if JANA2_HAVE_ROOT
 #include <TObject.h>
@@ -154,6 +155,7 @@ public:
 
 
 protected:
+    jana::components::Output<T> mOutput {this};
     std::vector<T*> mData;
 };
 

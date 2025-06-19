@@ -123,7 +123,7 @@ bool JFactorySet::Add(JFactory* aFactory)
     mFactoriesFromString[untyped_key] = aFactory;
 
     for (const auto* output : aFactory->GetDatabundleOutputs()) {
-        for (const auto& bundle : output->GetDatabundles()) {
+        for (const auto& bundle : output->databundles) {
             bundle->SetFactory(aFactory);
             Add(bundle.get());
         }

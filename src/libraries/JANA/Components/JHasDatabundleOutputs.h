@@ -1,9 +1,10 @@
 
 #pragma once
 #include <JANA/Components/JDatabundle.h>
+#include <JANA/Utils/JEventLevel.h>
 #include <memory>
 
-class JEvent;
+class JFactorySet;
 
 namespace jana::components {
 
@@ -11,12 +12,13 @@ namespace jana::components {
 class JHasDatabundleOutputs {
 public:
     struct OutputBase {
-    protected:
-        std::vector<std::unique_ptr<JDatabundle>> m_databundles;
-        bool m_is_variadic = false;
-    public:
-        const std::vector<std::unique_ptr<JDatabundle>>& GetDatabundles() const { return m_databundles; }
-        virtual void StoreData(const JEvent& event) = 0;
+        std::string type_name;
+        std::vector<std::string> databundle_names;
+        std::vector<std::unique_ptr<JDatabundle>> databundles;
+        JEventLevel level = JEventLevel::None;
+        bool is_variadic = false;
+
+        virtual void StoreData(const JFactorySet& facset) = 0;
         virtual void Reset() = 0;
     };
 

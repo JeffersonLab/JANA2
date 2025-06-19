@@ -1,6 +1,6 @@
 #pragma once
 #include <JANA/Components/JHasDatabundleOutputs.h>
-#include <JANA/JEvent.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 namespace jana::components {
 
@@ -11,16 +11,16 @@ class Output : public JHasDatabundleOutputs::OutputBase {
 public:
     Output(JHasDatabundleOutputs* owner, std::string default_tag_name="") {
         owner->RegisterOutput(this);
-        this->collection_names.push_back(default_tag_name);
+        this->databundle_names.push_back(default_tag_name);
         this->type_name = JTypeInfo::demangle<T>();
     }
 
     std::vector<T*>& operator()() { return m_data; }
 
-protected:
-    void PutCollections(const JEvent& event) override {
-        event.Insert(m_data, this->collection_names[0]);
+    void StoreData(const JFactorySet&) override {
+    //    event.Insert(m_data, this->collection_names[0]);
     }
+
     void Reset() override { }
 };
 

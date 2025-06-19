@@ -37,7 +37,7 @@ private:
 public:
     JLightweightDatabundleT();
     void ClearData() override;
-    size_t GetSize() const override { return m_data.size();}
+    size_t GetSize() const override { return m_data->size();}
 
     std::vector<T*>& GetData() { return m_data; }
 
@@ -82,7 +82,7 @@ void JLightweightDatabundleT<T>::ClearData() {
     if (!GetNotOwnerFlag()) {
         for (auto p : m_data) delete p;
     }
-    m_data.clear();
+    m_data->clear();
     SetStatus(Status::Empty);
 }
 

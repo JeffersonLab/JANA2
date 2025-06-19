@@ -14,10 +14,13 @@ namespace jana::components {
 
 
 struct JHasOutputs {
-protected:
+public:
     struct OutputBase;
+
+protected:
     std::vector<OutputBase*> m_outputs;
 
+public:
     void RegisterOutput(OutputBase* output) {
         m_outputs.push_back(output);
     }
