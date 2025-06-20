@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
+#include <utility>
 
 /// Ideally we'd just use std::any, but we are restricted to C++14 for the time being
 struct JAny {

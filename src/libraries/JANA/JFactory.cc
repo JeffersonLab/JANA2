@@ -110,6 +110,12 @@ void JFactory::Create(const JEvent& event) {
         CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
         mStatus = Status::Processed;
         mCreationStatus = CreationStatus::Created;
+
+        for (auto* output : GetDatabundleOutputs()) {
+            for (auto* databundle : output->databundles) {
+                databundle->SetStatus(JDatabundle::Status::Created);
+            }
+        }
     }
 }
 

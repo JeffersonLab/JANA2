@@ -36,10 +36,11 @@ private:
 
 public:
     JLightweightDatabundleT();
+    void AttachData(std::vector<T*>* data) { m_data = data; }
     void ClearData() override;
     size_t GetSize() const override { return m_data->size();}
 
-    std::vector<T*>& GetData() { return m_data; }
+    std::vector<T*>& GetData() { return *m_data; }
 
     /// EnableGetAs generates a vtable entry so that users may extract the
     /// contents of this JFactoryT from the type-erased JFactory. The user has to manually specify which upcasts
@@ -80,7 +81,7 @@ void JLightweightDatabundleT<T>::ClearData() {
 
     // Assuming we _are_ the object owner, delete the underlying jobjects
     if (!GetNotOwnerFlag()) {
-        for (auto p : m_data) delete p;
+        for (auto p : *m_data) delete p;
     }
     m_data->clear();
     SetStatus(Status::Empty);
@@ -92,7 +93,7 @@ void JLightweightDatabundleT<T>::EnableGetAs() {
 
     auto upcast_lambda = [this]() {
         std::vector<S*> results;
-        for (auto t : m_data) {
+        for (auto t : *m_data) {
             results.push_back(static_cast<S*>(t));
         }
         return results;

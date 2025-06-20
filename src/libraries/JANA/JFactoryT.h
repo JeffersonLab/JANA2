@@ -27,6 +27,10 @@ public:
     using PairType = std::pair<IteratorType, IteratorType>;
 
     JFactoryT(std::string tag="") : JFactory(JTypeInfo::demangle<T>(), tag){
+        auto* main_databundle = mOutput.databundles.at(0);
+        auto* typed_main_databundle = static_cast<JLightweightDatabundleT<T>*>(main_databundle);
+        typed_main_databundle->AttachData(&mData);
+
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
 #if JANA2_HAVE_ROOT

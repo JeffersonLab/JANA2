@@ -14,11 +14,11 @@ public:
     struct OutputBase {
         std::string type_name;
         std::vector<std::string> databundle_names;
-        std::vector<std::unique_ptr<JDatabundle>> databundles;
+        std::vector<JDatabundle*> databundles;
         JEventLevel level = JEventLevel::None;
         bool is_variadic = false;
 
-        virtual void StoreData(const JFactorySet& facset) = 0;
+        virtual void StoreData(const JFactorySet&) = 0;
         virtual void Reset() = 0;
     };
 

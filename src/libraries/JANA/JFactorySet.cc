@@ -4,6 +4,7 @@
 
 #include <iterator>
 #include <iostream>
+#include <unistd.h>
 
 #include "JFactorySet.h"
 #include "JFactory.h"
@@ -40,10 +41,7 @@ JFactorySet::~JFactorySet()
     if (mIsFactoryOwner) {
 
         for (auto& pair : mDatabundlesFromUniqueName) {
-            // Only delete _inserted_ databundles. Otherwise they are deleted by their respective factories
-            if (pair.second->GetFactory() == nullptr) {
-                delete pair.second;
-            }
+            delete pair.second; // Databundles are always owned by the factoryset
         }
         for (auto& f : mFactories) delete f.second;
     }
@@ -59,6 +57,7 @@ void JFactorySet::Add(JDatabundle* databundle) {
     if (databundle->GetUniqueName().empty()) {
         throw JException("Attempted to add a databundle with no unique_name");
     }
+    LOG << "Added databundle " << databundle->GetUniqueName();
     auto named_result = mDatabundlesFromUniqueName.find(databundle->GetUniqueName());
     if (named_result != std::end(mDatabundlesFromUniqueName)) {
         // Collection is duplicate. Since this almost certainly indicates a user error, and
@@ -125,7 +124,7 @@ bool JFactorySet::Add(JFactory* aFactory)
     for (const auto* output : aFactory->GetDatabundleOutputs()) {
         for (const auto& bundle : output->databundles) {
             bundle->SetFactory(aFactory);
-            Add(bundle.get());
+            Add(bundle);
         }
     }
     return true;
@@ -157,7 +156,7 @@ JDatabundle* JFactorySet::GetDatabundle(const std::string& unique_name) const {
     if (it != std::end(mDatabundlesFromUniqueName)) {
         auto fac = it->second->GetFactory();
         if (fac != nullptr && fac->GetLevel() != mLevel) {
-            throw JException("Data bundle belongs to a different level on the event hierarchy!");
+            throw JException("Databundle belongs to a different level on the event hierarchy!");
         }
         return it->second;
     }
