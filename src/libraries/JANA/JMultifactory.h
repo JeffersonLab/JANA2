@@ -141,8 +141,8 @@ public:
 
 template <typename T>
 void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
-    JFactory* helper = new JMultifactoryHelper<T>(this);
-    if (!owns_data) helper->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
+    JFactoryT<T>* helper = new JMultifactoryHelper<T>(this);
+    if (!owns_data) helper->SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
     helper->SetPluginName(m_plugin_name);
     helper->SetFactoryName(GetTypeName()+"::Helper<" + JTypeInfo::demangle<T>() + ">");
     helper->SetTag(std::move(tag));

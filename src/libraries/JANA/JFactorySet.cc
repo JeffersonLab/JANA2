@@ -248,7 +248,6 @@ void JFactorySet::Clear() {
         // This automatically clears multifactories because their data is stored in helper factories!
     }
     for (auto& it : mDatabundlesFromUniqueName) {
-        // fac->ClearData() only clears JFactoryT's, because that's how it always worked.
         // Clearing is fundamentally an operation on the data bundle, not on the factory itself.
         // Furthermore, "clearing" the factory is misleading because factories can cache arbitrary
         // state inside member variables, and there's no way to clear that.

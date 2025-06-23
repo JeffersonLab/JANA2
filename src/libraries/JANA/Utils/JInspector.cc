@@ -194,8 +194,6 @@ void JInspector::ToText(const JFactory* fac, bool asJson, std::ostream& out) {
         out << "Tag                  " << tag << std::endl;
         out << "Creation status      " << creationStatus << std::endl;
         out << "Object count         " << fac->GetNumObjects() << std::endl;
-        out << "Persistent flag      " << fac->TestFactoryFlag(JFactory::PERSISTENT) << std::endl;
-        out << "NotObjectOwner flag  " << fac->TestFactoryFlag(JFactory::NOT_OBJECT_OWNER) << std::endl;
     }
     else {
         out << "{" << std::endl;
@@ -205,8 +203,6 @@ void JInspector::ToText(const JFactory* fac, bool asJson, std::ostream& out) {
         out << "  \"tag\":           \"" << tag << "\"," << std::endl;
         out << "  \"creation\":      \"" << creationStatus << "\"," << std::endl;
         out << "  \"object_count\":  " << fac->GetNumObjects() << "," << std::endl;
-        out << "  \"persistent\":    " << fac->TestFactoryFlag(JFactory::PERSISTENT) << "," << std::endl;
-        out << "  \"not_obj_owner\": " << fac->TestFactoryFlag(JFactory::NOT_OBJECT_OWNER) << std::endl;
         out << "}" << std::endl;
     }
 }

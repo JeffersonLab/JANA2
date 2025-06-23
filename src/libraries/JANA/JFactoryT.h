@@ -124,6 +124,37 @@ public:
         mCreationStatus = CreationStatus::Inserted;
     }
 
+    /// Set a flag (or flags)
+    inline void SetFactoryFlag(JFactory_Flags_t f) {
+        switch (f) {
+            case JFactory::PERSISTENT: SetPersistentFlag(true); break;
+            case JFactory::NOT_OBJECT_OWNER: SetNotOwnerFlag(true); break;
+            case JFactory::REGENERATE: SetRegenerateFlag(true); break;
+            case JFactory::WRITE_TO_OUTPUT: SetWriteToOutputFlag(true); break;
+            default: throw JException("Invalid factory flag");
+        }
+    }
+
+    /// Clear a flag (or flags)
+    inline void ClearFactoryFlag(JFactory_Flags_t f) {
+        switch (f) {
+            case JFactory::PERSISTENT: SetPersistentFlag(false); break;
+            case JFactory::NOT_OBJECT_OWNER: SetNotOwnerFlag(false); break;
+            case JFactory::REGENERATE: SetRegenerateFlag(false); break;
+            case JFactory::WRITE_TO_OUTPUT: SetWriteToOutputFlag(false); break;
+            default: throw JException("Invalid factory flag");
+        }
+    }
+
+    inline void SetPersistentFlag(bool persistent) {
+        mOutput.GetDatabundle().SetPersistentFlag(persistent);
+    }
+
+    inline void SetNotOwnerFlag(bool not_owner) {
+        mOutput.GetDatabundle().SetNotOwnerFlag(not_owner);
+    }
+
+
 
     /// EnableGetAs generates a vtable entry so that users may extract the
     /// contents of this JFactoryT from the type-erased JFactory. The user has to manually specify which upcasts
@@ -137,22 +168,7 @@ public:
     template <typename S> void EnableGetAs(std::false_type) {}
 
     void ClearData() override {
-
-        // ClearData won't do anything if Init() hasn't been called
-        if (mStatus == Status::Uninitialized) {
-            return;
-        }
-        // ClearData() does nothing if persistent flag is set.
-        // User must manually recycle data, e.g. during ChangeRun()
-        if (TestFactoryFlag(JFactory_Flags_t::PERSISTENT)) {
-            return;
-        }
-
-        // Assuming we _are_ the object owner, delete the underlying jobjects
-        if (!TestFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER)) {
-            for (auto p : mData) delete p;
-        }
-        mData.clear();
+        // Data is cleared via JDatabundle::ClearData() now
         mStatus = Status::Unprocessed;
         mCreationStatus = CreationStatus::NotCreatedYet;
     }

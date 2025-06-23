@@ -175,19 +175,19 @@ void JEventProcessor_janaroot::Process(const std::shared_ptr<const JEvent>& even
 		// exists, the other threads will not have their WRITE_TO_OUTPUT
 		// flags set properly.
 		if(nametags_to_write_out.size()>0){
-			allfactories[i]->ClearFactoryFlag(JFactory::WRITE_TO_OUTPUT);
+			allfactories[i]->SetWriteToOutputFlag(false);
 			// Form nametag for factory to compare to ones listed in config. param.
 			string nametag = allfactories[i]->GetObjectName();
 			string tag = allfactories[i]->GetTag();
 			if(!tag.empty()) nametag += ":" + tag;
 			for(unsigned int j=0; j<nametags_to_write_out.size(); j++){
 				if(nametags_to_write_out[j] == nametag){
-					allfactories[i]->SetFactoryFlag(JFactory::WRITE_TO_OUTPUT);
+					allfactories[i]->SetWriteToOutputFlag(true);
 				}
 			}
 		}
 
-		if(allfactories[i]->TestFactoryFlag(JFactory::WRITE_TO_OUTPUT)) facs.push_back(allfactories[i]);
+		if(allfactories[i]->GetWriteToOutputFlag()) facs.push_back(allfactories[i]);
 	}
 	
 	// Clear all trees' "N" values for this event

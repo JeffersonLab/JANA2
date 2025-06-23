@@ -32,6 +32,7 @@ private:
     //std::optional<std::type_index> m_inner_type_index;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE;
 
+
 protected:
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
 

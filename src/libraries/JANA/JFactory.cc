@@ -51,7 +51,7 @@ void JFactory::Create(const JEvent& event) {
     // 1. JFactory::Process() if REGENERATE flag is set
     // ---------------------------------------------------------------------
 
-    if (TestFactoryFlag(REGENERATE)) {
+    if (mRegenerate) {
         if (mStatus == Status::Inserted) {
             // Status::Inserted indicates that the data came from either src->GetObjects() or evt->Insert()
             ClearData(); 

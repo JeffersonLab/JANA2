@@ -9,38 +9,27 @@
 #include <TObject.h>
 #endif
 
-class JLightweightDatabundle : public JDatabundle {
-    bool m_is_persistent = false;
-    bool m_not_object_owner = false;
-    bool m_write_to_output = true;
-
-public:
-    JLightweightDatabundle() = default;
-    ~JLightweightDatabundle() override = default;
-    void SetPersistentFlag(bool persistent) { m_is_persistent = persistent; }
-    void SetNotOwnerFlag(bool not_owner) { m_not_object_owner = not_owner; }
-    void SetWriteToOutputFlag(bool write_to_output) { m_write_to_output = write_to_output; }
-
-    bool GetPersistentFlag() { return m_is_persistent; }
-    bool GetNotOwnerFlag() { return m_not_object_owner; }
-    bool GetWriteToOutputFlag() { return m_write_to_output; }
-};
-
-
-
 template <typename T>
-class JLightweightDatabundleT : public JLightweightDatabundle {
+class JLightweightDatabundleT : public JDatabundle {
 private:
     std::vector<T*>* m_data = nullptr;
     bool m_is_owned = false;
+    bool m_is_persistent = false;
+    bool m_not_object_owner = false;
 
 public:
     JLightweightDatabundleT();
     void AttachData(std::vector<T*>* data) { m_data = data; }
     void ClearData() override;
-    size_t GetSize() const override { return m_data->size();}
 
+    size_t GetSize() const override { return m_data->size();}
     std::vector<T*>& GetData() { return *m_data; }
+
+    void SetPersistentFlag(bool persistent) { m_is_persistent = persistent; }
+    void SetNotOwnerFlag(bool not_owner) { m_not_object_owner = not_owner; }
+
+    bool GetPersistentFlag() { return m_is_persistent; }
+    bool GetNotOwnerFlag() { return m_not_object_owner; }
 
     /// EnableGetAs generates a vtable entry so that users may extract the
     /// contents of this JFactoryT from the type-erased JFactory. The user has to manually specify which upcasts

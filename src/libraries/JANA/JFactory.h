@@ -68,56 +68,9 @@ public:
 
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
 
-    // Note: JFactory_Flags_t is going to be deprecated. Use Set...Flag()s instead
-    /// Get all flags in the form of a single word
-    inline uint32_t GetFactoryFlags() const { return mFlags; }
-
-    /// Set a flag (or flags)
-    inline void SetFactoryFlag(JFactory_Flags_t f) {
-        mFlags |= (uint32_t) f;
-    }
-
-    /// Clear a flag (or flags)
-    inline void ClearFactoryFlag(JFactory_Flags_t f) {
-        mFlags &= ~(uint32_t) f;
-    }
-
-    /// Test if a flag (or set of flags) is set
-    inline bool TestFactoryFlag(JFactory_Flags_t f) const {
-        return (mFlags & (uint32_t) f) == (uint32_t) f;
-    }
-
-    inline void SetPersistentFlag(bool persistent) { 
-        if (persistent) { 
-            SetFactoryFlag(PERSISTENT); }
-        else { 
-            ClearFactoryFlag(PERSISTENT); }
-    }
-
-    inline void SetNotOwnerFlag(bool not_owner) { 
-        if (not_owner) {
-            SetFactoryFlag(NOT_OBJECT_OWNER); }
-        else { 
-            ClearFactoryFlag(NOT_OBJECT_OWNER); }
-    }
-
-    inline void SetRegenerateFlag(bool regenerate) { 
-        if (regenerate) {
-            SetFactoryFlag(REGENERATE); }
-        else { 
-            ClearFactoryFlag(REGENERATE); }
-    }
-
-    inline void SetWriteToOutputFlag(bool write_to_output) { 
-        if (write_to_output) {
-            SetFactoryFlag(WRITE_TO_OUTPUT); }
-        else {
-            ClearFactoryFlag(WRITE_TO_OUTPUT); }
-    }
-
-    inline bool GetWriteToOutputFlag() { 
-        return TestFactoryFlag(WRITE_TO_OUTPUT);
-    }
+    void SetRegenerateFlag(bool regenerate) { mRegenerate = regenerate; }
+    void SetWriteToOutputFlag(bool write_to_output) { mWriteToOutput = write_to_output; }
+    bool GetWriteToOutputFlag() { return mWriteToOutput; }
 
     /// Get data source value depending on how objects came to be here. (Used mainly by JEvent::Get() )
     inline JCallGraphRecorder::JDataSource GetDataSource() const {
@@ -183,7 +136,8 @@ protected:
 
     std::string mObjectName;
     std::string mTag;
-    uint32_t mFlags = WRITE_TO_OUTPUT;
+    bool mRegenerate = false;
+    bool mWriteToOutput = true;
     int32_t mPreviousRunNumber = -1;
     bool mInsideCreate = false; // Use this to detect cycles in factory dependencies
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
