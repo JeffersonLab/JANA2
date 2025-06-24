@@ -57,7 +57,7 @@ void JFactorySet::Add(JDatabundle* databundle) {
     if (databundle->GetUniqueName().empty()) {
         throw JException("Attempted to add a databundle with no unique_name");
     }
-    LOG << "Added databundle " << databundle->GetUniqueName();
+    LOG << "Added databundle with unique_name=" << databundle->GetUniqueName();
     auto named_result = mDatabundlesFromUniqueName.find(databundle->GetUniqueName());
     if (named_result != std::end(mDatabundlesFromUniqueName)) {
         // Collection is duplicate. Since this almost certainly indicates a user error, and
@@ -92,6 +92,8 @@ bool JFactorySet::Add(JFactory* aFactory)
     /// throw an exception and let the user figure out what to do.
     /// This scenario occurs when the user has multiple JFactory<T> producing the
     /// same T JObject, and is not distinguishing between them via tags.
+    
+    LOG << "Adding JFactory with tag=" << aFactory->GetTag() << " and object name " << aFactory->GetObjectName();
 
     auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
     auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
@@ -121,8 +123,8 @@ bool JFactorySet::Add(JFactory* aFactory)
     mFactories[typed_key] = aFactory;
     mFactoriesFromString[untyped_key] = aFactory;
 
-    for (const auto* output : aFactory->GetDatabundleOutputs()) {
-        for (const auto& bundle : output->databundles) {
+    for (auto* output : aFactory->GetDatabundleOutputs()) {
+        for (const auto& bundle : output->GetDatabundles()) {
             bundle->SetFactory(aFactory);
             Add(bundle);
         }

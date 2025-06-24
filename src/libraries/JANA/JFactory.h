@@ -38,18 +38,19 @@ public:
         REGENERATE = 0x08        // Replaces JANA1 JFactory_base::use_factory and JFactory::GetCheckSourceFirst()
     };
 
-    JFactory(std::string aName, std::string aTag = "")
-    : mObjectName(std::move(aName)), 
-      mTag(std::move(aTag)), 
-      mStatus(Status::Uninitialized) {
-          SetPrefix(aTag.empty() ? mObjectName : mObjectName + ":" + mTag);
-    };
-
+    JFactory() = default;
     virtual ~JFactory() = default;
 
+    std::string GetTag() const { 
+        auto& db = GetDatabundleOutputs().at(0)->GetDatabundles().at(0);
+        if (db->HasShortName()) {
+            return db->GetShortName();
+        }
+        return db->GetUniqueName();
+    }
 
-    std::string GetTag() const { return mTag; }
-    std::string GetObjectName() const { return mObjectName; }
+    std::string GetObjectName() const { return GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->GetTypeName(); }
+
     std::string GetFactoryName() const { return m_type_name; }
     Status GetStatus() const { return mStatus; }
     CreationStatus GetCreationStatus() const { return mCreationStatus; }
@@ -57,11 +58,7 @@ public:
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
-
-    void SetTag(std::string tag) { mTag = std::move(tag); }
-    void SetObjectName(std::string objectName) { mObjectName = std::move(objectName); }
     void SetFactoryName(std::string factoryName) { SetTypeName(factoryName); }
-
     void SetStatus(Status status){ mStatus = status; }
     void SetCreationStatus(CreationStatus status){ mCreationStatus = status; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
@@ -134,8 +131,6 @@ public:
 
 protected:
 
-    std::string mObjectName;
-    std::string mTag;
     bool mRegenerate = false;
     bool mWriteToOutput = true;
     int32_t mPreviousRunNumber = -1;

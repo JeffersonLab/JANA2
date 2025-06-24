@@ -26,7 +26,8 @@ private:
     // Fields
     Status m_status = Status::Empty;
     std::string m_unique_name;
-    //std::optional<std::string> m_short_name;
+    std::string m_short_name;
+    bool m_has_short_name = true;
     std::string m_type_name;
     JFactory* m_factory = nullptr;
     //std::optional<std::type_index> m_inner_type_index;
@@ -46,7 +47,8 @@ public:
     // Getters
     Status GetStatus() const { return m_status; }
     std::string GetUniqueName() const { return m_unique_name; }
-    //std::optional<std::string> GetShortName() const { return m_short_name; }
+    std::string GetShortName() const { return m_short_name; }
+    bool HasShortName() const { return m_has_short_name; }
     std::string GetTypeName() const { return m_type_name; }
     //std::optional<std::type_index> GetTypeIndex() const { return m_inner_type_index; }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
@@ -54,8 +56,17 @@ public:
 
     // Setters
     void SetStatus(Status s) { m_status = s;}
-    void SetUniqueName(std::string unique_name) { m_unique_name = unique_name; }
-    //void SetShortName(std::string short_name) { m_short_name = short_name; }
+    void SetUniqueName(std::string unique_name) { m_unique_name = unique_name; m_has_short_name = false; }
+    void SetShortName(std::string short_name) {
+        m_short_name = short_name;
+        if (m_short_name.empty()) {
+            m_unique_name = m_type_name;
+        }
+        else {
+            m_unique_name = m_type_name + ":" + short_name;
+        }
+        m_has_short_name = true;
+    }
     void SetTypeName(std::string type_name) { m_type_name = type_name; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
     void SetFactory(JFactory* fac) { m_factory = fac; }

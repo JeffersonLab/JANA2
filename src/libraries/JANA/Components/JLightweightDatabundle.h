@@ -58,10 +58,6 @@ JLightweightDatabundleT<T>::JLightweightDatabundleT() {
 template <typename T>
 void JLightweightDatabundleT<T>::ClearData() {
 
-    // ClearData won't do anything if Init() hasn't been called
-    if (GetStatus() == Status::Empty) {
-        return;
-    }
     // ClearData() does nothing if persistent flag is set.
     // User must manually recycle data, e.g. during ChangeRun()
     if (GetPersistentFlag()) {
