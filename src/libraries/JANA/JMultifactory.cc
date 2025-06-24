@@ -12,7 +12,7 @@ void JMultifactory::Execute(const std::shared_ptr<const JEvent>& event) {
     std::lock_guard<std::mutex> lock(m_mutex);
 #if JANA2_HAVE_PODIO
     if (mNeedPodio) {
-        mPodioFrame = GetOrCreateFrame(event);
+        mPodioFrame = GetOrCreateFrame(*event);
     }
 #endif
 
@@ -69,13 +69,13 @@ void JMultifactory::DoInit() {
     if (m_status != Status::Uninitialized) {
         throw JException("Attempted to initialzie a JMultifactory that has already been initialized!");
     }
-    CallWithJExceptionWrapper("JMultifactory::Init", [&](){ Init(); });
     for (auto* parameter : m_parameters) {
-        parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+        parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
     }
     for (auto* service : m_services) {
         service->Fetch(m_app);
     }
+    CallWithJExceptionWrapper("JMultifactory::Init", [&](){ Init(); });
     m_status = Status::Initialized;
 }
 

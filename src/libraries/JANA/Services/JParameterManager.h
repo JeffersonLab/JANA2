@@ -123,18 +123,25 @@ public:
     template<typename T, size_t arrSize>
     static inline void Parse(const std::string& value, std::array<T,arrSize>& out); 
 
+    template<size_t arrSize>
+    static inline void Parse(const std::string& value, std::array<std::string,arrSize>& out);
+
+
     /*
     Template specialization done for double and float numbers in order to match the 
     precision of the number with the string
     */
     template<typename T>
     static std::string Stringify(const T& value);
-    
+
     template<typename T>
     static std::string Stringify(const std::vector<T>& values);
 
     template<typename T,size_t N>
     static std::string Stringify(const std::array<T,N>& values);
+ 
+    template<size_t N>
+    static std::string Stringify(const std::array<std::string,N>& values);
 
     template<typename T>
     static bool Equals(const T& lhs, const T& rhs);
@@ -374,7 +381,33 @@ inline void JParameterManager::Parse(const std::string& value,std::array<T,N> &v
         T t;
         Parse(s, t);
         val[indx++]= t;
-    }    
+    }
+}
+
+// @brief Template to parse a string and return in an array of strings
+template<size_t N>
+inline void JParameterManager::Parse(const std::string& value,std::array<std::string,N> &val) {
+    std::string s;
+    std::stringstream ss(value);
+    std::string temp;   // creating a temp var allows us to store the string s where the escape character was used
+    int indx = 0;
+    while (getline(ss, s, ',')) {
+        std::string t;
+        if (s.back() == '\\') {
+            s.pop_back();
+            temp += s + ',';
+            continue;
+        }
+        if (!temp.empty()) {
+            Parse(temp + s, t);
+            val[indx++]= t;
+            temp.clear();
+        }
+        else {
+            Parse(s, t);
+            val[indx++]= t;
+        }
+    }
 }
 
 /// @brief Specialization for std::vector<std::string>
@@ -387,6 +420,32 @@ inline void JParameterManager::Parse(const std::string& value, std::vector<T> &v
         T t;
         Parse(s, t);
         val.push_back(t);
+    }
+}
+
+/// @brief Specialization for std::vector<std::string> with escape commas
+template<>
+inline void JParameterManager::Parse(const std::string& value, std::vector<std::string> &val) {
+    std::stringstream ss(value);
+    std::string s;
+    val.clear(); // clearing the input vector to ensure no dulication which can be caused due to val.push_back(t);
+    std::string temp;   // creating a temp var allows us to store the string s where the escape character was used
+    while (getline(ss, s, ',')) {
+        std::string t;
+        if (s.back() == '\\') {
+            s.pop_back();
+            temp += s + ',';
+            continue;
+        }
+        if (!temp.empty()) {
+            Parse(temp + s, t);
+            val.push_back(t);
+            temp.clear();
+        }
+        else {
+            Parse(s, t);
+            val.push_back(t);
+        }
     }
 }
 
@@ -491,6 +550,37 @@ inline std::string JParameterManager::Stringify(const std::vector<T> &values) {
 }
 
 
+template <>
+inline std::string JParameterManager::Stringify(const std::vector<std::string> &values) {
+    size_t len = values.size();
+    std::stringstream ssv;
+    for (size_t i = 0; i < len; ++i) {
+        if (values[i].find(',') != std::string::npos) {
+            std::stringstream ss(values[i]);
+            std::string s;
+            std::string s_end = values[i].substr(values[i].rfind(',')+1);
+            while (getline(ss, s, ',')) {
+                if (s == s_end) {
+                    ssv << s;
+                    if (i != len-1) {
+                        ssv << ',';
+                    }
+                    break;
+                }
+                ssv << s << "\\,";
+                continue;
+            }
+        } else {
+            ssv << values[i];
+            if (i != len-1) {
+                ssv << ',';
+            }
+        }
+    }
+    return ssv.str();
+}
+
+
 // @brief Template for generically stringifying an array
 template <typename T, size_t N>
 inline std::string JParameterManager::Stringify(const std::array<T,N> &values) {
@@ -504,6 +594,37 @@ inline std::string JParameterManager::Stringify(const std::array<T,N> &values) {
         ss << values[len-1];
     }
     return ss.str();
+}
+
+
+template <size_t N>
+inline std::string JParameterManager::Stringify(const std::array<std::string,N> &values) {
+    size_t len = values.size();
+    std::stringstream ssv;
+    for (size_t i = 0; i < len; ++i) {
+        if (values[i].find(',') != std::string::npos) {
+            std::stringstream ss(values[i]);
+            std::string s;
+            std::string s_end = values[i].substr(values[i].rfind(',')+1);
+            while (getline(ss, s, ',')) {
+                if (s == s_end) {
+                    ssv << s;
+                    if (i != len-1) {
+                        ssv << ',';
+                    }
+                    break;
+                }
+                ssv << s << "\\,";
+                continue;
+            }
+        } else {
+            ssv << values[i];
+            if (i != len-1) {
+                ssv << ',';
+            }
+        }
+    }
+    return ssv.str();
 }
 
 // @brief Equals() is called internally by SetDefaultParameter. This allows the user to define equivalence relations on custom data types so that

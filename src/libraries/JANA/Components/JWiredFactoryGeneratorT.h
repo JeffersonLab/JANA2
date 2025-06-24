@@ -22,6 +22,8 @@ public:
     void GenerateFactories(JFactorySet *factory_set) override {
 
         auto wiring_svc = GetApplication()->template GetService<jana::services::JWiringService>();
+        const auto& shared_params = wiring_svc->GetSharedParameters();
+
         const auto& type_name = JTypeInfo::demangle<FactoryT>();
         for (const auto* wiring : wiring_svc->GetWirings(GetPluginName(), type_name)) {
 
@@ -32,7 +34,9 @@ public:
 
             // Set the parameter values on the factory. This way, the values in the wiring file
             // show up as "defaults" and the values set on the command line show up as "overrides".
-            factory->ConfigureAllParameters(wiring->configs);
+            for (auto parameter : factory->GetAllParameters()) {
+                parameter->Wire(wiring->configs, shared_params);
+            }
 
             // Check that output levels in wiring file match the factory's level
             for (auto output_level : wiring->output_levels) {
@@ -45,6 +49,8 @@ public:
                              wiring->level,
                              wiring->input_names,
                              wiring->input_levels,
+                             wiring->variadic_input_names,
+                             wiring->variadic_input_levels,
                              wiring->output_names);
 
             factory_set->Add(factory);

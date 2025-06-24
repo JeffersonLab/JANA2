@@ -36,7 +36,7 @@ struct TestProc : public JEventProcessor {
         auto src_x = event.Get<TestData>("src").at(0)->x;
         event.Insert<TestData>(new TestData {.x=src_x + 1}, "map");
     }
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
         bench.consume_cpu_ms(200);
         auto map_x = event.Get<TestData>("map").at(0)->x;
         REQUIRE(map_x == (int)event.GetEventNumber()*2 + 1);
@@ -95,6 +95,8 @@ TEST_CASE("JExecutionEngine_StateMachine") {
 TEST_CASE("JExecutionEngine_ExternalWorkers") {
     JApplication app;
     app.SetParameterValue("jana:nevents", 1);
+    app.SetParameterValue("jana:max_inflight_events", 2);
+
     app.Add(new TestSource());
     app.Add(new TestProc());
     app.Initialize();
@@ -236,6 +238,7 @@ TEST_CASE("JExecutionEngine_RunSingleEvent") {
 TEST_CASE("JExecutionEngine_ExternalPause") {
     JApplication app;
     app.SetParameterValue("jana:loglevel", "info");
+    app.SetParameterValue("jana:max_inflight_events", 4);
     app.Add(new TestSource());
     app.Add(new TestProc());
     app.Initialize();

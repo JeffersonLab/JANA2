@@ -2,16 +2,16 @@
 macro(add_jana_plugin plugin_name)
 
     # Parse remaining arguments
-    set(options LINK_SHARED)
+    set(options LINK_STATIC)
     set(oneValueArgs EXPORT)
     set(multiValueArgs SOURCES PUBLIC_HEADER TESTS)
 
     cmake_parse_arguments(PLUGIN "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (LINK_SHARED)
-        set(PLUGIN_JANA_LIB jana2_shared_lib)
-    else()
+    if (LINK_STATIC)
         set(PLUGIN_JANA_LIB jana2_static_lib)
+    else()
+        set(PLUGIN_JANA_LIB jana2_shared_lib)
     endif()
 
     if (NOT PLUGIN_SOURCES AND NOT PLUGIN_PUBLIC_HEADER AND NOT PLUGIN_TESTS)
@@ -93,16 +93,16 @@ macro(add_jana_plugin plugin_name)
 
     # Handle tests
     if (PLUGIN_TESTS)
-        add_executable(${plugin_name}_tests ${PLUGIN_TESTS})
-        target_link_libraries(${plugin_name}_tests PRIVATE ${plugin_name} "${JANA_NAMESPACE}VendoredCatch2")
-        set_target_properties(${plugin_name}_tests PROPERTIES
+        add_executable(${plugin_name}-tests ${PLUGIN_TESTS})
+        target_link_libraries(${plugin_name}-tests PRIVATE ${plugin_name} "${JANA_NAMESPACE}VendoredCatch2")
+        set_target_properties(${plugin_name}-tests PROPERTIES
             SKIP_BUILD_RPATH FALSE
             BUILD_WITH_INSTALL_RPATH TRUE
             INSTALL_RPATH_USE_LINK_PATH TRUE
             INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
         )
-        #install(TARGETS ${plugin_name}_tests RUNTIME DESTINATION bin)
-        add_test(NAME ${plugin_name}_tests COMMAND ${plugin_name}_tests)
+        #install(TARGETS ${plugin_name}-tests RUNTIME DESTINATION bin)
+        add_test(NAME ${plugin_name}-tests COMMAND ${plugin_name}-tests)
     endif()
 endmacro()
 

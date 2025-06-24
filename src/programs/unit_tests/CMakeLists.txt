@@ -15,13 +15,14 @@ set(TEST_SOURCES
     Components/JComponentTests.cc
     Components/JEventGetAllTests.cc
     Components/JEventProcessorTests.cc
-    Components/JEventProcessorSequentialTests.cc
     Components/JEventSourceTests.cc
     Components/JEventTests.cc
     Components/JFactoryDefTagsTests.cc
     Components/JFactoryTests.cc
     Components/JFactoryGeneratorTests.cc
+    Components/JHasInputsTests.cc
     Components/JMultiFactoryTests.cc
+    Components/JServiceTests.cc
     Components/UnfoldTests.cc
     Components/UserExceptionTests.cc
 
@@ -34,7 +35,7 @@ set(TEST_SOURCES
     Engine/TimeoutTests.cc
     Engine/JExecutionEngineTests.cc
 
-    Utils/JAutoactivableTests.cc
+    Utils/JAutoActivatorTests.cc
     Utils/JEventGroupTests.cc
     Utils/JTablePrinterTests.cc
     Utils/JStatusBitsTests.cc

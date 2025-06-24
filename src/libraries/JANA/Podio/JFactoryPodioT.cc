@@ -5,18 +5,18 @@
 #include "JFactoryPodioT.h"
 #include <JANA/JEvent.h>
 
-podio::Frame* GetOrCreateFrame(const std::shared_ptr<const JEvent>& event) {
+podio::Frame* GetOrCreateFrame(const JEvent& event) {
     podio::Frame* result = nullptr;
     try {
-        result = const_cast<podio::Frame*>(event->GetSingle<podio::Frame>(""));
+        result = const_cast<podio::Frame*>(event.GetSingle<podio::Frame>(""));
         if (result == nullptr) {
             result = new podio::Frame;
-            event->Insert(result);
+            event.Insert(result);
         }
     }
     catch (...) {
         result = new podio::Frame;
-        event->Insert(result);
+        event.Insert(result);
     }
     return result;
 }

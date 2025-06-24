@@ -31,6 +31,8 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/build
         cd $GITHUB_WORKSPACE/build
         cmake ../ -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Linux \
+          -DCMAKE_CXX_FLAGS="-Werror" \
+          -DCMAKE_CXX_STANDARD=20 \
           -DUSE_PYTHON=ON \
           -DUSE_ROOT=OFF \
           -DUSE_XERCES=ON -DXercesC_DIR=/usr \

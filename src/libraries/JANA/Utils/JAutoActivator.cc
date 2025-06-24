@@ -4,9 +4,12 @@
 
 
 #include "JAutoActivator.h"
+#include <JANA/JEventSource.h>
+#include <ios>
 
 JAutoActivator::JAutoActivator() {
     SetTypeName("JAutoActivator");
+    SetLoggerName("jana"); // We want this controlled by jana:loglevel
     SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
@@ -68,20 +71,45 @@ void JAutoActivator::Init() {
             throw JException("AutoActivator could not parse parameter 'autoactivate'");
         }
     }
+    m_output_processed_event_numbers = GetApplication()->RegisterParameter("jana:output_processed_event_numbers", false);
+    if (m_output_processed_event_numbers) {
+        m_processed_event_numbers_file.open("processed_event_numbers.csv", std::ios_base::out);
+        m_processed_event_numbers_file << "source,run_number,event_number" << std::endl;
+    }
 }
 
-void JAutoActivator::Process(const JEvent& event) {
+void JAutoActivator::ProcessParallel(const JEvent& event) {
     for (const auto &pair: m_auto_activated_factories) {
         auto name = pair.first;
         auto tag = pair.second;
         auto factory = event.GetFactory(name, tag);
         if (factory != nullptr) {
-            factory->Create(event.shared_from_this()); // This will do nothing if factory is already created
+            LOG_DEBUG(GetLogger()) << "Autoactivating factory with typename=" << name << ", tag=" << tag << LOG_END;
+            factory->Create(event); // This will do nothing if factory is already created
         }
         else {
             LOG_ERROR(GetLogger()) << "Could not find factory with typename=" << name << ", tag=" << tag << LOG_END;
             throw JException("AutoActivator could not find factory with typename=%s, tag=%s", name.c_str(), tag.c_str());
         }
+    }
+}
+
+void JAutoActivator::ProcessSequential(const JEvent& event) {
+    if (m_output_processed_event_numbers) {
+        std::string name = event.GetJEventSource()->GetResourceName();
+        if (name.empty()) {
+            name = event.GetJEventSource()->GetTypeName();
+        }
+        m_processed_event_numbers_file << name << "," 
+                                       << event.GetRunNumber() << "," 
+                                       << event.GetEventNumber() << std::endl;
+        m_processed_event_numbers_file.flush();
+    }
+}
+
+void JAutoActivator::Finish() {
+    if (m_output_processed_event_numbers) {
+        m_processed_event_numbers_file.close();
     }
 }
 

@@ -16,18 +16,15 @@ a `cmake-build-debug` directory which works just fine.
 Finally, you can cd into your build directory and build and install everything the usual CMake way.
 
 ```bash
-export JANA_VERSION=v2.0.5                    # Convenient to set this once for specific release
-export JANA_HOME=${PWD}/JANA${JANA_VERSION}   # Set full path to install dir
+git clone https://github.com/JeffersonLab/JANA2
 
-git clone https://github.com/JeffersonLab/JANA2 --branch ${JANA_VERSION} ${JANA_HOME}  # Get JANA2
+cd JANA2
+mkdir build                                         # Create build dir
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=`pwd`    # Generate make scripts
+cmake --build build --target install -j 8           # Build and install (using 8 threads)
 
-mkdir build                                   # Set build dir
-cd build
-cmake3 ${JANA_HOME}  # Generate makefiles     # Generate makefiles
-make -j8 install                              # Build (using 8 threads) and install
-
-source ${JANA_HOME}/bin/jana-this.sh          # Set PATH (and other envars)
-jana -Pplugins=JTest                          # Run JTest plugin to verify successful install
+source ${JANA_HOME}/bin/jana-this.sh                # Set PATH (and other envars)
+jana -Pplugins=JTest                                # Run JTest plugin to verify successful install
 ```
 
 Note: If you want to use a compiler other than the default one on your system, it is not enough to modify your

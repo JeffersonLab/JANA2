@@ -34,7 +34,7 @@ jobs:
         run: |
           mkdir halld_recon
           cd halld_recon
-          git clone --branch rasool_jana2 https://github.com/JeffersonLab/halld_recon.git .
+          git clone -b master https://github.com/JeffersonLab/halld_recon.git .
         
       - name: Build Halld_recon on Alma9
         run: |

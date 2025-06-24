@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0074 NEW) # find_package() uses <PackageName>_ROOT implicit hints
 
-project(jana2 VERSION 2.3.3)
+project(jana2 VERSION 2.4.2)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
@@ -29,12 +29,10 @@ else()
 endif()
 
 
-# Add library directories to rpath so users don't need to use LD_LIBRARY_PATH.
-# (see https://dev.my-gate.net/2021/08/04/understanding-rpath-with-cmake )
-# TODO: detector MacOS and set MACOSX_RPATH to TRUE
+# Add library directories to RPATH for all targets
 set( CMAKE_SKIP_BUILD_RPATH FALSE )
 set( CMAKE_BUILD_WITH_INSTALL_RPATH FALSE )
-set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib/JANA/plugins" )
+set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/JANA/plugins" )
 set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 # Generate a compilation database, e.g. for IDE autocompletion

@@ -69,7 +69,7 @@ struct CountingProcessor : public JEventProcessor {
 
     void Init() override {}
 
-    void Process(const JEvent&) override {
+    void ProcessSequential(const JEvent&) override {
         processed_count += 1;
         // jout << "Processing " << event->GetEventNumber() << jendl;
         REQUIRE(finish_call_count == 0);

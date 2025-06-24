@@ -16,6 +16,7 @@ class JBenchmarker {
     unsigned m_nsamples = 15;
     std::string m_output_dir = "JANA_Test_Results";
     bool m_copy_script = true;
+    bool m_use_log_scale = false;
 
 public:
     explicit JBenchmarker(JApplication* app);

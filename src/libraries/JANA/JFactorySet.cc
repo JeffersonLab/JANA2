@@ -38,10 +38,49 @@ JFactorySet::~JFactorySet()
     /// The only time mIsFactoryOwner should/can be set false is when a JMultifactory is using a JFactorySet internally
     /// to manage its JMultifactoryHelpers.
     if (mIsFactoryOwner) {
+
+        for (auto& pair : mDatabundlesFromUniqueName) {
+            // Only delete _inserted_ databundles. Otherwise they are deleted by their respective factories
+            if (pair.second->GetFactory() == nullptr) {
+                delete pair.second;
+            }
+        }
         for (auto& f : mFactories) delete f.second;
     }
     // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
     for (auto* mf : mMultifactories) { delete mf; }
+}
+
+//---------------------------------
+// Add
+//---------------------------------
+void JFactorySet::Add(JDatabundle* databundle) {
+
+    if (databundle->GetUniqueName().empty()) {
+        throw JException("Attempted to add a databundle with no unique_name");
+    }
+    auto named_result = mDatabundlesFromUniqueName.find(databundle->GetUniqueName());
+    if (named_result != std::end(mDatabundlesFromUniqueName)) {
+        // Collection is duplicate. Since this almost certainly indicates a user error, and
+        // the caller will not be able to do anything about it anyway, throw an exception.
+        // We show the user which factory is causing this problem, including both plugin names
+
+        auto ex = JException("Attempted to add duplicate databundles");
+        ex.function_name = "JFactorySet::Add";
+        ex.instance_name = databundle->GetUniqueName();
+
+        auto fac = databundle->GetFactory();
+        if (fac != nullptr) {
+            ex.type_name = fac->GetTypeName();
+            ex.plugin_name = fac->GetPluginName();
+            if (named_result->second->GetFactory() != nullptr) {
+                ex.plugin_name += ", " + named_result->second->GetFactory()->GetPluginName();
+            }
+        }
+        throw ex;
+    }
+    // Note that this is agnostic to event level. We may decide to change this.
+    mDatabundlesFromUniqueName[databundle->GetUniqueName()] = databundle;
 }
 
 //---------------------------------
@@ -82,6 +121,13 @@ bool JFactorySet::Add(JFactory* aFactory)
 
     mFactories[typed_key] = aFactory;
     mFactoriesFromString[untyped_key] = aFactory;
+
+    for (const auto* output : aFactory->GetDatabundleOutputs()) {
+        for (const auto& bundle : output->GetDatabundles()) {
+            bundle->SetFactory(aFactory);
+            Add(bundle.get());
+        }
+    }
     return true;
 }
 
@@ -102,6 +148,22 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
     /// the enclosing JFactorySet.
     return true;
 }
+
+//---------------------------------
+// GetDataBundle
+//---------------------------------
+JDatabundle* JFactorySet::GetDatabundle(const std::string& unique_name) const {
+    auto it = mDatabundlesFromUniqueName.find(unique_name);
+    if (it != std::end(mDatabundlesFromUniqueName)) {
+        auto fac = it->second->GetFactory();
+        if (fac != nullptr && fac->GetLevel() != mLevel) {
+            throw JException("Data bundle belongs to a different level on the event hierarchy!");
+        }
+        return it->second;
+    }
+    return nullptr;
+}
+
 
 //---------------------------------
 // GetFactory
@@ -142,6 +204,17 @@ std::vector<JMultifactory*> JFactorySet::GetAllMultifactories() const {
 }
 
 //---------------------------------
+// GetAllDatabundleUniqueNames
+//---------------------------------
+std::vector<std::string> JFactorySet::GetAllDatabundleUniqueNames() const {
+    std::vector<std::string> results;
+    for (const auto& it : mDatabundlesFromUniqueName) {
+        results.push_back(it.first);
+    }
+    return results;
+}
+
+//---------------------------------
 // Print
 //---------------------------------
 void JFactorySet::Print() const
@@ -174,6 +247,13 @@ void JFactorySet::Clear() {
         auto sFactory = sFactoryPair.second;
         sFactory->ClearData();
         // This automatically clears multifactories because their data is stored in helper factories!
+    }
+    for (auto& it : mDatabundlesFromUniqueName) {
+        // fac->ClearData() only clears JFactoryT's, because that's how it always worked.
+        // Clearing is fundamentally an operation on the data bundle, not on the factory itself.
+        // Furthermore, "clearing" the factory is misleading because factories can cache arbitrary
+        // state inside member variables, and there's no way to clear that.
+        it.second->ClearData();
     }
 }
 

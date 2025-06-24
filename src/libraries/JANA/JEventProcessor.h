@@ -21,7 +21,7 @@ public:
     JEventProcessor() = default;
     virtual ~JEventProcessor() = default;
 
-    // TODO: Deprecate
+    [[deprecated]]
     explicit JEventProcessor(JApplication* app) {
         m_app = app;
     }
@@ -35,7 +35,7 @@ public:
     virtual void DoInitialize() {
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto* parameter : m_parameters) {
-            parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+            parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
         }
         for (auto* service : m_services) {
             service->Fetch(m_app);
@@ -52,6 +52,9 @@ public:
         }
         for (auto* input : m_inputs) {
             input->PrefetchCollection(event);
+        }
+        for (auto* variadic_input : m_variadic_inputs) {
+            variadic_input->PrefetchCollection(event);
         }
         if (m_callback_style == CallbackStyle::ExpertMode) {
             ProcessParallel(event);
@@ -84,6 +87,9 @@ public:
             // a begin-of-run event.
             input->GetCollection(event);
         }
+        for (auto* variadic_input : m_variadic_inputs) {
+            variadic_input->GetCollection(event);
+        }
         auto run_number = event.GetRunNumber();
         if (m_last_run_number != run_number) {
             for (auto* resource : m_resources) {
@@ -93,12 +99,12 @@ public:
             CallWithJExceptionWrapper("JEventProcessor::ChangeRun", [&](){ ChangeRun(event); });
         }
         if (m_callback_style == CallbackStyle::DeclarativeMode) {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ 
-                Process(event.GetRunNumber(), event.GetEventNumber(), event.GetEventIndex());
+            CallWithJExceptionWrapper("JEventProcessor::ProcessSequential", [&](){ 
+                ProcessSequential(event.GetRunNumber(), event.GetEventNumber(), event.GetEventIndex());
             });
         }
         else if (m_callback_style == CallbackStyle::ExpertMode) {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(event); });
+            CallWithJExceptionWrapper("JEventProcessor::ProcessSequential", [&](){ ProcessSequential(event); });
         }
         m_event_count += 1;
     }
@@ -161,9 +167,12 @@ public:
             "Processor", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
-            size_t subinput_count = input->names.size();
+            result->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->GetTypeName(), input->GetLevel()));
+        }
+        for (const auto* input : m_variadic_inputs) {
+            size_t subinput_count = input->GetRequestedDatabundleNames().size();
             for (size_t i=0; i<subinput_count; ++i) {
-                result->AddInput(new JComponentSummary::Collection("", input->names[i], input->type_name, input->levels[i]));
+                result->AddInput(new JComponentSummary::Collection("", input->GetRequestedDatabundleNames()[i], input->GetTypeName(), input->GetLevel()));
             }
         }
         summary.Add(result);
@@ -183,7 +192,7 @@ public:
     virtual void ProcessParallel(const JEvent& /*event*/) {
     }
 
-    virtual void Process(const JEvent& /*event*/) {
+    virtual void ProcessSequential(const JEvent& /*event*/) {
     }
 
     // DeclarativeMode-specific callbacks
@@ -191,17 +200,12 @@ public:
     virtual void ProcessParallel(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
     }
 
-    virtual void Process(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
+    virtual void ProcessSequential(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
     }
 
 
     virtual void Finish() {}
 
-
-    [[deprecated]]
-    virtual std::string GetType() const {
-        return m_type_name;
-    }
 
 protected:
 

@@ -126,14 +126,14 @@ void JApplication::Initialize() {
         std::ostringstream oss;
         oss << "Initializing..." << std::endl << std::endl;
         JVersion::PrintVersionDescription(oss);
-        LOG_WARN(m_logger) << oss.str() << LOG_END;
+        LOG_INFO(m_logger) << oss.str() << LOG_END;
     }
     else {
         std::ostringstream oss;
         oss << "Initializing..." << std::endl;
         JVersion::PrintSplash(oss);
         JVersion::PrintVersionDescription(oss);
-        LOG_WARN(m_logger) << oss.str() << LOG_END;
+        LOG_INFO(m_logger) << oss.str() << LOG_END;
     }
 
     // Attach all plugins

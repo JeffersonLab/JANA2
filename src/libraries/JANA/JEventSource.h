@@ -31,7 +31,8 @@ public:
 private:
     std::string m_resource_name;
     std::atomic_ullong m_events_emitted {0};
-    std::atomic_ullong m_events_finished {0};
+    std::atomic_ullong m_events_skipped {0};
+    std::atomic_ullong m_events_processed {0};
     uint64_t m_nskip = 0;
     uint64_t m_nevents = 0;
     bool m_enable_finish_event = false;
@@ -127,21 +128,20 @@ public:
         return false;
     }
 
+    /// `Skip` allows the user to move forward in the file without having to read and discard entire events. It takes
+    /// as inputs an event object and the number of events to skip, and returns a pair containing a JEventSource::Result
+    /// and the number of events that still need to be skipped. The event object can be completely ignored. If it is
+    /// populated, however, it should be cleared before Skip() returns.
+    virtual std::pair<JEventSource::Result, size_t> Skip(JEvent& event, size_t events_to_skip);
+
 
     // Getters
     
     std::string GetResourceName() const { return m_resource_name; }
 
-    [[deprecated]]
-    uint64_t GetEventCount() const { return m_events_emitted; };
     uint64_t GetEmittedEventCount() const { return m_events_emitted; };
-    uint64_t GetFinishedEventCount() const { return m_events_finished; };
-
-    [[deprecated]]
-    virtual std::string GetType() const { return m_type_name; }
-
-    [[deprecated]]
-    std::string GetName() const { return m_resource_name; }
+    uint64_t GetSkippedEventCount() const { return m_events_skipped; };
+    uint64_t GetProcessedEventCount() const { return m_events_processed; };
 
     bool IsGetObjectsEnabled() const { return m_enable_get_objects; }
     bool IsFinishEventEnabled() const { return m_enable_finish_event; }
@@ -174,9 +174,6 @@ public:
 
     // Internal
 
-    [[deprecated("Replaced by JEventSource::DoOpen()")]]
-    void DoInitialize();
-    
     virtual void DoInit();
 
     void DoOpen(bool with_lock=true);

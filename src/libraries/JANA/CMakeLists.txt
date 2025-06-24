@@ -50,9 +50,6 @@ set(JANA2_SOURCES
     CLI/JBenchmarker.cc
     CLI/JSignalHandler.cc
     CLI/JMain.cc
-
-    Compatibility/JStreamLog.cc
-    Compatibility/JStreamLogBuffer.cc
     )
 
 if (${USE_PODIO})
@@ -80,7 +77,7 @@ elseif (${USE_ROOT})
 endif()
 
 
-# static library, always there
+# Build static library
 add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2> $<TARGET_OBJECTS:VendoredMD5>)
 set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
@@ -95,27 +92,23 @@ elseif (${USE_ROOT})
 endif()
 install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
 
-# optionally build shared lib
-if (BUILD_SHARED_LIBS)
-    message(STATUS "Building both shared and static libraries")
-    add_library(jana2_shared_lib SHARED $<TARGET_OBJECTS:jana2> $<TARGET_OBJECTS:VendoredMD5>)
-    set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
-    target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
-    target_link_libraries(jana2_shared_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
-    target_link_libraries(jana2_shared_lib PUBLIC VendoredTomlPlusPlus)
+# Build shared library
+add_library(jana2_shared_lib SHARED $<TARGET_OBJECTS:jana2> $<TARGET_OBJECTS:VendoredMD5>)
+set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
-    if (${USE_PODIO})
-        target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
-    elseif (${USE_ROOT})
-        target_link_libraries(jana2_shared_lib PUBLIC ${ROOT_LIBRARIES})
-    endif()
+target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
+target_link_libraries(jana2_shared_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
+target_link_libraries(jana2_shared_lib PUBLIC VendoredTomlPlusPlus)
 
-    install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)
-    set(INSTALL_RPATH_USE_LINK_PATH True)
-else()
-    message(STATUS "Building static library only")
+if (${USE_PODIO})
+    target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+elseif (${USE_ROOT})
+    target_link_libraries(jana2_shared_lib PUBLIC ${ROOT_LIBRARIES})
 endif()
+
+install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)
+set(INSTALL_RPATH_USE_LINK_PATH True)
 
 
 # Install "public" header files
@@ -128,7 +121,6 @@ file(GLOB jana_utils_headers "Utils/*.h*")
 file(GLOB jana_calibs_headers "Calibrations/*.h*")
 file(GLOB jana_geometry_headers "Geometry/*.h*")
 file(GLOB jana_cli_headers "CLI/*.h*")
-file(GLOB jana_compat_headers "Compatibility/*.h*")
 file(GLOB jana_podio_headers "Podio/*.h*")
 file(GLOB jana_component_headers "Components/*.h*")
 file(GLOB jana_topology_headers "Topology/*.h*")
@@ -141,7 +133,6 @@ install(FILES ${jana_utils_headers} DESTINATION include/JANA/Utils)
 install(FILES ${jana_calibs_headers} DESTINATION include/JANA/Calibrations)
 install(FILES ${jana_geometry_headers} DESTINATION include/JANA/Geometry)
 install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
-install(FILES ${jana_compat_headers} DESTINATION include/JANA/Compatibility)
 install(FILES ${jana_component_headers} DESTINATION include/JANA/Components)
 install(FILES ${jana_topology_headers} DESTINATION include/JANA/Topology)
 

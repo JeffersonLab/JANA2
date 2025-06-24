@@ -8,12 +8,32 @@
 #include <JANA/Utils/JTypeInfo.h>
 
 
-void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
+class FlagGuard {
+    bool* m_flag;
+public:
+    FlagGuard(bool* flag) : m_flag(flag) {
+        *m_flag = true;
+    }
+    ~FlagGuard() {
+        *m_flag = false;
+    }
+};
 
-    if (m_app == nullptr && event->GetJApplication() != nullptr) {
+void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
+    Create(*event.get());
+}
+
+void JFactory::Create(const JEvent& event) {
+
+    if (mInsideCreate) {
+        throw JException("Encountered a cycle in the factory dependency graph! Hint: Maybe this data was supposed to be inserted in the JEventSource");
+    }
+    FlagGuard insideCreateFlagGuard (&mInsideCreate); // No matter how we exit from Create() (particularly with exceptions) mInsideCreate will be set back to false
+
+    if (m_app == nullptr && event.GetJApplication() != nullptr) {
         // These are usually set by JFactoryGeneratorT, but some user code has custom JFactoryGenerators which don't!
         // The design of JFactoryGenerator doesn't give us a better place to inject things
-        m_app = event->GetJApplication();
+        m_app = event.GetJApplication();
         m_logger = m_app->GetJParameterManager()->GetLogger(GetLoggerName());
     }
 
@@ -55,12 +75,12 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         // 3. JEventSource::GetObjects() if source has GetObjects() enabled
         // ---------------------------------------------------------------------
 
-        auto src = event->GetJEventSource();
+        auto src = event.GetJEventSource();
         if (src != nullptr && src->IsGetObjectsEnabled()) {
             bool found_data = false;
 
             CallWithJExceptionWrapper("JEventSource::GetObjects", [&](){ 
-                found_data = src->GetObjects(event, this); });
+                found_data = src->GetObjects(event.shared_from_this(), this); });
 
             if (found_data) {
                 mStatus = Status::Inserted;
@@ -78,16 +98,16 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
     // If the data was Processed (instead of Inserted), it will be in cache, and we can just exit.
     // Otherwise we call Process() to create the data in the first place.
     if (mStatus == Status::Unprocessed) {
-        auto run_number = event->GetRunNumber();
+        auto run_number = event.GetRunNumber();
         if (mPreviousRunNumber != run_number) {
             if (mPreviousRunNumber != -1) {
                 CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
             }
-            CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
-            CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event); });
+            CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.shared_from_this()); });
+            CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
             mPreviousRunNumber = run_number;
         }
-        CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event); });
+        CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
         mStatus = Status::Processed;
         mCreationStatus = CreationStatus::Created;
     }
@@ -98,7 +118,7 @@ void JFactory::DoInit() {
         return;
     }
     for (auto* parameter : m_parameters) {
-        parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+        parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
     }
     for (auto* service : m_services) {
         service->Fetch(m_app);

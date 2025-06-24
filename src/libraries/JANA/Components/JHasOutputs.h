@@ -40,16 +40,22 @@ protected:
             this->type_name = JTypeInfo::demangle<T>();
         }
 
+        void SetTag(std::string tag) {
+            this->collection_names.clear();
+            this->collection_names.push_back(tag);
+        }
+
         std::vector<T*>& operator()() { return m_data; }
+
+        void SetNotOwnerFlag(bool not_owner=true) { is_not_owner = not_owner; }
 
     protected:
         void InsertCollection(JEvent& event) override {
             auto fac = event.Insert(m_data, this->collection_names[0]);
-            fac->SetIsNotOwnerFlag(is_not_owner);
+            fac->SetNotOwnerFlag(is_not_owner);
         }
         void Reset() override { }
 
-        void SetIsNotOwnerFlag(bool not_owner=true) { is_not_owner = not_owner; }
     };
 
 
@@ -68,6 +74,11 @@ protected:
         }
 
         std::unique_ptr<typename PodioT::collection_type>& operator()() { return m_data; }
+
+        void SetCollectionName(std::string name) {
+            this->collection_names.clear();
+            this->collection_names.push_back(name);
+        }
 
     protected:
         void InsertCollection(JEvent& event) override {
@@ -95,6 +106,10 @@ protected:
 
         std::vector<std::unique_ptr<typename PodioT::collection_type>>& operator()() { return m_data; }
 
+        void SetCollectionNames(std::vector<std::string> names) {
+            this->collection_names = names;
+        }
+
     protected:
         void InsertCollection(JEvent& event) override {
             if (m_data.size() != this->collection_names.size()) {
@@ -103,7 +118,7 @@ protected:
             }
             size_t i = 0;
             for (auto& coll_name : this->collection_names) {
-                event.InsertCollection(std::move(*(m_data[i++])), coll_name);
+                event.InsertCollection<PodioT>(std::move(*(m_data[i++])), coll_name);
             }
         }
 

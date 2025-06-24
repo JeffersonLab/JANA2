@@ -58,7 +58,7 @@ public:
         }
         // TODO: Obtain overrides of collection names from param manager
         for (auto* parameter : m_parameters) {
-            parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+            parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
         }
         for (auto* service : m_services) {
             service->Fetch(m_app);
@@ -72,11 +72,13 @@ public:
             std::lock_guard<std::mutex> lock(m_mutex);
             if (m_status != Status::Initialized) {
                 throw JException("JEventFolder: Component needs to be initialized and not finalized before Fold can be called");
-                // TODO: Consider calling Initialize(with_lock=false) like we do elsewhere
             }
         }
         for (auto* input : m_inputs) {
             input->PrefetchCollection(child);
+        }
+        for (auto* variadic_input : m_variadic_inputs) {
+            variadic_input->PrefetchCollection(child);
         }
         if (m_callback_style != CallbackStyle::DeclarativeMode) {
             CallWithJExceptionWrapper("JEventFolder::Preprocess", [&](){
@@ -92,7 +94,7 @@ public:
         }
         if (!m_call_preprocess_upstream) {
             CallWithJExceptionWrapper("JEventFolder::Preprocess", [&](){
-                Preprocess(parent);
+                Preprocess(child);
             });
         }
         if (m_last_run_number != parent.GetRunNumber()) {
@@ -112,10 +114,10 @@ public:
             m_last_run_number = parent.GetRunNumber();
         }
         for (auto* input : m_inputs) {
-            input->GetCollection(parent);
-            // TODO: This requires that all inputs come from the parent.
-            //       However, eventually we will want to support inputs 
-            //       that come from the child.
+            input->GetCollection(child);
+        }
+        for (auto* variadic_input : m_variadic_inputs) {
+            variadic_input->GetCollection(child);
         }
         for (auto* output : m_outputs) {
             output->Reset();
@@ -145,9 +147,12 @@ public:
             "Folder", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
-            size_t subinput_count = input->names.size();
+            us->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->GetTypeName(), input->GetLevel()));
+        }
+        for (const auto* input : m_variadic_inputs) {
+            size_t subinput_count = input->GetRequestedDatabundleNames().size();
             for (size_t i=0; i<subinput_count; ++i) {
-                us->AddInput(new JComponentSummary::Collection("", input->names[i], input->type_name, input->levels[i]));
+                us->AddInput(new JComponentSummary::Collection("", input->GetRequestedDatabundleNames().at(i), input->GetTypeName(), input->GetLevel()));
             }
         }
         for (const auto* output : m_outputs) {

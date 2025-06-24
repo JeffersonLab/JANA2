@@ -137,7 +137,7 @@ class JEventProcessorPY {
             // nullptr so that it does not hold on the the JEvent after we return
             // from this method. We use this trick to ensure it happens even if an
             // exception is thrown from pymProcess().
-            std::shared_ptr<int> mEvent_free(nullptr, [=](int */*ptr*/){ mEvent = nullptr;});
+            std::shared_ptr<int> mEvent_free(nullptr, [=,this](int */*ptr*/){ mEvent = nullptr;});
             mEvent = aEvent; // remember this JEvent so it can be used in calls to Get()
 
             pymProcess();
@@ -250,7 +250,7 @@ class JEventProcessorPY {
 class JEventProcessorPYTrampoline: public JEventProcessor {
 
 public:
-    JEventProcessorPYTrampoline(JApplication *japp, JEventProcessorPY *jevent_proc):JEventProcessor(japp),jevent_proc_py(jevent_proc){
+    JEventProcessorPYTrampoline(JEventProcessorPY *jevent_proc):jevent_proc_py(jevent_proc){
         SetTypeName(jevent_proc->class_name);
         jevent_proc_py->SetJApplication(japp); // copy JApplication pointer to our JEventProcessorPY
     }

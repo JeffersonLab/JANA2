@@ -90,7 +90,11 @@
 
             //Get ccdb calibration object
             ccdb::Calibration *calib = mGenerator->MakeCalibration(url,run,varition,time);
+            bool cache_on;
+            GetApplication()->GetParameter("ccdb:cache", cache_on);
 
+            if(cache_on)
+                calib->EnableCache(true);
             //Create jana calibration object from ccdb
             return new JCalibrationCCDB(calib, url, run, context);
         }

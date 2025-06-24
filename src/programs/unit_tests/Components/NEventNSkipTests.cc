@@ -6,6 +6,10 @@
 
 #include <JANA/JEventSource.h>
 
+struct EventData : public JObject {
+    int event_nr=0;
+    EventData(int event_nr) : event_nr(event_nr){}
+};
 
 struct NEventNSkipBoundedSource : public JEventSource {
 
@@ -19,11 +23,14 @@ struct NEventNSkipBoundedSource : public JEventSource {
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
-    Result Emit(JEvent&) override {
+    Result Emit(JEvent& event) override {
+
+        REQUIRE(event.Get<EventData>("", false).size() == 0);
         if (event_count >= event_bound) {
             return Result::FailureFinished;
         }
         event_count += 1;
+        event.Insert(new EventData {event_count});
         events_emitted.push_back(event_count);
         return Result::Success;
     }
@@ -136,9 +143,9 @@ TEST_CASE("JEventSourceArrow with multiple JEventSources") {
         REQUIRE(source1->close_count == 1);
         REQUIRE(source2->close_count == 1);
         REQUIRE(source3->close_count == 1);
-        REQUIRE(source1->GetEmittedEventCount() == 9);   // 3 dropped, 6 emitted
-        REQUIRE(source2->GetEmittedEventCount() == 12);  // 3 dropped, 9 emitted
-        REQUIRE(source3->GetEmittedEventCount() == 7);   // 3 dropped, 4 emitted
+        REQUIRE(source1->GetEmittedEventCount() == 6);   // 3 dropped, 6 emitted
+        REQUIRE(source2->GetEmittedEventCount() == 9);  // 3 dropped, 9 emitted
+        REQUIRE(source3->GetEmittedEventCount() == 4);   // 3 dropped, 4 emitted
         REQUIRE(app.GetNEventsProcessed() == 19);
     }
 
@@ -164,7 +171,7 @@ TEST_CASE("JEventSourceArrow with multiple JEventSources") {
         REQUIRE(source1->close_count == 1);
         REQUIRE(source2->close_count == 1);
         REQUIRE(source3->close_count == 1);
-        REQUIRE(source1->GetEmittedEventCount() == 6);   // 2 dropped, 4 emitted
+        REQUIRE(source1->GetEmittedEventCount() == 4);   // 2 dropped, 4 emitted
         REQUIRE(source2->GetEmittedEventCount() == 13);  // 13 emitted
         REQUIRE(source3->GetEmittedEventCount() == 4);   // 4 emitted
         REQUIRE(app.GetNEventsProcessed() == 21);

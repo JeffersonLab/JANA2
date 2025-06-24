@@ -16,7 +16,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: build
       run: |
-        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=`pwd` \
+        cmake -S . -B build \
+          -DCMAKE_INSTALL_PREFIX=`pwd` \
           -DUSE_PYTHON=ON \
           -DUSE_ROOT=ON \
           -DUSE_PODIO=ON \
@@ -29,16 +30,17 @@ jobs:
       run: |
         echo "ldd bin/jana"
         ldd bin/jana
-        echo "ldd bin/libJANA.so"
+        echo "ldd lib/libJANA.so"
         ldd lib/libJANA.so
-        echo "bin/jana rpath"
-        objdump -x bin/jana | grep PATH
-        echo "lib/libJANA.so rpath"
-        objdump -x lib/libJANA.so | grep PATH
-        echo "lib/JANA/plugins/TimesliceExample.so"
-        objdump -x lib/JANA/plugins/TimesliceExample.so | grep PATH
-        echo "bin/PodioExample"
-        objdump -x bin/PodioExample | grep PATH
+        echo "RPATH of bin/jana:"
+        objdump -x bin/jana | grep PATH || echo "Empty!"
+        echo "RPATH of lib/libJANA.so:"
+        objdump -x lib/libJANA.so | grep PATH || echo "Empty!"
+        echo "RPATH of lib/JANA/plugins/TimesliceExample.so:"
+        objdump -x lib/JANA/plugins/TimesliceExample.so | grep PATH || echo "Empty!"
+        echo "RPATH of bin/PodioExample:"
+        objdump -x bin/PodioExample | grep PATH || echo "Empty!"
+
     - name: JTest
       run: |
         export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH

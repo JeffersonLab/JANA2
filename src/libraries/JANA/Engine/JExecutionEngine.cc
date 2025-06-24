@@ -78,6 +78,9 @@ void JExecutionEngine::RunTopology() {
     if (m_runstatus == RunStatus::Finished) {
         throw JException("Cannot switch topology runstatus to Running because it is already Finished");
     }
+    if (m_arrow_states.size() == 0) {
+        throw JException("Cannot execute an empty topology! Hint: Have you provided an event source?");
+    }
 
     // Set start time and event count
     m_time_at_start = clock_t::now();
@@ -106,6 +109,12 @@ void JExecutionEngine::ScaleWorkers(size_t nthreads) {
     // an external thread team, should the need arise.
 
     std::unique_lock<std::mutex> lock(m_mutex);
+
+    if (nthreads != 0 && m_arrow_states.size() == 0) {
+        // We check that (nthreads != 0) because this gets called at shutdown even if the topology wasn't run
+        // Remember, we want JApplication::Initialize() to succeed and JMain to shut down cleanly even when the topology is empty
+        throw JException("Cannot execute an empty topology! Hint: Have you provided an event source?");
+    }
 
     auto prev_nthreads = m_worker_states.size();
 
@@ -262,7 +271,7 @@ void JExecutionEngine::RunSupervisor() {
             last_event_count = perf.event_count;
 
             // Print rates
-            LOG_WARN(m_logger) << "Status: " << perf.event_count << " events processed at "
+            LOG_INFO(m_logger) << "Status: " << perf.event_count << " events processed at "
                             << JTypeInfo::to_string_with_si_prefix(latest_throughput_hz) << "Hz ("
                             << JTypeInfo::to_string_with_si_prefix(perf.throughput_hz) << "Hz avg)" << LOG_END;
         }
@@ -662,7 +671,7 @@ void JExecutionEngine::PrintFinalReport() {
 
     LOG_INFO(GetLogger()) << LOG_END;
 
-    LOG_WARN(GetLogger()) << "Final report: " << event_count << " events processed at "
+    LOG_INFO(GetLogger()) << "Final report: " << event_count << " events processed at "
                           << JTypeInfo::to_string_with_si_prefix(throughput_hz) << "Hz" << LOG_END;
 
 }

@@ -4,22 +4,26 @@
 
 #pragma once
 
-#include <JANA/Compatibility/JStreamLog.h>
-
 #include <iostream>
 #include <sstream>
 #include <chrono>
-#include <thread>
 #include <iomanip>
 #include <time.h>
-#include <mutex>
+#include <atomic>
+#include <fstream>
 
 #ifndef JANA2_USE_LOGGER_MUTEX
 #define JANA2_USE_LOGGER_MUTEX 0
 #endif
+#if JANA2_USE_LOGGER_MUTEX
+#include <mutex>
+#endif
 
 
 struct JLogger {
+    static thread_local int thread_id;
+    static std::atomic_int next_thread_id;
+
     enum class Level { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
     Level level;
     std::ostream *destination;
@@ -42,9 +46,6 @@ struct JLogger {
     void ShowLevel(bool show) {show_level = show; }
     void ShowTimestamp(bool show) {show_timestamp = show; }
     void ShowThreadstamp(bool show) {show_threadstamp = show; }
-
-    [[ deprecated("Use SetGroup() instead")]]
-    void SetTag(std::string tag) {this->group = tag; }
 };
 
 
@@ -54,7 +55,7 @@ inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
         case JLogger::Level::TRACE: return s << "trace";
         case JLogger::Level::DEBUG: return s << "debug";
         case JLogger::Level::INFO:  return s << "info";
-        case JLogger::Level::WARN:  return s << "warn ";
+        case JLogger::Level::WARN:  return s << "warn";
         case JLogger::Level::ERROR: return s << "error";
         case JLogger::Level::FATAL: return s << "fatal";
         default:               return s << "off";
@@ -90,6 +91,13 @@ public:
             builder << std::put_time(&tm_buf, "%H:%M:%S.");
             builder << std::setfill('0') << std::setw(3) << milliseconds.count() << std::setfill(' ') << " ";
         }
+        if (logger.show_threadstamp) {
+            if (logger.thread_id == -1) {
+                logger.thread_id = logger.next_thread_id;
+                logger.next_thread_id += 1;
+            }
+            builder << "#" << std::setw(3) << std::setfill('0') << logger.thread_id << " ";
+        }
         if (logger.show_level) {
             switch (level) {
                 case JLogger::Level::TRACE: builder << "[trace] "; break;
@@ -100,9 +108,6 @@ public:
                 case JLogger::Level::FATAL: builder << "[fatal] "; break;
                 default: builder << "[?????] ";
             }
-        }
-        if (logger.show_threadstamp) {
-            builder << std::this_thread::get_id() << " ";
         }
         if (logger.show_group && !logger.group.empty()) {
             builder << logger.group << " > ";
@@ -165,6 +170,10 @@ extern JLogger jerr;
 #define jendl std::endl
 #define default_cout_logger jout
 #define default_cerr_logger jerr
+#ifndef _DBG_
 #define _DBG_ jerr<<__FILE__<<":"<<__LINE__<<" "
+#endif
+#ifndef _DBG__
 #define _DBG__ jerr<<__FILE__<<":"<<__LINE__<<std::endl
+#endif
 

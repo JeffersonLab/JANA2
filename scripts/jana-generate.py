@@ -328,7 +328,7 @@ cmake_minimum_required(VERSION 3.9)
 project({name}_project)
 
 if(NOT "${{CMAKE_CXX_STANDARD}}")
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
@@ -365,7 +365,7 @@ plugin_cmakelists_txt = """
 if(true)
   # Automatically determine source file list.
   file(GLOB mysourcefiles *.cpp *.cc *.c  *.hpp *.hh *.h)
-  set( JANAGPUTest_PLUGIN_SOURCES ${{mysourcefiles}} )    
+  set( {name}_PLUGIN_SOURCES ${{mysourcefiles}} )    
 else()
   # Manually manage source file list
   set ({name}_PLUGIN_SOURCES

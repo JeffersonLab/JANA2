@@ -49,7 +49,7 @@ struct SimpleProcessor : public JEventProcessor {
         init_count += 1;
     }
 
-    void Process(const JEvent&) override {
+    void ProcessSequential(const JEvent&) override {
     }
 
     void Finish() override {

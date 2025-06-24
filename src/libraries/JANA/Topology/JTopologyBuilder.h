@@ -19,6 +19,7 @@ class JComponentManager;
 class JArrow;
 class JFoldArrow;
 class JUnfoldArrow;
+class JEventTapArrow;
 
 class JTopologyBuilder : public JService {
 public:
@@ -32,7 +33,7 @@ public:
     std::vector<JEventPool*> pools;          // Pools shared between arrows
     
     // Topology configuration
-    size_t m_max_inflight_events = 4;
+    size_t m_max_inflight_events = 1;
     size_t m_location_count = 1;
     bool m_enable_stealing = false;
     int m_affinity = 0;
@@ -58,8 +59,9 @@ public:
     void create_topology();
 
     void attach_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder);
-    void connect_to_first_available(JArrow* upstream, std::vector<JArrow*> downstreams);
-    void connect(JArrow* upstream, size_t upstream_index, JArrow* downstream, size_t downstream_index);
+    void connect_to_first_available(JArrow* upstream, size_t upstream_port_id, std::vector<std::pair<JArrow*, size_t>> downstreams);
+    void connect(JArrow* upstream, size_t upstream_port_id, JArrow* downstream, size_t downstream_port_id);
+    std::pair<JEventTapArrow*, JEventTapArrow*> create_tap_chain(std::vector<JEventProcessor*>& procs, std::string name);
 
     std::string print_topology();
 

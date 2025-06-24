@@ -9,6 +9,7 @@
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasDatabundleOutputs.h>
 
 #include <string>
 #include <typeindex>
@@ -22,7 +23,8 @@ class JEvent;
 class JObject;
 class JApplication;
 
-class JFactory : public jana::components::JComponent {
+class JFactory : public jana::components::JComponent, 
+                 public jana::components::JHasDatabundleOutputs {
 public:
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Finished};
@@ -46,8 +48,6 @@ public:
     virtual ~JFactory() = default;
 
 
-    std::string GetName() const __attribute__ ((deprecated))  { return mObjectName; }
-
     std::string GetTag() const { return mTag; }
     std::string GetObjectName() const { return mObjectName; }
     std::string GetFactoryName() const { return m_type_name; }
@@ -57,8 +57,6 @@ public:
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
-
-    void SetName(std::string objectName) __attribute__ ((deprecated)) { mObjectName = std::move(objectName); }
 
     void SetTag(std::string tag) { mTag = std::move(tag); }
     void SetObjectName(std::string objectName) { mObjectName = std::move(objectName); }
@@ -170,6 +168,8 @@ public:
     /// Create() calls JFactory::Init,BeginRun,Process in an invariant-preserving way without knowing the exact
     /// type of object contained. In order to access these objects when all you have is a JFactory*, use JFactory::GetAs().
     virtual void Create(const std::shared_ptr<const JEvent>& event);
+    virtual void Create(const JEvent& event);
+
     void DoInit();
     void DoFinish();
     void Summarize(JComponentSummary& summary) const override;
@@ -185,6 +185,7 @@ protected:
     std::string mTag;
     uint32_t mFlags = WRITE_TO_OUTPUT;
     int32_t mPreviousRunNumber = -1;
+    bool mInsideCreate = false; // Use this to detect cycles in factory dependencies
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
 
     mutable Status mStatus = Status::Uninitialized;

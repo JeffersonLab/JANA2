@@ -22,11 +22,10 @@ private:
     friend class JMultifactory;
     void SetFrame(podio::Frame* frame) { mFrame = frame; }
 
-    // Meant to be called internally, from JEvent:
-    friend class JEvent;
+public:
+    // Meant to be called from JEvent or VariadicPodioInput
     const podio::CollectionBase* GetCollection() { return mCollection; }
 
-public:
     // Meant to be called from ctor, or externally, if we are creating a dummy factory such as a multifactory helper
     void SetSubsetCollection(bool isSubsetCollection=true) { mIsSubsetCollection = isSubsetCollection; }
 };
@@ -54,6 +53,8 @@ public:
     void Finish() override {}
 
     void Create(const std::shared_ptr<const JEvent>& event) final;
+    void Create(const JEvent& event) final;
+
     std::type_index GetObjectType() const final { return std::type_index(typeid(T)); }
     std::size_t GetNumObjects() const final { return mCollection->size(); }
     void ClearData() final;
@@ -154,10 +155,10 @@ void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collectio
 }
 
 // This free function is used to break the dependency loop between JFactoryPodioT and JEvent.
-podio::Frame* GetOrCreateFrame(const std::shared_ptr<const JEvent>& event);
+podio::Frame* GetOrCreateFrame(const JEvent& event);
 
 template <typename T>
-void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
+void JFactoryPodioT<T>::Create(const JEvent& event) {
     mFrame = GetOrCreateFrame(event);
     try {
         JFactory::Create(event);
@@ -175,6 +176,11 @@ void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
         // If calling Process() didn't result in a call to Set() or SetCollection(), we create an empty collection
         // so that podio::ROOTWriter doesn't segfault on the null mCollection pointer
     }
+}
+
+template <typename T>
+void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
+    Create(*event);
 }
 
 template <typename T>

@@ -58,9 +58,7 @@ void JArrow::push(OutputData& outputs, size_t output_count, size_t location_id) 
             port.queue->Push(event, location_id);
         }
         else if (port.pool != nullptr) {
-            if (!port.is_input) {
-                event->Clear();
-            }
+            event->Clear(!port.is_input);
             port.pool->Push(event, location_id);
         }
         else {

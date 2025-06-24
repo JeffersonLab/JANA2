@@ -2,8 +2,8 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JTestEventProcessor_h
-#define JTestEventProcessor_h
+#ifndef JTestPlotter_h
+#define JTestPlotter_h
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/Utils/JBenchUtils.h>
@@ -29,7 +29,7 @@ public:
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
 
         m_bench_utils.set_seed(event.GetEventNumber(), typeid(*this).name());
 
@@ -47,5 +47,5 @@ public:
 
 };
 
-#endif // JTestEventProcessor
+#endif // JTestPlotter_h
 

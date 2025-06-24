@@ -47,7 +47,7 @@ struct DummyProcessor : public JEventProcessor {
         event.Get<DummyData>();
     }
 
-    void Process(const JEvent& event) override {
+    void ProcessSequential(const JEvent& event) override {
         m_bench_utils.set_seed(event.GetEventNumber(), NAME_OF_THIS);
         m_bench_utils.consume_cpu_ms(10);
     }

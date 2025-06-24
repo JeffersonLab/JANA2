@@ -7,6 +7,10 @@
 
 namespace jana::services {
 
+JWiringService::JWiringService() {
+    SetPrefix("jana");
+}
+
 void JWiringService::Init() {
     LOG_INFO(GetLogger()) << "Initializing JWiringService" << LOG_END;
     // User is _only_ allowed to specify wiring file via parameter
@@ -15,7 +19,7 @@ void JWiringService::Init() {
     // (recursively) load files
 
     if (!m_wirings_input_file().empty()) {
-        AddWirings(*m_wirings_input_file);
+        AddWiringFile(*m_wirings_input_file);
     }
 }
 
@@ -80,15 +84,19 @@ void JWiringService::AddWirings(const toml::table& table, const std::string& sou
 
         auto input_names = f["input_names"].as_array();
         if (input_names != nullptr) {
-            for (const auto& input_name : *f["input_names"].as_array()) {
+            for (const auto& input_name : *input_names) {
                 wiring->input_names.push_back(input_name.value<std::string>().value());
             }
         }
 
-        auto output_names = f["output_names"].as_array();
-        if (output_names != nullptr) {
-            for (const auto& output_name : *f["output_names"].as_array()) {
-                wiring->output_names.push_back(output_name.value<std::string>().value());
+        auto variadic_input_names = f["variadic_input_names"].as_array();
+        if (variadic_input_names != nullptr) {
+            for (const auto& input_name_vec : *variadic_input_names) {
+                std::vector<std::string> temp;
+                for (const auto& input_name : *(input_name_vec.as_array())) {
+                    temp.push_back(input_name.as_string()->get());
+                }
+                wiring->variadic_input_names.push_back(temp);
             }
         }
 
@@ -96,6 +104,20 @@ void JWiringService::AddWirings(const toml::table& table, const std::string& sou
         if (input_levels != nullptr) {
             for (const auto& input_level : *input_levels) {
                 wiring->input_levels.push_back(parseEventLevel(input_level.value<std::string>().value()));
+            }
+        }
+
+        auto variadic_input_levels = f["variadic_input_levels"].as_array();
+        if (variadic_input_levels != nullptr) {
+            for (const auto& input_level : *variadic_input_levels) {
+                wiring->variadic_input_levels.push_back(parseEventLevel(input_level.value<std::string>().value()));
+            }
+        }
+
+        auto output_names = f["output_names"].as_array();
+        if (output_names != nullptr) {
+            for (const auto& output_name : *f["output_names"].as_array()) {
+                wiring->output_names.push_back(output_name.value<std::string>().value());
             }
         }
 
@@ -114,9 +136,10 @@ void JWiringService::AddWirings(const toml::table& table, const std::string& sou
     AddWirings(wirings, source);
 }
 
-void JWiringService::AddWirings(const std::string& filename) {
+void JWiringService::AddWiringFile(const std::string& filename) {
     try {
         auto tbl = toml::parse_file(filename);
+        AddSharedParameters(tbl, filename);
         AddWirings(tbl, filename);
     }
     catch (const toml::parse_error& err) {
@@ -167,6 +190,25 @@ void JWiringService::Overlay(Wiring& above, const Wiring& below) {
     }
 }
 
+
+void JWiringService::AddSharedParameters(const toml::table& table, const std::string& /*source*/) {
+    auto shared_params = table["configs"].as_table();
+    if (shared_params == nullptr) {
+        LOG_INFO(GetLogger()) << "No configs found!" << LOG_END;
+        return;
+    }
+    for (const auto& param : *shared_params) {
+        std::string key(param.first);
+        std::string val = *param.second.value<std::string>();
+        m_shared_parameters[key] = val;
+    }
+}
+
+
+
+const std::map<std::string, std::string>& JWiringService::GetSharedParameters() const {
+    return m_shared_parameters;
+}
 
 
 } // namespace jana::services
