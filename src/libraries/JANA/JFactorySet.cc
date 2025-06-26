@@ -246,8 +246,10 @@ void JFactorySet::Clear() {
 
     for (const auto& sFactoryPair : mFactories) {
         auto sFactory = sFactoryPair.second;
-        sFactory->ClearData();
-        // This automatically clears multifactories because their data is stored in helper factories!
+        if (sFactory->GetStatus() != JFactory::Status::Uninitialized) {
+            sFactory->SetStatus(JFactory::Status::Unprocessed);
+            sFactory->SetCreationStatus(JFactory::CreationStatus::NotCreatedYet);
+        }
     }
     for (auto& it : mDatabundlesFromUniqueName) {
         // Clearing is fundamentally an operation on the data bundle, not on the factory itself.

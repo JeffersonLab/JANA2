@@ -28,6 +28,7 @@ public:
 
     JFactoryT() {
         mOutput.GetDatabundle().AttachData(&mData);
+        SetPrefix(mOutput.GetDatabundle().GetUniqueName());
 
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
@@ -168,9 +169,20 @@ public:
     template <typename S> void EnableGetAs(std::false_type) {}
 
     void ClearData() override {
-        // Data is cleared via JDatabundle::ClearData() now
+        // This is mainly used for test cases now. JFactorySet::Clear directly clears all databundles, 
+        // even those without a corresponding JFactory.
+
+        if (mStatus == Status::Uninitialized) {
+            // ClearData won't do anything if Init() hasn't been called
+            return;
+        }
         mStatus = Status::Unprocessed;
         mCreationStatus = CreationStatus::NotCreatedYet;
+        for (auto* output : GetDatabundleOutputs()) {
+            for (auto* db : output->GetDatabundles()) {
+                db->ClearData();
+            }
+        }
     }
 
 
