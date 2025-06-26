@@ -49,7 +49,9 @@ public:
         return db->GetUniqueName();
     }
 
-    std::string GetObjectName() const { return GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->GetTypeName(); }
+    std::string GetObjectName() const { return mObjectName; }
+
+    void SetObjectName(std::string object_name) { mObjectName = object_name; }
 
     std::string GetFactoryName() const { return m_type_name; }
     Status GetStatus() const { return mStatus; }
@@ -136,6 +138,7 @@ protected:
     int32_t mPreviousRunNumber = -1;
     bool mInsideCreate = false; // Use this to detect cycles in factory dependencies
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
+    std::string mObjectName;
 
     mutable Status mStatus = Status::Uninitialized;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)

@@ -12,7 +12,7 @@ struct Hit { double E; };
 
 class MyFac : public JFactoryT<Hit> {
     void Process(const std::shared_ptr<const JEvent>&) {
-        mData.push_back(new Hit(22.2));
+        mData.push_back(new Hit{22.2});
     }
 };
 

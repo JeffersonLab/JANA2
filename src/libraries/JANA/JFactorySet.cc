@@ -57,7 +57,6 @@ void JFactorySet::Add(JDatabundle* databundle) {
     if (databundle->GetUniqueName().empty()) {
         throw JException("Attempted to add a databundle with no unique_name");
     }
-    LOG << "Added databundle with unique_name=" << databundle->GetUniqueName();
     auto named_result = mDatabundlesFromUniqueName.find(databundle->GetUniqueName());
     if (named_result != std::end(mDatabundlesFromUniqueName)) {
         // Collection is duplicate. Since this almost certainly indicates a user error, and
@@ -92,8 +91,6 @@ bool JFactorySet::Add(JFactory* aFactory)
     /// throw an exception and let the user figure out what to do.
     /// This scenario occurs when the user has multiple JFactory<T> producing the
     /// same T JObject, and is not distinguishing between them via tags.
-    
-    LOG << "Adding JFactory with tag=" << aFactory->GetTag() << " and object name " << aFactory->GetObjectName();
 
     auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
     auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
@@ -245,17 +242,14 @@ void JFactorySet::Print() const
 void JFactorySet::Clear() {
 
     for (const auto& sFactoryPair : mFactories) {
-        auto sFactory = sFactoryPair.second;
-        if (sFactory->GetStatus() != JFactory::Status::Uninitialized) {
-            sFactory->SetStatus(JFactory::Status::Unprocessed);
-            sFactory->SetCreationStatus(JFactory::CreationStatus::NotCreatedYet);
-        }
+        auto fac = sFactoryPair.second;
+        fac->ClearData();
     }
     for (auto& it : mDatabundlesFromUniqueName) {
-        // Clearing is fundamentally an operation on the data bundle, not on the factory itself.
-        // Furthermore, "clearing" the factory is misleading because factories can cache arbitrary
-        // state inside member variables, and there's no way to clear that.
-        it.second->ClearData();
+        // Clear any databundles that did not come from a JFactory
+        if (it.second->GetFactory() == nullptr) {
+            it.second->ClearData();
+        }
     }
 }
 

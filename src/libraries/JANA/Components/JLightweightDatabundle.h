@@ -5,7 +5,7 @@
 #include <JANA/JObject.h> 
 #include <JANA/Utils/JTypeInfo.h>
 
-#ifdef JANA2_HAVE_ROOT
+#if JANA2_HAVE_ROOT
 #include <TObject.h>
 #endif
 
@@ -50,7 +50,7 @@ JLightweightDatabundleT<T>::JLightweightDatabundleT() {
     SetTypeName(JTypeInfo::demangle<T>());
     EnableGetAs<T>();
     EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
-#ifdef JANA2_HAVE_ROOT
+#if JANA2_HAVE_ROOT
     EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
 #endif
 }

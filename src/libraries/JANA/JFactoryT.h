@@ -29,6 +29,7 @@ public:
     JFactoryT() {
         mOutput.GetDatabundle().AttachData(&mData);
         SetPrefix(mOutput.GetDatabundle().GetUniqueName());
+        SetObjectName(mOutput.GetDatabundle().GetTypeName());
 
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
