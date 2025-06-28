@@ -67,6 +67,13 @@ public:
 
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
 
+    virtual void SetFactoryFlag(JFactory_Flags_t f) {
+        switch (f) {
+            case JFactory::REGENERATE: SetRegenerateFlag(false); break;
+            case JFactory::WRITE_TO_OUTPUT: SetWriteToOutputFlag(false); break;
+            default: throw JException("Unsupported factory flag");
+        }
+    };
     void SetRegenerateFlag(bool regenerate) { mRegenerate = regenerate; }
     void SetWriteToOutputFlag(bool write_to_output) { mWriteToOutput = write_to_output; }
     bool GetWriteToOutputFlag() { return mWriteToOutput; }

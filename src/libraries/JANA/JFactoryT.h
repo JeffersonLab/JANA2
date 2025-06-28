@@ -128,7 +128,7 @@ public:
     }
 
     /// Set a flag (or flags)
-    inline void SetFactoryFlag(JFactory_Flags_t f) {
+    inline void SetFactoryFlag(JFactory_Flags_t f) override {
         switch (f) {
             case JFactory::PERSISTENT: SetPersistentFlag(true); break;
             case JFactory::NOT_OBJECT_OWNER: SetNotOwnerFlag(true); break;
