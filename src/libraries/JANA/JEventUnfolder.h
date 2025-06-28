@@ -146,8 +146,13 @@ public:
                     result = Unfold(parent, child, m_child_number);
                 });
             }
-            for (auto* output : m_outputs) {
-                output->InsertCollection(child);
+            if (result != Result::KeepChildNextParent) {
+                // If the user returns KeepChildNextParent, JANA cannot publish any output databundles (not even empty ones)
+                // because on the next call to Unfold(), podio will throw an exception about inserting the collection twice.
+                // Any data put in an output databundle will be automatically cleared via OutputBase::Reset() before the next Unfold().
+                for (auto* output : m_outputs) {
+                    output->InsertCollection(child);
+                }
             }
             m_child_number += 1;
             if (result == Result::NextChildNextParent || result == Result::KeepChildNextParent) {

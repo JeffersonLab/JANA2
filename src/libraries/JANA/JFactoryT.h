@@ -12,6 +12,7 @@
 #include <JANA/JObject.h>
 #include <JANA/JVersion.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <JANA/Components/JLightweightOutput.h>
 
 #if JANA2_HAVE_ROOT
 #include <TObject.h>
@@ -25,7 +26,12 @@ public:
     using IteratorType = typename std::vector<T*>::const_iterator;
     using PairType = std::pair<IteratorType, IteratorType>;
 
-    JFactoryT(std::string tag="") : JFactory(JTypeInfo::demangle<T>(), tag){
+    JFactoryT(std::string tag="") {
+        mOutput.GetDatabundle().AttachData(&mData);
+        SetTag(tag);
+        SetPrefix(mOutput.GetDatabundle().GetUniqueName());
+        SetObjectName(mOutput.GetDatabundle().GetTypeName());
+
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
 #if JANA2_HAVE_ROOT
@@ -41,6 +47,8 @@ public:
     void EndRun() override {}
     void Process(const std::shared_ptr<const JEvent>&) override {}
 
+
+    void SetTag(std::string tag) { mOutput.SetShortName(tag); }
 
     std::type_index GetObjectType(void) const override {
         return std::type_index(typeid(T));
@@ -70,7 +78,7 @@ public:
     }
 
     /// Please use the typed setters instead whenever possible
-    // TODO: Deprecate this!
+    [[deprecated]]
     void Set(const std::vector<JObject*>& aData) override {
         std::vector<T*> data;
         for (auto obj : aData) {
@@ -82,7 +90,7 @@ public:
     }
 
     /// Please use the typed setters instead whenever possible
-    // TODO: Deprecate this!
+    [[deprecated]]
     void Insert(JObject* aDatum) override {
         T* casted = dynamic_cast<T*>(aDatum);
         assert(casted != nullptr);
@@ -119,6 +127,37 @@ public:
         mCreationStatus = CreationStatus::Inserted;
     }
 
+    /// Set a flag (or flags)
+    inline void SetFactoryFlag(JFactory_Flags_t f) override {
+        switch (f) {
+            case JFactory::PERSISTENT: SetPersistentFlag(true); break;
+            case JFactory::NOT_OBJECT_OWNER: SetNotOwnerFlag(true); break;
+            case JFactory::REGENERATE: SetRegenerateFlag(true); break;
+            case JFactory::WRITE_TO_OUTPUT: SetWriteToOutputFlag(true); break;
+            default: throw JException("Invalid factory flag");
+        }
+    }
+
+    /// Clear a flag (or flags)
+    inline void ClearFactoryFlag(JFactory_Flags_t f) {
+        switch (f) {
+            case JFactory::PERSISTENT: SetPersistentFlag(false); break;
+            case JFactory::NOT_OBJECT_OWNER: SetNotOwnerFlag(false); break;
+            case JFactory::REGENERATE: SetRegenerateFlag(false); break;
+            case JFactory::WRITE_TO_OUTPUT: SetWriteToOutputFlag(false); break;
+            default: throw JException("Invalid factory flag");
+        }
+    }
+
+    inline void SetPersistentFlag(bool persistent) {
+        mOutput.GetDatabundle().SetPersistentFlag(persistent);
+    }
+
+    inline void SetNotOwnerFlag(bool not_owner) {
+        mOutput.GetDatabundle().SetNotOwnerFlag(not_owner);
+    }
+
+
 
     /// EnableGetAs generates a vtable entry so that users may extract the
     /// contents of this JFactoryT from the type-erased JFactory. The user has to manually specify which upcasts
@@ -132,28 +171,25 @@ public:
     template <typename S> void EnableGetAs(std::false_type) {}
 
     void ClearData() override {
+        // This is mainly used for test cases now. JFactorySet::Clear directly clears all databundles, 
+        // even those without a corresponding JFactory.
 
-        // ClearData won't do anything if Init() hasn't been called
         if (mStatus == Status::Uninitialized) {
+            // ClearData won't do anything if Init() hasn't been called
             return;
         }
-        // ClearData() does nothing if persistent flag is set.
-        // User must manually recycle data, e.g. during ChangeRun()
-        if (TestFactoryFlag(JFactory_Flags_t::PERSISTENT)) {
-            return;
-        }
-
-        // Assuming we _are_ the object owner, delete the underlying jobjects
-        if (!TestFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER)) {
-            for (auto p : mData) delete p;
-        }
-        mData.clear();
         mStatus = Status::Unprocessed;
         mCreationStatus = CreationStatus::NotCreatedYet;
+        for (auto* output : GetDatabundleOutputs()) {
+            for (auto* db : output->GetDatabundles()) {
+                db->ClearData();
+            }
+        }
     }
 
 
 protected:
+    jana::components::Output<T> mOutput {this};
     std::vector<T*> mData;
 };
 

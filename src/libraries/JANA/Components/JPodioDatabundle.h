@@ -23,7 +23,7 @@ public:
 
     virtual void ClearData() override {
         m_collection = nullptr;
-        SetStatus(JDataBundle::Status::Empty);
+        SetStatus(JDatabundle::Status::Empty);
         // Podio clears the data itself when the frame is destroyed.
         // Until then, the collection is immutable.
         //

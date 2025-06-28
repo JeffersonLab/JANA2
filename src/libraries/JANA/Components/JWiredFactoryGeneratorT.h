@@ -51,7 +51,8 @@ public:
                              wiring->input_levels,
                              wiring->variadic_input_names,
                              wiring->variadic_input_levels,
-                             wiring->output_names);
+                             wiring->output_names,
+                             wiring->variadic_output_names);
 
             factory_set->Add(factory);
         }

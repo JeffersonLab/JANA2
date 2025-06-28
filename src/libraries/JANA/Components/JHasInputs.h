@@ -3,6 +3,7 @@
 // Created by Nathan Brei
 
 #pragma once
+#include "JANA/Components/JComponentSummary.h"
 #if JANA2_HAVE_PODIO
 #include "JANA/Podio/JFactoryPodioT.h"
 #endif
@@ -460,6 +461,56 @@ protected:
         }
     };
 #endif
+    void WireInputs(JEventLevel component_level,
+                    const std::vector<JEventLevel>& single_input_levels,
+                    const std::vector<std::string>& single_input_databundle_names,
+                    const std::vector<JEventLevel>& variadic_input_levels,
+                    const std::vector<std::vector<std::string>>& variadic_input_databundle_names) {
+
+        // Validate that we have the correct number of input databundle names
+        if (single_input_databundle_names.size() != m_inputs.size()) {
+            throw JException("Wrong number of (nonvariadic) input databundle names! Expected %d, found %d", m_inputs.size(), single_input_databundle_names.size());
+        }
+
+        if (variadic_input_databundle_names.size() != m_variadic_inputs.size()) {
+            throw JException("Wrong number of variadic input databundle names! Expected %d, found %d", m_variadic_inputs.size(), variadic_input_databundle_names.size());
+        }
+
+        size_t i = 0;
+        for (auto* input : m_inputs) {
+            input->SetDatabundleName(single_input_databundle_names.at(i));
+            if (single_input_levels.empty()) {
+                input->SetLevel(component_level);
+            }
+            else {
+                input->SetLevel(single_input_levels.at(i));
+            }
+            i += 1;
+        }
+
+        i = 0;
+        for (auto* variadic_input : m_variadic_inputs) {
+            variadic_input->SetRequestedDatabundleNames(variadic_input_databundle_names.at(i));
+            if (variadic_input_levels.empty()) {
+                variadic_input->SetLevel(component_level);
+            }
+            else {
+                variadic_input->SetLevel(variadic_input_levels.at(i));
+            }
+            i += 1;
+        }
+    }
+
+    void SummarizeInputs(JComponentSummary::Component& summary) const {
+        for (const auto* input : m_inputs) {
+            summary.AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->GetTypeName(), input->GetLevel()));
+        }
+        for (const auto* input : m_variadic_inputs) {
+            for (auto& databundle_name : input->GetRequestedDatabundleNames()) {
+                summary.AddInput(new JComponentSummary::Collection("", databundle_name, input->GetTypeName(), input->GetLevel()));
+            }
+        }
+    }
 };
 
 } // namespace jana::components

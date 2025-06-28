@@ -4,6 +4,7 @@
 
 #include <iterator>
 #include <iostream>
+#include <unistd.h>
 
 #include "JFactorySet.h"
 #include "JFactory.h"
@@ -40,10 +41,7 @@ JFactorySet::~JFactorySet()
     if (mIsFactoryOwner) {
 
         for (auto& pair : mDatabundlesFromUniqueName) {
-            // Only delete _inserted_ databundles. Otherwise they are deleted by their respective factories
-            if (pair.second->GetFactory() == nullptr) {
-                delete pair.second;
-            }
+            delete pair.second; // Databundles are always owned by the factoryset
         }
         for (auto& f : mFactories) delete f.second;
     }
@@ -122,10 +120,10 @@ bool JFactorySet::Add(JFactory* aFactory)
     mFactories[typed_key] = aFactory;
     mFactoriesFromString[untyped_key] = aFactory;
 
-    for (const auto* output : aFactory->GetDatabundleOutputs()) {
+    for (auto* output : aFactory->GetDatabundleOutputs()) {
         for (const auto& bundle : output->GetDatabundles()) {
             bundle->SetFactory(aFactory);
-            Add(bundle.get());
+            Add(bundle);
         }
     }
     return true;
@@ -157,7 +155,7 @@ JDatabundle* JFactorySet::GetDatabundle(const std::string& unique_name) const {
     if (it != std::end(mDatabundlesFromUniqueName)) {
         auto fac = it->second->GetFactory();
         if (fac != nullptr && fac->GetLevel() != mLevel) {
-            throw JException("Data bundle belongs to a different level on the event hierarchy!");
+            throw JException("Databundle belongs to a different level on the event hierarchy!");
         }
         return it->second;
     }
@@ -244,16 +242,14 @@ void JFactorySet::Print() const
 void JFactorySet::Clear() {
 
     for (const auto& sFactoryPair : mFactories) {
-        auto sFactory = sFactoryPair.second;
-        sFactory->ClearData();
-        // This automatically clears multifactories because their data is stored in helper factories!
+        auto fac = sFactoryPair.second;
+        fac->ClearData();
     }
     for (auto& it : mDatabundlesFromUniqueName) {
-        // fac->ClearData() only clears JFactoryT's, because that's how it always worked.
-        // Clearing is fundamentally an operation on the data bundle, not on the factory itself.
-        // Furthermore, "clearing" the factory is misleading because factories can cache arbitrary
-        // state inside member variables, and there's no way to clear that.
-        it.second->ClearData();
+        // Clear any databundles that did not come from a JFactory
+        if (it.second->GetFactory() == nullptr) {
+            it.second->ClearData();
+        }
     }
 }
 

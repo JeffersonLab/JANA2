@@ -23,6 +23,7 @@ public:
         std::vector<std::vector<std::string>> variadic_input_names = {};
         std::vector<JEventLevel> variadic_input_levels = {};
         std::vector<std::string> output_names = {};
+        std::vector<std::vector<std::string>> variadic_output_names = {};
         FactoryConfigType configs = {}; /// Must be copyable!
     };
 
@@ -95,8 +96,9 @@ public:
             // Set up all of the wiring prereqs so that Init() can do its thing
             // Specifically, it needs valid input/output tags, a valid logger, and
             // valid default values in its Config object
-            factory->PreInit(wiring.tag, wiring.level, wiring.input_names, wiring.input_levels, 
-                             wiring.variadic_input_names, wiring.variadic_input_levels, wiring.output_names);
+            factory->PreInit(wiring.tag, wiring.level, wiring.input_names, wiring.input_levels,
+                             wiring.variadic_input_names, wiring.variadic_input_levels,
+                             wiring.output_names, wiring.variadic_output_names);
 
             // Factory is ready
             factory_set->Add(factory);

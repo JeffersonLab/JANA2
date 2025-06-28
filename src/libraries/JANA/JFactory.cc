@@ -51,7 +51,7 @@ void JFactory::Create(const JEvent& event) {
     // 1. JFactory::Process() if REGENERATE flag is set
     // ---------------------------------------------------------------------
 
-    if (TestFactoryFlag(REGENERATE)) {
+    if (mRegenerate) {
         if (mStatus == Status::Inserted) {
             // Status::Inserted indicates that the data came from either src->GetObjects() or evt->Insert()
             ClearData(); 
@@ -110,6 +110,12 @@ void JFactory::Create(const JEvent& event) {
         CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
         mStatus = Status::Processed;
         mCreationStatus = CreationStatus::Created;
+
+        for (auto* output : GetDatabundleOutputs()) {
+            for (auto* databundle : output->databundles) {
+                databundle->SetStatus(JDatabundle::Status::Created);
+            }
+        }
     }
 }
 

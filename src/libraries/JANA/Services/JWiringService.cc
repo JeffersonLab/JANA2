@@ -121,6 +121,18 @@ void JWiringService::AddWirings(const toml::table& table, const std::string& sou
             }
         }
 
+        auto variadic_output_names = f["variadic_output_names"].as_array();
+        if (variadic_output_names != nullptr) {
+            for (const auto& output_name_vec : *variadic_output_names) {
+                std::vector<std::string> temp;
+                for (const auto& output_name : *(output_name_vec.as_array())) {
+                    temp.push_back(output_name.as_string()->get());
+                }
+                wiring->variadic_output_names.push_back(temp);
+            }
+        }
+
+
         auto configs = f["configs"].as_table();
         if (configs != nullptr) {
             for (const auto& config : *configs) {

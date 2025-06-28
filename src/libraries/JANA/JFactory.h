@@ -38,18 +38,21 @@ public:
         REGENERATE = 0x08        // Replaces JANA1 JFactory_base::use_factory and JFactory::GetCheckSourceFirst()
     };
 
-    JFactory(std::string aName, std::string aTag = "")
-    : mObjectName(std::move(aName)), 
-      mTag(std::move(aTag)), 
-      mStatus(Status::Uninitialized) {
-          SetPrefix(aTag.empty() ? mObjectName : mObjectName + ":" + mTag);
-    };
-
+    JFactory() = default;
     virtual ~JFactory() = default;
 
+    std::string GetTag() const { 
+        auto& db = GetDatabundleOutputs().at(0)->GetDatabundles().at(0);
+        if (db->HasShortName()) {
+            return db->GetShortName();
+        }
+        return db->GetUniqueName();
+    }
 
-    std::string GetTag() const { return mTag; }
     std::string GetObjectName() const { return mObjectName; }
+
+    void SetObjectName(std::string object_name) { mObjectName = object_name; }
+
     std::string GetFactoryName() const { return m_type_name; }
     Status GetStatus() const { return mStatus; }
     CreationStatus GetCreationStatus() const { return mCreationStatus; }
@@ -57,67 +60,23 @@ public:
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
-
-    void SetTag(std::string tag) { mTag = std::move(tag); }
-    void SetObjectName(std::string objectName) { mObjectName = std::move(objectName); }
     void SetFactoryName(std::string factoryName) { SetTypeName(factoryName); }
-
     void SetStatus(Status status){ mStatus = status; }
     void SetCreationStatus(CreationStatus status){ mCreationStatus = status; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
 
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
 
-    // Note: JFactory_Flags_t is going to be deprecated. Use Set...Flag()s instead
-    /// Get all flags in the form of a single word
-    inline uint32_t GetFactoryFlags() const { return mFlags; }
-
-    /// Set a flag (or flags)
-    inline void SetFactoryFlag(JFactory_Flags_t f) {
-        mFlags |= (uint32_t) f;
-    }
-
-    /// Clear a flag (or flags)
-    inline void ClearFactoryFlag(JFactory_Flags_t f) {
-        mFlags &= ~(uint32_t) f;
-    }
-
-    /// Test if a flag (or set of flags) is set
-    inline bool TestFactoryFlag(JFactory_Flags_t f) const {
-        return (mFlags & (uint32_t) f) == (uint32_t) f;
-    }
-
-    inline void SetPersistentFlag(bool persistent) { 
-        if (persistent) { 
-            SetFactoryFlag(PERSISTENT); }
-        else { 
-            ClearFactoryFlag(PERSISTENT); }
-    }
-
-    inline void SetNotOwnerFlag(bool not_owner) { 
-        if (not_owner) {
-            SetFactoryFlag(NOT_OBJECT_OWNER); }
-        else { 
-            ClearFactoryFlag(NOT_OBJECT_OWNER); }
-    }
-
-    inline void SetRegenerateFlag(bool regenerate) { 
-        if (regenerate) {
-            SetFactoryFlag(REGENERATE); }
-        else { 
-            ClearFactoryFlag(REGENERATE); }
-    }
-
-    inline void SetWriteToOutputFlag(bool write_to_output) { 
-        if (write_to_output) {
-            SetFactoryFlag(WRITE_TO_OUTPUT); }
-        else {
-            ClearFactoryFlag(WRITE_TO_OUTPUT); }
-    }
-
-    inline bool GetWriteToOutputFlag() { 
-        return TestFactoryFlag(WRITE_TO_OUTPUT);
-    }
+    virtual void SetFactoryFlag(JFactory_Flags_t f) {
+        switch (f) {
+            case JFactory::REGENERATE: SetRegenerateFlag(false); break;
+            case JFactory::WRITE_TO_OUTPUT: SetWriteToOutputFlag(false); break;
+            default: throw JException("Unsupported factory flag");
+        }
+    };
+    void SetRegenerateFlag(bool regenerate) { mRegenerate = regenerate; }
+    void SetWriteToOutputFlag(bool write_to_output) { mWriteToOutput = write_to_output; }
+    bool GetWriteToOutputFlag() { return mWriteToOutput; }
 
     /// Get data source value depending on how objects came to be here. (Used mainly by JEvent::Get() )
     inline JCallGraphRecorder::JDataSource GetDataSource() const {
@@ -181,12 +140,12 @@ public:
 
 protected:
 
-    std::string mObjectName;
-    std::string mTag;
-    uint32_t mFlags = WRITE_TO_OUTPUT;
+    bool mRegenerate = false;
+    bool mWriteToOutput = true;
     int32_t mPreviousRunNumber = -1;
     bool mInsideCreate = false; // Use this to detect cycles in factory dependencies
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
+    std::string mObjectName;
 
     mutable Status mStatus = Status::Uninitialized;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
