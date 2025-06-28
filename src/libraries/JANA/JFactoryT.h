@@ -26,8 +26,9 @@ public:
     using IteratorType = typename std::vector<T*>::const_iterator;
     using PairType = std::pair<IteratorType, IteratorType>;
 
-    JFactoryT() {
+    JFactoryT(std::string tag="") {
         mOutput.GetDatabundle().AttachData(&mData);
+        SetTag(tag);
         SetPrefix(mOutput.GetDatabundle().GetUniqueName());
         SetObjectName(mOutput.GetDatabundle().GetTypeName());
 
