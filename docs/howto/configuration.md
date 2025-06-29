@@ -22,6 +22,7 @@ The following configuration options are used most commonly:
 | jana:show_ticker          | bool    | Controls whether the status ticker is shown |
 | jana:ticker_interval          | int     | Controls how often the status ticker updates (in ms)  |
 | autoactivate | string | Triggers JFactories without needing a JEventProcessor. Format is "datatype1:tag1,datatype2:tag2" |
+| jana:inspect | bool | Controls whether to immediately drop into the Inspector |
 
 JANA automatically provides each component with its own logger. You can control the logging verbosity of individual components
 just like any other parameter. For instance, if your component prefixes its parameters with `BCAL:tracking`,

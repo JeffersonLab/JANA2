@@ -74,7 +74,6 @@ public:
     void Run(bool wait_until_stopped=true, bool finish=true);
     void Scale(int nthreads);
     void Stop(bool wait_until_stopped=false, bool finish=true);
-    void Inspect();
     void Quit(bool skip_join = false);
     void SetExitCode(int exitCode);
     int GetExitCode();
@@ -139,14 +138,13 @@ private:
     std::shared_ptr<JComponentManager> m_component_manager;
     std::shared_ptr<JExecutionEngine> m_execution_engine;
 
-    bool m_inspecting = false;
+    bool m_inspect = false;
     bool m_quitting = false;
     bool m_skip_join = false;
     std::atomic_bool m_initialized {false};
     std::atomic_bool m_services_available {false};
     int  m_exit_code = (int) ExitCode::Success;
     int  m_desired_nthreads;
-    std::atomic_int m_sigint_count {0};
 
     // For instantaneous rate calculations
     std::mutex m_inst_rate_mutex;

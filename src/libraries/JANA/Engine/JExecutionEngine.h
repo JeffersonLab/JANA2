@@ -145,6 +145,7 @@ public:
     bool IsTickerEnabled() const;
     void SetTimeoutEnabled(bool timeout_on);
     bool IsTimeoutEnabled() const;
+    void RequestInspector();
 
     void HandleSIGINT();
     void HandleSIGUSR1();

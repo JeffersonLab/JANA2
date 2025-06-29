@@ -68,6 +68,10 @@ void JExecutionEngine::Init() {
     }
 }
 
+void JExecutionEngine::RequestInspector() {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_interrupt_status = InterruptStatus::InspectRequested;
+}
 
 void JExecutionEngine::RunTopology() {
     std::unique_lock<std::mutex> lock(m_mutex);
@@ -214,7 +218,9 @@ void JExecutionEngine::DrainTopology() {
 
 void JExecutionEngine::RunSupervisor() {
 
-    m_interrupt_status = InterruptStatus::NoInterruptsSupervised;
+    if (m_interrupt_status == InterruptStatus::NoInterruptsUnsupervised) {
+        m_interrupt_status = InterruptStatus::NoInterruptsSupervised;
+    }
     size_t last_event_count = 0;
     clock_t::time_point last_measurement_time = clock_t::now();
 
