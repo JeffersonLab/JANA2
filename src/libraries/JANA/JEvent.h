@@ -11,8 +11,6 @@
 #include <JANA/JLogger.h>
 #include <JANA/JVersion.h>
 
-#include <JANA/Components/JPodioDatabundle.h>
-
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
@@ -27,9 +25,7 @@
 
 #if JANA2_HAVE_PODIO
 #include <JANA/Podio/JFactoryPodioT.h>
-namespace podio {
-class CollectionBase;
-}
+#include <JANA/Components/JPodioDatabundle.h>
 #endif
 
 class JApplication;
@@ -452,7 +448,7 @@ template <typename T>
 const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
 
     auto collection = GetCollectionBase(name, throw_on_missing);
-    auto* typed_collection = dynamic_cast<const T::collection_type*>(collection);
+    auto* typed_collection = dynamic_cast<const typename T::collection_type*>(collection);
     if (throw_on_missing && typed_collection == nullptr) {
         throw JException("Databundle with uniquename '%s' does not contain %s", JTypeInfo::demangle<typename T::collection_type>().c_str());
     }
