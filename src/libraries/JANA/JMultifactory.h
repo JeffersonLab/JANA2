@@ -40,7 +40,6 @@ public:
 
 
 #if JANA2_HAVE_PODIO
-// TODO: This redundancy goes away if we merge JFactoryPodioT with JFactoryT
 template <typename T>
 class JMultifactoryHelperPodio : public JFactoryPodioT<T>{
 
@@ -162,13 +161,6 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
-#if JANA2_HAVE_PODIO
-    // This may or may not be a Podio factory. We find out if it is, and if so, set the frame before calling Set().
-    auto* typed = dynamic_cast<JFactoryPodio*>(helper);
-    if (typed != nullptr) {
-        typed->SetFrame(mPodioFrame); // Needs to be called before helper->Set(), otherwise Set() excepts
-    }
-#endif
     helper->Set(data);
 }
 
@@ -210,8 +202,6 @@ void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::C
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
-
-    typed->SetFrame(mPodioFrame);
     typed->SetCollection(std::move(collection));
 }
 
@@ -235,8 +225,6 @@ void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFac
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
-
-    typed->SetFrame(mPodioFrame);
     typed->SetCollection(std::move(collection));
 }
 

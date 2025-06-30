@@ -9,27 +9,9 @@
 #include <JANA/Components/JPodioOutput.h>
 #include <podio/Frame.h>
 
-/// The point of this additional base class is to allow us _untyped_ access to the underlying PODIO collection,
-/// at the cost of some weird multiple inheritance. The JEvent can trigger the untyped factory using Create(), then
-///
-class JFactoryPodio {
-protected:
-    const podio::CollectionBase* mCollection = nullptr;
-    bool mIsSubsetCollection = false;
-    podio::Frame* mFrame = nullptr;
-
-public:
-    // Meant to be called from JEvent or VariadicPodioInput
-    const podio::CollectionBase* GetCollection() { return mCollection; }
-    void SetFrame(podio::Frame* frame) { mFrame = frame; }
-
-    // Meant to be called from ctor, or externally, if we are creating a dummy factory such as a multifactory helper
-    void SetSubsetCollection(bool isSubsetCollection=true) { mIsSubsetCollection = isSubsetCollection; }
-};
-
 
 template <typename T>
-class JFactoryPodioT : public JFactoryT<T>, public JFactoryPodio {
+class JFactoryPodioT : public JFactory {
 public:
     using CollectionT = typename T::collection_type;
 private:
@@ -54,6 +36,7 @@ public:
     void Create(const JEvent& event) final;
 
     void SetTag(std::string tag) { mOutput.SetUniqueName(tag); }
+    void SetSubsetCollection(bool is_subset=true) { mOutput.SetSubsetCollection(is_subset); }
 
     std::type_index GetObjectType() const final { return std::type_index(typeid(T)); }
     std::size_t GetNumObjects() const final { return mOutput.GetDatabundle()->GetSize(); }
@@ -61,6 +44,7 @@ public:
 
     void SetCollection(CollectionT&& collection);
     void SetCollection(std::unique_ptr<CollectionT> collection);
+    const podio::CollectionBase* GetCollection() { return mOutput.GetDatabundle()->GetCollection(); }
 
 
 private:
@@ -72,7 +56,9 @@ private:
 
 
 template <typename T>
-JFactoryPodioT<T>::JFactoryPodioT() = default;
+JFactoryPodioT<T>::JFactoryPodioT() {
+    SetObjectName(JTypeInfo::demangle<T>());
+}
 
 template <typename T>
 JFactoryPodioT<T>::~JFactoryPodioT() {
@@ -84,11 +70,7 @@ template <typename T>
 void JFactoryPodioT<T>::SetCollection(CollectionT&& collection) {
     /// Provide a PODIO collection. Note that PODIO assumes ownership of this collection.
 
-    CollectionT* coll = new CollectionT;
-    *coll = std::move(collection);
-    this->mOutput.GetDatabundle()->SetCollection(coll);
-    // Inserting into frame is handled by StoreData()
-    // Updating JFactoryPodio::mCollection, mFrame is handled by Create()
+    (*mOutput()) = std::move(collection);
 }
 
 
@@ -97,10 +79,7 @@ void JFactoryPodioT<T>::SetCollection(std::unique_ptr<CollectionT> collection) {
     /// Provide a PODIO collection. Note that PODIO assumes ownership of this collection, and the
     /// collection pointer should be assumed to be invalid after this call
 
-    CollectionT* coll = collection.release();
-    this->mOutput.GetDatabundle()->SetCollection(coll);
-    // Inserting into frame is handled by StoreData()
-    // Updating JFactoryPodio::mCollection, mFrame is handled by Create()
+    mOutput() = std::move(collection);
 }
 
 
@@ -118,8 +97,6 @@ void JFactoryPodioT<T>::ClearData() {
             db->ClearData();
         }
     }
-    mCollection = nullptr;
-    mFrame = nullptr;
 }
 
 template <typename T>
@@ -134,23 +111,21 @@ podio::Frame* GetOrCreateFrame(const JEvent& event);
 
 template <typename T>
 void JFactoryPodioT<T>::Create(const JEvent& event) {
-    auto* frame = GetOrCreateFrame(event);
     try {
         JFactory::Create(event);
-        mFrame = mOutput.GetDatabundle()->GetFrame();
-        mCollection = mOutput.GetDatabundle()->GetCollection();
     }
     catch (...) {
         if (mOutput.GetDatabundle()->GetCollection() == nullptr) {
             // If calling Create() excepts, we still create an empty collection
             // so that podio::ROOTWriter doesn't segfault on the null mCollection pointer
             const std::string& unique_name = mOutput.GetDatabundle()->GetUniqueName();
+            auto* frame = GetOrCreateFrame(event);
+            auto coll = CollectionT();
+            coll.setSubsetCollection(mOutput.IsSubsetCollection());
             frame->put(CollectionT(), unique_name);
             const auto* moved = &frame->template get<CollectionT>(unique_name);
             mOutput.GetDatabundle()->SetCollection(moved);
             mOutput.GetDatabundle()->SetFrame(frame);
-            mCollection = moved;
-            mFrame = frame;
         }
         throw;
     }

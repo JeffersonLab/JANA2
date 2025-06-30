@@ -67,7 +67,17 @@ public:
         }
         m_has_short_name = true;
     }
-    void SetTypeName(std::string type_name) { m_type_name = type_name; }
+    void SetTypeName(std::string type_name) {
+        m_type_name = type_name; 
+        if (m_has_short_name) {
+            if (m_short_name.empty()) {
+                m_unique_name = type_name;
+            }
+            else {
+                m_unique_name = type_name + ":" + m_short_name;
+            }
+        }
+    }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
     void SetFactory(JFactory* fac) { m_factory = fac; }
 

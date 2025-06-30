@@ -19,7 +19,13 @@ private:
 
 public:
     JLightweightDatabundleT();
+    ~JLightweightDatabundleT();
+
     void AttachData(std::vector<T*>* data) { m_data = data; }
+    void UseSelfContainedData() {
+        m_data = new std::vector<T*>;
+        m_is_owned = true;
+    }
     void ClearData() override;
 
     size_t GetSize() const override { return m_data->size();}
@@ -53,6 +59,13 @@ JLightweightDatabundleT<T>::JLightweightDatabundleT() {
 #if JANA2_HAVE_ROOT
     EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
 #endif
+}
+
+template <typename T>
+JLightweightDatabundleT<T>::~JLightweightDatabundleT() {
+    if (m_is_owned) {
+        delete m_data;
+    }
 }
 
 template <typename T>

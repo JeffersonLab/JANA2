@@ -40,13 +40,17 @@ JFactorySet::~JFactorySet()
     /// to manage its JMultifactoryHelpers.
     if (mIsFactoryOwner) {
 
-        for (auto& pair : mDatabundlesFromUniqueName) {
-            delete pair.second; // Databundles are always owned by the factoryset
-        }
+        // Deleting the factories will clear their databundles but not delete them
         for (auto& f : mFactories) delete f.second;
+
+        // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
+        for (auto* mf : mMultifactories) { delete mf; }
+
+        // Databundles are always owned by the factoryset and always deleted here
+        for (auto& pair : mDatabundlesFromUniqueName) {
+            delete pair.second; 
+        }
     }
-    // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
-    for (auto* mf : mMultifactories) { delete mf; }
 }
 
 //---------------------------------
@@ -79,6 +83,7 @@ void JFactorySet::Add(JDatabundle* databundle) {
     }
     // Note that this is agnostic to event level. We may decide to change this.
     mDatabundlesFromUniqueName[databundle->GetUniqueName()] = databundle;
+    mDatabundles.push_back(databundle);
 }
 
 //---------------------------------
@@ -177,6 +182,13 @@ JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::str
         return it->second;
     }
     return nullptr;
+}
+
+//---------------------------------
+// GetAllDatabundles
+//---------------------------------
+const std::vector<JDatabundle*>& JFactorySet::GetAllDatabundles() const {
+    return mDatabundles;
 }
 
 //---------------------------------

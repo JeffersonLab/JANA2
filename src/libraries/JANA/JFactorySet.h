@@ -37,6 +37,7 @@ class JFactorySet {
         std::vector<JFactory*> GetAllFactories() const;
         std::vector<JMultifactory*> GetAllMultifactories() const;
         template<typename T> std::vector<JFactoryT<T>*> GetAllFactories() const;
+        const std::vector<JDatabundle*>& GetAllDatabundles() const;
 
         std::vector<std::string> GetAllDatabundleUniqueNames() const;
         JDatabundle* GetDatabundle(const std::string& unique_name) const;
@@ -46,6 +47,7 @@ class JFactorySet {
 
     protected:
 
+        std::vector<JDatabundle*> mDatabundles;
         std::map<std::string, JDatabundle*> mDatabundlesFromUniqueName;
         std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
         std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
