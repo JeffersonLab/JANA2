@@ -22,7 +22,7 @@ class JEventSource : public jana::components::JComponent,
 public:
     /// Result describes what happened the last time a GetEvent() was attempted.
     /// If Emit() or GetEvent() reaches an error state, it should throw a JException instead.
-    enum class Result { Success, FailureTryAgain, FailureFinished };
+    enum class Result { Success, FailureTryAgain, FailureFinished, FailureLevelChange };
 
     /// The user is supposed to _throw_ RETURN_STATUS::kNO_MORE_EVENTS or kBUSY from GetEvent()
     enum class RETURN_STATUS { kSUCCESS, kNO_MORE_EVENTS, kBUSY, kTRY_AGAIN, kERROR, kUNKNOWN };
@@ -38,6 +38,9 @@ private:
     bool m_enable_finish_event = false;
     bool m_enable_get_objects = false;
     bool m_enable_process_parallel = false;
+
+    std::vector<JEventLevel> m_event_levels;
+    JEventLevel m_next_level = JEventLevel::None;
 
 
 public:
@@ -174,6 +177,9 @@ public:
     void SetNEvents(uint64_t nevents) { m_nevents = nevents; };
     void SetNSkip(uint64_t nskip) { m_nskip = nskip; };
 
+    void SetNextEventLevel(JEventLevel level) { m_next_level = level; }
+    void SetEventLevels(std::vector<JEventLevel> levels) { m_event_levels = levels; }
+
 
     // Internal
 
@@ -182,7 +188,7 @@ public:
     void DoOpen(bool with_lock=true);
 
     void DoClose(bool with_lock=true);
-    
+
     Result DoNext(std::shared_ptr<JEvent> event);
 
     Result DoNextCompatibility(std::shared_ptr<JEvent> event);
