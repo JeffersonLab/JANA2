@@ -134,10 +134,6 @@ public:
     void Summarize(JComponentSummary& summary) const override;
 
 
-    virtual void Set(const std::vector<JObject *> &data) = 0;
-    virtual void Insert(JObject *data) = 0;
-
-
 protected:
 
     bool mRegenerate = false;
