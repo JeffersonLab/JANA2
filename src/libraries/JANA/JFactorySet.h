@@ -20,40 +20,39 @@ class JMultifactory;
 
 class JFactorySet {
 
-    public:
-        JFactorySet();
-        JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);
-        virtual ~JFactorySet();
+private:
+    std::vector<JDatabundle*> mDatabundles;
+    std::map<std::string, JDatabundle*> mDatabundlesFromUniqueName;
+    std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
+    std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
+    std::vector<JMultifactory*> mMultifactories;
+    bool mIsFactoryOwner = true;
+    JEventLevel mLevel = JEventLevel::PhysicsEvent;
 
-        bool Add(JFactory* aFactory);
-        bool Add(JMultifactory* multifactory);
-        void Add(JDatabundle* databundle);
-        void Print() const;
-        void Clear();
-        void Finish();
+public:
+    JFactorySet();
+    JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);
+    virtual ~JFactorySet();
 
-        JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
-        template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
-        std::vector<JFactory*> GetAllFactories() const;
-        std::vector<JMultifactory*> GetAllMultifactories() const;
-        template<typename T> std::vector<JFactoryT<T>*> GetAllFactories() const;
-        const std::vector<JDatabundle*>& GetAllDatabundles() const;
+    bool Add(JFactory* aFactory);
+    bool Add(JMultifactory* multifactory);
+    void Add(JDatabundle* databundle);
+    void Print() const;
+    void Clear();
+    void Finish();
 
-        std::vector<std::string> GetAllDatabundleUniqueNames() const;
-        JDatabundle* GetDatabundle(const std::string& unique_name) const;
+    JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
+    template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
+    std::vector<JFactory*> GetAllFactories() const;
+    std::vector<JMultifactory*> GetAllMultifactories() const;
+    template<typename T> std::vector<JFactoryT<T>*> GetAllFactories() const;
+    const std::vector<JDatabundle*>& GetAllDatabundles() const;
 
-        JEventLevel GetLevel() const { return mLevel; }
-        void SetLevel(JEventLevel level) { mLevel = level; }
+    std::vector<std::string> GetAllDatabundleUniqueNames() const;
+    JDatabundle* GetDatabundle(const std::string& unique_name) const;
 
-    protected:
-
-        std::vector<JDatabundle*> mDatabundles;
-        std::map<std::string, JDatabundle*> mDatabundlesFromUniqueName;
-        std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
-        std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
-        std::vector<JMultifactory*> mMultifactories;
-        bool mIsFactoryOwner = true;
-        JEventLevel mLevel = JEventLevel::PhysicsEvent;
+    JEventLevel GetLevel() const { return mLevel; }
+    void SetLevel(JEventLevel level) { mLevel = level; }
 };
 
 
