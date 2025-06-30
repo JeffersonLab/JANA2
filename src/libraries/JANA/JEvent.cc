@@ -25,19 +25,6 @@ JEvent::~JEvent() {
 void JEvent::SetFactorySet(JFactorySet* factorySet) {
     delete mFactorySet;
     mFactorySet = factorySet;
-#if JANA2_HAVE_PODIO
-    // Maintain the index of PODIO factories
-    for (JFactory* factory : mFactorySet->GetAllFactories()) {
-        if (dynamic_cast<JFactoryPodio*>(factory) != nullptr) {
-            auto tag = factory->GetTag();
-            auto it = mPodioFactories.find(tag);
-            if (it != mPodioFactories.end()) {
-                throw JException("SetFactorySet failed because PODIO factory tag '%s' is not unique", tag.c_str());
-            }
-            mPodioFactories[tag] = factory;
-        }
-    }
-#endif
 }
 
 

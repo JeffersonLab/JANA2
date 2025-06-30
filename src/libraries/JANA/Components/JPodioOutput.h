@@ -15,7 +15,9 @@ template <typename PodioT>
 class PodioOutput : public JHasDatabundleOutputs::OutputBase {
 private:
     std::unique_ptr<typename PodioT::collection_type> m_transient_collection;
+    bool m_is_subset = false;
     JPodioDatabundle* m_podio_databundle;
+
 public:
     PodioOutput(JHasDatabundleOutputs* owner, std::string unique_name="") {
 
@@ -35,6 +37,9 @@ public:
     std::unique_ptr<typename PodioT::collection_type>& operator()() { return m_transient_collection; }
 
     JPodioDatabundle* GetDatabundle() const { return m_podio_databundle; }
+
+    void SetSubsetCollection(bool is_subset) { m_is_subset = is_subset; }
+    bool IsSubsetCollection() const { return m_is_subset; }
 
     void SetUniqueName(std::string unique_name) {
         this->m_podio_databundle->SetUniqueName(unique_name);
@@ -57,6 +62,7 @@ protected:
 
         if (bundle == nullptr) {
             typed_bundle = new JLightweightDatabundleT<podio::Frame>;
+            typed_bundle->UseSelfContainedData();
             facset.Add(typed_bundle);
         }
         else {
@@ -68,6 +74,7 @@ protected:
         }
         podio::Frame* frame = typed_bundle->GetData().at(0);
 
+        m_transient_collection->setSubsetCollection(m_is_subset);
         frame->put(std::move(m_transient_collection), m_podio_databundle->GetUniqueName());
         const auto* moved = &frame->template get<typename PodioT::collection_type>(m_podio_databundle->GetUniqueName());
         m_transient_collection = nullptr;
