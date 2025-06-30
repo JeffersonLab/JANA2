@@ -2,7 +2,6 @@
 #pragma once
 #include <JANA/Components/JDatabundle.h>
 #include <JANA/Utils/JEventLevel.h>
-#include <memory>
 
 class JFactorySet;
 
@@ -21,7 +20,7 @@ public:
 
         const std::vector<JDatabundle*>& GetDatabundles() { return databundles; }
 
-        virtual void StoreData(const JFactorySet&) = 0;
+        virtual void StoreData(JFactorySet&) = 0;
         virtual void Reset() = 0;
     };
 

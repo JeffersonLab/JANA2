@@ -89,14 +89,6 @@ public:
         Set(std::move(data));
     }
 
-    /// Please use the typed setters instead whenever possible
-    [[deprecated]]
-    void Insert(JObject* aDatum) override {
-        T* casted = dynamic_cast<T*>(aDatum);
-        assert(casted != nullptr);
-        Insert(casted);
-    }
-
     virtual void Set(const std::vector<T*>& aData) {
         if (aData == mData) {
             // The user populated mData directly instead of populating a temporary vector and passing it to us.
@@ -171,8 +163,6 @@ public:
     template <typename S> void EnableGetAs(std::false_type) {}
 
     void ClearData() override {
-        // This is mainly used for test cases now. JFactorySet::Clear directly clears all databundles, 
-        // even those without a corresponding JFactory.
 
         if (mStatus == Status::Uninitialized) {
             // ClearData won't do anything if Init() hasn't been called

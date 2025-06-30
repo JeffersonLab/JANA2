@@ -42,7 +42,7 @@ public:
     JLightweightDatabundleT<T>& GetDatabundle() { return *m_databundle; }
 
 
-    void StoreData(const JFactorySet&) override {
+    void StoreData(JFactorySet&) override {
     //    event.Insert(m_data, this->collection_names[0]);
     }
 

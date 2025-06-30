@@ -5,13 +5,14 @@
 
 #include <JANA/Components/JDatabundle.h>
 #include <podio/CollectionBase.h>
-#include <podio/podioVersion.h>
+#include <podio/Frame.h>
 
 
 class JPodioDatabundle : public JDatabundle {
 
 private:
     const podio::CollectionBase* m_collection = nullptr;
+    podio::Frame* m_frame = nullptr;
 
 public:
     size_t GetSize() const override {
@@ -23,6 +24,8 @@ public:
 
     virtual void ClearData() override {
         m_collection = nullptr;
+        m_frame = nullptr;
+
         SetStatus(JDatabundle::Status::Empty);
         // Podio clears the data itself when the frame is destroyed.
         // Until then, the collection is immutable.
@@ -36,7 +39,10 @@ public:
     }
 
     const podio::CollectionBase* GetCollection() const { return m_collection; }
+    podio::Frame* GetFrame() const { return m_frame; }
+
     void SetCollection(const podio::CollectionBase* collection) { m_collection = collection; }
+    void SetFrame(podio::Frame* frame) { m_frame = frame; }
 };
 
 
