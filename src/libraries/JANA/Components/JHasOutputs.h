@@ -41,7 +41,7 @@ public:
 
     template <typename T>
     class Output : public OutputBase {
-        std::vector<T*> m_data;
+        std::vector<T*> m_transient_data;
         bool is_not_owner = false;
 
     public:
@@ -56,7 +56,7 @@ public:
             this->collection_names.push_back(tag);
         }
 
-        std::vector<T*>& operator()() { return m_data; }
+        std::vector<T*>& operator()() { return m_transient_data; }
 
         void SetNotOwnerFlag(bool not_owner=true) { is_not_owner = not_owner; }
 
@@ -67,12 +67,13 @@ public:
         }
 
         void SetCollection(JMultifactory& fac) override {
-            fac.SetData<T>(this->collection_names[0], this->m_data);
+            fac.SetData<T>(this->collection_names[0], this->m_transient_data);
         }
 
         void InsertCollection(JEvent& event) override {
-            auto fac = event.Insert(m_data, this->collection_names[0]);
+            auto fac = event.Insert(m_transient_data, this->collection_names[0]);
             fac->SetNotOwnerFlag(is_not_owner);
+            m_transient_data.clear();
         }
         void Reset() override { }
 

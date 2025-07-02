@@ -1,8 +1,10 @@
 #include "MultiLevelTopologyTests.h"
 #include "JANA/Engine/JExecutionEngine.h"
+#include "JANA/JApplicationFwd.h"
 #include "JANA/JException.h"
 #include "JANA/Topology/JArrow.h"
 #include "JANA/Topology/JTopologyBuilder.h"
+#include "JANA/Utils/JEventLevel.h"
 
 #include <iostream>
 #include <map>
@@ -89,6 +91,29 @@ TEST_CASE("TimeslicesTests") {
 
 
 } // namespace timeslice_tests
+
+
+namespace multilevel_source_tests {
+
+TEST_CASE("MultilevelSource_Trivial") {
+    // This test case demonstrates the multilevel source behaving just like the plain old JEventSource
+
+    JApplication app;
+    auto* source = new MyMultilevelSource;
+    auto* proc = new MyMultilevelProcessor;
+
+    source->SetEventLevels({JEventLevel::PhysicsEvent});
+    source->data_stream = {{JEventLevel::PhysicsEvent, 4}, {JEventLevel::PhysicsEvent, 5}, {JEventLevel::PhysicsEvent, 6}};
+    proc->expected_data_stream = {{-1,-1,4}, {-1,-1,5}, {-1,-1,6}};
+
+    app.Add(source);
+    app.Add(proc);
+    app.Run();
+}
+
+
+
+} // namespace multilevel_source_tests
 } // namespce jana
 
 
