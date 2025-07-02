@@ -35,6 +35,8 @@ public:
         virtual void SetCollection(JMultifactory& fac) = 0;
         virtual void InsertCollection(JEvent& event) = 0;
         virtual void Reset() = 0;
+
+        void SetLevel(JEventLevel level) { this->level = level; }
     };
 
     template <typename T>
