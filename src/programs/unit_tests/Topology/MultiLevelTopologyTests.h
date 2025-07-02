@@ -180,6 +180,7 @@ struct MyMultilevelSource : public JEventSource {
     Output<MyHits> m_hits_out {this};
 
     MyMultilevelSource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
         SetEventLevels({JEventLevel::Run, JEventLevel::SlowControls, JEventLevel::PhysicsEvent});
 
         m_calibs_out.SetLevel(JEventLevel::Run);
@@ -188,6 +189,11 @@ struct MyMultilevelSource : public JEventSource {
     }
 
     Result Emit(JEvent& event) override {
+
+        if (data_stream_index >= data_stream.size()) {
+            return Result::FailureFinished;
+        }
+
         auto container_level = event.GetLevel();
         auto data_level = data_stream[data_stream_index].first;
 
@@ -223,12 +229,22 @@ struct MyMultilevelProcessor : public JEventProcessor {
     MyMultilevelProcessor() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
         m_calibs_in.SetLevel(JEventLevel::Run);
+        m_calibs_in.SetOptional(true);
+
         m_controls_in.SetLevel(JEventLevel::SlowControls);
+        m_controls_in.SetOptional(true);
+
         m_hits_in.SetLevel(JEventLevel::PhysicsEvent);
+        m_hits_in.SetOptional(true);
     }
 
     void ProcessSequential(const JEvent&) override {
-        actual_data_stream.push_back({m_calibs_in->at(0)->x, m_controls_in->at(0)->x, m_hits_in->at(0)->x});
+
+        int calib = m_calibs_in->size() == 0 ? -1 : m_calibs_in->at(0)->x;
+        int control = m_controls_in->size() == 0 ? -1 : m_controls_in->at(0)->x;
+        int hit = m_hits_in->size() == 0 ? -1 : m_hits_in->at(0)->x;
+
+        actual_data_stream.push_back({calib, control, hit});
     }
 
     void Finish() override {
