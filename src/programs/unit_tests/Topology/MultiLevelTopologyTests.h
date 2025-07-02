@@ -163,4 +163,80 @@ struct MyClusterFactory : public JFactoryT<MyCluster> {
 };
 
 } // namespace timeslice_tests
+
+namespace multilevel_source_tests {
+
+struct MyCalibs {int x=0; };
+struct MyControls {int x=0; };
+struct MyHits {int x=0; };
+
+struct MyMultilevelSource : public JEventSource {
+
+    std::vector<std::pair<JEventLevel, int>> data_stream;
+    size_t data_stream_index = 0;
+
+    Output<MyCalibs> m_calibs_out {this};
+    Output<MyControls> m_controls_out {this};
+    Output<MyHits> m_hits_out {this};
+
+    MyMultilevelSource() {
+        SetEventLevels({JEventLevel::Run, JEventLevel::SlowControls, JEventLevel::PhysicsEvent});
+
+        m_calibs_out.SetLevel(JEventLevel::Run);
+        m_controls_out.SetLevel(JEventLevel::SlowControls);
+        m_hits_out.SetLevel(JEventLevel::PhysicsEvent);
+    }
+
+    Result Emit(JEvent& event) override {
+        auto container_level = event.GetLevel();
+        auto data_level = data_stream[data_stream_index].first;
+
+        if (container_level != data_level) {
+            SetNextEventLevel(data_level);
+            return JEventSource::Result::FailureLevelChange;
+        }
+
+        if (data_level == JEventLevel::PhysicsEvent) {
+            m_hits_out().push_back(new MyHits {data_stream[data_stream_index].second});
+        }
+        else if (data_level == JEventLevel::SlowControls) {
+            m_controls_out().push_back(new MyControls {data_stream[data_stream_index].second});
+        }
+        else if (data_level == JEventLevel::Run) {
+            m_calibs_out().push_back(new MyCalibs {data_stream[data_stream_index].second});
+        }
+
+        data_stream_index += 1;
+        return Result::Success;
+    }
+};
+
+struct MyMultilevelProcessor : public JEventProcessor {
+
+    std::vector<std::tuple<int, int, int>> expected_data_stream;
+    std::vector<std::tuple<int, int, int>> actual_data_stream;
+
+    Input<MyCalibs> m_calibs_in {this};
+    Input<MyControls> m_controls_in {this};
+    Input<MyHits> m_hits_in {this};
+
+    MyMultilevelProcessor() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+        m_calibs_in.SetLevel(JEventLevel::Run);
+        m_controls_in.SetLevel(JEventLevel::SlowControls);
+        m_hits_in.SetLevel(JEventLevel::PhysicsEvent);
+    }
+
+    void ProcessSequential(const JEvent&) override {
+        actual_data_stream.push_back({m_calibs_in->at(0)->x, m_controls_in->at(0)->x, m_hits_in->at(0)->x});
+    }
+
+    void Finish() override {
+        REQUIRE(expected_data_stream == actual_data_stream);
+    }
+
+};
+
+
+} //namespace multilevel_source_tests
 } // namespace jana
