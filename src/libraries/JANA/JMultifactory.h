@@ -184,8 +184,8 @@ void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
 
 template <typename T>
 void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::CollectionT&& collection) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
-    if (helper == nullptr) {
+    auto* bundle = mHelpers.GetDatabundle(tag);
+    if (bundle == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
         ex.function_name = "JMultifactory::SetCollection";
         ex.type_name = m_type_name;
@@ -193,7 +193,7 @@ void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::C
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
-    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
+    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(bundle->GetFactory());
     if (typed == nullptr) {
         auto ex = JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
         ex.function_name = "JMultifactory::SetCollection";
@@ -207,8 +207,8 @@ void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::C
 
 template <typename T>
 void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFactoryPodioT<T>::CollectionT> collection) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
-    if (helper == nullptr) {
+    auto* bundle = mHelpers.GetDatabundle(tag);
+    if (bundle == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
         ex.function_name = "JMultifactory::SetCollection";
         ex.type_name = m_type_name;
@@ -216,7 +216,7 @@ void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFac
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
-    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
+    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(bundle->GetFactory());
     if (typed == nullptr) {
         auto ex = JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
         ex.function_name = "JMultifactory::SetCollection";
