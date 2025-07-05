@@ -122,11 +122,9 @@ TEST_CASE("FoldArrowTests") {
 
 
         evt1->SetParent(ts1);
-        ts1->Release(); // One-to-one
         child_in.Push(evt1, 0);
 
         evt2->SetParent(ts2);
-        ts2->Release(); // One-to-one
         child_in.Push(evt2, 0);
     
         arrow.execute(0);
@@ -162,11 +160,9 @@ TEST_CASE("FoldArrowTests") {
 
         evt1->SetParent(ts1);
         evt2->SetParent(ts1);
-        ts1->Release(); // One-to-two
         
         evt3->SetParent(ts2);
         evt4->SetParent(ts2);
-        ts2->Release(); // One-to-two
    
         child_in.Push(evt1, 0);
         child_in.Push(evt2, 0);

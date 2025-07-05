@@ -59,7 +59,7 @@ void JArrow::push(OutputData& outputs, size_t output_count, size_t location_id) 
         }
         else if (port.pool != nullptr) {
             event->Clear(!port.is_input);
-            port.pool->Push(event, location_id);
+            port.pool->Ingest(event, location_id);
         }
         else {
             throw JException("Arrow %s: Port %d not wired!", m_name.c_str(), port_index);
