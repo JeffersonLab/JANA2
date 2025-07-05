@@ -77,6 +77,18 @@ public:
         return mData;
     }
 
+    /// Please use the typed setters instead whenever possible
+    [[deprecated]]
+    void Set(const std::vector<JObject*>& aData) override {
+        std::vector<T*> data;
+        for (auto obj : aData) {
+            T* casted = dynamic_cast<T*>(obj);
+            assert(casted != nullptr);
+            data.push_back(casted);
+        }
+        Set(std::move(data));
+    }
+
     virtual void Set(const std::vector<T*>& aData) {
         if (aData == mData) {
             // The user populated mData directly instead of populating a temporary vector and passing it to us.

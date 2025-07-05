@@ -133,6 +133,8 @@ public:
     void DoFinish();
     void Summarize(JComponentSummary& summary) const override;
 
+    virtual void Set(const std::vector<JObject *>&) { throw JException("Not supported!"); }
+
 
 protected:
 
