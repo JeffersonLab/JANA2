@@ -77,8 +77,8 @@ protected:
         m_transient_collection->setSubsetCollection(m_is_subset);
         frame->put(std::move(m_transient_collection), m_podio_databundle->GetUniqueName());
         const auto* moved = &frame->template get<typename PodioT::collection_type>(m_podio_databundle->GetUniqueName());
-        m_transient_collection = nullptr;
         m_podio_databundle->SetCollection(moved);
+        m_transient_collection = std::make_unique<typename PodioT::collection_type>();
     }
 
     void Reset() override {
