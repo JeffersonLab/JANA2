@@ -38,6 +38,7 @@ public:
         if (this->m_next_input_port == PARENT_IN) {
             assert(m_parent_event == nullptr);
             m_parent_event = event;
+            m_parent_event->TakeRefToSelf();
         }
         else if (this->m_next_input_port == CHILD_IN) {
             assert(m_child_event == nullptr);
@@ -81,7 +82,7 @@ public:
         if (result == JEventUnfolder::Result::KeepChildNextParent) {
             // KeepChildNextParent is a little more complicated because we have to handle the case of the parent having no children.
             // In this case the parent obviously doesn't get shared among any children, and instead it is sent to the REJECTED_PARENT_OUT port.
-            int child_count = m_parent_event->Release(); // Decrement the reference count so that this can be recycled
+            int child_count = m_parent_event->ReleaseRefToSelf(); // Decrement the reference count so that this can be recycled
             LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << " (" << child_count << " children emitted)";
 
             if (child_count > 0) {
@@ -113,7 +114,7 @@ public:
         }
         else if (result == JEventUnfolder::Result::NextChildNextParent) {
             m_child_event->SetParent(m_parent_event);
-            m_parent_event->Release(); // Decrement the reference count so that this can be recycled
+            m_parent_event->ReleaseRefToSelf(); // Decrement the reference count so that this can be recycled
             outputs[0] = {m_child_event, CHILD_OUT};
             output_count = 1;
             LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;

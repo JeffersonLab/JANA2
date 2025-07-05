@@ -2,6 +2,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 // Author: Nathan Brei
 
+#include "JANA/JEvent.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <JANA/Topology/JEventPool.h>
 
@@ -58,6 +59,36 @@ void JEventPool::Scale(size_t capacity) {
         Push(evt->get(), evt_idx % GetLocationCount());
     }
 }
+
+void JEventPool::Ingest(JEvent* event, size_t location) {
+
+    // Detach and foward parents
+    auto finished_parents = event->ReleaseAllParents();
+    // TODO: I'd prefer to not have to do an allocation each time, but this will work for now
+    for (auto* parent : finished_parents) {
+        m_parent_pools.at(parent->GetLevel())->NotifyThatAllChildrenFinished(parent, location);
+        // TODO: This is likely the wrong location. Obtain from parent event?
+    }
+
+    if (event->GetChildCount() == 0) {
+        // There's no way for additional children to appear because Ingest takes the "original" parent
+        Push(event, location);
+    }
+    else {
+        // We've received the original but we can't push it until all children have been pushed to 
+        // _their_ pools, in which case we push once we receive the notification
+        m_pending.insert(event);
+    }
+}
+
+
+void JEventPool::NotifyThatAllChildrenFinished(JEvent* event, size_t location) {
+    size_t was_present = m_pending.erase(event);
+    if (was_present == 1) {
+        Push(event, location);
+    }
+}
+
 
 void JEventPool::Finalize() {
     for (auto& evt : m_owned_events) {

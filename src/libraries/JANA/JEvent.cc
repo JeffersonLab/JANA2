@@ -80,13 +80,34 @@ JEvent* JEvent::ReleaseParent(JEventLevel level) {
     }
 }
 
-int JEvent::Release() {
+std::vector<JEvent*> JEvent::ReleaseAllParents() {
+    std::vector<JEvent*> released_parents;
+
+    for (auto it : mParents) {
+        auto remaining_refs = it.second->mReferenceCount.fetch_sub(1);
+        if (remaining_refs == 1) {
+            released_parents.push_back(it.second);
+        }
+    }
+    mParents.clear();
+    return released_parents;
+}
+
+void JEvent::TakeRefToSelf() {
+    mReferenceCount++;
+}
+
+int JEvent::ReleaseRefToSelf() {
     int remaining_refs = mReferenceCount.fetch_sub(1);
     remaining_refs -= 1; // fetch_sub post increments
     if (remaining_refs < 0) {
         throw JException("JEvent's own refcount has gone negative!");
     }
     return remaining_refs;
+}
+
+int JEvent::GetChildCount() {
+    return mReferenceCount;
 }
 
 void JEvent::Clear(bool processed_successfully) {
@@ -97,7 +118,6 @@ void JEvent::Clear(bool processed_successfully) {
     mFactorySet.Clear();
     mInspector.Reset();
     mCallGraph.Reset();
-    mReferenceCount = 1;
 }
 
 void JEvent::Finish() {

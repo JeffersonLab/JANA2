@@ -50,7 +50,7 @@ private:
 
     // Hierarchical event memory management
     std::vector<std::pair<JEventLevel, JEvent*>> mParents;
-    std::atomic_int mReferenceCount {1};
+    std::atomic_int mReferenceCount {0};
     int64_t mEventIndex = -1;
 
 
@@ -87,7 +87,11 @@ public:
     const JEvent& GetParent(JEventLevel level) const;
     void SetParent(JEvent* parent);
     JEvent* ReleaseParent(JEventLevel level);
-    int Release();
+    std::vector<JEvent*> ReleaseAllParents();
+    int GetChildCount();
+
+    void TakeRefToSelf();
+    int ReleaseRefToSelf();
 
     // Lifecycle
     void Clear(bool processed_successfully=true);
