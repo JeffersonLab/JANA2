@@ -133,9 +133,7 @@ public:
     void DoFinish();
     void Summarize(JComponentSummary& summary) const override;
 
-
-    virtual void Set(const std::vector<JObject *> &data) = 0;
-    virtual void Insert(JObject *data) = 0;
+    virtual void Set(const std::vector<JObject *>&) { throw JException("Not supported!"); }
 
 
 protected:
