@@ -430,7 +430,7 @@ protected:
                     if (typed_databundle == nullptr) {
                         throw JException("Not a JPodioDatabundle: type_name=%s, unique_name=%s", databundle->GetTypeName().c_str(), databundle->GetUniqueName().c_str());
                     }
-                    auto typed_collection = dynamic_cast<const PodioT::collection_type*>(typed_databundle->GetCollection());
+                    auto typed_collection = dynamic_cast<const typename PodioT::collection_type*>(typed_databundle->GetCollection());
                     if (typed_collection == nullptr) {
                         throw JException("Podio collection is not a %s: type_name=%s, unique_name=%s", JTypeInfo::demangle<PodioT>().c_str(), databundle->GetTypeName().c_str(), databundle->GetUniqueName().c_str());
                     }
