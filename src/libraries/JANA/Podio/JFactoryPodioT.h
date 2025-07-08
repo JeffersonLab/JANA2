@@ -84,6 +84,7 @@ void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collectio
     this->mStatus = JFactory::Status::Inserted;
     this->mCreationStatus = JFactory::CreationStatus::Inserted;
     this->mOutput.GetDatabundle()->SetCollection(collection);
+    this->mOutput.GetDatabundle()->SetStatus(JDatabundle::Status::Inserted);
 }
 
 // This free function is used to break the dependency loop between JFactoryPodioT and JEvent.

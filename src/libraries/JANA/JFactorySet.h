@@ -23,6 +23,7 @@ class JFactorySet {
 private:
     std::vector<JDatabundle*> mDatabundles;
     std::map<std::string, JDatabundle*> mDatabundlesFromUniqueName;
+    std::map<std::type_index, std::vector<JDatabundle*>> mDatabundlesFromTypeIndex;
     std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
     std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
     std::vector<JMultifactory*> mMultifactories;
@@ -50,6 +51,7 @@ public:
 
     std::vector<std::string> GetAllDatabundleUniqueNames() const;
     JDatabundle* GetDatabundle(const std::string& unique_name) const;
+    const std::vector<JDatabundle*>& GetDatabundles(std::type_index index) const;
 
     JEventLevel GetLevel() const { return mLevel; }
     void SetLevel(JEventLevel level) { mLevel = level; }

@@ -4,9 +4,8 @@
 
 #pragma once
 #include "JANA/Components/JComponentSummary.h"
-#if JANA2_HAVE_PODIO
-#include "JANA/Podio/JFactoryPodioT.h"
-#endif
+#include "JANA/Utils/JTypeInfo.h"
+#include <typeindex>
 #include <JANA/JEvent.h>
 
 
@@ -425,16 +424,19 @@ protected:
                 }
             }
             else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
-                auto facs = event.GetFactorySet()->GetAllFactories<PodioT>();
-                for (auto* fac : facs) {
-                    JFactoryPodioT<PodioT>* podio_fac = dynamic_cast<JFactoryPodioT<PodioT>*>(fac);
-                    if (podio_fac == nullptr) {
-                        throw JException("Found factory which is NOT a podio factory!");
+                auto databundles = event.GetFactorySet()->GetDatabundles(std::type_index(typeid(PodioT)));
+                for (auto* databundle : databundles) {
+                    auto typed_databundle = dynamic_cast<JPodioDatabundle*>(databundle);
+                    if (typed_databundle == nullptr) {
+                        throw JException("Not a JPodioDatabundle: type_name=%s, unique_name=%s", databundle->GetTypeName().c_str(), databundle->GetUniqueName().c_str());
                     }
-                    auto typed_collection = dynamic_cast<const typename PodioT::collection_type*>(podio_fac->GetCollection());
+                    auto typed_collection = dynamic_cast<const typename PodioT::collection_type*>(typed_databundle->GetCollection());
+                    if (typed_collection == nullptr) {
+                        throw JException("Podio collection is not a %s: type_name=%s, unique_name=%s", JTypeInfo::demangle<PodioT>().c_str(), databundle->GetTypeName().c_str(), databundle->GetUniqueName().c_str());
+                    }
                     m_datas.push_back(typed_collection);
                     if (need_dynamic_realized_databundle_names) {
-                        m_realized_databundle_names.push_back(podio_fac->GetTag());
+                        m_realized_databundle_names.push_back(typed_databundle->GetUniqueName());
                     }
                 }
             }

@@ -24,7 +24,6 @@
 #include <atomic>
 
 #if JANA2_HAVE_PODIO
-#include <JANA/Podio/JFactoryPodioT.h>
 #include <JANA/Components/JPodioDatabundle.h>
 #endif
 
@@ -122,9 +121,9 @@ public:
 #if JANA2_HAVE_PODIO
     std::vector<std::string> GetAllCollectionNames() const;
     const podio::CollectionBase* GetCollectionBase(std::string name, bool throw_on_missing=true) const;
-    template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name, bool throw_on_missing=true) const;
-    template <typename T> JFactoryPodioT<T>* InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name);
-    template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name);
+    template <typename T> const typename T::collection_type* GetCollection(std::string name, bool throw_on_missing=true) const;
+    template <typename T> void InsertCollection(typename T::collection_type&& collection, std::string name);
+    template <typename T> void InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name);
 #endif
 
 
@@ -417,11 +416,11 @@ inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
     return unique_names;
 }
 
-inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing) const {
-    auto* bundle = mFactorySet->GetDatabundle(name);
+inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string unique_name, bool throw_on_missing) const {
+    auto* bundle = mFactorySet->GetDatabundle(unique_name);
     if (bundle == nullptr) {
         if (throw_on_missing) {
-            throw JException("Missing databundle with uniquename '%s'", name.c_str());
+            throw JException("Missing databundle with uniquename '%s'", unique_name.c_str());
         }
         return nullptr;
     }
@@ -429,7 +428,7 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, 
     auto* typed_bundle = dynamic_cast<JPodioDatabundle*>(bundle);
     if (typed_bundle == nullptr) {
         if (throw_on_missing) {
-            throw JException("Databundle with uniquename '%s' is not a JPodioDatabundle", name.c_str());
+            throw JException("Databundle with uniquename '%s' is not a JPodioDatabundle", unique_name.c_str());
         }
         return nullptr;
     }
@@ -447,7 +446,7 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, 
 
 
 template <typename T>
-const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
+const typename T::collection_type* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
 
     auto collection = GetCollectionBase(name, throw_on_missing);
     auto* typed_collection = dynamic_cast<const typename T::collection_type*>(collection);
@@ -459,18 +458,30 @@ const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string
 
 
 template <typename T>
-JFactoryPodioT<T>* JEvent::InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name) {
-    /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JFactoryPodioT<T>
+void JEvent::InsertCollection(typename T::collection_type&& collection, std::string name) {
+    /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JPodioDatabundle
 
-    auto frame = GetOrCreateFrame(*this);
+    podio::Frame* frame = nullptr;
+    try {
+        frame = const_cast<podio::Frame*>(GetSingle<podio::Frame>(""));
+        if (frame == nullptr) {
+            frame = new podio::Frame;
+            Insert(frame);
+        }
+    }
+    catch (...) {
+        frame = new podio::Frame;
+        Insert(frame);
+    }
+
     const auto& owned_collection = frame->put(std::move(collection), name);
-    return InsertCollectionAlreadyInFrame<T>(&owned_collection, name);
+    InsertCollectionAlreadyInFrame<T>(&owned_collection, name);
 }
 
 
 template <typename T>
-JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string unique_name) {
-    /// InsertCollection inserts the provided PODIO collection into a JFactoryPodioT<T>. It assumes that the collection pointer
+void JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string unique_name) {
+    /// InsertCollection inserts the provided PODIO collection into a JPodioDatabundle. It assumes that the collection pointer
     /// is _already_ owned by the podio::Frame corresponding to this JEvent. This is meant to be used if you are starting out
     /// with a PODIO frame (e.g. a JEventSource that uses podio::ROOTReader).
 
@@ -488,34 +499,30 @@ JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const podio::Collectio
 
     // Retrieve factory if it already exists, else create it
 
-    JFactoryPodioT<T>* factory = nullptr;
-    auto* bundle = mFactorySet->GetDatabundle(unique_name);
+    JDatabundle* bundle = mFactorySet->GetDatabundle(unique_name);
+    JPodioDatabundle* typed_bundle = nullptr;
 
     if (bundle == nullptr) {
-        factory = new JFactoryPodioT<T>();
-        factory->SetTag(unique_name);
-        factory->SetLevel(GetLevel());
-        mFactorySet->Add(factory);
+        typed_bundle = new JPodioDatabundle();
+        typed_bundle->SetUniqueName(unique_name);
+        typed_bundle->SetTypeIndex(std::type_index(typeid(T)));
+        typed_bundle->SetTypeName(JTypeInfo::demangle<T>());
+        mFactorySet->Add(typed_bundle); 
+        // Note that this transfers ownership to the JFactorySet because there's no corresponding JFactory
     }
     else {
-        factory = dynamic_cast<JFactoryPodioT<T>*>(bundle->GetFactory());
-        // There's a chance that some user already added to the event's JFactorySet a
-        // JFactoryT<PodioT> which ISN'T a JFactoryPodioT<T>. In this case, we cannot set the collection.
-        if (factory == nullptr) {
-            throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
+        typed_bundle = dynamic_cast<JPodioDatabundle*>(bundle);
+        if (typed_bundle == nullptr) {
+            throw JException("Databundle must be a JPodioDatabundle in order to insert a Podio collection");
+        }
+        if (typed_bundle->GetStatus() != JDatabundle::Status::Empty) {
+            // PODIO collections can only be inserted once, unlike regular JANA factories.
+            throw JException("A Podio collection is already present and cannot be overwritten", unique_name.c_str());
         }
     }
 
-    // PODIO collections can only be inserted once, unlike regular JANA factories.
-    if (factory->GetStatus() == JFactory::Status::Inserted  ||
-        factory->GetStatus() == JFactory::Status::Processed) {
-
-        throw JException("PODIO collections can only be inserted once, but factory with tag '%s' already has data", unique_name.c_str());
-    }
-
-    factory->SetCollectionAlreadyInFrame(typed_collection);
-    factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() );
-    return factory;
+    typed_bundle->SetStatus(JDatabundle::Status::Inserted);
+    typed_bundle->SetCollection(typed_collection);
 }
 
 #endif // JANA2_HAVE_PODIO
