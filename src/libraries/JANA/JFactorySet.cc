@@ -22,6 +22,7 @@ JFactorySet::JFactorySet(void)
 //---------------------------------
 // JFactorySet    (Constructor)
 //---------------------------------
+[[deprecated]]
 JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& generators)
 {
     // Add all factories from all factory generators
@@ -57,6 +58,8 @@ JFactorySet::~JFactorySet()
 // Add
 //---------------------------------
 void JFactorySet::Add(JDatabundle* databundle) {
+    LOG << "      Adding databundle with type_name=" << databundle->GetTypeName()
+        << " unique_name=" << databundle->GetUniqueName();
 
     if (databundle->GetUniqueName().empty()) {
         throw JException("Attempted to add a databundle with no unique_name");
@@ -102,8 +105,17 @@ bool JFactorySet::Add(JFactory* aFactory)
     auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
     auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
 
-    if (aFactory->GetLevel() != mLevel && aFactory->GetLevel() != JEventLevel::None) {
+    if (aFactory->GetLevel() != mLevel && mLevel != JEventLevel::None && aFactory->GetLevel() != JEventLevel::None) {
+        LOG << "    Skipping factory with type_name=" << aFactory->GetTypeName()
+            << ", level=" << toString(aFactory->GetLevel())
+            << " to event with level= " << toString(mLevel);
         return false;
+    }
+    else {
+        LOG << "    Adding factory with type_name=" << aFactory->GetTypeName()
+            << ", level=" << toString(aFactory->GetLevel())
+            << " to event with level= " << toString(mLevel);
+
     }
 
     auto typed_result = mFactories.find(typed_key);

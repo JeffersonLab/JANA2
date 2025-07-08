@@ -28,7 +28,7 @@ private:
     std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
     std::vector<JMultifactory*> mMultifactories;
     bool mIsFactoryOwner = true;
-    JEventLevel mLevel = JEventLevel::PhysicsEvent;
+    JEventLevel mLevel = JEventLevel::None;
 
 public:
     JFactorySet();
