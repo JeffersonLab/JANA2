@@ -83,6 +83,7 @@ void JFactorySet::Add(JDatabundle* databundle) {
     }
     // Note that this is agnostic to event level. We may decide to change this.
     mDatabundlesFromUniqueName[databundle->GetUniqueName()] = databundle;
+    mDatabundlesFromTypeIndex[databundle->GetTypeIndex()].push_back(databundle);
     mDatabundles.push_back(databundle);
 }
 
@@ -96,9 +97,14 @@ bool JFactorySet::Add(JFactory* aFactory)
     /// throw an exception and let the user figure out what to do.
     /// This scenario occurs when the user has multiple JFactory<T> producing the
     /// same T JObject, and is not distinguishing between them via tags.
+    /// Returns bool indicating whether the add succeeded.
 
     auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
     auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
+
+    if (aFactory->GetLevel() != mLevel && aFactory->GetLevel() != JEventLevel::None) {
+        return false;
+    }
 
     auto typed_result = mFactories.find(typed_key);
     auto untyped_result = mFactoriesFromString.find(untyped_key);
@@ -165,6 +171,18 @@ JDatabundle* JFactorySet::GetDatabundle(const std::string& unique_name) const {
         return it->second;
     }
     return nullptr;
+}
+
+//---------------------------------
+// GetDataBundles
+//---------------------------------
+const std::vector<JDatabundle*>& JFactorySet::GetDatabundles(std::type_index index) const {
+    static std::vector<JDatabundle*> no_databundles {};
+    auto it = mDatabundlesFromTypeIndex.find(index);
+    if (it != std::end(mDatabundlesFromTypeIndex)) {
+        return it->second;
+    }
+    return no_databundles;
 }
 
 
