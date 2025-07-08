@@ -12,8 +12,6 @@ class JHasDatabundleOutputs {
 public:
     struct OutputBase {
     public:
-        std::string type_name;
-        std::vector<std::string> databundle_names;
         std::vector<JDatabundle*> databundles;
         JEventLevel level = JEventLevel::None;
         bool is_variadic = false;
