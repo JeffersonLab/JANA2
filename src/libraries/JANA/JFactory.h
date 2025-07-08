@@ -41,6 +41,10 @@ public:
     JFactory() = default;
     virtual ~JFactory() = default;
 
+    void SetTag(std::string tag) {
+        GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->SetShortName(tag);
+    }
+
     std::string GetTag() const { 
         auto& db = GetDatabundleOutputs().at(0)->GetDatabundles().at(0);
         if (db->HasShortName()) {
@@ -69,11 +73,14 @@ public:
 
     virtual void SetFactoryFlag(JFactory_Flags_t f) {
         switch (f) {
+            case JFactory::PERSISTENT: SetPersistentFlag(true); break;
             case JFactory::REGENERATE: SetRegenerateFlag(false); break;
             case JFactory::WRITE_TO_OUTPUT: SetWriteToOutputFlag(false); break;
             default: throw JException("Unsupported factory flag");
         }
     };
+
+    void SetPersistentFlag(bool persistent) { mPersistent = persistent; }
     void SetRegenerateFlag(bool regenerate) { mRegenerate = regenerate; }
     void SetWriteToOutputFlag(bool write_to_output) { mWriteToOutput = write_to_output; }
     bool GetWriteToOutputFlag() { return mWriteToOutput; }
@@ -91,10 +98,38 @@ public:
         return datasource;
     }
 
-    // Overloaded by JFactoryT
-    virtual std::type_index GetObjectType() const = 0;
+    std::type_index GetObjectType() const {
+        return GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->GetTypeIndex();
+    }
 
-    virtual void ClearData() = 0;
+    std::size_t GetNumObjects() const {
+        return GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->GetSize();
+    }
+
+    void ClearData() {
+        if (this->mStatus == JFactory::Status::Uninitialized) {
+            return;
+        }
+
+        if (mPersistent) {
+            // Persistence is a property of both the factory AND the databundle
+            // - "Don't re-run this factory on the next event"
+            // - "Don't clear this databundle every time the JEvent gets recycled"
+            // Factory is persistent <=> All databundles are persistent
+            // We ARE allowing databundles to be persistent even if they don't have a JFactory
+            // We don't have a way to enforce this generally yet
+            return;
+        }
+
+        this->mStatus = JFactory::Status::Unprocessed;
+        this->mCreationStatus = JFactory::CreationStatus::NotCreatedYet;
+
+        for (auto* output : this->GetDatabundleOutputs()) {
+            for (auto* db : output->GetDatabundles()) {
+                db->ClearData();
+            }
+        }
+    }
 
 
     // Overloaded by user Factories
@@ -105,9 +140,6 @@ public:
     virtual void Process(const std::shared_ptr<const JEvent>&) {}
     virtual void Finish() {}
 
-    virtual std::size_t GetNumObjects() const {
-        return 0;
-    }
 
 
     /// Access the encapsulated data, performing an upcast if necessary. This is useful for extracting data from
@@ -140,6 +172,8 @@ protected:
 
     bool mRegenerate = false;
     bool mWriteToOutput = true;
+    bool mPersistent = false;
+
     int32_t mPreviousRunNumber = -1;
     bool mInsideCreate = false; // Use this to detect cycles in factory dependencies
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
