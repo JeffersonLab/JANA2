@@ -37,7 +37,7 @@ private:
     JApplication* mApplication = nullptr;
     int32_t mRunNumber = 0;
     uint64_t mEventNumber = 0;
-    mutable JFactorySet* mFactorySet = nullptr;
+    mutable JFactorySet mFactorySet;
     mutable JCallGraphRecorder mCallGraph;
     mutable JInspector mInspector;
     bool mUseDefaultTags = false;
@@ -57,7 +57,6 @@ public:
     explicit JEvent(JApplication* app);
     virtual ~JEvent();
 
-    void SetFactorySet(JFactorySet* aFactorySet);
     void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber;}
     void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
     void SetJApplication(JApplication* app){mApplication = app;}
@@ -65,7 +64,7 @@ public:
     void SetDefaultTags(std::map<std::string, std::string> aDefaultTags){mDefaultTags=aDefaultTags; mUseDefaultTags = !mDefaultTags.empty();}
     void SetSequential(bool isSequential) {mIsBarrierEvent = isSequential;}
 
-    JFactorySet* GetFactorySet() const { return mFactorySet; }
+    JFactorySet* GetFactorySet() const { return &mFactorySet; }
     int32_t GetRunNumber() const {return mRunNumber;}
     uint64_t GetEventNumber() const {return mEventNumber;}
     JApplication* GetJApplication() const {return mApplication;}
@@ -77,8 +76,8 @@ public:
     bool IsWarmedUp() { return mIsWarmedUp; }
 
     // Hierarchical
-    JEventLevel GetLevel() const { return mFactorySet->GetLevel(); }
-    void SetLevel(JEventLevel level) { mFactorySet->SetLevel(level); }
+    JEventLevel GetLevel() const { return mFactorySet.GetLevel(); }
+    void SetLevel(JEventLevel level) { mFactorySet.SetLevel(level); }
     void SetEventIndex(int event_index) { mEventIndex = event_index; }
     int64_t GetEventIndex() const { return mEventIndex; }
 
@@ -140,7 +139,7 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
-    auto factory = mFactorySet->GetFactory<T>(resolved_tag);
+    auto factory = mFactorySet.GetFactory<T>(resolved_tag);
     if (factory == nullptr) {
         if (throw_on_missing) {
             JException ex("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
@@ -157,7 +156,7 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
 /// wishes to examine them all together.
 template<class T>
 inline std::vector<JFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) const {
-    auto factories = mFactorySet->GetAllFactories<T>();
+    auto factories = mFactorySet.GetAllFactories<T>();
     if (factories.size() == 0) {
         if (throw_on_missing) {
             JException ex("Could not find any JFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
@@ -342,7 +341,7 @@ std::vector<const T*> JEvent::GetAll() const {
 template<class S>
 std::map<std::pair<std::string, std::string>, std::vector<S*>> JEvent::GetAllChildren() const {
     std::map<std::pair<std::string, std::string>, std::vector<S*>> results;
-    for (JFactory* factory : mFactorySet->GetAllFactories()) {
+    for (JFactory* factory : mFactorySet.GetAllFactories()) {
         auto val = factory->GetAs<S>();
         if (!val.empty()) {
             auto key = std::make_pair(factory->GetObjectName(), factory->GetTag());
@@ -366,12 +365,12 @@ inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
-    auto factory = mFactorySet->GetFactory<T>(resolved_tag);
+    auto factory = mFactorySet.GetFactory<T>(resolved_tag);
     if (factory == nullptr) {
         factory = new JFactoryT<T>;
         factory->SetTag(tag);
-        factory->SetLevel(mFactorySet->GetLevel());
-        mFactorySet->Add(factory);
+        factory->SetLevel(mFactorySet.GetLevel());
+        mFactorySet.Add(factory);
     }
     factory->Insert(item);
     factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
@@ -386,12 +385,12 @@ inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::str
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
-    auto factory = mFactorySet->GetFactory<T>(resolved_tag);
+    auto factory = mFactorySet.GetFactory<T>(resolved_tag);
     if (factory == nullptr) {
         factory = new JFactoryT<T>;
         factory->SetTag(tag);
-        factory->SetLevel(mFactorySet->GetLevel());
-        mFactorySet->Add(factory);
+        factory->SetLevel(mFactorySet.GetLevel());
+        mFactorySet.Add(factory);
     }
     for (T* item : items) {
         factory->Insert(item);
@@ -408,7 +407,7 @@ inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::str
 
 inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
     std::vector<std::string> unique_names;
-    for (auto databundle : mFactorySet->GetAllDatabundles()) {
+    for (auto databundle : mFactorySet.GetAllDatabundles()) {
         if (dynamic_cast<JPodioDatabundle*>(databundle) != nullptr) {
             unique_names.push_back(databundle->GetUniqueName());
         }
@@ -417,7 +416,7 @@ inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
 }
 
 inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string unique_name, bool throw_on_missing) const {
-    auto* bundle = mFactorySet->GetDatabundle(unique_name);
+    auto* bundle = mFactorySet.GetDatabundle(unique_name);
     if (bundle == nullptr) {
         if (throw_on_missing) {
             throw JException("Missing databundle with uniquename '%s'", unique_name.c_str());
@@ -499,7 +498,7 @@ void JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collect
 
     // Retrieve factory if it already exists, else create it
 
-    JDatabundle* bundle = mFactorySet->GetDatabundle(unique_name);
+    JDatabundle* bundle = mFactorySet.GetDatabundle(unique_name);
     JPodioDatabundle* typed_bundle = nullptr;
 
     if (bundle == nullptr) {
@@ -507,7 +506,7 @@ void JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collect
         typed_bundle->SetUniqueName(unique_name);
         typed_bundle->SetTypeIndex(std::type_index(typeid(T)));
         typed_bundle->SetTypeName(JTypeInfo::demangle<T>());
-        mFactorySet->Add(typed_bundle); 
+        mFactorySet.Add(typed_bundle); 
         // Note that this transfers ownership to the JFactorySet because there's no corresponding JFactory
     }
     else {
