@@ -196,8 +196,12 @@ void JComponentManager::add(JEventUnfolder* unfolder) {
 }
 
 void JComponentManager::configure_event(JEvent& event) {
-    auto factory_set = new JFactorySet(m_fac_gens);
-    event.SetFactorySet(factory_set);
+    LOG << "Configuring event with level " << toString(event.GetLevel());
+    auto* factory_set = event.GetFactorySet();
+    for (auto gen : m_fac_gens) {
+        LOG << "  Adding fac to event with level " << toString(event.GetLevel());
+        gen->GenerateFactories(factory_set);
+    }
     event.SetDefaultTags(m_default_tags);
     event.GetJCallGraphRecorder()->SetEnabled(m_enable_call_graph_recording);
     event.SetJApplication(GetApplication());

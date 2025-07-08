@@ -58,9 +58,8 @@ TEST_CASE("MultiFactoryTests") {
         auto sut = new MyMultifactory(false);
         sut->SetApplication(&app);
         auto event = std::make_shared<JEvent>(&app);
-        auto fs = new JFactorySet;
+        auto fs = event->GetFactorySet();
         fs->Add(sut);
-        event->SetFactorySet(fs);
         auto as = event->Get<A>("first");
         REQUIRE(as.size() == 2);
         REQUIRE(as[1]->x == 5.5);
@@ -74,9 +73,8 @@ TEST_CASE("MultiFactoryTests") {
         auto sut = new MyMultifactory(true);
         sut->SetApplication(&app);
         auto event = std::make_shared<JEvent>(&app);
-        auto fs = new JFactorySet;
+        auto fs = event->GetFactorySet();
         fs->Add(sut);
-        event->SetFactorySet(fs);
         REQUIRE_THROWS(event->Get<A>("first"));
     }
 

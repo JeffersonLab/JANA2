@@ -260,6 +260,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // --------------------------
     // 0. Pool
     // --------------------------
+    LOG_INFO(GetLogger()) << "Creating event pool with level=" << current_level << " and size=" << m_max_inflight_events;
     JEventPool* pool_at_level = new JEventPool(m_components, m_max_inflight_events, m_location_count, current_level);
     pools.push_back(pool_at_level); // Hand over ownership of the pool to the topology
     LOG_INFO(GetLogger()) << "Created event pool with level=" << current_level << " and size=" << m_max_inflight_events;
