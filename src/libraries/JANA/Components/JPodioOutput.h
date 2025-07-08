@@ -25,12 +25,9 @@ public:
         this->m_podio_databundle = new JPodioDatabundle;
         this->databundles.push_back(m_podio_databundle);
 
-        this->type_name = JTypeInfo::demangle<PodioT>();
+        m_podio_databundle->SetShortName("");
         m_podio_databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
         m_podio_databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
-
-        m_podio_databundle->SetShortName("");
-        this->databundle_names.push_back("");
 
         m_transient_collection = std::move(std::make_unique<typename PodioT::collection_type>());
     }
@@ -46,14 +43,10 @@ public:
 
     void SetUniqueName(std::string unique_name) {
         this->m_podio_databundle->SetUniqueName(unique_name);
-        this->databundle_names.clear();
-        this->databundle_names.push_back(unique_name);
     }
 
     void SetShortName(std::string short_name) {
         this->m_podio_databundle->SetShortName(short_name);
-        this->databundle_names.clear();
-        this->databundle_names.push_back(this->m_podio_databundle->GetUniqueName());
     }
 
 protected:
