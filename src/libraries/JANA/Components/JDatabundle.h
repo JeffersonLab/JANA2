@@ -12,7 +12,6 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
-//#include <optional>
 
 
 class JFactory;
@@ -21,6 +20,7 @@ class JDatabundle {
 public:
     // Typedefs
     enum class Status { Empty, Created, Inserted, InsertedViaGetObjects };
+    struct NoTypeProvided {}; // This gives us a default value for m_type_index
 
 private:
     // Fields
@@ -30,7 +30,7 @@ private:
     bool m_has_short_name = true;
     std::string m_type_name;
     JFactory* m_factory = nullptr;
-    //std::optional<std::type_index> m_inner_type_index;
+    std::type_index m_inner_type_index = std::type_index(typeid(NoTypeProvided));
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE;
 
 
@@ -50,7 +50,7 @@ public:
     std::string GetShortName() const { return m_short_name; }
     bool HasShortName() const { return m_has_short_name; }
     std::string GetTypeName() const { return m_type_name; }
-    //std::optional<std::type_index> GetTypeIndex() const { return m_inner_type_index; }
+    std::type_index GetTypeIndex() const { return m_inner_type_index; }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
     JFactory* GetFactory() const { return m_factory; }
 
@@ -78,6 +78,7 @@ public:
             }
         }
     }
+    void SetTypeIndex(std::type_index index) { m_inner_type_index = index; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
     void SetFactory(JFactory* fac) { m_factory = fac; }
 
