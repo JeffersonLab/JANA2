@@ -19,7 +19,7 @@ private:
     JPodioDatabundle* m_podio_databundle;
 
 public:
-    PodioOutput(JHasDatabundleOutputs* owner, std::string unique_name="") {
+    PodioOutput(JHasDatabundleOutputs* owner) {
 
         owner->RegisterOutput(this);
         this->m_podio_databundle = new JPodioDatabundle;
@@ -27,14 +27,17 @@ public:
 
         this->type_name = JTypeInfo::demangle<PodioT>();
         m_podio_databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
+        m_podio_databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
 
-        m_podio_databundle->SetUniqueName(unique_name);
-        this->databundle_names.push_back(unique_name);
+        m_podio_databundle->SetShortName("");
+        this->databundle_names.push_back("");
 
         m_transient_collection = std::move(std::make_unique<typename PodioT::collection_type>());
     }
 
     std::unique_ptr<typename PodioT::collection_type>& operator()() { return m_transient_collection; }
+
+    typename PodioT::collection_type* operator->() { return m_transient_collection.get(); }
 
     JPodioDatabundle* GetDatabundle() const { return m_podio_databundle; }
 

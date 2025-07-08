@@ -3,6 +3,7 @@
 #include <JANA/Components/JHasDatabundleOutputs.h>
 #include <JANA/Components/JLightweightDatabundle.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <typeindex>
 
 namespace jana::components {
 
@@ -17,6 +18,7 @@ public:
         this->type_name = JTypeInfo::demangle<T>();
         m_databundle = new JLightweightDatabundleT<T>();
         m_databundle->SetTypeName(this->type_name);
+        m_databundle->SetTypeIndex(std::type_index(typeid(T)));
         std::string unique_name = short_name.empty() ? this->type_name : this->type_name + ":" + short_name;
         this->databundle_names.push_back(unique_name);
         m_databundle->SetShortName(short_name);

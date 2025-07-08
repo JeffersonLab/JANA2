@@ -38,10 +38,6 @@ public:
     void SetTag(std::string tag) { mOutput.SetUniqueName(tag); }
     void SetSubsetCollection(bool is_subset=true) { mOutput.SetSubsetCollection(is_subset); }
 
-    std::type_index GetObjectType() const final { return std::type_index(typeid(T)); }
-    std::size_t GetNumObjects() const final { return mOutput.GetDatabundle()->GetSize(); }
-    void ClearData() final;
-
     void SetCollection(CollectionT&& collection);
     void SetCollection(std::unique_ptr<CollectionT> collection);
     const podio::CollectionBase* GetCollection() { return mOutput.GetDatabundle()->GetCollection(); }
@@ -82,22 +78,6 @@ void JFactoryPodioT<T>::SetCollection(std::unique_ptr<CollectionT> collection) {
     mOutput() = std::move(collection);
 }
 
-
-template <typename T>
-void JFactoryPodioT<T>::ClearData() {
-    if (this->mStatus == JFactory::Status::Uninitialized) {
-        return;
-    }
-
-    this->mStatus = JFactory::Status::Unprocessed;
-    this->mCreationStatus = JFactory::CreationStatus::NotCreatedYet;
-
-    for (auto* output : this->GetDatabundleOutputs()) {
-        for (auto* db : output->GetDatabundles()) {
-            db->ClearData();
-        }
-    }
-}
 
 template <typename T>
 void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collection) {
