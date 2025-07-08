@@ -8,7 +8,6 @@
 
 #include "JFactorySet.h"
 #include "JFactory.h"
-#include "JMultifactory.h"
 #include "JFactoryGenerator.h"
 
 //---------------------------------
@@ -36,21 +35,12 @@ JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& generators)
 //---------------------------------
 JFactorySet::~JFactorySet()
 {
-    /// The destructor will delete any factories in the set, unless mIsFactoryOwner is set to false.
-    /// The only time mIsFactoryOwner should/can be set false is when a JMultifactory is using a JFactorySet internally
-    /// to manage its JMultifactoryHelpers.
-    if (mIsFactoryOwner) {
+    // Deleting the factories will clear their databundles but not delete them
+    for (auto& f : mFactories) delete f.second;
 
-        // Deleting the factories will clear their databundles but not delete them
-        for (auto& f : mFactories) delete f.second;
-
-        // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
-        for (auto* mf : mMultifactories) { delete mf; }
-
-        // Databundles are always owned by the factoryset and always deleted here
-        for (auto& pair : mDatabundlesFromUniqueName) {
-            delete pair.second; 
-        }
+    // Databundles are always owned by the factoryset and always deleted here
+    for (auto& pair : mDatabundlesFromUniqueName) {
+        delete pair.second; 
     }
 }
 
@@ -152,24 +142,6 @@ bool JFactorySet::Add(JFactory* aFactory)
     return true;
 }
 
-
-bool JFactorySet::Add(JMultifactory *multifactory) {
-    /// Add a JMultifactory to this JFactorySet. This JFactorySet takes ownership of its JMultifactoryHelpers,
-    /// which was previously held by the JMultifactory.mHelpers JFactorySet.
-    /// Ownership of the JMultifactory itself is shared among those helpers.
-
-    auto helpers = multifactory->GetHelpers();
-    for (auto fac : helpers->GetAllFactories()) {
-        Add(fac);
-    }
-    helpers->mIsFactoryOwner = false;
-    mMultifactories.push_back(multifactory);
-    /// This is a little bit weird, but we are using a JFactorySet internally to JMultifactory in order to store and
-    /// efficiently access its JMultifactoryHelpers. Ownership of the JMultifactoryHelpers is transferred to
-    /// the enclosing JFactorySet.
-    return true;
-}
-
 //---------------------------------
 // GetDataBundle
 //---------------------------------
@@ -233,17 +205,6 @@ std::vector<JFactory*> JFactorySet::GetAllFactories() const {
 }
 
 //---------------------------------
-// GetAllMultifactories
-//---------------------------------
-std::vector<JMultifactory*> JFactorySet::GetAllMultifactories() const {
-    std::vector<JMultifactory*> results;
-    for (auto f : mMultifactories) {
-        results.push_back(f);
-    }
-    return results;
-}
-
-//---------------------------------
 // GetAllDatabundleUniqueNames
 //---------------------------------
 std::vector<std::string> JFactorySet::GetAllDatabundleUniqueNames() const {
@@ -301,9 +262,6 @@ void JFactorySet::Clear() {
 void JFactorySet::Finish() {
     for (auto& p : mFactories) {
         p.second->DoFinish();
-    }
-    for (auto& multifac : mMultifactories) {
-        multifac->DoFinish();
     }
 }
 

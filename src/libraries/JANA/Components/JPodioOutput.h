@@ -23,7 +23,7 @@ public:
 
         owner->RegisterOutput(this);
         this->m_podio_databundle = new JPodioDatabundle;
-        this->databundles.push_back(m_podio_databundle);
+        this->GetDatabundles().push_back(m_podio_databundle);
 
         m_podio_databundle->SetShortName("");
         m_podio_databundle->SetTypeName(JTypeInfo::demangle<PodioT>());

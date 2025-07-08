@@ -113,7 +113,7 @@ void JFactory::Create(const JEvent& event) {
 
         for (auto* output : GetDatabundleOutputs()) {
             output->StoreData(*event.GetFactorySet());
-            for (auto* databundle : output->databundles) {
+            for (auto* databundle : output->GetDatabundles()) {
                 databundle->SetStatus(JDatabundle::Status::Created);
             }
         }
