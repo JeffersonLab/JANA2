@@ -8,6 +8,7 @@
 
 #if JANA2_HAVE_PODIO
 #include <PodioDatamodel/ExampleHitCollection.h>
+#include <JANA/Components/JPodioOutput.h>
 #endif
 
 namespace jana::databundletests::jfactoryt {
@@ -66,16 +67,16 @@ class MyFac : public JFactory {
     }
 };
 
-void CheckPodioCollection(JEvent& event, std::string unique_name, size_t expected_value) {
+void CheckPodioCollection(JEvent& event, std::string unique_name, size_t expected_value, JDatabundle::Status status = JDatabundle::Status::Created) {
 
     // Trigger creation via event->GetCollection
-    auto coll = event.GetCollection<ExampleHit>("ExampleHit");
+    auto coll = event.GetCollection<ExampleHit>(unique_name);
     REQUIRE(coll->size() == 1);
     REQUIRE(coll->at(0).time() == expected_value);
 
     // Check databundle contents directly as well
     auto databundle = event.GetFactorySet()->GetDatabundle(unique_name);
-    REQUIRE(databundle->GetStatus() == JDatabundle::Status::Created);
+    REQUIRE(databundle->GetStatus() == status);
     REQUIRE(databundle->GetSize() == 1);
 
     auto typed_databundle = dynamic_cast<JPodioDatabundle*>(databundle);
@@ -85,6 +86,7 @@ void CheckPodioCollection(JEvent& event, std::string unique_name, size_t expecte
     auto typed_collection = dynamic_cast<const ExampleHitCollection*>(typed_databundle->GetCollection());
     REQUIRE(typed_collection->at(0).time() == expected_value);
 }
+
 
 TEST_CASE("JDatabundle_JFactory") {
     JApplication app;
@@ -106,6 +108,32 @@ TEST_CASE("JDatabundle_JFactory") {
     event->Clear();
     event->SetEventNumber(11);
     CheckPodioCollection(*event, "ExampleHit", 22);
+}
+
+
+void InsertOneHit(JEvent& event, std::string unique_name, size_t value) {
+    ExampleHitCollection collection;
+    auto hit = collection.create();
+    hit.time(value);
+    event.InsertCollection<ExampleHit>(std::move(collection), unique_name);
+}
+
+TEST_CASE("JDatabundle_InsertCollection") {
+
+    JApplication app;
+    auto event = std::make_shared<JEvent>(&app);
+
+    auto databundle = event->GetFactorySet()->GetDatabundle("myhits");
+    REQUIRE(databundle == nullptr); 
+    // This databundle won't exist because there's no factory and nothing has been Inserted
+
+    event->Clear();
+    InsertOneHit(*event, "myhits", 8);
+    CheckPodioCollection(*event, "myhits", 8, JDatabundle::Status::Inserted);
+
+    event->Clear();
+    InsertOneHit(*event, "myhits", 22);
+    CheckPodioCollection(*event, "myhits", 22, JDatabundle::Status::Inserted);
 }
 
 

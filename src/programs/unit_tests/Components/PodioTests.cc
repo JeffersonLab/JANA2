@@ -1,10 +1,13 @@
 
 #include <catch.hpp>
 
-#include <type_traits>
-#include <PodioDatamodel/ExampleClusterCollection.h>
+#include <JANA/Podio/JFactoryPodioT.h>
 #include <JANA/JEvent.h>
 #include <JANA/JFactoryGenerator.h>
+
+#include <PodioDatamodel/ExampleClusterCollection.h>
+
+#include <type_traits>
 
 namespace podiotests {
 
