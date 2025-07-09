@@ -19,7 +19,11 @@ JEvent::~JEvent() {
 /// GetFactory() should be used with extreme care because it subverts the JEvent abstraction.
 /// Most historical uses of GetFactory are far better served by JMultifactory
 JFactory* JEvent::GetFactory(const std::string& object_name, const std::string& tag) const {
-    return mFactorySet.GetFactory(object_name, tag);
+    auto databundle = mFactorySet.GetDatabundle(object_name, tag);
+    if (databundle != nullptr) {
+        return databundle->GetFactory();
+    }
+    return nullptr;
 }
 
 /// GetAllFactories() should be used with extreme care because it subverts the JEvent abstraction.

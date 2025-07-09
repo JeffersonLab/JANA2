@@ -4,6 +4,7 @@
 
 #pragma once
 #include "JANA/Components/JComponentSummary.h"
+#include "JANA/Components/JLightweightDatabundle.h"
 #include "JANA/Utils/JTypeInfo.h"
 #include <typeindex>
 #include <JANA/JEvent.h>
@@ -326,14 +327,24 @@ protected:
 
                 if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
                     // We are fetching from the JEvent we already have
-                    auto facs = event.GetFactorySet()->template GetAllFactories<T>();
+                    auto databundles = event.GetFactorySet()->GetDatabundles(std::type_index(typeid(T)));
                     size_t i=0;
-                    for (auto* fac : facs) {
+                    for (auto* databundle : databundles) {
+
+                        auto typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
+                        if (typed_databundle == nullptr) {
+                            continue;
+                        }
                         m_datas.push_back({});                                   // Create a destination for this factory's data
-                        auto iters = fac->CreateAndGetData(event);
+                        auto* factory = databundle->GetFactory();
+                        if (factory != nullptr) {
+                            factory->Create(event);
+                        }
+                        auto& contents = typed_databundle->GetData();
                         auto& dest = m_datas.at(i);
-                        dest.insert(dest.end(), iters.first, iters.second);
-                        m_realized_databundle_names.push_back(fac->GetTag());
+                        dest.insert(dest.end(), contents.begin(), contents.end());
+                        m_realized_databundle_names.push_back(databundle->GetUniqueName());
+                        // TODO: Not sure how I want to handle short/unique names here
                         i += 1;
                     }
                 }
@@ -341,14 +352,24 @@ protected:
                     // We are fetching from a parent event
                     if (m_is_optional && !event.HasParent(m_level)) return;      // Short-circuit if optional and parent missing
                     auto& parent = event.GetParent(m_level);                     // GetParent throws if parent missing
-                    auto facs = parent.GetFactorySet()->template GetAllFactories<T>();
+                    auto databundles = parent.GetFactorySet()->GetDatabundles(std::type_index(typeid(T)));
                     size_t i=0;
-                    for (auto* fac : facs) {
+                    for (auto* databundle : databundles) {
+
+                        auto typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
+                        if (typed_databundle == nullptr) {
+                            continue;
+                        }
                         m_datas.push_back({});                                   // Create a destination for this factory's data
-                        auto iters = fac->CreateAndGetData(event);
+                        auto* factory = databundle->GetFactory();
+                        if (factory != nullptr) {
+                            factory->Create(event);
+                        }
+                        auto& contents = typed_databundle->GetData();
                         auto& dest = m_datas.at(i);
-                        dest.insert(dest.end(), iters.first, iters.second);
-                        m_realized_databundle_names.push_back(fac->GetTag());
+                        dest.insert(dest.end(), contents.begin(), contents.end());
+                        m_realized_databundle_names.push_back(databundle->GetUniqueName());
+                        // TODO: Not sure how I want to handle short/unique names here
                         i += 1;
                     }
                 }
@@ -455,9 +476,12 @@ protected:
                 }
             }
             else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
-                auto facs = event.GetFactorySet()->GetAllFactories<PodioT>();
-                for (auto* fac : facs) {
-                    fac->Create(event);
+                auto databundles = event.GetFactorySet()->GetDatabundles(std::type_index(typeid(PodioT)));
+                for (auto* databundle : databundles) {
+                    auto* factory = databundle->GetFactory();
+                    if (factory != nullptr) {
+                        factory->Create(event);
+                    }
                 }
             }
         }
