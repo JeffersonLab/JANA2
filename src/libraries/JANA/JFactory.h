@@ -41,6 +41,10 @@ public:
     JFactory() = default;
     virtual ~JFactory() = default;
 
+    void SetTag(std::string tag) {
+        GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->SetShortName(tag);
+    }
+
     std::string GetTag() const { 
         auto& db = GetDatabundleOutputs().at(0)->GetDatabundles().at(0);
         if (db->HasShortName()) {
@@ -91,10 +95,28 @@ public:
         return datasource;
     }
 
-    // Overloaded by JFactoryT
-    virtual std::type_index GetObjectType() const = 0;
+    std::type_index GetObjectType() const {
+        return GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->GetTypeIndex();
+    }
 
-    virtual void ClearData() = 0;
+    std::size_t GetNumObjects() const {
+        return GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->GetSize();
+    }
+
+    void ClearData() {
+        if (this->mStatus == JFactory::Status::Uninitialized) {
+            return;
+        }
+
+        this->mStatus = JFactory::Status::Unprocessed;
+        this->mCreationStatus = JFactory::CreationStatus::NotCreatedYet;
+
+        for (auto* output : this->GetDatabundleOutputs()) {
+            for (auto* db : output->GetDatabundles()) {
+                db->ClearData();
+            }
+        }
+    }
 
 
     // Overloaded by user Factories
@@ -105,9 +127,6 @@ public:
     virtual void Process(const std::shared_ptr<const JEvent>&) {}
     virtual void Finish() {}
 
-    virtual std::size_t GetNumObjects() const {
-        return 0;
-    }
 
 
     /// Access the encapsulated data, performing an upcast if necessary. This is useful for extracting data from
@@ -133,9 +152,7 @@ public:
     void DoFinish();
     void Summarize(JComponentSummary& summary) const override;
 
-
-    virtual void Set(const std::vector<JObject *> &data) = 0;
-    virtual void Insert(JObject *data) = 0;
+    virtual void Set(const std::vector<JObject *>&) { throw JException("Not supported!"); }
 
 
 protected:

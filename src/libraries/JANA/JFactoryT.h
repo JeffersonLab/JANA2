@@ -48,16 +48,6 @@ public:
     void Process(const std::shared_ptr<const JEvent>&) override {}
 
 
-    void SetTag(std::string tag) { mOutput.SetShortName(tag); }
-
-    std::type_index GetObjectType(void) const override {
-        return std::type_index(typeid(T));
-    }
-
-    std::size_t GetNumObjects(void) const override {
-        return mData.size();
-    }
-
     /// CreateAndGetData handles all the preconditions and postconditions involved in calling the user-defined Open(),
     /// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
     /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
@@ -87,14 +77,6 @@ public:
             data.push_back(casted);
         }
         Set(std::move(data));
-    }
-
-    /// Please use the typed setters instead whenever possible
-    [[deprecated]]
-    void Insert(JObject* aDatum) override {
-        T* casted = dynamic_cast<T*>(aDatum);
-        assert(casted != nullptr);
-        Insert(casted);
     }
 
     virtual void Set(const std::vector<T*>& aData) {
@@ -169,23 +151,6 @@ public:
     // std::is_convertible(). The std::true_type version defers to the standard EnableGetAs().
     template <typename S> void EnableGetAs(std::true_type) { EnableGetAs<S>(); }
     template <typename S> void EnableGetAs(std::false_type) {}
-
-    void ClearData() override {
-        // This is mainly used for test cases now. JFactorySet::Clear directly clears all databundles, 
-        // even those without a corresponding JFactory.
-
-        if (mStatus == Status::Uninitialized) {
-            // ClearData won't do anything if Init() hasn't been called
-            return;
-        }
-        mStatus = Status::Unprocessed;
-        mCreationStatus = CreationStatus::NotCreatedYet;
-        for (auto* output : GetDatabundleOutputs()) {
-            for (auto* db : output->GetDatabundles()) {
-                db->ClearData();
-            }
-        }
-    }
 
 
 protected:

@@ -22,6 +22,7 @@ JFactorySet::JFactorySet(void)
 //---------------------------------
 // JFactorySet    (Constructor)
 //---------------------------------
+[[deprecated]]
 JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& generators)
 {
     // Add all factories from all factory generators
@@ -40,19 +41,25 @@ JFactorySet::~JFactorySet()
     /// to manage its JMultifactoryHelpers.
     if (mIsFactoryOwner) {
 
-        for (auto& pair : mDatabundlesFromUniqueName) {
-            delete pair.second; // Databundles are always owned by the factoryset
-        }
+        // Deleting the factories will clear their databundles but not delete them
         for (auto& f : mFactories) delete f.second;
+
+        // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
+        for (auto* mf : mMultifactories) { delete mf; }
+
+        // Databundles are always owned by the factoryset and always deleted here
+        for (auto& pair : mDatabundlesFromUniqueName) {
+            delete pair.second; 
+        }
     }
-    // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
-    for (auto* mf : mMultifactories) { delete mf; }
 }
 
 //---------------------------------
 // Add
 //---------------------------------
 void JFactorySet::Add(JDatabundle* databundle) {
+    LOG << "      Adding databundle with type_name=" << databundle->GetTypeName()
+        << " unique_name=" << databundle->GetUniqueName();
 
     if (databundle->GetUniqueName().empty()) {
         throw JException("Attempted to add a databundle with no unique_name");
@@ -79,6 +86,8 @@ void JFactorySet::Add(JDatabundle* databundle) {
     }
     // Note that this is agnostic to event level. We may decide to change this.
     mDatabundlesFromUniqueName[databundle->GetUniqueName()] = databundle;
+    mDatabundlesFromTypeIndex[databundle->GetTypeIndex()].push_back(databundle);
+    mDatabundles.push_back(databundle);
 }
 
 //---------------------------------
@@ -91,9 +100,23 @@ bool JFactorySet::Add(JFactory* aFactory)
     /// throw an exception and let the user figure out what to do.
     /// This scenario occurs when the user has multiple JFactory<T> producing the
     /// same T JObject, and is not distinguishing between them via tags.
+    /// Returns bool indicating whether the add succeeded.
 
     auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
     auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
+
+    if (aFactory->GetLevel() != mLevel && mLevel != JEventLevel::None && aFactory->GetLevel() != JEventLevel::None) {
+        LOG << "    Skipping factory with type_name=" << aFactory->GetTypeName()
+            << ", level=" << toString(aFactory->GetLevel())
+            << " to event with level= " << toString(mLevel);
+        return false;
+    }
+    else {
+        LOG << "    Adding factory with type_name=" << aFactory->GetTypeName()
+            << ", level=" << toString(aFactory->GetLevel())
+            << " to event with level= " << toString(mLevel);
+
+    }
 
     auto typed_result = mFactories.find(typed_key);
     auto untyped_result = mFactoriesFromString.find(untyped_key);
@@ -154,12 +177,24 @@ JDatabundle* JFactorySet::GetDatabundle(const std::string& unique_name) const {
     auto it = mDatabundlesFromUniqueName.find(unique_name);
     if (it != std::end(mDatabundlesFromUniqueName)) {
         auto fac = it->second->GetFactory();
-        if (fac != nullptr && fac->GetLevel() != mLevel) {
+        if (fac != nullptr && fac->GetLevel() != mLevel && mLevel != JEventLevel::None && fac->GetLevel() != JEventLevel::None) {
             throw JException("Databundle belongs to a different level on the event hierarchy!");
         }
         return it->second;
     }
     return nullptr;
+}
+
+//---------------------------------
+// GetDataBundles
+//---------------------------------
+const std::vector<JDatabundle*>& JFactorySet::GetDatabundles(std::type_index index) const {
+    static std::vector<JDatabundle*> no_databundles {};
+    auto it = mDatabundlesFromTypeIndex.find(index);
+    if (it != std::end(mDatabundlesFromTypeIndex)) {
+        return it->second;
+    }
+    return no_databundles;
 }
 
 
@@ -171,12 +206,19 @@ JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::str
     auto untyped_key = std::make_pair(object_name, tag);
     auto it = mFactoriesFromString.find(untyped_key);
     if (it != std::end(mFactoriesFromString)) {
-        if (it->second->GetLevel() != mLevel) {
+        if (it->second->GetLevel() != mLevel && mLevel != JEventLevel::None && it->second->GetLevel() != JEventLevel::None) {
             throw JException("Factory belongs to a different level on the event hierarchy!");
         }
         return it->second;
     }
     return nullptr;
+}
+
+//---------------------------------
+// GetAllDatabundles
+//---------------------------------
+const std::vector<JDatabundle*>& JFactorySet::GetAllDatabundles() const {
+    return mDatabundles;
 }
 
 //---------------------------------

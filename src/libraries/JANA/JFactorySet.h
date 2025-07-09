@@ -20,38 +20,41 @@ class JMultifactory;
 
 class JFactorySet {
 
-    public:
-        JFactorySet();
-        JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);
-        virtual ~JFactorySet();
+private:
+    std::vector<JDatabundle*> mDatabundles;
+    std::map<std::string, JDatabundle*> mDatabundlesFromUniqueName;
+    std::map<std::type_index, std::vector<JDatabundle*>> mDatabundlesFromTypeIndex;
+    std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
+    std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
+    std::vector<JMultifactory*> mMultifactories;
+    bool mIsFactoryOwner = true;
+    JEventLevel mLevel = JEventLevel::None;
 
-        bool Add(JFactory* aFactory);
-        bool Add(JMultifactory* multifactory);
-        void Add(JDatabundle* databundle);
-        void Print() const;
-        void Clear();
-        void Finish();
+public:
+    JFactorySet();
+    JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);
+    virtual ~JFactorySet();
 
-        JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
-        template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
-        std::vector<JFactory*> GetAllFactories() const;
-        std::vector<JMultifactory*> GetAllMultifactories() const;
-        template<typename T> std::vector<JFactoryT<T>*> GetAllFactories() const;
+    bool Add(JFactory* aFactory);
+    bool Add(JMultifactory* multifactory);
+    void Add(JDatabundle* databundle);
+    void Print() const;
+    void Clear();
+    void Finish();
 
-        std::vector<std::string> GetAllDatabundleUniqueNames() const;
-        JDatabundle* GetDatabundle(const std::string& unique_name) const;
+    JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
+    template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
+    std::vector<JFactory*> GetAllFactories() const;
+    std::vector<JMultifactory*> GetAllMultifactories() const;
+    template<typename T> std::vector<JFactoryT<T>*> GetAllFactories() const;
+    const std::vector<JDatabundle*>& GetAllDatabundles() const;
 
-        JEventLevel GetLevel() const { return mLevel; }
-        void SetLevel(JEventLevel level) { mLevel = level; }
+    std::vector<std::string> GetAllDatabundleUniqueNames() const;
+    JDatabundle* GetDatabundle(const std::string& unique_name) const;
+    const std::vector<JDatabundle*>& GetDatabundles(std::type_index index) const;
 
-    protected:
-
-        std::map<std::string, JDatabundle*> mDatabundlesFromUniqueName;
-        std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
-        std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
-        std::vector<JMultifactory*> mMultifactories;
-        bool mIsFactoryOwner = true;
-        JEventLevel mLevel = JEventLevel::PhysicsEvent;
+    JEventLevel GetLevel() const { return mLevel; }
+    void SetLevel(JEventLevel level) { mLevel = level; }
 };
 
 
@@ -62,7 +65,7 @@ JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
     auto typed_iter = mFactories.find(typed_key);
     if (typed_iter != std::end(mFactories)) {
         JEventLevel found_level = typed_iter->second->GetLevel();
-        if (found_level != mLevel) {
+        if (found_level != mLevel && mLevel != JEventLevel::None && found_level != JEventLevel::None) {
             throw JException("Factory belongs to a different level on the event hierarchy. Expected: %s, Found: %s", toString(mLevel).c_str(), toString(found_level).c_str());
         }
         return static_cast<JFactoryT<T>*>(typed_iter->second);
@@ -72,7 +75,7 @@ JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
     auto untyped_iter = mFactoriesFromString.find(untyped_key);
     if (untyped_iter != std::end(mFactoriesFromString)) {
         JEventLevel found_level = untyped_iter->second->GetLevel();
-        if (found_level != mLevel) {
+        if (found_level != mLevel && mLevel != JEventLevel::None && found_level != JEventLevel::None) {
             throw JException("Factory belongs to a different level on the event hierarchy. Expected: %s, Found: %s", toString(mLevel).c_str(), toString(found_level).c_str());
         }
         return static_cast<JFactoryT<T>*>(untyped_iter->second);
