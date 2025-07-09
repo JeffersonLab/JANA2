@@ -9,8 +9,10 @@
 namespace jana {
 
 template <typename OutputCollectionT, typename FacT>
-FacT* RetrieveFactory(JFactorySet* facset, std::string output_collection_name) {
-    auto fac = facset->GetFactory<OutputCollectionT>(output_collection_name);
+FacT* RetrieveFactory(JFactorySet* facset, std::string short_name) {
+    auto databundle = facset->GetDatabundle(std::type_index(typeid(OutputCollectionT)), short_name);
+    REQUIRE(databundle != nullptr);
+    auto fac = databundle->GetFactory();
     REQUIRE(fac != nullptr);
     auto typed_fac = dynamic_cast<FacT*>(fac);
     REQUIRE(typed_fac != nullptr);
@@ -152,6 +154,7 @@ TEST_CASE("JOmniFactoryParametersTests") {
         JFactorySet facset;
         facgen.SetApplication(&app);
         facgen.GenerateFactories(&facset);
+        facset.Print();
         auto sut = RetrieveFactory<MyCluster,TestFac>(&facset, "specific_clusters_out");
         // RetrieveMultifactory() will call DoInitialize() for us
 

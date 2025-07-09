@@ -11,6 +11,7 @@
 #include <PodioDatamodel/ExampleHitCollection.h>
 #include <PodioDatamodel/ExampleClusterCollection.h>
 #include <podio/podioVersion.h>
+#include <JANA/Podio/JFactoryPodioT.h>
 
 #if podio_VERSION >= PODIO_VERSION(1,2,0)
 #include <podio/LinkCollection.h>

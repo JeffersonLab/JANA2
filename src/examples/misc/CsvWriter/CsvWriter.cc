@@ -57,12 +57,12 @@ public:
 
         // In parallel, trigger construction of the collections we need.
         for (const auto& [type_name, tag] : m_collection_types_and_tags) {
-            auto fac = event.GetFactorySet()->GetFactory(type_name, tag);
-            if (fac == nullptr) {
+            auto databundle = event.GetFactorySet()->GetDatabundle(type_name, tag);
+            if (databundle == nullptr || databundle->GetFactory() == nullptr) {
                 // If the factory is not found, throw an exception immediately and exit
                 throw JException("Factory not found! typename=%s, tag=%s", type_name.c_str(), tag.c_str());
             }
-            fac->Create(event);
+            databundle->GetFactory()->Create(event);
         }
     }
 
@@ -81,10 +81,10 @@ public:
         for (const auto& [type_name, tag] : m_collection_types_and_tags) {
 
             // Retrieve the collections we triggered earlier
-            auto fac = event.GetFactorySet()->GetFactory(type_name, tag);
-            std::vector<JObject*> objects = fac->GetAs<JObject>();
+            auto databundle = event.GetFactorySet()->GetDatabundle(type_name, tag);
+            std::vector<JObject*> objects = databundle->GetAs<JObject>();
             size_t obj_count = objects.size();
-            if (obj_count != fac->GetNumObjects()) {
+            if (obj_count != databundle->GetSize()) {
                 throw JException("Collection does not appear to contain JObjects!");
                 // Right now, there's no foolproof way to distinguish between 
                 // JFactory::GetAs() returning empty because the collection is simply empty,

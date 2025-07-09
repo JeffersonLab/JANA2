@@ -11,6 +11,11 @@
 #include <JANA/JLogger.h>
 #include <JANA/JVersion.h>
 
+#include <JANA/Components/JLightweightDatabundle.h>
+#if JANA2_HAVE_PODIO
+#include <JANA/Components/JPodioDatabundle.h>
+#endif
+
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
@@ -18,14 +23,12 @@
 #include <JANA/Utils/JCallGraphEntryMaker.h>
 #include <JANA/Utils/JInspector.h>
 
+#include <typeindex>
 #include <vector>
 #include <cstddef>
 #include <memory>
 #include <atomic>
 
-#if JANA2_HAVE_PODIO
-#include <JANA/Components/JPodioDatabundle.h>
-#endif
 
 class JApplication;
 class JEventSource;
@@ -139,15 +142,37 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
-    auto factory = mFactorySet.GetFactory<T>(resolved_tag);
-    if (factory == nullptr) {
+    auto* databundle = mFactorySet.GetDatabundle(std::type_index(typeid(T)), resolved_tag);
+    if (databundle == nullptr) {
         if (throw_on_missing) {
-            JException ex("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
+            JException ex("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + "and tag=" + tag);
             ex.show_stacktrace = false;
+            mFactorySet.Print();
             throw ex;
         }
+        return nullptr;
     };
-    return factory;
+    auto* factory = databundle->GetFactory();
+    if (factory == nullptr) {
+        if (throw_on_missing) {
+            JException ex("No factory provided for databundle with type_index=" + JTypeInfo::demangle<T>() + "and tag=" + tag);
+            ex.show_stacktrace = false;
+            mFactorySet.Print();
+            throw ex;
+        }
+        return nullptr;
+    };
+    auto* typed_factory = dynamic_cast<JFactoryT<T>*>(databundle->GetFactory());
+    if (typed_factory == nullptr) {
+        if (throw_on_missing) {
+            JException ex("Factory does not inherit from JFactoryT<T> for databundle with type_index=" + JTypeInfo::demangle<T>() + "and tag=" + tag);
+            ex.show_stacktrace = false;
+            mFactorySet.Print();
+            throw ex;
+        }
+        return nullptr;
+    };
+    return typed_factory;
 }
 
 
@@ -156,7 +181,12 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
 /// wishes to examine them all together.
 template<class T>
 inline std::vector<JFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) const {
-    auto factories = mFactorySet.GetAllFactories<T>();
+    std::vector<JFactoryT<T>*> factories;
+    for (auto* factory : mFactorySet.GetAllFactories()) {
+        if (dynamic_cast<JFactoryT<T>*>(factory) != nullptr) {
+            factories.push_back(factory);
+        }
+    }
     if (factories.size() == 0) {
         if (throw_on_missing) {
             JException ex("Could not find any JFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
@@ -365,7 +395,7 @@ inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
-    auto factory = mFactorySet.GetFactory<T>(resolved_tag);
+    auto factory = GetFactory<T>(resolved_tag);
     if (factory == nullptr) {
         factory = new JFactoryT<T>;
         factory->SetTag(tag);
@@ -385,7 +415,7 @@ inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::str
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
-    auto factory = mFactorySet.GetFactory<T>(resolved_tag);
+    auto factory = GetFactory<T>(resolved_tag);
     if (factory == nullptr) {
         factory = new JFactoryT<T>;
         factory->SetTag(tag);

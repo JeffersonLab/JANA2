@@ -21,8 +21,17 @@ public:
     JLightweightDatabundleT();
     ~JLightweightDatabundleT();
 
-    void AttachData(std::vector<T*>* data) { m_data = data; }
+    void AttachData(std::vector<T*>* data) { 
+        if (m_is_owned) {
+            delete m_data;
+        }
+        m_data = data; 
+        m_is_owned = false;
+    }
     void UseSelfContainedData() {
+        if (m_is_owned) {
+            delete m_data;
+        }
         m_data = new std::vector<T*>;
         m_is_owned = true;
     }

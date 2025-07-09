@@ -130,7 +130,11 @@ void JComponentManager::initialize_components() {
         unfolder->Summarize(m_summary);
     }
 
-    JFactorySet dummy_fac_set(m_fac_gens);
+    JFactorySet dummy_fac_set;
+    for (auto* fac_gen : m_fac_gens) {
+        // TODO: Get rid of this
+        fac_gen->GenerateFactories(&dummy_fac_set);
+    }
 
     // Factories
     for (auto* fac : dummy_fac_set.GetAllFactories()) {
