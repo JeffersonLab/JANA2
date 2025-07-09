@@ -486,6 +486,7 @@ void JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collect
 
     const auto* typed_collection = dynamic_cast<const typename T::collection_type*>(collection);
     if (typed_collection == nullptr) {
+        mFactorySet.Print();
         throw JException("Attempted to insert a collection of the wrong type! name='%s', expected type='%s', actual type='%s'",
             unique_name.c_str(), JTypeInfo::demangle<typename T::collection_type>().c_str(), collection->getDataTypeName().data());
     }
@@ -512,16 +513,22 @@ void JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collect
     else {
         typed_bundle = dynamic_cast<JPodioDatabundle*>(bundle);
         if (typed_bundle == nullptr) {
-            throw JException("Databundle must be a JPodioDatabundle in order to insert a Podio collection");
+            mFactorySet.Print();
+            throw JException("Databundle with unique_name='%s' must be a JPodioDatabundle in order to insert a Podio collection", unique_name.c_str());
         }
         if (typed_bundle->GetStatus() != JDatabundle::Status::Empty) {
             // PODIO collections can only be inserted once, unlike regular JANA factories.
-            throw JException("A Podio collection is already present and cannot be overwritten", unique_name.c_str());
+            mFactorySet.Print();
+            throw JException("A Podio collection with unique_name='%s' is already present and cannot be overwritten", unique_name.c_str());
         }
     }
 
     typed_bundle->SetStatus(JDatabundle::Status::Inserted);
     typed_bundle->SetCollection(typed_collection);
+    auto fac = typed_bundle->GetFactory();
+    if (fac) {
+        fac->SetStatus(JFactory::Status::Inserted);
+    }
 }
 
 #endif // JANA2_HAVE_PODIO

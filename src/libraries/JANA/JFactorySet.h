@@ -65,7 +65,7 @@ JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
     auto typed_iter = mFactories.find(typed_key);
     if (typed_iter != std::end(mFactories)) {
         JEventLevel found_level = typed_iter->second->GetLevel();
-        if (found_level != mLevel) {
+        if (found_level != mLevel && mLevel != JEventLevel::None && found_level != JEventLevel::None) {
             throw JException("Factory belongs to a different level on the event hierarchy. Expected: %s, Found: %s", toString(mLevel).c_str(), toString(found_level).c_str());
         }
         return static_cast<JFactoryT<T>*>(typed_iter->second);
@@ -75,7 +75,7 @@ JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
     auto untyped_iter = mFactoriesFromString.find(untyped_key);
     if (untyped_iter != std::end(mFactoriesFromString)) {
         JEventLevel found_level = untyped_iter->second->GetLevel();
-        if (found_level != mLevel) {
+        if (found_level != mLevel && mLevel != JEventLevel::None && found_level != JEventLevel::None) {
             throw JException("Factory belongs to a different level on the event hierarchy. Expected: %s, Found: %s", toString(mLevel).c_str(), toString(found_level).c_str());
         }
         return static_cast<JFactoryT<T>*>(untyped_iter->second);
