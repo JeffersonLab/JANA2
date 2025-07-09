@@ -177,7 +177,7 @@ JDatabundle* JFactorySet::GetDatabundle(const std::string& unique_name) const {
     auto it = mDatabundlesFromUniqueName.find(unique_name);
     if (it != std::end(mDatabundlesFromUniqueName)) {
         auto fac = it->second->GetFactory();
-        if (fac != nullptr && fac->GetLevel() != mLevel) {
+        if (fac != nullptr && fac->GetLevel() != mLevel && mLevel != JEventLevel::None && fac->GetLevel() != JEventLevel::None) {
             throw JException("Databundle belongs to a different level on the event hierarchy!");
         }
         return it->second;
@@ -206,7 +206,7 @@ JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::str
     auto untyped_key = std::make_pair(object_name, tag);
     auto it = mFactoriesFromString.find(untyped_key);
     if (it != std::end(mFactoriesFromString)) {
-        if (it->second->GetLevel() != mLevel) {
+        if (it->second->GetLevel() != mLevel && mLevel != JEventLevel::None && it->second->GetLevel() != JEventLevel::None) {
             throw JException("Factory belongs to a different level on the event hierarchy!");
         }
         return it->second;
