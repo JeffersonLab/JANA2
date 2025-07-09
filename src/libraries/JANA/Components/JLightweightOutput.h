@@ -18,6 +18,7 @@ public:
         m_databundle->SetTypeName(JTypeInfo::demangle<T>());
         m_databundle->SetTypeIndex(std::type_index(typeid(T)));
         m_databundle->SetShortName(short_name);
+        m_databundle->UseSelfContainedData();
         GetDatabundles().push_back(m_databundle);
         // Factory will be set by JFactorySet, not here
     }

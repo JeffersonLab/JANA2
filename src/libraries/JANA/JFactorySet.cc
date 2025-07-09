@@ -169,18 +169,28 @@ void JFactorySet::Print() const {
                 table | factory->GetPrefix();
                 table | databundle->GetTypeName();
                 table | databundle->GetUniqueName();
-                table | databundle->GetStatus();
+                switch (databundle->GetStatus()) {
+                    case JDatabundle::Status::Empty:    table | "Empty";    break;
+                    case JDatabundle::Status::Created:  table | "Created";  break;
+                    case JDatabundle::Status::Inserted: table | "Inserted"; break;
+                }
                 table | databundle->GetSize();
             }
         }
     }
     for (auto* databundle : mDatabundles) {
-        table | "[None]";
-        table | "[None]";
-        table | databundle->GetTypeName();
-        table | databundle->GetUniqueName();
-        table | databundle->GetStatus();
-        table | databundle->GetSize();
+        if (databundle->GetFactory() == nullptr) {
+            table | "[None]";
+            table | "[None]";
+            table | databundle->GetTypeName();
+            table | databundle->GetUniqueName();
+            switch (databundle->GetStatus()) {
+                case JDatabundle::Status::Empty:    table | "Empty";    break;
+                case JDatabundle::Status::Created:  table | "Created";  break;
+                case JDatabundle::Status::Inserted: table | "Inserted"; break;
+            }
+            table | databundle->GetSize();
+        }
     }
     table.Render(std::cout);
 }
