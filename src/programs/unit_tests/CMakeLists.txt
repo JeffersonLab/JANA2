@@ -4,6 +4,7 @@ set(TEST_SOURCES
     Topology/JArrowTests.cc
     Topology/JPoolTests.cc
     Topology/MultiLevelTopologyTests.cc
+    Topology/JMultilevelArrowTests.cc
     Topology/QueueTests.cc
     #Topology/SubeventTests.cc
 

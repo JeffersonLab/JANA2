@@ -1,0 +1,31 @@
+
+// Copyright 2025, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
+#pragma once
+#include <JANA/Topology/JArrow.h>
+
+
+class JMultilevelArrow : public JArrow {
+public:
+    enum class Direction { In, Out };
+    enum class Style { AllToAll, AllToOne, OneToAll };
+
+private:
+    Style m_style = Style::AllToAll;
+    std::vector<JEventLevel> m_levels;
+    std::map<std::tuple<JEventLevel, Direction>, size_t> m_port_lookup;
+    JEventLevel m_next_input_level;
+    std::vector<JEvent*> m_pending_outputs;
+    FireResult m_pending_fireresult = FireResult::KeepGoing;
+
+public:
+    void ConfigurePorts(Style style, std::vector<JEventLevel> levels);
+    size_t GetPortIndex(JEventLevel level, Direction direction);
+    void initialize() {};
+    void finalize() {};
+    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status);
+    virtual void Process(JEvent* input, std::vector<JEvent*>& outputs, JEventLevel& next_input_level, JArrow::FireResult& result);
+};
+
+
