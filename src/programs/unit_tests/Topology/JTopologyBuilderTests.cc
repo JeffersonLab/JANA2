@@ -7,6 +7,7 @@
 
 #include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Topology/JMultilevelArrow.h>
+#include <JANA/Topology/JDeinterleaveArrow.h>
 #include <JANA/JEventProcessor.h>
 
 class MySrc : public JMultilevelArrow {
@@ -17,10 +18,10 @@ public:
 
         // Cycle through each of the input levels one after another
         input->SetEventNumber(event_count);
-        next_input_level = GetLevels().at(event_count % GetLevels().size());
+        event_count += 1; // Avoid ever requesting 2 of the same event level in a row
+        next_input_level = GetLevels().at(event_count % GetLevels().size()); // Switch to the next event level next time
         outputs.push_back(input);
-        LOG_INFO(get_logger()) << "Producing " << toString(input->GetLevel()) << " number " << input->GetEventNumber();
-        event_count += 1;
+        LOG_INFO(get_logger()) << "Producing " << toString(input->GetLevel()) << " number " << input->GetEventNumber() << ". Next input level=" << toString(next_input_level);
 
         if (event_count > 9) {
             result = FireResult::Finished; // TODO: This is SuccessFinished, not FailureFinished
@@ -31,9 +32,9 @@ public:
     }
 };
 
-class MyProc : public JEventProcessor {
+class InterleavedProc : public JEventProcessor {
 public:
-    MyProc() {
+    InterleavedProc() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
     void ProcessSequential(const JEvent& event) override {
@@ -78,14 +79,97 @@ void configure_multilevel_source_topology(JTopologyBuilder& builder) {
 
 
 TEST_CASE("MultilevelArrowCustomTopology") {
-    auto* src_arrow = new JMultilevelArrow;
-    src_arrow->ConfigurePorts(JMultilevelArrow::Style::AllToOne, {JEventLevel::Run, JEventLevel::Timeslice});
 
     JApplication app;
     //app.SetParameterValue("jana:loglevel", "debug");
-    app.Add(new MyProc);
+    app.Add(new InterleavedProc);
     auto builder = app.GetService<JTopologyBuilder>();
     builder->set_configure_fn(configure_multilevel_source_topology);
     app.Run();
 
 }
+
+void configure_deinterleave_topology(JTopologyBuilder& builder) {
+
+    // Warning: max_inflight_events:run, 
+    auto run_pool = new JEventPool(builder.m_components, 2, 1, JEventLevel::Run);
+    auto controls_pool = new JEventPool(builder.m_components, 2, 1, JEventLevel::SlowControls);
+    auto physics_pool = new JEventPool(builder.m_components, 4, 1, JEventLevel::PhysicsEvent);
+
+    builder.pools.push_back(run_pool);
+    builder.pools.push_back(controls_pool);
+    builder.pools.push_back(physics_pool);
+
+    physics_pool->AttachForwardingPool(controls_pool);
+    physics_pool->AttachForwardingPool(run_pool);
+
+    auto* src_arrow = new MySrc;
+    src_arrow->set_name("MultilevelSource");
+    src_arrow->ConfigurePorts(JMultilevelArrow::Style::AllToOne, {JEventLevel::Run, JEventLevel::SlowControls, JEventLevel::PhysicsEvent});
+    src_arrow->attach(run_pool, src_arrow->GetPortIndex(JEventLevel::Run, JMultilevelArrow::Direction::In));
+    src_arrow->attach(controls_pool, src_arrow->GetPortIndex(JEventLevel::SlowControls, JMultilevelArrow::Direction::In));
+    src_arrow->attach(physics_pool, src_arrow->GetPortIndex(JEventLevel::PhysicsEvent, JMultilevelArrow::Direction::In));
+
+    // Problem: This design forces us to have a minimum of TWO events in flight because otherwise we can't evict if we have two of the same parent events in a row
+
+    auto* deil_arrow = new JDeinterleaveArrow;
+    deil_arrow->set_name("Deinterleave");
+    deil_arrow->SetLevels({JEventLevel::Run, JEventLevel::SlowControls, JEventLevel::PhysicsEvent});
+    deil_arrow->attach(run_pool, deil_arrow->GetPortIndex(JEventLevel::Run, JMultilevelArrow::Direction::Out));
+    deil_arrow->attach(controls_pool, deil_arrow->GetPortIndex(JEventLevel::SlowControls, JMultilevelArrow::Direction::Out));
+
+    JEventTapArrow* tap_arrow = new JEventTapArrow("DeinterleavedTap");
+    for (auto proc : builder.m_components->get_evt_procs()) {
+        tap_arrow->add_processor(proc);
+    }
+
+    builder.connect(src_arrow, src_arrow->GetPortIndex(JEventLevel::PhysicsEvent, JMultilevelArrow::Direction::Out),
+                    deil_arrow, deil_arrow->GetPortIndex(JEventLevel::PhysicsEvent, JMultilevelArrow::Direction::In));
+
+
+    builder.connect(deil_arrow, deil_arrow->GetPortIndex(JEventLevel::PhysicsEvent, JMultilevelArrow::Direction::Out),
+                    tap_arrow, tap_arrow->EVENT_IN);
+
+    builder.queues.at(0)->Scale(8); // Queue capacity = N(Run) + N(SlowControls) + N(PhysicsEvent)
+    builder.queues.at(1)->Scale(4); // Queue capacity = N(PhysicsEvent)
+
+    tap_arrow->attach(physics_pool, tap_arrow->EVENT_OUT);
+
+    builder.arrows.push_back(src_arrow);
+    builder.arrows.push_back(deil_arrow);
+    builder.arrows.push_back(tap_arrow);
+}
+
+class DeinterleavedProc : public JEventProcessor {
+public:
+    DeinterleavedProc() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+    void ProcessSequential(const JEvent& event) override {
+        LOG_INFO(GetLogger()) << "Consuming " << toString(event.GetLevel()) << " number " << event.GetEventNumber();
+
+        if (event.HasParent(JEventLevel::Run)) {
+            auto& run= event.GetParent(JEventLevel::Run);
+            LOG_INFO(GetLogger()) << "   Run number: " << run.GetEventNumber();
+        }
+        if (event.HasParent(JEventLevel::SlowControls)) {
+            auto& controls= event.GetParent(JEventLevel::SlowControls);
+            LOG_INFO(GetLogger()) << "   SlowControls number: " << controls.GetEventNumber();
+        }
+    }
+};
+
+
+TEST_CASE("DeinterleaveArrowCustomTopology") {
+
+    JApplication app;
+    app.SetParameterValue("jana:loglevel", "debug");
+    app.Add(new DeinterleavedProc);
+    auto builder = app.GetService<JTopologyBuilder>();
+    builder->set_configure_fn(configure_deinterleave_topology);
+    app.Run();
+}
+
+
+
+

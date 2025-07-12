@@ -2,6 +2,9 @@
 #include "JANA/Topology/JArrow.h"
 #include <JANA/Topology/JMultilevelArrow.h>
 
+void JMultilevelArrow::initialize() {};
+void JMultilevelArrow::finalize() {};
+
 void JMultilevelArrow::ConfigurePorts(Style style, std::vector<JEventLevel> levels) {
     m_levels = levels;
     m_style = style;
@@ -34,6 +37,7 @@ void JMultilevelArrow::ConfigurePorts(Style style, std::vector<JEventLevel> leve
         }
     }
     create_ports(input_port_count, output_port_count);
+    m_next_input_level = levels.at(0);
 }
 
 size_t JMultilevelArrow::GetPortIndex(JEventLevel level, Direction direction) const {
