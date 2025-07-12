@@ -36,8 +36,12 @@ void JMultilevelArrow::ConfigurePorts(Style style, std::vector<JEventLevel> leve
     create_ports(input_port_count, output_port_count);
 }
 
-size_t JMultilevelArrow::GetPortIndex(JEventLevel level, Direction direction) {
+size_t JMultilevelArrow::GetPortIndex(JEventLevel level, Direction direction) const {
     return m_port_lookup.at({level, direction});
+}
+
+const std::vector<JEventLevel>& JMultilevelArrow::GetLevels() const {
+    return m_levels;
 }
 
 
