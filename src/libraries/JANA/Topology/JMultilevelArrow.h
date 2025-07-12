@@ -20,12 +20,14 @@ private:
     FireResult m_pending_fireresult = FireResult::KeepGoing;
 
 public:
+    JMultilevelArrow() = default;
+    virtual ~JMultilevelArrow() = default;
     void ConfigurePorts(Style style, std::vector<JEventLevel> levels);
     size_t GetPortIndex(JEventLevel level, Direction direction) const;
     const std::vector<JEventLevel>& GetLevels() const;
-    void initialize() {};
-    void finalize() {};
-    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status);
+    void initialize() override;
+    void finalize() override;
+    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override;
     virtual void Process(JEvent* input, std::vector<JEvent*>& outputs, JEventLevel& next_input_level, JArrow::FireResult& result);
 };
 
