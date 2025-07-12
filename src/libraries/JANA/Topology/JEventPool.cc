@@ -27,6 +27,10 @@ JEventPool::JEventPool(std::shared_ptr<JComponentManager> component_manager,
     }
 }
 
+void JEventPool::AttachForwardingPool(JEventPool* pool) {
+    m_parent_pools[pool->m_level] = pool;
+}
+
 void JEventPool::Scale(size_t capacity) {
     auto old_capacity = m_capacity;
     if (capacity < old_capacity) {
@@ -62,30 +66,44 @@ void JEventPool::Scale(size_t capacity) {
 
 void JEventPool::Ingest(JEvent* event, size_t location) {
 
+    // Check if event even belongs here. If not, forward to the correct pool
+    // This is necessary for interleaved events
+    auto incoming_event_level = event->GetLevel();
+    if (incoming_event_level != m_level) {
+        //LOG << "Forwarding event " << event->GetEventNumber() << " to parent pool";
+        m_parent_pools.at(incoming_event_level)->Ingest(event, location);
+        return;
+    }
+
     // Detach and foward parents
     auto finished_parents = event->ReleaseAllParents();
     // TODO: I'd prefer to not have to do an allocation each time, but this will work for now
     for (auto* parent : finished_parents) {
+        LOG << "JEventPool::Ingest: Found finished parent of level " << toString(parent->GetLevel());
         m_parent_pools.at(parent->GetLevel())->NotifyThatAllChildrenFinished(parent, location);
         // TODO: This is likely the wrong location. Obtain from parent event?
     }
 
     if (event->GetChildCount() == 0) {
         // There's no way for additional children to appear because Ingest takes the "original" parent
+        //LOG << "JEventPool::Ingest: event at level " << toString(m_level) << " is PUSHED";
         Push(event, location);
     }
     else {
         // We've received the original but we can't push it until all children have been pushed to 
         // _their_ pools, in which case we push once we receive the notification
+        //LOG << "JEventPool::Ingest: event is pending";
         m_pending.insert(event);
     }
 }
 
 
 void JEventPool::NotifyThatAllChildrenFinished(JEvent* event, size_t location) {
+    LOG << "JEventPool::Notify called for level " << toString(m_level);
     size_t was_present = m_pending.erase(event);
     if (was_present == 1) {
         Push(event, location);
+        //LOG << "JEventPool::Notify is pushing parent event";
     }
 }
 

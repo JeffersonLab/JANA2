@@ -21,7 +21,8 @@ private:
 
 public:
     void ConfigurePorts(Style style, std::vector<JEventLevel> levels);
-    size_t GetPortIndex(JEventLevel level, Direction direction);
+    size_t GetPortIndex(JEventLevel level, Direction direction) const;
+    const std::vector<JEventLevel>& GetLevels() const;
     void initialize() {};
     void finalize() {};
     void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status);
