@@ -1,6 +1,8 @@
 
+#include "JANA/Utils/JEventLevel.h"
 #include <JANA/JEvent.h>
 #include <JANA/Services/JComponentManager.h>
+#include <cstdint>
 #include <sstream>
 
 
@@ -42,7 +44,7 @@ bool JEvent::HasParent(JEventLevel level) const {
 
 const JEvent& JEvent::GetParent(JEventLevel level) const {
     for (const auto& pair : mParents) {
-        if (pair.first == level) return *pair.second;
+        if (pair.first == level) return *pair.second.first;
     }
     throw JException("Unable to find parent at level %s", 
                         toString(level).c_str());
@@ -54,7 +56,7 @@ void JEvent::SetParent(JEvent* parent) {
         if (pair.first == level) throw JException("Event already has a parent at level %s", 
                                                     toString(parent->GetLevel()).c_str());
     }
-    mParents.push_back({level, parent});
+    mParents.push_back({level, {parent, parent->GetEventNumber()}});
     parent->mReferenceCount.fetch_add(1);
     MakeEventStamp();
 }
@@ -68,7 +70,7 @@ void JEvent::MakeEventStamp() const {
         size_t parent_count = mParents.size();
         for (size_t i=0; i<parent_count; ++i) {
             auto parent = mParents[i].second;
-            ss << parent->GetEventStamp();
+            ss << parent.first->GetEventStamp();
             if (i != parent_count-1) {
                 ss << ",";
             }
@@ -85,6 +87,25 @@ const std::string& JEvent::GetEventStamp() const {
     return mEventStamp;
 }
 
+void JEvent::SetParentNumber(JEventLevel level, uint64_t number) {
+    for (const auto& pair : mParents) {
+        if (pair.first == level) {
+            throw JException("Event already has a parent at level %s", toString(level).c_str());
+        }
+    }
+    mParents.push_back({level, {nullptr, number}});
+    MakeEventStamp();
+}
+
+
+uint64_t JEvent::GetParentNumber(JEventLevel level) const {
+    for (const auto& pair : mParents) {
+        if (pair.first == level) {
+            return pair.second.second;
+        }
+    }
+    return 0;
+}
 
 
 JEvent* JEvent::ReleaseParent(JEventLevel level) {
@@ -97,12 +118,12 @@ JEvent* JEvent::ReleaseParent(JEventLevel level) {
                 toString(level).c_str(), toString(pair.first).c_str());
     }
     mParents.pop_back();
-    auto remaining_refs = pair.second->mReferenceCount.fetch_sub(1);
+    auto remaining_refs = pair.second.first->mReferenceCount.fetch_sub(1);
     if (remaining_refs < 1) { // Remember, this was fetched _before_ the last subtraction
         throw JException("Parent refcount has gone negative!");
     }
     if (remaining_refs == 1) {
-        return pair.second; 
+        return pair.second.first; 
         // Parent is no longer shared. Transfer back to arrow
     }
     else {
@@ -114,9 +135,9 @@ std::vector<JEvent*> JEvent::ReleaseAllParents() {
     std::vector<JEvent*> released_parents;
 
     for (auto it : mParents) {
-        auto remaining_refs = it.second->mReferenceCount.fetch_sub(1);
+        auto remaining_refs = it.second.first->mReferenceCount.fetch_sub(1);
         if (remaining_refs == 1) {
-            released_parents.push_back(it.second);
+            released_parents.push_back(it.second.first);
         }
     }
     mParents.clear();

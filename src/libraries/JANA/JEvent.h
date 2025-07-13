@@ -24,6 +24,7 @@
 #include <JANA/Utils/JInspector.h>
 
 #include <typeindex>
+#include <cstdint>
 #include <vector>
 #include <memory>
 #include <atomic>
@@ -50,7 +51,7 @@ private:
     bool mIsWarmedUp = false;
 
     // Hierarchical event memory management
-    std::vector<std::pair<JEventLevel, JEvent*>> mParents;
+    std::vector<std::pair<JEventLevel, std::pair<JEvent*, uint64_t>>> mParents;
     std::atomic_int mReferenceCount {0};
     int64_t mEventIndex = -1;
 
@@ -92,6 +93,8 @@ public:
     JEvent* ReleaseParent(JEventLevel level);
     std::vector<JEvent*> ReleaseAllParents();
     int GetChildCount();
+    uint64_t GetParentNumber(JEventLevel level) const;
+    void SetParentNumber(JEventLevel level, uint64_t number);
 
     void TakeRefToSelf();
     int ReleaseRefToSelf();
