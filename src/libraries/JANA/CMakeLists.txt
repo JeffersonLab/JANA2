@@ -21,6 +21,7 @@ set(JANA2_SOURCES
     Topology/JEventMapArrow.cc
     Topology/JEventTapArrow.cc
     Topology/JMultilevelArrow.cc
+    Topology/JMultilevelSourceArrow.cc
     Topology/JDeinterleaveArrow.cc
     Topology/JTopologyBuilder.cc
 
