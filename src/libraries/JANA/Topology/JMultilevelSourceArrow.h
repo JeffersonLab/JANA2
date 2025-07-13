@@ -12,7 +12,7 @@ private:
     JEventLevel m_child_event_level = JEventLevel::None;
     JEventLevel m_next_input_level;
 
-    bool m_deferred_finish = false;
+    bool m_finish_in_progress = false;
     std::vector<JEvent*> m_pending_outputs;
 
     std::unordered_map<JEventLevel, std::pair<JEvent*, size_t>> m_pending_parents;
@@ -27,6 +27,7 @@ public:
 
 
     void initialize() override;
+    void EvictParent(JEventLevel level, OutputData& outputs);
     void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override;
     virtual JEventSource::Result DoNext(JEvent& event);
     void finalize() override;
