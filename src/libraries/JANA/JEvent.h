@@ -42,6 +42,7 @@ private:
     mutable JFactorySet mFactorySet;
     mutable JCallGraphRecorder mCallGraph;
     mutable JInspector mInspector;
+    mutable std::string mEventStamp;
     bool mUseDefaultTags = false;
     std::map<std::string, std::string> mDefaultTags;
     JEventSource* mEventSource = nullptr;
@@ -53,14 +54,15 @@ private:
     std::atomic_int mReferenceCount {0};
     int64_t mEventIndex = -1;
 
+    void MakeEventStamp() const;
 
 public:
     JEvent();
     explicit JEvent(JApplication* app);
     virtual ~JEvent();
 
-    void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber;}
-    void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
+    void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber; MakeEventStamp(); }
+    void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber; MakeEventStamp(); }
     void SetJApplication(JApplication* app){mApplication = app;}
     void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
     void SetDefaultTags(std::map<std::string, std::string> aDefaultTags){mDefaultTags=aDefaultTags; mUseDefaultTags = !mDefaultTags.empty();}
@@ -82,6 +84,7 @@ public:
     void SetLevel(JEventLevel level) { mFactorySet.SetLevel(level); }
     void SetEventIndex(int event_index) { mEventIndex = event_index; }
     int64_t GetEventIndex() const { return mEventIndex; }
+    const std::string& GetEventStamp() const;
 
     bool HasParent(JEventLevel level) const;
     const JEvent& GetParent(JEventLevel level) const;

@@ -1,6 +1,7 @@
 
 #include <JANA/JEvent.h>
 #include <JANA/Services/JComponentManager.h>
+#include <sstream>
 
 
 JEvent::JEvent() : mInspector(this){
@@ -55,7 +56,36 @@ void JEvent::SetParent(JEvent* parent) {
     }
     mParents.push_back({level, parent});
     parent->mReferenceCount.fetch_add(1);
+    MakeEventStamp();
 }
+
+
+void JEvent::MakeEventStamp() const {
+    std::ostringstream ss;
+    ss << toChar(mFactorySet.GetLevel()) << ":" << mEventNumber;
+    if (!mParents.empty()) {
+        ss << "(";
+        size_t parent_count = mParents.size();
+        for (size_t i=0; i<parent_count; ++i) {
+            auto parent = mParents[i].second;
+            ss << parent->GetEventStamp();
+            if (i != parent_count-1) {
+                ss << ",";
+            }
+        }
+        ss << ")";
+    }
+    mEventStamp = ss.str();
+};
+
+const std::string& JEvent::GetEventStamp() const {
+    if (mEventStamp.empty()) {
+        MakeEventStamp();
+    }
+    return mEventStamp;
+}
+
+
 
 JEvent* JEvent::ReleaseParent(JEventLevel level) {
     if (mParents.size() == 0) {
