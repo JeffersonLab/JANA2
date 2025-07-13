@@ -39,7 +39,7 @@ public:
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
     void ProcessSequential(const JEvent& event) override {
-        LOG_INFO(GetLogger()) << "Consuming " << toString(event.GetLevel()) << " number " << event.GetEventNumber();
+        LOG_INFO(GetLogger()) << "Consuming " << event.GetEventStamp();
     }
 };
 
@@ -147,16 +147,7 @@ public:
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
     void ProcessSequential(const JEvent& event) override {
-        LOG_INFO(GetLogger()) << "Consuming " << toString(event.GetLevel()) << " number " << event.GetEventNumber();
-
-        if (event.HasParent(JEventLevel::Run)) {
-            auto& run= event.GetParent(JEventLevel::Run);
-            LOG_INFO(GetLogger()) << "   Run number: " << run.GetEventNumber();
-        }
-        if (event.HasParent(JEventLevel::SlowControls)) {
-            auto& controls= event.GetParent(JEventLevel::SlowControls);
-            LOG_INFO(GetLogger()) << "   SlowControls number: " << controls.GetEventNumber();
-        }
+        LOG_INFO(GetLogger()) << "Consuming " << event.GetEventStamp();
     }
 };
 
@@ -171,6 +162,20 @@ TEST_CASE("DeinterleaveArrowCustomTopology") {
     app.Run();
 }
 
+class MyMultiSource : public JEventSource {
+public:
+    MyMultiSource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+        SetEventLevels({JEventLevel::Run, JEventLevel::SlowControls, JEventLevel::PhysicsEvent});
+    }
+    Result Emit(JEvent& event) override {
+        auto count = GetEmittedEventCount();
+        const auto& levels = GetEventLevels();
+        SetNextEventLevel(levels.at((count+1) % levels.size()));
+        LOG_INFO(GetLogger()) << "Emitting " << event.GetEventStamp();
+        return Result::Success; // Assume that source can peek ahead to request a different level
+    }
+};
 
 void configure_multisource_topology(JTopologyBuilder& builder) {
 
@@ -187,7 +192,7 @@ void configure_multisource_topology(JTopologyBuilder& builder) {
 
     auto* src_arrow = new JMultilevelSourceArrow;
     src_arrow->set_name("MultilevelSource");
-    src_arrow->SetLevels({JEventLevel::Run, JEventLevel::SlowControls, JEventLevel::PhysicsEvent});
+    src_arrow->SetEventSource(builder.m_components->get_evt_srces().at(0));
     src_arrow->attach(run_pool, src_arrow->GetPortIndex(JEventLevel::Run, JMultilevelSourceArrow::Direction::In));
     src_arrow->attach(controls_pool, src_arrow->GetPortIndex(JEventLevel::SlowControls, JMultilevelSourceArrow::Direction::In));
     src_arrow->attach(physics_pool, src_arrow->GetPortIndex(JEventLevel::PhysicsEvent, JMultilevelSourceArrow::Direction::In));
@@ -216,6 +221,8 @@ TEST_CASE("MultilevelSourceCustomTopology") {
 
     JApplication app;
     app.SetParameterValue("jana:loglevel", "trace");
+    app.SetParameterValue("jana:nevents", 10);
+    app.Add(new MyMultiSource);
     app.Add(new DeinterleavedProc);
     auto builder = app.GetService<JTopologyBuilder>();
     builder->set_configure_fn(configure_multisource_topology);

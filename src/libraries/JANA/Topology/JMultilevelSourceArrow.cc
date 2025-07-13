@@ -1,6 +1,26 @@
+#include "JANA/JEventSource.h"
 #include "JANA/Topology/JArrow.h"
+#include "JANA/Utils/JEventLevel.h"
 #include <JANA/Topology/JMultilevelSourceArrow.h>
 
+
+void JMultilevelSourceArrow::SetEventSource(JEventSource* source) {
+    m_source = source;
+    m_levels = source->GetEventLevels();
+    m_child_event_level = m_levels.back();
+    m_next_input_port = 0;
+
+    size_t input_port_count = 0;
+    size_t output_port_count = 0;
+    for (auto level : m_levels) {
+        m_port_lookup[{level, Direction::In}] = input_port_count++;
+    }
+    for (auto level : m_levels) {
+        m_port_lookup[{level, Direction::Out}] = input_port_count + output_port_count++;
+    }
+
+    create_ports(input_port_count, output_port_count);
+}
 
 const std::vector<JEventLevel>& JMultilevelSourceArrow::GetLevels() const {
     return m_levels;
@@ -10,74 +30,46 @@ size_t JMultilevelSourceArrow::GetPortIndex(JEventLevel level, Direction directi
     return m_port_lookup.at({level, direction});
 };
 
- void JMultilevelSourceArrow::SetLevels(std::vector<JEventLevel> levels) {
-    m_levels = levels;
-    m_child_event_level = levels.back();
-    m_next_input_port = 0;
-
-    size_t input_port_count = 0;
-    size_t output_port_count = 0;
-    for (auto level : levels) {
-        m_port_lookup[{level, Direction::In}] = input_port_count++;
-    }
-    for (auto level : levels) {
-        m_port_lookup[{level, Direction::Out}] = input_port_count + output_port_count++;
-    }
-
-    create_ports(input_port_count, output_port_count);
+void JMultilevelSourceArrow::initialize() {
+    // We initialize everything immediately, but don't open any resources until we absolutely have to; see process(): source->DoNext()
+    m_source->DoInit();
 }
 
-void JMultilevelSourceArrow::initialize() {}
-
-void JMultilevelSourceArrow::finalize() {}
-
-JEventSource::Result JMultilevelSourceArrow::DoNext(JEvent& event) {
-    // Cycle through each of the input levels one after another
-    event.SetEventNumber(m_total_emitted_event_count);
-    m_total_emitted_event_count += 1; // Avoid ever requesting 2 of the same event level in a row
-    m_next_input_level = GetLevels().at(m_total_emitted_event_count % GetLevels().size()); // Switch to the next event level next time
-    LOG_INFO(get_logger()) << "Producing " << toString(event.GetLevel()) << " number " << event.GetEventNumber() << ". Next input level=" << toString(m_next_input_level);
-
-    if (m_total_emitted_event_count > 9) {
-        return JEventSource::Result::FailureFinished;
-    }
-    else {
-        return JEventSource::Result::Success;
-    }
-    return JEventSource::Result::Success;
-}
-void JMultilevelSourceArrow::EvictParent(JEventLevel level, OutputData& outputs) {
-
+void JMultilevelSourceArrow::finalize() {
+    // Generally JEventSources finalize themselves as soon as they detect that they have run out of events.
+    // However, we can't rely on the JEventSources turning themselves off since execution can be externally paused.
+    // Instead we leave everything open until we finalize the whole topology, and finalize remaining event sources then.
+    m_source->DoClose();
 }
 
 void JMultilevelSourceArrow::fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     if (!m_finish_in_progress) {
 
-        auto result = DoNext(*input);
-
-        // First we have to consider whether the user changed m_next_input_level, regardless of result returned
-        // If so, this puts an evicted parent in the output buffer
-
+        LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << LOG_END;
+        auto result = m_source->DoNext(input->shared_from_this());
+        m_next_input_level = m_source->GetNextInputLevel();
         m_next_input_port = GetPortIndex(m_next_input_level, Direction::In);
-        LOG_INFO(get_logger()) << "Changing input port to " << m_next_input_port << " because level is now " << toString(m_next_input_level);
 
-        // This is a little bit tricky: Ideally we would be able to constrain max_inflight_events:$PARENT_LEVEL to be 1, 
-        // which would essentially behave like (nicer) barrier events. However, if there is only 1 event
-        // inflight at $PARENT_LEVEL, we have to evict immediately so that we don't deadlock.
+        LOG_TRACE(get_logger()) << "JMultilevelSourceArrow: Returned from DoNext(" << toString(input->GetLevel()) << "). Next input level is " << toString(m_next_input_level);
+        if (m_next_input_level != m_child_event_level) {
+            // If the next requested event level is a parent event level, we need to evict the current parent NOW.
+            // This is a little bit tricky: Ideally we would be able to constrain max_inflight_events:$PARENT_LEVEL to be 1, 
+            // which would essentially behave like (nicer) barrier events. However, if there is only 1 event
+            // inflight at $PARENT_LEVEL, we have to evict immediately so that we don't deadlock.
 
-        auto it = m_pending_parents.find(m_next_input_level);
-        if (it != m_pending_parents.end()) {
-            if (it->second.first != nullptr) {
-                // There IS an old parent
-                size_t parent_output_port = GetPortIndex(m_next_input_level, Direction::Out);
-                LOG_INFO(get_logger()) << "Evicting parent " << toString(m_next_input_level) << " to port " << parent_output_port;
-                outputs.at(0) = {it->second.first, parent_output_port};
-                it->second.first = nullptr;
-                output_count = 1;
+            auto it = m_pending_parents.find(m_next_input_level);
+            if (it != m_pending_parents.end()) {
+                if (it->second.first != nullptr) {
+                    // There IS an old parent
+                    size_t parent_output_port = GetPortIndex(m_next_input_level, Direction::Out);
+                    LOG_TRACE(get_logger()) << "JMultilevelSourceArrow: Evicting parent " << it->second.first->GetEventStamp() << " to port " << parent_output_port;
+                    outputs.at(0) = {it->second.first, parent_output_port};
+                    it->second.first = nullptr;
+                    output_count = 1;
+                }
             }
         }
-
 
         if (result == JEventSource::Result::Success) {
             // We have a newly filled event we have to do something with
@@ -89,7 +81,7 @@ void JMultilevelSourceArrow::fire(JEvent* input, OutputData& outputs, size_t& ou
                     // Note that this only attaches parents that we already, so if the parents arrive in the wrong order they
                     // will just be missing. If this is expected behavior, you'll need to set your downstream parent inputs to be optional.
                     if (parent_pair.first != nullptr) {
-                        LOG_INFO(get_logger()) << "Attaching parent: " << toString(level) << " with number " << parent_pair.first->GetEventNumber() << " to event " << toString(input->GetLevel()) << " " << input->GetEventNumber();
+                        LOG_INFO(get_logger()) << "JMultilevelSourceArrow: Attaching parent: " << parent_pair.first->GetEventStamp() << " to event " << input->GetEventStamp();
                         input->SetParent(parent_pair.first);
                     }
                 }
@@ -113,6 +105,7 @@ void JMultilevelSourceArrow::fire(JEvent* input, OutputData& outputs, size_t& ou
                 }
                 else {
                     m_pending_parents[input->GetLevel()] = {input, 1};
+                    status = JArrow::FireResult::KeepGoing;
                     return;
                 }
             }

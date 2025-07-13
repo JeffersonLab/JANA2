@@ -149,6 +149,8 @@ public:
     uint64_t GetSkippedEventCount() const { return m_events_skipped; };
     uint64_t GetProcessedEventCount() const { return m_events_processed; };
 
+    const std::vector<JEventLevel> GetEventLevels() { return m_event_levels; }
+
     bool IsGetObjectsEnabled() const { return m_enable_get_objects; }
     bool IsFinishEventEnabled() const { return m_enable_finish_event; }
     bool IsProcessParallelEnabled() const { return m_enable_process_parallel; }
@@ -179,6 +181,7 @@ public:
 
     void SetNextEventLevel(JEventLevel level) { m_next_level = level; }
     void SetEventLevels(std::vector<JEventLevel> levels) { m_event_levels = levels; }
+    JEventLevel GetNextInputLevel() const { return m_next_level; }
 
 
     // Internal
@@ -188,7 +191,7 @@ public:
     void DoOpen(bool with_lock=true);
 
     void DoClose(bool with_lock=true);
-
+    
     Result DoNext(std::shared_ptr<JEvent> event);
 
     Result DoNextCompatibility(std::shared_ptr<JEvent> event);
