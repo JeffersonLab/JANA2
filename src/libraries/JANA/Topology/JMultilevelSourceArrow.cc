@@ -46,95 +46,115 @@ JEventSource::Result JMultilevelSourceArrow::DoNext(JEvent& event) {
     }
     return JEventSource::Result::Success;
 }
+void JMultilevelSourceArrow::EvictParent(JEventLevel level, OutputData& outputs) {
+
+}
 
 void JMultilevelSourceArrow::fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
-    if (m_deferred_finish) {
-        // We need to dump all of our parent events when the event source finishes.
-        // If there are more than two of them, we need to paginate them across multiple
-        // calls to fire().
-        // As long as more remain, we return FireResult::KeepGoing.
-        // Once they are all gone, we return FireResult::Finished.
-        return;
-    }
+    if (!m_finish_in_progress) {
 
-    auto result = DoNext(*input);
-    if (result == JEventSource::Result::Success) {
-        // We have a newly filled event we have to do something with
+        auto result = DoNext(*input);
 
-        if (input->GetLevel() == m_child_event_level) {
-            // We acquired a child! Attach it to its parents and push it into the big wide world
-       
-            for (auto [level, parent_pair] : m_pending_parents) {
-                input->SetParent(parent_pair.first);
-                // Note that this only attaches parents that we already, so if the parents arrive in the wrong order they
-                // will just be missing. If this is expected behavior, you'll need to set your downstream parent inputs to be optional.
-            }
-            outputs.at(0) = {input, GetPortIndex(m_child_event_level, Direction::Out)};
-            output_count = 1;
-            status = JArrow::FireResult::KeepGoing;
-            return;
-        }
-        else {
-            // We acquired a parent event! It's predecessor SHOULD have already been evicted as soon as the source returned FailureLevelChange
+        // First we have to consider whether the user changed m_next_input_level, regardless of result returned
+        // If so, this puts an evicted parent in the output buffer
 
-            auto it = m_pending_parents.find(input->GetLevel());
-            if (it != m_pending_parents.end()) {
-                // There IS an old parent
-                if (it->second.first != nullptr) { 
-                    throw JException("Found a parent event we weren't expecting"); 
-                }
-                it->second.first = input;
-                it->second.second += 1; // Increment parent count
-                status = JArrow::FireResult::KeepGoing;
-                return;
-            }
-            else {
-                m_pending_parents[input->GetLevel()] = {input, 1};
-            }
-        }
-    }
-    else if (result == JEventSource::Result::FailureTryAgain) {
-        // Return this event to the pool with no further action
-        outputs.at(0) = {input, GetPortIndex(input->GetLevel(), Direction::In)};
-        output_count = 1;
-        status = JArrow::FireResult::ComeBackLater;
-        return;
-    }
-    else if (result == JEventSource::Result::FailureLevelChange) {
-        // Request input from a different port next time
         m_next_input_port = GetPortIndex(m_next_input_level, Direction::In);
-
-        // Return this event to the pool
-        outputs.at(0) = {input, GetPortIndex(input->GetLevel(), Direction::In)};
-        output_count = 1;
+        LOG_INFO(get_logger()) << "Changing input port to " << m_next_input_port << " because level is now " << toString(m_next_input_level);
 
         // This is a little bit tricky: Ideally we would be able to constrain max_inflight_events:$PARENT_LEVEL to be 1, 
         // which would essentially behave like (nicer) barrier events. However, if there is only 1 event
         // inflight at $PARENT_LEVEL, we have to evict immediately so that we don't deadlock.
 
-        auto it = m_pending_parents.find(input->GetLevel());
+        auto it = m_pending_parents.find(m_next_input_level);
         if (it != m_pending_parents.end()) {
             if (it->second.first != nullptr) {
                 // There IS an old parent
-                outputs.at(1) = {it->second.first, GetPortIndex(input->GetLevel(), Direction::Out)};
+                size_t parent_output_port = GetPortIndex(m_next_input_level, Direction::Out);
+                LOG_INFO(get_logger()) << "Evicting parent " << toString(m_next_input_level) << " to port " << parent_output_port;
+                outputs.at(0) = {it->second.first, parent_output_port};
                 it->second.first = nullptr;
-                output_count = 2;
+                output_count = 1;
             }
         }
 
-        status = JArrow::FireResult::KeepGoing;
-        return;
+
+        if (result == JEventSource::Result::Success) {
+            // We have a newly filled event we have to do something with
+
+            if (input->GetLevel() == m_child_event_level) {
+                // We acquired a child! Attach it to its parents and push it into the big wide world
+
+                for (auto [level, parent_pair] : m_pending_parents) {
+                    // Note that this only attaches parents that we already, so if the parents arrive in the wrong order they
+                    // will just be missing. If this is expected behavior, you'll need to set your downstream parent inputs to be optional.
+                    if (parent_pair.first != nullptr) {
+                        LOG_INFO(get_logger()) << "Attaching parent: " << toString(level) << " with number " << parent_pair.first->GetEventNumber() << " to event " << toString(input->GetLevel()) << " " << input->GetEventNumber();
+                        input->SetParent(parent_pair.first);
+                    }
+                }
+                outputs.at(output_count++) = {input, GetPortIndex(m_child_event_level, Direction::Out)};
+                status = JArrow::FireResult::KeepGoing;
+                return;
+            }
+            else {
+                // We acquired a parent event! It's predecessor SHOULD have already been evicted during the previous call to fire()
+
+                auto it = m_pending_parents.find(input->GetLevel());
+                if (it != m_pending_parents.end()) {
+                    // There IS an old parent
+                    if (it->second.first != nullptr) { 
+                        throw JException("Found a parent event we weren't expecting"); 
+                    }
+                    it->second.first = input;
+                    it->second.second += 1; // Increment parent count
+                    status = JArrow::FireResult::KeepGoing;
+                    return;
+                }
+                else {
+                    m_pending_parents[input->GetLevel()] = {input, 1};
+                    return;
+                }
+            }
+        }
+        else if (result == JEventSource::Result::FailureTryAgain) {
+            // Return this event to the pool with no further action
+            outputs.at(output_count++) = {input, GetPortIndex(input->GetLevel(), Direction::In)};
+            status = JArrow::FireResult::ComeBackLater;
+            return;
+        }
+        else if (result == JEventSource::Result::FailureLevelChange) {
+            // Return this input event to the pool
+            outputs.at(output_count++) = {input, GetPortIndex(input->GetLevel(), Direction::In)};
+
+            status = JArrow::FireResult::KeepGoing;
+            return;
+        }
+        else if (result == JEventSource::Result::FailureFinished) {
+            // Return this input event to the pool
+            outputs.at(output_count++) = {input, GetPortIndex(input->GetLevel(), Direction::In)};
+            m_finish_in_progress = true;
+            // Fall-through to if (finish_in_progress) below
+        }
     }
-    else if (result == JEventSource::Result::FailureFinished) {
-        // Return input to pool, but emit _all_ pending parents. This may require deferring finish
-        // if more than two parents are present
-        //    Pop two parents and send onward
-        //    Set m_deferred_finish
-        //    return FireResult::KeepGoing
-        // else 
-        //    Pop all remaining parents and send onward
-        //    return FireResult::FailureFinished
-        status = JArrow::FireResult::Finished;
+    // At this point the only thing left to do is to evict ALL parents using as many fire() calls as necessary
+
+    bool no_more_parents = false;
+    while (output_count < 2 && !no_more_parents) {
+        // We improvise our own m_pending_parents.pop()
+        auto it = m_pending_parents.begin();
+        if (it != m_pending_parents.end()) {
+            // Found a parent
+            auto parent = it->second.first;
+            if (parent != nullptr) {
+                outputs.at(output_count++) = {parent, GetPortIndex(parent->GetLevel(), Direction::Out)};
+            }
+            m_pending_parents.erase(it);
+        }
+        else {
+            no_more_parents = true;
+        }
     }
+    status = (no_more_parents) ? JArrow::FireResult::Finished : JArrow::FireResult::KeepGoing;
+    return;
 }
