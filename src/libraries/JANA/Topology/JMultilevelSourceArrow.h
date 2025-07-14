@@ -17,6 +17,8 @@ private:
     std::unordered_map<JEventLevel, std::pair<JEvent*, size_t>> m_pending_parents;
     bool m_finish_in_progress = false;
 
+private:
+    void EvictNextParent(OutputData& outputs, size_t& output_count);
 
 public:
     const std::vector<JEventLevel>& GetLevels() const;
