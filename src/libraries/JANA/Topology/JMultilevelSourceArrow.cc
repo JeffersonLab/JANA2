@@ -80,7 +80,7 @@ void JMultilevelSourceArrow::fire(JEvent* input, OutputData& outputs, size_t& ou
                     // Note that this only attaches parents that we already, so if the parents arrive in the wrong order they
                     // will just be missing. If this is expected behavior, you'll need to set your downstream parent inputs to be optional.
                     if (parent_pair.first != nullptr) {
-                        LOG_INFO(get_logger()) << "JMultilevelSourceArrow: Attaching parent: " << parent_pair.first->GetEventStamp() << " to event " << input->GetEventStamp();
+                        LOG_TRACE(get_logger()) << "JMultilevelSourceArrow: Attaching parent: " << parent_pair.first->GetEventStamp() << " to event " << input->GetEventStamp();
                         input->SetParent(parent_pair.first);
                     }
                 }
