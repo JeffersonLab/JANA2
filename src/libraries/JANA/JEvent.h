@@ -199,7 +199,9 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     Get(v, tag);
     if(v.size()!=1){
         t = NULL;
-        if(exception_if_not_one) throw v.size();
+        if(exception_if_not_one) {
+            throw JException("GetSingle<%s>: Factory has wrong number of items: 1 expected, %d found.", JTypeInfo::demangle<T>().c_str(), v.size());
+        }
     }
     t = v[0];
     return fac;
