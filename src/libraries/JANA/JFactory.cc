@@ -25,7 +25,11 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 
 void JFactory::Create(const JEvent& event) {
 
-    if (mInsideCreate) {
+    if (mInsideCreate && (mStatus != Status::Inserted)) {
+        // Ideally, we disallow any calls to Create() that end up calling it right back. However, we do allow
+        // calls that go down to GetObjects, who inserts the data, but then RETRIEVES the same data it just inserted,
+        // so that it can subsequently calculate and insert OTHER data. Once we refactor JEventSourceEVIOpp, we can consider
+        // removing this weird edge case.
         throw JException("Encountered a cycle in the factory dependency graph! Hint: Maybe this data was supposed to be inserted in the JEventSource");
     }
     FlagGuard insideCreateFlagGuard (&mInsideCreate); // No matter how we exit from Create() (particularly with exceptions) mInsideCreate will be set back to false
