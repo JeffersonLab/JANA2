@@ -178,6 +178,16 @@ public:
             // ClearData won't do anything if Init() hasn't been called
             return;
         }
+        if (mOutput.GetDatabundle().GetPersistentFlag()) {
+            // Persistence is a property of both the factory AND the databundle
+            // - "Don't re-run this factory on the next event"
+            // - "Don't clear this databundle every time the JEvent gets recycled"
+            // Factory is persistent <=> All databundles are persistent
+            // We ARE allowing databundles to be persistent even if they don't have a JFactory
+            // We don't have a way to enforce this generally yet
+            return;
+        }
+
         mStatus = Status::Unprocessed;
         mCreationStatus = CreationStatus::NotCreatedYet;
         for (auto* output : GetDatabundleOutputs()) {
