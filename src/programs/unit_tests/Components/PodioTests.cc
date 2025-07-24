@@ -1,10 +1,18 @@
 
 #include <catch.hpp>
 
+#include <memory>
 #include <type_traits>
-#include <PodioDatamodel/ExampleClusterCollection.h>
 #include <JANA/JEvent.h>
 #include <JANA/JFactoryGenerator.h>
+#include <JANA/Components/JOmniFactory.h>
+#include <JANA/Components/JOmniFactoryGeneratorT.h>
+#include <PodioDatamodel/ExampleClusterCollection.h>
+#include <podio/podioVersion.h>
+
+#if podio_VERSION >= PODIO_VERSION(1,2,0)
+#include <podio/LinkCollection.h>
+#endif
 
 namespace podiotests {
 
@@ -43,33 +51,6 @@ TEST_CASE("PodioTestsInsertAndRetrieve") {
         REQUIRE(collection_retrieved->size() == 2);
         REQUIRE((*collection_retrieved)[0].energy() == 16.0);
     }
-
-}
-
-template <typename T, typename = void>
-struct MyWrapper {
-    bool have_podio() {
-        return false;
-    }
-};
-
-template <typename T>
-struct MyWrapper<T, std::void_t<typename T::collection_type>> {
-    int x = 2;
-    bool have_podio() {
-        return true;
-    }
-};
-
-TEST_CASE("SFINAE for JFactoryT || JFactoryPodioT") {
-
-    MyWrapper<int> w;
-    REQUIRE(w.have_podio() == false);
-
-    MyWrapper<ExampleCluster> ww;
-    REQUIRE(ww.have_podio() == true);
-
-    ww.x = 22;
 
 }
 
@@ -164,5 +145,46 @@ TEST_CASE("JFactoryPodioT::Init gets called") {
     REQUIRE(fac != nullptr);
     REQUIRE(fac->init_called == true);
 }
+
+#if podio_VERSION >= PODIO_VERSION(1,2,0)
+
+using ClusterClusterLink = podio::LinkCollection<ExampleCluster, ExampleCluster>::value_type;
+struct MyOmniFac: jana::components::JOmniFactory<MyOmniFac> {
+
+    PodioInput<ExampleCluster> m_clusters_in {this};
+    PodioInput<ClusterClusterLink> m_links_in {this};  // Just to test that the Input machinery is OK
+    PodioOutput<ClusterClusterLink> m_links_out {this};
+
+    void Configure() {};
+
+    void ChangeRun(int32_t) {}
+
+    void Execute(int32_t, int32_t) {
+        auto link = m_links_out()->create();
+        link.setFrom(m_clusters_in()->at(1));
+        link.setTo(m_clusters_in()->at(0));
+    }
+};
+
+TEST_CASE("PodioLink_Test") {
+    JApplication app;
+    app.Add(new JOmniFactoryGeneratorT<MyOmniFac>("blah", {"clusters", "simple"}, {"complex"}));
+    auto event = std::make_shared<JEvent>(&app);
+    ExampleClusterCollection clusters;
+    auto c1 = clusters.create();
+    c1.energy(22);
+    auto c2 = clusters.create();
+    c2.energy(33);
+
+    event->InsertCollection<ExampleCluster>(std::move(clusters), "clusters");
+    event->InsertCollection<ClusterClusterLink>(ClusterClusterLink::collection_type(), "simple");
+
+    auto coll = event->GetCollection<ClusterClusterLink>("complex");
+    REQUIRE(coll->size() == 1);
+    REQUIRE(coll->at(0).getFrom().energy() == 33);
+    REQUIRE(coll->at(0).getTo().energy() == 22);
+}
+#endif
+
 } // namespace podiotests
 
