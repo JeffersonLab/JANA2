@@ -63,7 +63,6 @@ public:
     void SetCollection(std::unique_ptr<CollectionT> collection);
     void Set(const std::vector<T*>& aData) final;
     void Set(std::vector<T*>&& aData) final;
-    void Insert(T* aDatum) final;
 
 
 
@@ -202,15 +201,6 @@ void JFactoryPodioT<T>::Set(std::vector<T*>&& aData) {
         collection.push_back(*item);
         delete item;
     }
-    SetCollection(std::move(collection));
-}
-
-template <typename T>
-void JFactoryPodioT<T>::Insert(T* aDatum) {
-    CollectionT collection;
-    if (mIsSubsetCollection) collection->setSubsetCollection(true);
-    collection->push_back(*aDatum);
-    delete aDatum;
     SetCollection(std::move(collection));
 }
 
