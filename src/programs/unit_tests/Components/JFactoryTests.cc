@@ -607,3 +607,34 @@ TEST_CASE("JFactory_GetObjects_Caching") {
         REQUIRE(source->get_objects_different_count == 1);
     }
 }
+
+
+struct PersistentFactory: public JFactoryT<JFactoryTestDummyObject> {
+    size_t processed_count = 0;
+    PersistentFactory() {
+        SetFactoryFlag(JFactory::PERSISTENT);
+    }
+
+    void Process(const std::shared_ptr<const JEvent>& event) override {
+        REQUIRE(processed_count == 0);
+        processed_count += 1;
+        event->Insert(new JFactoryTestDummyObject(22));
+    }
+};
+
+TEST_CASE("PersistentFactory_Test") {
+    JApplication app;
+    app.Add(new JFactoryGeneratorT<PersistentFactory>());
+    auto event = std::make_shared<JEvent>(&app);
+
+    auto data = event->Get<JFactoryTestDummyObject>();
+    REQUIRE(data.size() == 1);
+    REQUIRE(data.at(0)->data == 22);
+
+    // Simulate being recycled
+    event->Clear();
+    REQUIRE(data.size() == 1);
+    REQUIRE(data.at(0)->data == 22);
+}
+
+

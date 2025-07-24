@@ -189,6 +189,22 @@ TEST_CASE("JEventInsertTests") {
         REQUIRE(retrieved->datum == first->datum);      // Same contents
         REQUIRE(retrieved == first);                    // Same pointer
     }
+    
+    SECTION("Old-style JEvent::GetSingle throws a JException when factory contains multiple objects") {
+        auto first = new FakeJObject(22);
+        event->Insert(first);
+        event->Insert(new FakeJObject(99));
+        event->Insert(new FakeJObject(42));
+
+        const FakeJObject* retrieved = nullptr;
+        try {
+            event->GetSingle(retrieved, "", true);
+            REQUIRE(1 == 0);
+        }
+        catch(JException& e) {
+            std::cout << e << std::endl;
+        }
+    }
 
     // ---------------
     // GetSingleStrict
