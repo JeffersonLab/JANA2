@@ -116,6 +116,7 @@ void JFactory::Create(const JEvent& event) {
         mCreationStatus = CreationStatus::Created;
 
         for (auto* output : GetDatabundleOutputs()) {
+            output->StoreData(*event.GetFactorySet());
             for (auto* databundle : output->databundles) {
                 databundle->SetStatus(JDatabundle::Status::Created);
             }

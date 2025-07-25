@@ -39,12 +39,6 @@ TEST_CASE("PodioTestsInsertAndRetrieve") {
         REQUIRE((*collection_retrieved)[0].energy() == 16.0);
     }
 
-    SECTION("Retrieve using JEvent::Get()") {
-        std::vector<const ExampleCluster*> clusters_retrieved = event->Get<ExampleCluster>("clusters");
-        REQUIRE(clusters_retrieved.size() == 2);
-        REQUIRE(clusters_retrieved[0]->energy() == 16.0);
-    }
-
     SECTION("Retrieve directly from podio::Frame") {
         auto frame = event->GetSingle<podio::Frame>();
         auto* collection_retrieved = dynamic_cast<const ExampleClusterCollection*>(frame->get("clusters"));
@@ -110,6 +104,7 @@ TEST_CASE("PODIO 'subset' collections handled correctly (not involving factories
     REQUIRE(c.id() == b.id());
 
 }
+} // namespace podiotests
 
 namespace jana2_tests_podiotests_init {
 
@@ -127,7 +122,6 @@ struct TestFac : public JFactoryPodioT<ExampleCluster> {
         SetCollection(std::move(c));
     }
 };
-}
 
 TEST_CASE("JFactoryPodioT::Init gets called") {
 
@@ -136,15 +130,17 @@ TEST_CASE("JFactoryPodioT::Init gets called") {
     auto event = std::make_shared<JEvent>(&app);
     event->Clear();  // Simulate a trip to the JEventPool
 
-    auto r = event->GetCollectionBase("clusters");
-    REQUIRE(r != nullptr);
-    const auto* res = dynamic_cast<const ExampleClusterCollection*>(r);
-    REQUIRE(res != nullptr);
-    REQUIRE((*res)[0].energy() == 16.0);
-    auto fac = dynamic_cast<jana2_tests_podiotests_init::TestFac*>(event->GetFactory<ExampleCluster>("clusters"));
+    auto untyped_coll = event->GetCollectionBase("clusters");
+    REQUIRE(untyped_coll != nullptr);
+    const auto* typed_coll = dynamic_cast<const ExampleClusterCollection*>(untyped_coll);
+    REQUIRE(typed_coll != nullptr);
+    REQUIRE(typed_coll->size() == 1);
+    REQUIRE(typed_coll->at(0).energy() == 16.0);
+    auto fac = dynamic_cast<jana2_tests_podiotests_init::TestFac*>(event->GetFactory("ExampleCluster", "clusters"));
     REQUIRE(fac != nullptr);
     REQUIRE(fac->init_called == true);
 }
+} // namespace jana2_tests_podiotests_init
 
 #if podio_VERSION >= PODIO_VERSION(1,2,0)
 
@@ -185,6 +181,4 @@ TEST_CASE("PodioLink_Test") {
     REQUIRE(coll->at(0).getTo().energy() == 22);
 }
 #endif
-
-} // namespace podiotests
 

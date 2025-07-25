@@ -48,16 +48,6 @@ public:
     void Process(const std::shared_ptr<const JEvent>&) override {}
 
 
-    void SetTag(std::string tag) { mOutput.SetShortName(tag); }
-
-    std::type_index GetObjectType(void) const override {
-        return std::type_index(typeid(T));
-    }
-
-    std::size_t GetNumObjects(void) const override {
-        return mData.size();
-    }
-
     /// CreateAndGetData handles all the preconditions and postconditions involved in calling the user-defined Open(),
     /// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
     /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
@@ -87,14 +77,6 @@ public:
             data.push_back(casted);
         }
         Set(std::move(data));
-    }
-
-    /// Please use the typed setters instead whenever possible
-    [[deprecated]]
-    void Insert(JObject* aDatum) override {
-        T* casted = dynamic_cast<T*>(aDatum);
-        assert(casted != nullptr);
-        Insert(casted);
     }
 
     virtual void Set(const std::vector<T*>& aData) {
@@ -149,14 +131,9 @@ public:
         }
     }
 
-    inline void SetPersistentFlag(bool persistent) {
-        mOutput.GetDatabundle().SetPersistentFlag(persistent);
-    }
-
     inline void SetNotOwnerFlag(bool not_owner) {
         mOutput.GetDatabundle().SetNotOwnerFlag(not_owner);
     }
-
 
 
     /// EnableGetAs generates a vtable entry so that users may extract the
@@ -169,34 +146,6 @@ public:
     // std::is_convertible(). The std::true_type version defers to the standard EnableGetAs().
     template <typename S> void EnableGetAs(std::true_type) { EnableGetAs<S>(); }
     template <typename S> void EnableGetAs(std::false_type) {}
-
-    void ClearData() override {
-        // This is mainly used for test cases now. JFactorySet::Clear directly clears all databundles, 
-        // even those without a corresponding JFactory.
-
-        if (mStatus == Status::Uninitialized) {
-            // ClearData won't do anything if Init() hasn't been called
-            return;
-        }
-        if (mOutput.GetDatabundle().GetPersistentFlag()) {
-            // Persistence is a property of both the factory AND the databundle
-            // - "Don't re-run this factory on the next event"
-            // - "Don't clear this databundle every time the JEvent gets recycled"
-            // Factory is persistent <=> All databundles are persistent
-            // We ARE allowing databundles to be persistent even if they don't have a JFactory
-            // We don't have a way to enforce this generally yet
-            return;
-        }
-
-        mStatus = Status::Unprocessed;
-        mCreationStatus = CreationStatus::NotCreatedYet;
-        for (auto* output : GetDatabundleOutputs()) {
-            for (auto* db : output->GetDatabundles()) {
-                db->ClearData();
-            }
-        }
-    }
-
 
 protected:
     jana::components::Output<T> mOutput {this};
