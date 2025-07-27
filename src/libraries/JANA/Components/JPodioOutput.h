@@ -57,28 +57,36 @@ protected:
         JLightweightDatabundleT<podio::Frame>* typed_bundle = nullptr;
 
         if (bundle == nullptr) {
+            LOG << "No frame databundle found. Creating new databundle.";
             typed_bundle = new JLightweightDatabundleT<podio::Frame>;
             typed_bundle->UseSelfContainedData();
             facset.Add(typed_bundle);
         }
         else {
             typed_bundle = dynamic_cast<JLightweightDatabundleT<podio::Frame>*>(bundle);
+            if (typed_bundle == nullptr) {
+                throw JException("Databundle with unique_name 'podio::Frame' is not a JLightweightDatabundleT");
+            }
         }
         if (typed_bundle->GetSize() == 0) {
+            LOG << "Found typed bundle with no frame. Creating new frame.";
             typed_bundle->GetData().push_back(new podio::Frame);
             typed_bundle->SetStatus(JDatabundle::Status::Inserted);
         }
         podio::Frame* frame = typed_bundle->GetData().at(0);
 
-        m_transient_collection->setSubsetCollection(m_is_subset);
+        LOG << "Storing podio collection with name=" << m_podio_databundle->GetUniqueName() << " to frame " << frame << "...";
         frame->put(std::move(m_transient_collection), m_podio_databundle->GetUniqueName());
+        LOG << "...done";
         const auto* moved = &frame->template get<typename PodioT::collection_type>(m_podio_databundle->GetUniqueName());
         m_podio_databundle->SetCollection(moved);
+        m_podio_databundle->SetStatus(JDatabundle::Status::Created);
         m_transient_collection = std::make_unique<typename PodioT::collection_type>();
     }
 
     void Reset() override {
         m_transient_collection = std::move(std::make_unique<typename PodioT::collection_type>());
+        m_transient_collection->setSubsetCollection(m_is_subset);
     }
 };
 
@@ -131,6 +139,7 @@ public:
             collection = nullptr;
             const auto &databundle = dynamic_cast<JPodioDatabundle*>(m_databundles[i]);
             databundle->SetCollection(moved);
+            databundle->SetStatus(JDatabundle::Status::Created);
             i += 1;
         }
         m_transient_collections.clear();
