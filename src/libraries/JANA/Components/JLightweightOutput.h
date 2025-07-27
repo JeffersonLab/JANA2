@@ -9,7 +9,6 @@ namespace jana::components {
 
 template <typename T>
 class Output : public JHasDatabundleOutputs::OutputBase {
-    std::vector<T*> m_data;
     JLightweightDatabundleT<T>* m_databundle; // Just so that we have a typed reference
 
 public:
@@ -31,13 +30,13 @@ public:
         m_databundle->SetUniqueName(unique_name);
     }
 
-    std::vector<T*>& operator()() { return m_data; }
+    // TODO: Output uses existing JFactoryT::mData, otherwise stores a TRANSIENT vector of nonconst ptrs
+    //std::vector<T*>& operator()() { return m_databundle; }
 
     JLightweightDatabundleT<T>& GetDatabundle() { return *m_databundle; }
 
-
     void StoreData(JFactorySet&) override {
-    //    event.Insert(m_data, this->collection_names[0]);
+        m_databundle->SetStatus(JDatabundle::Status::Created);
     }
 
     void Reset() override { }
