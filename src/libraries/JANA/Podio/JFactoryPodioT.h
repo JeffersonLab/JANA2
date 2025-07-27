@@ -106,7 +106,6 @@ void JFactoryPodioT<T>::Create(const JEvent& event) {
             frame->put(CollectionT(), unique_name);
             const auto* moved = &frame->template get<CollectionT>(unique_name);
             mOutput.GetDatabundle()->SetCollection(moved);
-            mOutput.GetDatabundle()->SetFrame(frame);
         }
         throw;
     }
