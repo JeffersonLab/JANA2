@@ -111,16 +111,34 @@ void JFactory::Create(const JEvent& event) {
             CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
             mPreviousRunNumber = run_number;
         }
-        CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
-        mStatus = Status::Processed;
-        mCreationStatus = CreationStatus::Created;
-
-        for (auto* output : GetDatabundleOutputs()) {
-            output->StoreData(*event.GetFactorySet());
-            for (auto* databundle : output->databundles) {
-                databundle->SetStatus(JDatabundle::Status::Created);
+        try {
+            CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
+            mStatus = Status::Processed;
+            mCreationStatus = CreationStatus::Created;
+            for (auto* output : GetDatabundleOutputs()) {
+                output->StoreData(*event.GetFactorySet());
+                for (auto* databundle : output->databundles) {
+                    databundle->SetStatus(JDatabundle::Status::Created);
+                }
             }
         }
+        catch (...) {
+            // Save everything already created even if we throw an exception
+            // This is so that we leave everything in a valid state just in case someone tries to catch the exception recover,
+            // such as EICrecon. (Remember that a missing collection in the podio frame will segfault if anyone tries to write that frame)
+            // Note that the collections themselves won't know that they exited early
+
+            mStatus = Status::Processed;
+            mCreationStatus = CreationStatus::Created;
+            for (auto* output : GetDatabundleOutputs()) {
+                output->StoreData(*event.GetFactorySet());
+                for (auto* databundle : output->databundles) {
+                    databundle->SetStatus(JDatabundle::Status::Created);
+                }
+            }
+            throw;
+        }
+
     }
 }
 
