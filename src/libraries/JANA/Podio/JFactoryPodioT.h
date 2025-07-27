@@ -32,9 +32,6 @@ public:
     void EndRun() override {}
     void Finish() override {}
 
-    void Create(const std::shared_ptr<const JEvent>& event) final;
-    void Create(const JEvent& event) final;
-
     void SetTag(std::string tag) { mOutput.SetUniqueName(tag); }
     void SetSubsetCollection(bool is_subset=true) { mOutput.SetSubsetCollection(is_subset); }
 
@@ -89,31 +86,5 @@ void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collectio
 
 // This free function is used to break the dependency loop between JFactoryPodioT and JEvent.
 podio::Frame* GetOrCreateFrame(const JEvent& event);
-
-template <typename T>
-void JFactoryPodioT<T>::Create(const JEvent& event) {
-    try {
-        JFactory::Create(event);
-    }
-    catch (...) {
-        if (mOutput.GetDatabundle()->GetCollection() == nullptr) {
-            // If calling Create() excepts, we still create an empty collection
-            // so that podio::ROOTWriter doesn't segfault on the null mCollection pointer
-            const std::string& unique_name = mOutput.GetDatabundle()->GetUniqueName();
-            auto* frame = GetOrCreateFrame(event);
-            auto coll = CollectionT();
-            coll.setSubsetCollection(mOutput.IsSubsetCollection());
-            frame->put(CollectionT(), unique_name);
-            const auto* moved = &frame->template get<CollectionT>(unique_name);
-            mOutput.GetDatabundle()->SetCollection(moved);
-        }
-        throw;
-    }
-}
-
-template <typename T>
-void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
-    Create(*event);
-}
 
 
