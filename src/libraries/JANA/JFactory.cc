@@ -117,9 +117,6 @@ void JFactory::Create(const JEvent& event) {
             mCreationStatus = CreationStatus::Created;
             for (auto* output : GetDatabundleOutputs()) {
                 output->StoreData(*event.GetFactorySet());
-                for (auto* databundle : output->databundles) {
-                    databundle->SetStatus(JDatabundle::Status::Created);
-                }
             }
         }
         catch (...) {
@@ -128,13 +125,12 @@ void JFactory::Create(const JEvent& event) {
             // such as EICrecon. (Remember that a missing collection in the podio frame will segfault if anyone tries to write that frame)
             // Note that the collections themselves won't know that they exited early
 
+            LOG << "Exception in JFactory::Create, prefix=" << GetPrefix();
+            // TODO: Add an "Excepted" Status? For JFactory, JDatabundle, or both?
             mStatus = Status::Processed;
             mCreationStatus = CreationStatus::Created;
             for (auto* output : GetDatabundleOutputs()) {
                 output->StoreData(*event.GetFactorySet());
-                for (auto* databundle : output->databundles) {
-                    databundle->SetStatus(JDatabundle::Status::Created);
-                }
             }
             throw;
         }
