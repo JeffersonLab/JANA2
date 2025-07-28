@@ -23,7 +23,7 @@ public:
 
         owner->RegisterOutput(this);
         this->m_podio_databundle = new JPodioDatabundle;
-        this->databundles.push_back(m_podio_databundle);
+        this->GetDatabundles().push_back(m_podio_databundle);
 
         m_podio_databundle->SetShortName("");
         m_podio_databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
@@ -107,13 +107,13 @@ public:
             coll->SetTypeName(JTypeInfo::demangle<PodioT>());
             m_transient_collections.push_back(std::move(coll));
         }
-        for (auto& coll_name : this->databundles) {
+        for (auto& coll_name : GetDatabundles()) {
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
         }
     }
     void StoreData(JFactorySet& facset) override {
-        if (m_transient_collections.size() != this->databundles.size()) {
-            throw JException("VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", this->databundles.size(), m_transient_collections.size());
+        if (m_transient_collections.size() != GetDatabundles().size()) {
+            throw JException("VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", GetDatabundles().size(), m_transient_collections.size());
         }
 
         auto* bundle = facset.GetDatabundle("podio::Frame");
@@ -146,7 +146,7 @@ public:
     }
 
     void Reset() override {
-        for (auto& coll_name : this->databundles) {
+        for (auto& coll_name : GetDatabundles()) {
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
         }
     }

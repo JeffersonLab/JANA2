@@ -90,9 +90,7 @@ TEST_CASE("MultiFactoryTests") {
         app.Add(new JFactoryGeneratorT<MyMultifactory>());
         auto event = std::make_shared<JEvent>(&app);
 
-        auto helper_fac = dynamic_cast<JMultifactoryHelper<A>*>(event->GetFactory<A>("first"));
-        REQUIRE(helper_fac != nullptr);
-        auto sut = dynamic_cast<MyMultifactory*>(helper_fac->GetMultifactory());
+        auto sut = dynamic_cast<MyMultifactory*>(event->GetFactory<A>("first"));
         REQUIRE(sut != nullptr);
 
         REQUIRE(sut->m_process_call_count == 0);

@@ -148,17 +148,6 @@ void JComponentManager::initialize_components() {
         }
         fac->Summarize(m_summary);
     }
-
-    // Multifactories
-    for (auto* fac : dummy_fac_set.GetAllMultifactories()) {
-        try {
-            fac->DoInit();
-        }
-        catch (...) {
-            // Swallow any exceptions! See above.
-        }
-        fac->Summarize(m_summary);
-    }
 }
 
 void JComponentManager::next_plugin(std::string plugin_name) {

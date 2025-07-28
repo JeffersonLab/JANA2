@@ -8,7 +8,6 @@ set(JANA2_SOURCES
     JEventSource.cc
     JFactory.cc
     JFactorySet.cc
-    JMultifactory.cc
     JService.cc
     JVersion.cc
     JEvent.cc
