@@ -10,13 +10,20 @@ namespace jana::components {
 
 class JHasDatabundleOutputs {
 public:
-    struct OutputBase {
-    public:
+    class OutputBase {
+
+    private:
         std::vector<JDatabundle*> databundles;
+
+    protected:
         JEventLevel level = JEventLevel::None;
         bool is_variadic = false;
 
-        const std::vector<JDatabundle*>& GetDatabundles() { return databundles; }
+    public:
+        OutputBase() = default;
+        virtual ~OutputBase() = default;
+
+        std::vector<JDatabundle*>& GetDatabundles() { return databundles; }
 
         virtual void StoreData(JFactorySet&) = 0;
         virtual void Reset() = 0;

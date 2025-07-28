@@ -18,7 +18,7 @@ public:
         m_databundle->SetTypeName(JTypeInfo::demangle<T>());
         m_databundle->SetTypeIndex(std::type_index(typeid(T)));
         m_databundle->SetShortName(short_name);
-        this->databundles.push_back(m_databundle);
+        GetDatabundles().push_back(m_databundle);
         // Factory will be set by JFactorySet, not here
     }
 
@@ -28,6 +28,10 @@ public:
 
     void SetUniqueName(std::string unique_name) {
         m_databundle->SetUniqueName(unique_name);
+    }
+
+    void SetNotOwnerFlag(bool not_owner) {
+        m_databundle->SetNotOwnerFlag(not_owner);
     }
 
     // TODO: Output uses existing JFactoryT::mData, otherwise stores a TRANSIENT vector of nonconst ptrs
