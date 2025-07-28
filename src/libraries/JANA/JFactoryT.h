@@ -27,7 +27,6 @@ public:
     using PairType = std::pair<IteratorType, IteratorType>;
 
     JFactoryT(std::string tag="") {
-        mOutput.GetDatabundle().AttachData(&mData);
         SetTag(tag);
         SetPrefix(mOutput.GetDatabundle().GetUniqueName());
         SetObjectName(mOutput.GetDatabundle().GetTypeName());
@@ -148,8 +147,8 @@ public:
     template <typename S> void EnableGetAs(std::false_type) {}
 
 protected:
-    jana::components::Output<T> mOutput {this};
     std::vector<T*> mData;
+    jana::components::Output<T> mOutput {this, &mData};
 };
 
 template<typename T>
