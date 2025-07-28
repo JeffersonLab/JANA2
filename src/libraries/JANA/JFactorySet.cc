@@ -3,12 +3,11 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <iterator>
-#include <iostream>
 #include <unistd.h>
 
 #include "JFactorySet.h"
+#include "JANA/Utils/JTablePrinter.h"
 #include "JFactory.h"
-#include "JFactoryGenerator.h"
 
 //---------------------------------
 // JFactorySet    (Constructor)
@@ -19,28 +18,16 @@ JFactorySet::JFactorySet(void)
 }
 
 //---------------------------------
-// JFactorySet    (Constructor)
-//---------------------------------
-[[deprecated]]
-JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& generators)
-{
-    // Add all factories from all factory generators
-    for(auto generator : generators){
-        generator->GenerateFactories(this);
-    }
-}
-
-//---------------------------------
 // ~JFactorySet    (Destructor)
 //---------------------------------
 JFactorySet::~JFactorySet()
 {
     // Deleting the factories will clear their databundles but not delete them
-    for (auto& f : mFactories) delete f.second;
+    for (auto* factory : mFactories) delete factory;
 
     // Databundles are always owned by the factoryset and always deleted here
-    for (auto& pair : mDatabundlesFromUniqueName) {
-        delete pair.second; 
+    for (auto* databundle : mDatabundles) {
+        delete databundle;
     }
 }
 
@@ -48,14 +35,11 @@ JFactorySet::~JFactorySet()
 // Add
 //---------------------------------
 void JFactorySet::Add(JDatabundle* databundle) {
-    LOG << "      Adding databundle with type_name=" << databundle->GetTypeName()
-        << " unique_name=" << databundle->GetUniqueName();
-
     if (databundle->GetUniqueName().empty()) {
         throw JException("Attempted to add a databundle with no unique_name");
     }
-    auto named_result = mDatabundlesFromUniqueName.find(databundle->GetUniqueName());
-    if (named_result != std::end(mDatabundlesFromUniqueName)) {
+    auto named_result = mDatabundleFromUniqueName.find(databundle->GetUniqueName());
+    if (named_result != std::end(mDatabundleFromUniqueName)) {
         // Collection is duplicate. Since this almost certainly indicates a user error, and
         // the caller will not be able to do anything about it anyway, throw an exception.
         // We show the user which factory is causing this problem, including both plugin names
@@ -74,16 +58,21 @@ void JFactorySet::Add(JDatabundle* databundle) {
         }
         throw ex;
     }
-    // Note that this is agnostic to event level. We may decide to change this.
-    mDatabundlesFromUniqueName[databundle->GetUniqueName()] = databundle;
-    mDatabundlesFromTypeIndex[databundle->GetTypeIndex()].push_back(databundle);
+
     mDatabundles.push_back(databundle);
+    mDatabundleFromUniqueName[databundle->GetUniqueName()] = databundle;
+    mDatabundleFromTypeIndexAndEitherName[{databundle->GetTypeIndex(), databundle->GetUniqueName()}] = databundle;
+    mDatabundleFromTypeIndexAndEitherName[{databundle->GetTypeIndex(), databundle->GetShortName()}] = databundle;
+    mDatabundleFromTypeNameAndEitherName[{databundle->GetTypeName(), databundle->GetUniqueName()}] = databundle;
+    mDatabundleFromTypeNameAndEitherName[{databundle->GetTypeName(), databundle->GetShortName()}] = databundle;
+    mDatabundlesFromTypeIndex[databundle->GetTypeIndex()].push_back(databundle);
+    mDatabundlesFromTypeName[databundle->GetTypeName()].push_back(databundle);
 }
 
 //---------------------------------
 // Add
 //---------------------------------
-bool JFactorySet::Add(JFactory* aFactory)
+bool JFactorySet::Add(JFactory* factory)
 {
     /// Add a JFactory to this JFactorySet. The JFactorySet assumes ownership of this factory.
     /// If the JFactorySet already contains a JFactory with the same key,
@@ -92,73 +81,64 @@ bool JFactorySet::Add(JFactory* aFactory)
     /// same T JObject, and is not distinguishing between them via tags.
     /// Returns bool indicating whether the add succeeded.
 
-    auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
-    auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
-
-    if (aFactory->GetLevel() != mLevel && mLevel != JEventLevel::None && aFactory->GetLevel() != JEventLevel::None) {
-        LOG << "    Skipping factory with type_name=" << aFactory->GetTypeName()
-            << ", level=" << toString(aFactory->GetLevel())
+    if (factory->GetLevel() != mLevel && mLevel != JEventLevel::None && factory->GetLevel() != JEventLevel::None) {
+        LOG << "    Skipping factory with type_name=" << factory->GetTypeName()
+            << ", level=" << toString(factory->GetLevel())
             << " to event with level= " << toString(mLevel);
         return false;
     }
     else {
-        LOG << "    Adding factory with type_name=" << aFactory->GetTypeName()
-            << ", level=" << toString(aFactory->GetLevel())
+        LOG << "    Adding factory with type_name=" << factory->GetTypeName()
+            << ", level=" << toString(factory->GetLevel())
             << " to event with level= " << toString(mLevel);
-
     }
 
-    auto typed_result = mFactories.find(typed_key);
-    auto untyped_result = mFactoriesFromString.find(untyped_key);
+    mFactories.push_back(factory);
 
-    if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
-        // Factory is duplicate. Since this almost certainly indicates a user error, and
-        // the caller will not be able to do anything about it anyway, throw an exception.
-        // We show the user which factory is causing this problem, including both plugin names
-        std::string other_plugin_name;
-        if (typed_result != std::end(mFactories)) {
-            other_plugin_name = typed_result->second->GetPluginName();
-        }
-        else {
-            other_plugin_name = untyped_result->second->GetPluginName();
-        }
-        auto ex = JException("Attempted to add duplicate factories");
-        ex.function_name = "JFactorySet::Add";
-        ex.instance_name = aFactory->GetPrefix();
-        ex.type_name = aFactory->GetTypeName();
-        ex.plugin_name = aFactory->GetPluginName() + ", " + other_plugin_name;
-        throw ex;
-    }
-
-    mFactories[typed_key] = aFactory;
-    mFactoriesFromString[untyped_key] = aFactory;
-
-    for (auto* output : aFactory->GetDatabundleOutputs()) {
-        for (const auto& bundle : output->GetDatabundles()) {
-            bundle->SetFactory(aFactory);
-            Add(bundle);
+    for (auto* output : factory->GetDatabundleOutputs()) {
+        for (const auto& databundle : output->GetDatabundles()) {
+            databundle->SetFactory(factory); // It's a little weird to set this here
+            Add(databundle);
         }
     }
     return true;
 }
 
 //---------------------------------
-// GetDataBundle
+// GetDatabundle
 //---------------------------------
 JDatabundle* JFactorySet::GetDatabundle(const std::string& unique_name) const {
-    auto it = mDatabundlesFromUniqueName.find(unique_name);
-    if (it != std::end(mDatabundlesFromUniqueName)) {
-        auto fac = it->second->GetFactory();
-        if (fac != nullptr && fac->GetLevel() != mLevel && mLevel != JEventLevel::None && fac->GetLevel() != JEventLevel::None) {
-            throw JException("Databundle belongs to a different level on the event hierarchy!");
-        }
+    auto it = mDatabundleFromUniqueName.find(unique_name);
+    if (it != std::end(mDatabundleFromUniqueName)) {
         return it->second;
     }
     return nullptr;
 }
 
 //---------------------------------
-// GetDataBundles
+// GetDatabundle
+//---------------------------------
+JDatabundle* JFactorySet::GetDatabundle(const std::string& object_type_name, const std::string& unique_or_short_name) const {
+    auto it = mDatabundleFromTypeNameAndEitherName.find({object_type_name, unique_or_short_name});
+    if (it != std::end(mDatabundleFromTypeNameAndEitherName)) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+//---------------------------------
+// GetDatabundle
+//---------------------------------
+JDatabundle* JFactorySet::GetDatabundle(std::type_index object_type_index, const std::string& unique_or_short_name) const {
+    auto it = mDatabundleFromTypeIndexAndEitherName.find({object_type_index, unique_or_short_name});
+    if (it != std::end(mDatabundleFromTypeIndexAndEitherName)) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+//---------------------------------
+// GetDatabundles
 //---------------------------------
 const std::vector<JDatabundle*>& JFactorySet::GetDatabundles(std::type_index index) const {
     static std::vector<JDatabundle*> no_databundles {};
@@ -169,74 +149,40 @@ const std::vector<JDatabundle*>& JFactorySet::GetDatabundles(std::type_index ind
     return no_databundles;
 }
 
-
-//---------------------------------
-// GetFactory
-//---------------------------------
-JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::string& tag) const
-{
-    auto untyped_key = std::make_pair(object_name, tag);
-    auto it = mFactoriesFromString.find(untyped_key);
-    if (it != std::end(mFactoriesFromString)) {
-        if (it->second->GetLevel() != mLevel && mLevel != JEventLevel::None && it->second->GetLevel() != JEventLevel::None) {
-            throw JException("Factory belongs to a different level on the event hierarchy!");
-        }
-        return it->second;
-    }
-    return nullptr;
-}
-
-//---------------------------------
-// GetAllDatabundles
-//---------------------------------
-const std::vector<JDatabundle*>& JFactorySet::GetAllDatabundles() const {
-    return mDatabundles;
-}
-
-//---------------------------------
-// GetAllFactories
-//---------------------------------
-std::vector<JFactory*> JFactorySet::GetAllFactories() const {
-    std::vector<JFactory*> results;
-    for (auto p : mFactories) {
-        results.push_back(p.second);
-    }
-    return results;
-}
-
-//---------------------------------
-// GetAllDatabundleUniqueNames
-//---------------------------------
-std::vector<std::string> JFactorySet::GetAllDatabundleUniqueNames() const {
-    std::vector<std::string> results;
-    for (const auto& it : mDatabundlesFromUniqueName) {
-        results.push_back(it.first);
-    }
-    return results;
-}
-
 //---------------------------------
 // Print
 //---------------------------------
-void JFactorySet::Print() const
-{
-    size_t max_len = 0;
-    for (auto p: mFactories) {
-        if (p.second->GetLevel() != mLevel) continue;
-        auto len = p.second->GetObjectName().length();
-        if( len > max_len ) max_len = len;
-    }
+void JFactorySet::Print() const {
 
-    max_len += 4;
-    for (auto p: mFactories) {
-        if (p.second->GetLevel() != mLevel) continue;
-        auto name = p.second->GetObjectName();
-        auto tag = p.second->GetTag();
+    JTablePrinter table;
+    table.AddColumn("Factory type name");
+    table.AddColumn("Factory prefix");
+    table.AddColumn("Databundle type name");
+    table.AddColumn("Databundle unique name");
+    table.AddColumn("Status");
+    table.AddColumn("Size");
 
-        std::cout << std::string( max_len-name.length(), ' ') + name;
-        if (!tag.empty()) std::cout << ":" << tag;
-        std::cout << std::endl;
+    for (auto* factory : mFactories) {
+        for (auto* output: factory->GetDatabundleOutputs()) {
+            for (auto* databundle: output->GetDatabundles()) {
+                table | (factory->GetTypeName().empty() ? "[Unset]" : factory->GetTypeName());
+                table | factory->GetPrefix();
+                table | databundle->GetTypeName();
+                table | databundle->GetUniqueName();
+                table | databundle->GetStatus();
+                table | databundle->GetSize();
+            }
+        }
     }
+    for (auto* databundle : mDatabundles) {
+        table | "[None]";
+        table | "[None]";
+        table | databundle->GetTypeName();
+        table | databundle->GetUniqueName();
+        table | databundle->GetStatus();
+        table | databundle->GetSize();
+    }
+    table.Render(std::cout);
 }
 
 //---------------------------------
@@ -244,14 +190,13 @@ void JFactorySet::Print() const
 //---------------------------------
 void JFactorySet::Clear() {
 
-    for (const auto& sFactoryPair : mFactories) {
-        auto fac = sFactoryPair.second;
-        fac->ClearData();
+    for (auto* factory : mFactories) {
+        factory->ClearData();
     }
-    for (auto& it : mDatabundlesFromUniqueName) {
+    for (auto* databundle : mDatabundles) {
         // Clear any databundles that did not come from a JFactory
-        if (it.second->GetFactory() == nullptr) {
-            it.second->ClearData();
+        if (databundle->GetFactory() == nullptr) {
+            databundle->ClearData();
         }
     }
 }
@@ -260,8 +205,8 @@ void JFactorySet::Clear() {
 // Finish
 //---------------------------------
 void JFactorySet::Finish() {
-    for (auto& p : mFactories) {
-        p.second->DoFinish();
+    for (auto& factory : mFactories) {
+        factory->DoFinish();
     }
 }
 
