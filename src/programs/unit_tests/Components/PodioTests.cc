@@ -8,6 +8,7 @@
 #include <JANA/JMultifactory.h>
 #include <JANA/Components/JOmniFactory.h>
 #include <JANA/Components/JOmniFactoryGeneratorT.h>
+#include <JANA/Podio/JFactoryPodioT.h>
 #include <PodioDatamodel/ExampleHitCollection.h>
 #include <PodioDatamodel/ExampleClusterCollection.h>
 #include <podio/podioVersion.h>

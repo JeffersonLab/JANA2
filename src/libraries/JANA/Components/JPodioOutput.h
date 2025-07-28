@@ -59,7 +59,6 @@ protected:
         if (bundle == nullptr) {
             LOG << "No frame databundle found. Creating new databundle.";
             typed_bundle = new JLightweightDatabundleT<podio::Frame>;
-            typed_bundle->UseSelfContainedData();
             facset.Add(typed_bundle);
         }
         else {
