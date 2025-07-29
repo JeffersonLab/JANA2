@@ -173,6 +173,7 @@ void JFactorySet::Print() const {
                     case JDatabundle::Status::Empty:    table | "Empty";    break;
                     case JDatabundle::Status::Created:  table | "Created";  break;
                     case JDatabundle::Status::Inserted: table | "Inserted"; break;
+                    case JDatabundle::Status::Excepted: table | "Excepted"; break;
                 }
                 table | databundle->GetSize();
             }
@@ -188,6 +189,7 @@ void JFactorySet::Print() const {
                 case JDatabundle::Status::Empty:    table | "Empty";    break;
                 case JDatabundle::Status::Created:  table | "Created";  break;
                 case JDatabundle::Status::Inserted: table | "Inserted"; break;
+                case JDatabundle::Status::Excepted: table | "Excepted"; break;
             }
             table | databundle->GetSize();
         }

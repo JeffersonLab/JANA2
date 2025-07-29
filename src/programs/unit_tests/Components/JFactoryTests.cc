@@ -208,7 +208,7 @@ TEST_CASE("JFactoryTests") {
         REQUIRE(fac.GetStatus() == JFactory::Status::Uninitialized);
         REQUIRE_THROWS(fac.CreateAndGetData(event));
 
-        REQUIRE(fac.GetStatus() == JFactory::Status::Unprocessed);
+        REQUIRE(fac.GetStatus() == JFactory::Status::Excepted);
         REQUIRE_THROWS(fac.CreateAndGetData(event));
     }
 

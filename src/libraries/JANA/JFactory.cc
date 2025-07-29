@@ -101,7 +101,9 @@ void JFactory::Create(const JEvent& event) {
 
     // If the data was Processed (instead of Inserted), it will be in cache, and we can just exit.
     // Otherwise we call Process() to create the data in the first place.
-    if (mStatus == Status::Unprocessed) {
+    // If we already ran Process() but it excepted, we re-run Process() to trigger the same exception, so that every consumer
+    // is forced to handle it. Otherwise one "fault-tolerant" consumer will swallow the exception for everybody else.
+    if (mStatus == Status::Unprocessed || mStatus == Status::Excepted) {
         auto run_number = event.GetRunNumber();
         if (mPreviousRunNumber != run_number) {
             if (mPreviousRunNumber != -1) {
@@ -116,7 +118,7 @@ void JFactory::Create(const JEvent& event) {
             mStatus = Status::Processed;
             mCreationStatus = CreationStatus::Created;
             for (auto* output : GetDatabundleOutputs()) {
-                output->StoreData(*event.GetFactorySet());
+                output->StoreData(*event.GetFactorySet(), JDatabundle::Status::Created);
             }
         }
         catch (...) {
@@ -126,11 +128,10 @@ void JFactory::Create(const JEvent& event) {
             // Note that the collections themselves won't know that they exited early
 
             LOG << "Exception in JFactory::Create, prefix=" << GetPrefix();
-            // TODO: Add an "Excepted" Status? For JFactory, JDatabundle, or both?
-            mStatus = Status::Processed;
+            mStatus = Status::Excepted;
             mCreationStatus = CreationStatus::Created;
             for (auto* output : GetDatabundleOutputs()) {
-                output->StoreData(*event.GetFactorySet());
+                output->StoreData(*event.GetFactorySet(), JDatabundle::Status::Excepted);
             }
             throw;
         }
