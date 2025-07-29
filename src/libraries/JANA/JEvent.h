@@ -99,6 +99,7 @@ public:
 
 
     template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
+    template<class T> JLightweightDatabundleT<T>* GetLightweightDatabundle(const std::string& tag, bool throw_on_missing, bool call_factory_create) const;
     template<class T> std::vector<JFactoryT<T>*> GetFactoryAll(bool throw_on_missing = false) const;
 
     // C style getters
@@ -165,7 +166,7 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
     auto* typed_factory = dynamic_cast<JFactoryT<T>*>(databundle->GetFactory());
     if (typed_factory == nullptr) {
         if (throw_on_missing) {
-            JException ex("Factory does not inherit from JFactoryT<T> for databundle with type_index=" + JTypeInfo::demangle<T>() + "and tag=" + tag);
+            JException ex("Factory does not inherit from JFactoryT<T> for databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + tag);
             ex.show_stacktrace = false;
             mFactorySet.Print();
             throw ex;
@@ -173,6 +174,42 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
         return nullptr;
     };
     return typed_factory;
+}
+
+template<class T>
+JLightweightDatabundleT<T>* JEvent::GetLightweightDatabundle(const std::string& tag, bool throw_on_missing, bool call_factory_create) const {
+    std::string resolved_tag = tag;
+    if (mUseDefaultTags && tag.empty()) {
+        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
+        if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
+    }
+    auto* databundle = mFactorySet.GetDatabundle(std::type_index(typeid(T)), resolved_tag);
+    if (databundle == nullptr) {
+        if (throw_on_missing) {
+            JException ex("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + tag);
+            ex.show_stacktrace = false;
+            mFactorySet.Print();
+            throw ex;
+        }
+        return nullptr;
+    };
+    auto* typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
+    if (typed_databundle == nullptr) {
+        if (throw_on_missing) {
+            JException ex("Databundle with shortname '%s' does not inherit from JLightweightDatabundleT<%s>", tag.c_str(), JTypeInfo::demangle<T>().c_str());
+            ex.show_stacktrace = false;
+            mFactorySet.Print();
+            throw ex;
+        }
+        return nullptr;
+    }
+    auto factory = databundle->GetFactory();
+    if (call_factory_create && factory != nullptr) {
+        // Always call JFactory::Create if we have it, because REGENERATE and GetObjects logic is extremely complex and might override databundle contents
+        JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
+        factory->Create(*this);
+    }
+    return typed_databundle;
 }
 
 
@@ -290,13 +327,12 @@ void JEvent::GetAll(std::vector<const T*>& destination) const {
 /// - If the factory contains more than one item, GetSingle returns the first item
 
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
-    auto factory = GetFactory<T>(tag, true);
-    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->CreateAndGetData(*this);
-    if (std::distance(iterators.first, iterators.second) == 0) {
+
+    auto databundle = GetLightweightDatabundle<T>(tag, true, true); // Excepts rather than returns nullptr
+    if (databundle->GetSize() == 0) {
         return nullptr;
     }
-    return *iterators.first;
+    return databundle->GetData().at(0);
 }
 
 
@@ -308,35 +344,33 @@ template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
 /// - If the factory exists but contains no items, GetSingleStrict throws an exception
 /// - If the factory contains more than one item, GetSingleStrict throws an exception
 template<class T> const T* JEvent::GetSingleStrict(const std::string& tag) const {
-    auto factory = GetFactory<T>(tag, true);
-    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->CreateAndGetData(*this);
-    if (std::distance(iterators.first, iterators.second) == 0) {
+
+    auto databundle = GetLightweightDatabundle<T>(tag, true, true); // Excepts rather than returns nullptr
+    if (databundle->GetSize() == 0) {
         JException ex("GetSingle failed due to missing %d", NAME_OF(T));
         ex.show_stacktrace = false;
         throw ex;
+        return nullptr;
     }
-    else if (std::distance(iterators.first, iterators.second) > 1) {
+    else if (databundle->GetSize() > 1) {
         JException ex("GetSingle failed due to too many %d", NAME_OF(T));
         ex.show_stacktrace = false;
         throw ex;
     }
-    return *iterators.first;
+    return databundle->GetData().at(0);
 }
-
 
 template<class T>
 std::vector<const T*> JEvent::Get(const std::string& tag, bool strict) const {
 
-    auto factory = GetFactory<T>(tag, strict);
+    auto databundle = GetLightweightDatabundle<T>(tag, strict, true);
     std::vector<const T*> vec;
-    if (factory == nullptr) return vec; // Will have thrown already if strict==true
-    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iters = factory->CreateAndGetData(*this);
-    for (auto it=iters.first; it!=iters.second; ++it) {
-        vec.push_back(*it);
+    if (databundle != nullptr) { // databundle might be nullptr if strict=false
+        for (auto x: databundle->GetData()) {
+            vec.push_back(x);
+        }
     }
-    return vec; // Assumes RVO
+    return vec;
 }
 
 template<class T>
