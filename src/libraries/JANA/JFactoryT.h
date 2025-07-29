@@ -30,6 +30,7 @@ public:
         SetTag(tag);
         SetPrefix(mOutput.GetDatabundle().GetUniqueName());
         SetObjectName(mOutput.GetDatabundle().GetTypeName());
+        SetTypeName(NAME_OF_THIS);
 
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
@@ -84,12 +85,14 @@ public:
             // Doing this breaks the JFactory::Status invariant unless they remember to call Set() afterwards.
             // Ideally, they would use a temporary vector and not access mData at all, but they are used to this
             // from JANA1 and I haven't found a cleaner solution that gives them what they want yet.
+            mOutput.GetDatabundle().SetStatus(JDatabundle::Status::Inserted);
             mStatus = Status::Inserted;
             mCreationStatus = CreationStatus::Inserted;
         }
         else {
             ClearData();
             mData = aData;
+            mOutput.GetDatabundle().SetStatus(JDatabundle::Status::Inserted);
             mStatus = Status::Inserted;
             mCreationStatus = CreationStatus::Inserted;
         }
@@ -98,12 +101,14 @@ public:
     virtual void Set(std::vector<T*>&& aData) {
         ClearData();
         mData = std::move(aData);
+        mOutput.GetDatabundle().SetStatus(JDatabundle::Status::Inserted);
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
     }
 
     virtual void Insert(T* aDatum) {
         mData.push_back(aDatum);
+        mOutput.GetDatabundle().SetStatus(JDatabundle::Status::Inserted);
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
     }
