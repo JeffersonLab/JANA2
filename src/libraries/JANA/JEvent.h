@@ -145,7 +145,7 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
     auto* databundle = mFactorySet.GetDatabundle(std::type_index(typeid(T)), resolved_tag);
     if (databundle == nullptr) {
         if (throw_on_missing) {
-            JException ex("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + "and tag=" + tag);
+            JException ex("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + tag);
             ex.show_stacktrace = false;
             mFactorySet.Print();
             throw ex;
@@ -155,7 +155,7 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
     auto* factory = databundle->GetFactory();
     if (factory == nullptr) {
         if (throw_on_missing) {
-            JException ex("No factory provided for databundle with type_index=" + JTypeInfo::demangle<T>() + "and tag=" + tag);
+            JException ex("No factory provided for databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + tag);
             ex.show_stacktrace = false;
             mFactorySet.Print();
             throw ex;
@@ -491,16 +491,28 @@ void JEvent::InsertCollection(typename T::collection_type&& collection, std::str
     /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JPodioDatabundle
 
     podio::Frame* frame = nullptr;
-    try {
-        frame = const_cast<podio::Frame*>(GetSingle<podio::Frame>(""));
-        if (frame == nullptr) {
-            frame = new podio::Frame;
-            Insert(frame);
-        }
+    auto* bundle = mFactorySet.GetDatabundle("podio::Frame");
+
+    if (bundle == nullptr) {
+        LOG << "No frame databundle found, inserting new dummy JFactoryT.";
+        frame = new podio::Frame();
+        Insert(frame, ""); 
+        // Eventually we'll insert a databundle directly without the dummy JFactoryT
+        // However, we obviously need JEvent::GetSingle<podio::Frame>() to work, which 
+        // requires re-plumbing all or most of the Get*() methods to no longer rely on JFactoryT.
     }
-    catch (...) {
-        frame = new podio::Frame;
-        Insert(frame);
+    else {
+        JLightweightDatabundleT<podio::Frame>* typed_bundle = nullptr;
+        typed_bundle = dynamic_cast<JLightweightDatabundleT<podio::Frame>*>(bundle);
+        if (typed_bundle == nullptr) {
+            throw JException("Databundle with unique_name 'podio::Frame' is not a JLightweightDatabundleT");
+        }
+        if (typed_bundle->GetSize() == 0) {
+            LOG << "Found typed bundle with no frame. Creating new frame.";
+            typed_bundle->GetData().push_back(new podio::Frame);
+            typed_bundle->SetStatus(JDatabundle::Status::Inserted);
+        }
+        frame = typed_bundle->GetData().at(0);
     }
 
     const auto& owned_collection = frame->put(std::move(collection), name);

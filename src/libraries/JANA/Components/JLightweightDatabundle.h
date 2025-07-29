@@ -4,6 +4,7 @@
 #include <JANA/Components/JDatabundle.h>
 #include <JANA/JObject.h> 
 #include <JANA/Utils/JTypeInfo.h>
+#include <typeindex>
 
 #if JANA2_HAVE_ROOT
 #include <TObject.h>
@@ -48,7 +49,7 @@ public:
 
 template <typename T>
 JLightweightDatabundleT<T>::JLightweightDatabundleT(std::vector<T*>* external_data) {
-    if (external_data == nullptr) {
+    if (external_data != nullptr) {
         m_data = external_data;
         m_owns_data = false;
     }
@@ -58,6 +59,7 @@ JLightweightDatabundleT<T>::JLightweightDatabundleT(std::vector<T*>* external_da
     }
 
     SetTypeName(JTypeInfo::demangle<T>());
+    SetTypeIndex(std::type_index(typeid(T)));
     EnableGetAs<T>();
     EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
 #if JANA2_HAVE_ROOT
