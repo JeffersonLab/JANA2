@@ -19,7 +19,7 @@ class JFactory;
 class JDatabundle {
 public:
     // Typedefs
-    enum class Status { Empty, Created, Inserted };
+    enum class Status { Empty, Created, Inserted, Excepted };
     struct NoTypeProvided {}; // This gives us a default value for m_type_index
 
 private:

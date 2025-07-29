@@ -27,7 +27,7 @@ class JFactory : public jana::components::JComponent,
                  public jana::components::JHasDatabundleOutputs {
 public:
 
-    enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Finished};
+    enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Excepted, Finished};
     enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
 
     enum JFactory_Flags_t {

@@ -51,11 +51,11 @@ public:
 
     JLightweightDatabundleT<T>& GetDatabundle() { return *m_databundle; }
 
-    void StoreData(JFactorySet&) override {
+    void StoreData(JFactorySet&, JDatabundle::Status status) override {
         if (m_external_data == nullptr) {
             m_databundle->GetData() = std::move(m_transient_data);
         }
-        m_databundle->SetStatus(JDatabundle::Status::Created);
+        m_databundle->SetStatus(status);
     }
 
     void Reset() override { }

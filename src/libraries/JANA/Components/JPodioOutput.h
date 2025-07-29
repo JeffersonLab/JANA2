@@ -51,7 +51,7 @@ public:
 
 protected:
 
-    void StoreData(JFactorySet& facset) override {
+    void StoreData(JFactorySet& facset, JDatabundle::Status status) override {
 
         auto* bundle = facset.GetDatabundle("podio::Frame");
         JLightweightDatabundleT<podio::Frame>* typed_bundle = nullptr;
@@ -79,7 +79,7 @@ protected:
         LOG << "...done";
         const auto* moved = &frame->template get<typename PodioT::collection_type>(m_podio_databundle->GetUniqueName());
         m_podio_databundle->SetCollection(moved);
-        m_podio_databundle->SetStatus(JDatabundle::Status::Created);
+        m_podio_databundle->SetStatus(status);
         m_transient_collection = std::make_unique<typename PodioT::collection_type>();
     }
 
@@ -110,7 +110,7 @@ public:
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
         }
     }
-    void StoreData(JFactorySet& facset) override {
+    void StoreData(JFactorySet& facset, JDatabundle::Status status) override {
         if (m_transient_collections.size() != GetDatabundles().size()) {
             throw JException("VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", GetDatabundles().size(), m_transient_collections.size());
         }
@@ -138,7 +138,7 @@ public:
             collection = nullptr;
             const auto &databundle = dynamic_cast<JPodioDatabundle*>(m_databundles[i]);
             databundle->SetCollection(moved);
-            databundle->SetStatus(JDatabundle::Status::Created);
+            databundle->SetStatus(status);
             i += 1;
         }
         m_transient_collections.clear();
