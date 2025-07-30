@@ -7,16 +7,16 @@
 #include <JANA/JFactory.h>
 #include <JANA/Components/JHasRunCallbacks.h>
 #include <JANA/Components/JLightweightOutput.h>
+#include <JANA/JVersion.h>
 #include <typeindex>
 
-//#if JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
 #include "JANA/Components/JPodioOutput.h"
-//#endif
+#endif
 
 
-class JMultifactory : public JFactory,
-                      public jana::components::JHasRunCallbacks {
-    // TODO: JHasRunCallbacks belongs on JFactory
+class JMultifactory : public JFactory {
+
 private:
     std::vector<OutputBase*> m_owned_outputs;
     std::map<std::pair<std::type_index, std::string>, OutputBase*> m_output_index;
@@ -46,7 +46,7 @@ public:
     template <typename T>
     void SetData(std::string short_name, std::vector<T*> data);
 
-//#if JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
 
     template <typename T>
     void DeclarePodioOutput(std::string unique_name, bool owns_data=true);
@@ -57,7 +57,7 @@ public:
     template <typename T>
     void SetCollection(std::string unique_name, std::unique_ptr<typename T::collection_type> collection);
 
-//#endif
+#endif
 };
 
 
@@ -96,7 +96,7 @@ void JMultifactory::SetData(std::string short_name, std::vector<T*> data) {
 }
 
 
-// #if JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
 
 template <typename T>
 void JMultifactory::DeclarePodioOutput(std::string unique_name, bool owns_data) {
@@ -153,7 +153,7 @@ void JMultifactory::SetCollection(std::string unique_name, std::unique_ptr<typen
     *((*typed_output)()) = std::move(*collection);
 }
 
-//#endif // JANA2_HAVE_PODIO
+#endif // JANA2_HAVE_PODIO
 
 
 
