@@ -10,6 +10,7 @@
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Components/JComponent.h>
 #include <JANA/Components/JHasDatabundleOutputs.h>
+#include <JANA/Components/JHasRunCallbacks.h>
 
 #include <string>
 #include <typeindex>
@@ -23,7 +24,8 @@ class JEvent;
 class JObject;
 class JApplication;
 
-class JFactory : public jana::components::JComponent, 
+class JFactory : public jana::components::JComponent,
+                 public jana::components::JHasRunCallbacks,
                  public jana::components::JHasDatabundleOutputs {
 public:
 
@@ -134,9 +136,6 @@ public:
 
     // Overloaded by user Factories
     virtual void Init() {}
-    virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
-    virtual void ChangeRun(const std::shared_ptr<const JEvent>&) {}
-    virtual void EndRun() {}
     virtual void Process(const std::shared_ptr<const JEvent>&) {}
     virtual void Finish() {}
 
