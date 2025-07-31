@@ -15,7 +15,6 @@
 #include <JANA/JEvent.h>
 #include <JANA/JMultifactory.h>
 #include <JANA/JVersion.h>
-#include <JANA/Components/JHasInputs.h>
 #include <JANA/Components/JHasOutputs.h>
 
 #include <string>
@@ -27,7 +26,6 @@ struct EmptyConfig {};
 
 template <typename AlgoT, typename ConfigT=EmptyConfig>
 class JOmniFactory : public JMultifactory, 
-                     public jana::components::JHasInputs,
                      public jana::components::JHasOutputs {
 private:
 

@@ -9,6 +9,7 @@
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasInputs.h>
 #include <JANA/Components/JHasDatabundleOutputs.h>
 #include <JANA/Components/JHasRunCallbacks.h>
 
@@ -26,6 +27,7 @@ class JApplication;
 
 class JFactory : public jana::components::JComponent,
                  public jana::components::JHasRunCallbacks,
+                 public jana::components::JHasInputs,
                  public jana::components::JHasDatabundleOutputs {
 public:
 
