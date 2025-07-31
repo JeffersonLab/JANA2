@@ -5,12 +5,18 @@
 #pragma once
 #include "JANA/Components/JComponentSummary.h"
 #include "JANA/Components/JLightweightDatabundle.h"
+#include "JANA/Utils/JEventLevel.h"
 #include "JANA/Utils/JTypeInfo.h"
+#include "JANA/JFactorySet.h"
 #include <typeindex>
-#include <JANA/JEvent.h>
+#include <JANA/JEvent.h> // TODO: Remove me once possible
 
 
+class JEvent;
 namespace jana::components {
+
+// Free function in order to break circular dependence on JEvent
+JFactorySet* GetFactorySetAtLevel(const JEvent& event, JEventLevel desired_level);
 
 struct JHasInputs {
 protected:
@@ -21,6 +27,7 @@ protected:
     std::vector<InputBase*> m_inputs;
     std::vector<VariadicInputBase*> m_variadic_inputs;
     std::vector<std::pair<InputBase*, VariadicInputBase*>> m_ordered_inputs;
+
 
     void RegisterInput(InputBase* input) {
         m_inputs.push_back(input);
@@ -177,29 +184,45 @@ protected:
         friend class JComponentT;
 
         void GetCollection(const JEvent& event) {
-            auto& level = m_level;
+
+            // Eventually, we might try maintaining a permanent link to the databundle
+            // instead of having to retrieve it every time. This will only work if we are both on a
+            // JFactory in the same JFactorySet, though.
+
+            auto facset = GetFactorySetAtLevel(event, m_level);
+            auto databundle = facset->GetDatabundle(std::type_index(typeid(T)), m_databundle_name);
+            if (databundle == nullptr) {
+                if (!m_is_optional) {
+                    facset->Print();
+                    throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + m_databundle_name);
+                }
+            };
+            auto* typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
+            if (typed_databundle == nullptr) {
+                if (!m_is_optional) {
+                    facset->Print();
+                    throw JException("Databundle with shortname '%s' does not inherit from JLightweightDatabundleT<%s>", m_databundle_name.c_str(), JTypeInfo::demangle<T>().c_str());
+                }
+            }
             m_data.clear();
-            if (level == event.GetLevel() || level == JEventLevel::None) {
-                event.Get<T>(m_data, m_databundle_name, !m_is_optional);
-            }
-            else {
-                if (m_is_optional && !event.HasParent(level)) return;
-                event.GetParent(level).template Get<T>(m_data, m_databundle_name, !m_is_optional);
-            }
+            event.Get<T>(m_data, m_databundle_name, !m_is_optional);
+            m_data.insert(m_data.end(), typed_databundle->GetData().begin(), typed_databundle->GetData().end());
+            // Eventually we might skip the insert, and have operator() return the databundle contents directly
         }
+
         void PrefetchCollection(const JEvent& event) {
-            if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                auto fac = event.GetFactory<T>(m_databundle_name, !m_is_optional);
-                if (fac != nullptr) {
-                    fac->Create(event);
-                }
+            auto facset = GetFactorySetAtLevel(event, m_level);
+            if (facset == nullptr && !m_is_optional) {
+                throw JException("Could not find parent at level=" + toString(m_level));
             }
-            else {
-                if (m_is_optional && !event.HasParent(m_level)) return;
-                auto fac = event.GetParent(m_level).template GetFactory<T>(m_databundle_name, !m_is_optional);
-                if (fac != nullptr) {
-                    fac->Create(event);
-                }
+            auto coll = facset->GetDatabundle(std::type_index(typeid(T)), m_databundle_name);
+            if (coll == nullptr && !m_is_optional) {
+                facset->Print();
+                throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + m_databundle_name);
+            }
+            auto fac = coll->GetFactory();
+            if (fac != nullptr) {
+                fac->Create(event);
             }
         }
     };
