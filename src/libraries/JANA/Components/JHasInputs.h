@@ -268,22 +268,38 @@ protected:
         }
 
         void GetCollection(const JEvent& event) {
-            if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                m_data = event.GetCollection<PodioT>(m_databundle_name, !m_is_optional);
+            auto facset = GetFactorySetAtLevel(event, m_level);
+            auto databundle = facset->GetDatabundle(std::type_index(typeid(PodioT)), m_databundle_name);
+            if (databundle == nullptr) {
+                if (!m_is_optional) {
+                    facset->Print();
+                    throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<PodioT>() + " and tag=" + m_databundle_name);
+                }
+            };
+            auto* typed_databundle = dynamic_cast<JPodioDatabundle*>(databundle);
+            if (typed_databundle == nullptr) {
+                facset->Print();
+                throw JException("Databundle with unique name '%s' does not inherit from JPodioDatabundle", m_databundle_name.c_str());
             }
-            else {
-                if (m_is_optional && !event.HasParent(m_level)) return;
-                m_data = event.GetParent(m_level).template GetCollection<PodioT>(m_databundle_name, !m_is_optional);
+            m_data = dynamic_cast<const PodioT::collection_type*>(typed_databundle->GetCollection());
+            if (m_data == nullptr) {
+                throw JException("Databundle with unique name '%s' does not contain %s", m_databundle_name.c_str(), JTypeInfo::demangle<typename PodioT::collection_type>().c_str());
             }
         }
 
         void PrefetchCollection(const JEvent& event) {
-            if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                event.GetCollection<PodioT>(m_databundle_name, !m_is_optional);
+            auto facset = GetFactorySetAtLevel(event, m_level);
+            if (facset == nullptr && !m_is_optional) {
+                throw JException("Could not find parent at level=" + toString(m_level));
             }
-            else {
-                if (m_is_optional && !event.HasParent(m_level)) return;
-                event.GetParent(m_level).template GetCollection<PodioT>(m_databundle_name, !m_is_optional);
+            auto coll = facset->GetDatabundle(std::type_index(typeid(PodioT)), m_databundle_name);
+            if (coll == nullptr && !m_is_optional) {
+                facset->Print();
+                throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<PodioT>() + " and tag=" + m_databundle_name);
+            }
+            auto fac = coll->GetFactory();
+            if (fac != nullptr) {
+                fac->Create(event);
             }
         }
     };
