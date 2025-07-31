@@ -4,12 +4,15 @@
 
 #pragma once
 #include "JANA/Components/JComponentSummary.h"
+#include <JANA/JVersion.h>
+#if JANA2_HAVE_PODIO
+#include "JANA/Components/JPodioDatabundle.h"
+#endif
 #include "JANA/Components/JLightweightDatabundle.h"
 #include "JANA/Utils/JEventLevel.h"
 #include "JANA/Utils/JTypeInfo.h"
 #include "JANA/JFactorySet.h"
 #include <typeindex>
-#include <JANA/JEvent.h> // TODO: Remove me once possible
 
 
 class JEvent;
@@ -196,6 +199,8 @@ protected:
                     facset->Print();
                     throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + m_databundle_name);
                 }
+                m_data.clear();
+                return;
             };
             auto* typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
             if (typed_databundle == nullptr) {
@@ -205,9 +210,7 @@ protected:
                 }
             }
             m_data.clear();
-            event.Get<T>(m_data, m_databundle_name, !m_is_optional);
             m_data.insert(m_data.end(), typed_databundle->GetData().begin(), typed_databundle->GetData().end());
-            // Eventually we might skip the insert, and have operator() return the databundle contents directly
         }
 
         void PrefetchCollection(const JEvent& event) {
@@ -220,9 +223,11 @@ protected:
                 facset->Print();
                 throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + m_databundle_name);
             }
-            auto fac = coll->GetFactory();
-            if (fac != nullptr) {
-                fac->Create(event);
+            if (coll != nullptr) {
+                auto fac = coll->GetFactory();
+                if (fac != nullptr) {
+                    fac->Create(event);
+                }
             }
         }
     };
@@ -275,6 +280,9 @@ protected:
                     facset->Print();
                     throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<PodioT>() + " and tag=" + m_databundle_name);
                 }
+                // data IS optional, so we exit
+                m_data = nullptr;
+                return;
             };
             auto* typed_databundle = dynamic_cast<JPodioDatabundle*>(databundle);
             if (typed_databundle == nullptr) {
@@ -297,9 +305,11 @@ protected:
                 facset->Print();
                 throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<PodioT>() + " and tag=" + m_databundle_name);
             }
-            auto fac = coll->GetFactory();
-            if (fac != nullptr) {
-                fac->Create(event);
+            if (coll != nullptr) {
+                auto fac = coll->GetFactory();
+                if (fac != nullptr) {
+                    fac->Create(event);
+                }
             }
         }
     };
@@ -341,90 +351,83 @@ protected:
 
         void GetCollection(const JEvent& event) {
             m_datas.clear();
+            auto facset = GetFactorySetAtLevel(event, m_level);
+            if (facset == nullptr && !m_is_optional) {
+                throw JException("Could not find parent at level=" + toString(m_level));
+            }
             if (!m_requested_databundle_names.empty()) {
                 // We have a nonempty input, so we provide the user exactly the inputs they asked for (some of these may be null IF is_optional=true)
-                if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                    size_t i=0;
-                    for (auto& tag : m_requested_databundle_names) {
-                        m_datas.push_back({});
-                        event.Get<T>(m_datas.at(i++), tag, !m_is_optional);
+                for (auto& short_or_unique_name : m_requested_databundle_names) {
+                    auto databundle = facset->GetDatabundle(std::type_index(typeid(T)), short_or_unique_name);
+                    if (databundle == nullptr) {
+                        if (!m_is_optional) {
+                            facset->Print();
+                            throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + " and name=" + short_or_unique_name);
+                        }
+                        m_datas.push_back({}); // If a databundle is optional and missing, we still insert an empty vector for it
+                        continue;
+                    };
+                    auto* typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
+                    if (typed_databundle == nullptr) {
+                        facset->Print();
+                        throw JException("Databundle with shortname '%s' does not inherit from JLightweightDatabundleT<%s>", short_or_unique_name.c_str(), JTypeInfo::demangle<T>().c_str());
                     }
-                }
-                else {
-                    if (m_is_optional && !event.HasParent(m_level)) return;
-                    auto& parent = event.GetParent(m_level);
-                    size_t i=0;
-                    for (auto& tag : m_requested_databundle_names) {
-                        m_datas.push_back({});
-                        parent.template Get<T>(m_datas.at(i++), tag, !m_is_optional);
-                    }
+                    m_datas.push_back({});
+                    auto& dest = m_datas.back();
+                    dest.insert(dest.end(), typed_databundle->GetData().begin(), typed_databundle->GetData().end());
                 }
             }
             else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
                 // We have an empty input and a nontrivial empty input policy
                 m_realized_databundle_names.clear();
 
-                if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                    // We are fetching from the JEvent we already have
-                    auto databundles = event.GetFactorySet()->GetDatabundles(std::type_index(typeid(T)));
-                    size_t i=0;
-                    for (auto* databundle : databundles) {
+                auto databundles = facset->GetDatabundles(std::type_index(typeid(T)));
+                for (auto* databundle : databundles) {
 
-                        auto typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
-                        if (typed_databundle == nullptr) {
-                            continue;
-                        }
-                        m_datas.push_back({});                                   // Create a destination for this factory's data
-                        auto* factory = databundle->GetFactory();
-                        if (factory != nullptr) {
-                            factory->Create(event);
-                        }
-                        auto& contents = typed_databundle->GetData();
-                        auto& dest = m_datas.at(i);
-                        dest.insert(dest.end(), contents.begin(), contents.end());
-                        m_realized_databundle_names.push_back(databundle->GetUniqueName());
-                        // TODO: Not sure how I want to handle short/unique names here
-                        i += 1;
+                    auto typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
+                    if (typed_databundle == nullptr) {
+                        throw JException("Databundle with name=" + typed_databundle->GetUniqueName() + " does not inherit from JLightweightDatabundleT<" + JTypeInfo::demangle<T>() + ">");
                     }
-                }
-                else {
-                    // We are fetching from a parent event
-                    if (m_is_optional && !event.HasParent(m_level)) return;      // Short-circuit if optional and parent missing
-                    auto& parent = event.GetParent(m_level);                     // GetParent throws if parent missing
-                    auto databundles = parent.GetFactorySet()->GetDatabundles(std::type_index(typeid(T)));
-                    size_t i=0;
-                    for (auto* databundle : databundles) {
-
-                        auto typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
-                        if (typed_databundle == nullptr) {
-                            continue;
-                        }
-                        m_datas.push_back({});                                   // Create a destination for this factory's data
-                        auto* factory = databundle->GetFactory();
-                        if (factory != nullptr) {
-                            factory->Create(event);
-                        }
-                        auto& contents = typed_databundle->GetData();
-                        auto& dest = m_datas.at(i);
-                        dest.insert(dest.end(), contents.begin(), contents.end());
+                    auto& contents = typed_databundle->GetData();
+                    m_datas.push_back({}); // Create a destination for this factory's data
+                    auto& dest = m_datas.back();
+                    dest.insert(dest.end(), contents.begin(), contents.end());
+                    if (databundle->HasShortName()) {
+                        m_realized_databundle_names.push_back(databundle->GetShortName());
+                    }
+                    else {
                         m_realized_databundle_names.push_back(databundle->GetUniqueName());
-                        // TODO: Not sure how I want to handle short/unique names here
-                        i += 1;
                     }
                 }
             }
         }
         void PrefetchCollection(const JEvent& event) {
-            if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
+            auto facset = GetFactorySetAtLevel(event, m_level);
+            if (facset == nullptr && !m_is_optional) {
+                throw JException("Could not find parent at level=" + toString(m_level));
+            }
+            if (!m_realized_databundle_names.empty()) {
                 for (auto& tag : m_requested_databundle_names) {
-                    event.GetFactory<T>(tag, !m_is_optional)->Create(event);
+                    auto coll = facset->GetDatabundle(std::type_index(typeid(T)), tag);
+                    if (coll == nullptr && !m_is_optional) {
+                        facset->Print();
+                        throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + tag);
+                    }
+                    if (coll != nullptr) {
+                        auto fac = coll->GetFactory();
+                        if (fac != nullptr) {
+                            fac->Create(event);
+                        }
+                    }
                 }
             }
-            else {
-                if (m_is_optional && !event.HasParent(m_level)) return;
-                auto& parent = event.GetParent(m_level);
-                for (auto& tag : m_requested_databundle_names) {
-                    parent.template GetFactory<T>(tag, !m_is_optional)->Create(event);
+            else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
+                auto databundles = facset->GetDatabundles(std::type_index(typeid(T)));
+                for (auto* databundle : databundles) {
+                    auto* factory = databundle->GetFactory();
+                    if (factory != nullptr) {
+                        factory->Create(event);
+                    }
                 }
             }
         }
@@ -465,26 +468,41 @@ protected:
         }
 
         void GetCollection(const JEvent& event) {
+            auto facset = GetFactorySetAtLevel(event, m_level);
+            if (facset == nullptr && !m_is_optional) {
+                throw JException("Could not find parent at level=" + toString(m_level));
+            }
             bool need_dynamic_realized_databundle_names = (m_requested_databundle_names.empty()) && (m_empty_input_policy != EmptyInputPolicy::IncludeNothing);
             if (need_dynamic_realized_databundle_names) {
                 m_realized_databundle_names.clear();
             }
             m_datas.clear();
             if (!m_requested_databundle_names.empty()) {
-                for (auto& coll_name : m_requested_databundle_names) {
-                    if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                        auto coll = event.GetCollection<PodioT>(coll_name, !m_is_optional);
-                        m_datas.push_back(coll);
+                for (auto& short_or_unique_name : m_requested_databundle_names) {
+                    auto databundle = facset->GetDatabundle(std::type_index(typeid(PodioT)), short_or_unique_name);
+                    if (databundle == nullptr) {
+                        if (!m_is_optional) {
+                            facset->Print();
+                            throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<PodioT>() + " and name=" + short_or_unique_name);
+                        }
+                        m_datas.push_back(nullptr);
+                        continue;
                     }
-                    else {
-                        if (m_is_optional && !event.HasParent(m_level)) return;
-                        auto coll = event.GetParent(m_level).template GetCollection<PodioT>(coll_name, !m_is_optional);
-                        m_datas.push_back(coll);
+                    auto* typed_databundle = dynamic_cast<JPodioDatabundle*>(databundle);
+                    if (typed_databundle == nullptr) {
+                        facset->Print();
+                        throw JException("Databundle with name '%s' does not inherit from JPodioDatabundle", short_or_unique_name.c_str());
                     }
+                    auto* typed_collection = dynamic_cast<const PodioT::collection_type*>(typed_databundle->GetCollection());
+                    if (typed_collection == nullptr) {
+                        throw JException("Databundle with unique name '%s' does not contain %s", short_or_unique_name.c_str(), JTypeInfo::demangle<typename PodioT::collection_type>().c_str());
+                    }
+
+                    m_datas.push_back(typed_collection); // This MIGHT be nullptr if m_is_optional==true
                 }
             }
             else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
-                auto databundles = event.GetFactorySet()->GetDatabundles(std::type_index(typeid(PodioT)));
+                auto databundles = facset->GetDatabundles(std::type_index(typeid(PodioT)));
                 for (auto* databundle : databundles) {
                     auto typed_databundle = dynamic_cast<JPodioDatabundle*>(databundle);
                     if (typed_databundle == nullptr) {
@@ -495,27 +513,40 @@ protected:
                         throw JException("Podio collection is not a %s: type_name=%s, unique_name=%s", JTypeInfo::demangle<PodioT>().c_str(), databundle->GetTypeName().c_str(), databundle->GetUniqueName().c_str());
                     }
                     m_datas.push_back(typed_collection);
-                    if (need_dynamic_realized_databundle_names) {
-                        m_realized_databundle_names.push_back(typed_databundle->GetUniqueName());
+
+                    if (databundle->HasShortName()) {
+                        m_realized_databundle_names.push_back(databundle->GetShortName());
+                    }
+                    else {
+                        m_realized_databundle_names.push_back(databundle->GetUniqueName());
                     }
                 }
             }
         }
 
         void PrefetchCollection(const JEvent& event) {
+            auto facset = GetFactorySetAtLevel(event, m_level);
+            if (facset == nullptr && !m_is_optional) {
+                throw JException("Could not find parent at level=" + toString(m_level));
+            }
+
             if (!m_requested_databundle_names.empty()) {
-                for (auto& coll_name : m_requested_databundle_names) {
-                    if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                        event.GetCollection<PodioT>(coll_name, !m_is_optional);
+                for (auto& short_or_unique_name : m_requested_databundle_names) {
+                    auto coll = facset->GetDatabundle(std::type_index(typeid(PodioT)), short_or_unique_name);
+                    if (coll == nullptr && !m_is_optional) {
+                        facset->Print();
+                        throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<PodioT>() + " and tag=" + short_or_unique_name);
                     }
-                    else {
-                        if (m_is_optional && !event.HasParent(m_level)) return;
-                        event.GetParent(m_level).template GetCollection<PodioT>(coll_name, !m_is_optional);
+                    if (coll != nullptr) {
+                        auto fac = coll->GetFactory();
+                        if (fac != nullptr) {
+                            fac->Create(event);
+                        }
                     }
                 }
             }
             else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
-                auto databundles = event.GetFactorySet()->GetDatabundles(std::type_index(typeid(PodioT)));
+                auto databundles = facset->GetDatabundles(std::type_index(typeid(PodioT)));
                 for (auto* databundle : databundles) {
                     auto* factory = databundle->GetFactory();
                     if (factory != nullptr) {
