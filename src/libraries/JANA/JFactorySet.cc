@@ -82,20 +82,22 @@ bool JFactorySet::Add(JFactory* factory)
     /// Returns bool indicating whether the add succeeded.
 
     if (factory->GetLevel() != mLevel && mLevel != JEventLevel::None && factory->GetLevel() != JEventLevel::None) {
-        LOG << "    Skipping factory with type_name=" << factory->GetTypeName()
-            << ", level=" << toString(factory->GetLevel())
-            << " to event with level= " << toString(mLevel);
+        //LOG << "    Skipping factory with type_name=" << factory->GetTypeName()
+        //    << ", level=" << toString(factory->GetLevel())
+        //    << " to event with level= " << toString(mLevel);
         return false;
     }
+    /*
     else {
         LOG << "    Adding factory with type_name=" << factory->GetTypeName()
             << ", level=" << toString(factory->GetLevel())
             << " to event with level= " << toString(mLevel);
     }
+    */
 
     mFactories.push_back(factory);
 
-    for (auto* output : factory->GetDatabundleOutputs()) {
+    for (auto* output : factory->GetOutputs()) {
         if (output->GetLevel() != mLevel && output->GetLevel() != JEventLevel::None) {
             throw JException("Factory outputs are required to be at the same level as the factory itself");
         }
@@ -103,7 +105,7 @@ bool JFactorySet::Add(JFactory* factory)
         databundle->SetFactory(factory); // It's a little weird to set this here
         Add(databundle);
     }
-    for (auto* variadic_output : factory->GetVariadicDatabundleOutputs()) {
+    for (auto* variadic_output : factory->GetVariadicOutputs()) {
         if (variadic_output->GetLevel() != mLevel && variadic_output->GetLevel() != JEventLevel::None) {
             throw JException("Factory outputs are required to be at the same level as the factory itself");
         }
@@ -174,7 +176,7 @@ void JFactorySet::Print() const {
     table.AddColumn("Size");
 
     for (auto* factory : mFactories) {
-        for (auto* output: factory->GetDatabundleOutputs()) {
+        for (auto* output: factory->GetOutputs()) {
             auto* databundle = output->GetDatabundle();
             table | (factory->GetTypeName().empty() ? "[Unset]" : factory->GetTypeName());
             table | factory->GetPrefix();
@@ -188,7 +190,7 @@ void JFactorySet::Print() const {
             }
             table | databundle->GetSize();
         }
-        for (auto* output: factory->GetVariadicDatabundleOutputs()) {
+        for (auto* output: factory->GetVariadicOutputs()) {
             for (auto* databundle: output->GetDatabundles()) {
                 table | (factory->GetTypeName().empty() ? "[Unset]" : factory->GetTypeName());
                 table | factory->GetPrefix();

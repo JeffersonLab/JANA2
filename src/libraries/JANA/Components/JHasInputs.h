@@ -39,6 +39,14 @@ protected:
         m_variadic_inputs.push_back(input);
     }
 
+    const std::vector<InputBase*>& GetInputs() { 
+        return m_inputs; 
+    }
+
+    const std::vector<VariadicInputBase*>& GetVariadicInputs() { 
+        return m_variadic_inputs; 
+    }
+
     struct InputOptions {
         std::string name {""};
         JEventLevel level {JEventLevel::None};

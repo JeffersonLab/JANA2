@@ -1,6 +1,6 @@
 #pragma once
 #include "JANA/Components/JDatabundle.h"
-#include <JANA/Components/JHasDatabundleOutputs.h>
+#include <JANA/Components/JHasOutputs.h>
 #include <JANA/Components/JLightweightDatabundle.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <typeindex>
@@ -8,13 +8,13 @@
 namespace jana::components {
 
 template <typename T>
-class Output : public JHasDatabundleOutputs::OutputBase {
+class Output : public JHasOutputs::OutputBase {
     std::vector<T*> m_transient_data;
     std::vector<T*>* m_external_data = nullptr; // This is a hack for JFactoryT
     JLightweightDatabundleT<T>* m_databundle; // Just so that we have a typed reference
 
 public:
-    Output(JHasDatabundleOutputs* owner, std::string short_name="") {
+    Output(JHasOutputs* owner, std::string short_name="") {
         owner->RegisterOutput(this);
         m_databundle = new JLightweightDatabundleT<T>();
         m_databundle->SetTypeName(JTypeInfo::demangle<T>());
@@ -24,7 +24,7 @@ public:
         // Factory will be set by JFactorySet, not here
     }
 
-    Output(JHasDatabundleOutputs* owner, std::vector<T*>* external_data, std::string short_name="") {
+    Output(JHasOutputs* owner, std::vector<T*>* external_data, std::string short_name="") {
         owner->RegisterOutput(this);
         m_databundle = new JLightweightDatabundleT<T>(external_data);
         m_databundle->SetTypeName(JTypeInfo::demangle<T>());
@@ -52,3 +52,5 @@ public:
 };
 
 } // jana::components
+
+template <typename T> using Output = jana::components::Output<T>;

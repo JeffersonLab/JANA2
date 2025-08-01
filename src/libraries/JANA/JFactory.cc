@@ -114,13 +114,19 @@ void JFactory::Create(const JEvent& event) {
             mPreviousRunNumber = run_number;
         }
         try {
+            for (auto* input : GetInputs()) {
+                input->GetCollection(event);
+            }
+            for (auto* input : GetVariadicInputs()) {
+                input->GetCollection(event);
+            }
             CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
             mStatus = Status::Processed;
             mCreationStatus = CreationStatus::Created;
-            for (auto* output : GetDatabundleOutputs()) {
+            for (auto* output : GetOutputs()) {
                 output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
             }
-            for (auto* output : GetVariadicDatabundleOutputs()) {
+            for (auto* output : GetVariadicOutputs()) {
                 output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
             }
         }
@@ -133,10 +139,10 @@ void JFactory::Create(const JEvent& event) {
             LOG << "Exception in JFactory::Create, prefix=" << GetPrefix();
             mStatus = Status::Excepted;
             mCreationStatus = CreationStatus::Created;
-            for (auto* output : GetDatabundleOutputs()) {
+            for (auto* output : GetOutputs()) {
                 output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
             }
-            for (auto* output : GetVariadicDatabundleOutputs()) {
+            for (auto* output : GetVariadicOutputs()) {
                 output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
             }
             throw;
@@ -178,13 +184,8 @@ void JFactory::Summarize(JComponentSummary& summary) const {
             GetLevel(),
             GetPluginName());
 
-    auto coll = new JComponentSummary::Collection(
-            GetTag(), 
-            GetTag(),
-            GetObjectName(), 
-            GetLevel());
-
-    fs->AddOutput(coll);
+    SummarizeInputs(*fs);
+    SummarizeOutputs(*fs);
     summary.Add(fs);
 }
 
