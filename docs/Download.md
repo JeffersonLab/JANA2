@@ -5,10 +5,49 @@
 - `git clone https://github.com/JeffersonLab/JANA2/`
 
 ### Latest release
+
 - `git clone --branch latest_release https://github.com/JeffersonLab/JANA2`
 - [See release on GitHub](https://github.com/JeffersonLab/JANA2/tree/latest_release)
-- [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest/index.html)
-- [Download doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest.tar.gz)
+- [See online documentation](https://jeffersonlab.github.io/JANA2/)
+- [See online doxygen documentation](https://jeffersonlab.github.io/JANA2/refcpp/)
+
+### 2.4.3
+
+#### Behavior changes
+
+- JHasOutputs represents variadic output names as `std::vector<std::vector<std::string>>`, which now allows for multiple variadic outputs with arbitrary lengths (Pull request #458)
+
+- Removed the never-used JEventProcessorSequential and JEventProcessorSequentialRoot. All their functionality has been backported to JEventProcessor. (Pull request #456)
+
+- JInspector is now launched using the parameter `jana:inspect=true` instead of the command-line argument `--interactive`, which works regardless of which executable runs JANA. (Pull request 459)
+
+#### Bugfixes
+
+- Relax JFactory::Create cycle detector for the sake of JEventSourceEVIOpp (Pull request #461)
+
+- Fix JFactoryPodioT template error when using Podio LinkCollections (Pull request #462)
+
+- JEventUnfolder erroneously inserted outputs even though KeepChildNextParent was returned (Pull request #458)
+
+- JEventUnfolder supports parent events with zero children (Pull request #456)
+
+- JTopologyBuilder creates a chain of TapArrows so that independent JEventProcessors can be pipelined, allowing new-style JEventProcessors to have comparable performance to the old-style ones. (Pull request 456)
+
+#### Features
+
+- Variadic inputs now support an EmptyInputPolicy, which allows components to optionally retrieve all databundles/collections for a given type and EventLevel, analogous to JEvent::GetFactoryAll(). (Pull request #454)
+
+#### Usability improvements and refactoring
+
+- Improve the JANA tutorial and examples by creating a new paradigm, in which a toy reconstruction codebase is systematically built up piece-by-piece. Two versions exist, one using a lightweight (GlueX-style) datamodel, and the other using a Podio datamodel. Apart from the datamodel choice, the two versions are functionally identical. (Pull request #453)
+
+- Improve debugging by having the JANA1-style JEvent::GetSingle directly throw a JException instead of a size_t, thereby producing a full stack trace (Pull request #461)
+
+- Renamed JEventProcessor::Process(const JEvent&) to ProcessSequential to reduce user confusion (Note that this feature was experimental and unused up until now) (Pull request #456)
+
+- JTopologyBuilder::connect() wires arrows using port id instead of port index, reducing confusion while manually configuring topologies. (Pull request #456)
+
+- JFactoryT uses JDatabundle under the hood, as part of a deeper long-term refactoring. (Pull request #458, Issues #254, #276)
 
 ### 2.4.2
 
