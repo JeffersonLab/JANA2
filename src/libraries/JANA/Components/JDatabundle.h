@@ -40,6 +40,16 @@ protected:
 public:
     // Interface
     JDatabundle() = default;
+    JDatabundle(const JDatabundle& other) {
+        m_status = other.m_status;
+        m_unique_name = other.m_unique_name;
+        m_short_name = other.m_short_name;
+        m_type_name = other.m_type_name;
+        m_factory = other.m_factory; // Tricky, but doesn't matter much in practice
+        m_inner_type_index = other.m_inner_type_index;
+        m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE;
+        // TODO: Get UpcastVTable working again
+    }
     virtual ~JDatabundle() = default;
     virtual size_t GetSize() const = 0;
     virtual void ClearData() = 0;

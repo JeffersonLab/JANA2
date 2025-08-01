@@ -26,6 +26,7 @@ public:
         std::vector<JDatabundle*>& GetDatabundles() { return databundles; }
 
         virtual void StoreData(JFactorySet&, JDatabundle::Status) = 0;
+        virtual void StoreFromProcessor(JFactorySet&, JDatabundle::Status) {};
         virtual void Reset() = 0;
     };
 
