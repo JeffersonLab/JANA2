@@ -83,6 +83,57 @@ protected:
         m_transient_collection = std::make_unique<typename PodioT::collection_type>();
     }
 
+
+    void StoreFromProcessor(JFactorySet& facset, JDatabundle::Status status) override {
+
+        // First we retrieve the podio::Frame
+
+        auto* frame_bundle = facset.GetDatabundle("podio::Frame");
+        JLightweightDatabundleT<podio::Frame>* typed_frame_bundle = nullptr;
+
+        if (frame_bundle == nullptr) {
+            LOG << "No frame databundle found. Creating new databundle.";
+            typed_frame_bundle = new JLightweightDatabundleT<podio::Frame>;
+            facset.Add(typed_frame_bundle);
+        }
+        else {
+            typed_frame_bundle = dynamic_cast<JLightweightDatabundleT<podio::Frame>*>(frame_bundle);
+            if (typed_frame_bundle == nullptr) {
+                throw JException("Databundle with unique_name 'podio::Frame' is not a JLightweightDatabundleT");
+            }
+        }
+        if (typed_frame_bundle->GetSize() == 0) {
+            LOG << "Found typed bundle with no frame. Creating new frame.";
+            typed_frame_bundle->GetData().push_back(new podio::Frame);
+            typed_frame_bundle->SetStatus(JDatabundle::Status::Inserted);
+        }
+        podio::Frame* frame = typed_frame_bundle->GetData().at(0);
+        frame->put(std::move(m_transient_collection), m_podio_databundle->GetUniqueName());
+        const auto* published = &frame->template get<typename PodioT::collection_type>(m_podio_databundle->GetUniqueName());
+
+        // Then we store the collection itself
+
+        JPodioDatabundle* typed_collection_bundle = nullptr;
+        auto collection_bundle = facset.GetDatabundle(m_podio_databundle->GetTypeIndex(), m_podio_databundle->GetUniqueName());
+
+        if (collection_bundle == nullptr) {
+            // No databundle present. In this case we simply use m_podio_databundle as a template
+            typed_collection_bundle = new JPodioDatabundle(*m_podio_databundle);
+            facset.Add(typed_collection_bundle);
+        }
+        else {
+            typed_collection_bundle = dynamic_cast<JPodioDatabundle*>(collection_bundle);
+            if (typed_collection_bundle == nullptr) {
+                // Wrong databundle present
+                throw JException("Databundle with unique_name '%s' is not a JPodioDatabundle", m_podio_databundle->GetUniqueName().c_str());
+            }
+        }
+        typed_collection_bundle->SetCollection(published);
+        typed_collection_bundle->SetStatus(status);
+        m_transient_collection = std::make_unique<typename PodioT::collection_type>();
+        // TODO: Is Reset() always called? Are we make_unique()ing twice?
+    }
+
     void Reset() override {
         m_transient_collection = std::move(std::make_unique<typename PodioT::collection_type>());
         m_transient_collection->setSubsetCollection(m_is_subset);
@@ -143,6 +194,62 @@ public:
         }
         m_transient_collections.clear();
     }
+
+    void StoreFromProcessor(JFactorySet& facset, JDatabundle::Status status) override {
+
+        // First we retrieve the podio::Frame
+
+        auto* frame_bundle = facset.GetDatabundle("podio::Frame");
+        JLightweightDatabundleT<podio::Frame>* typed_frame_bundle = nullptr;
+
+        if (frame_bundle == nullptr) {
+            LOG << "No frame databundle found. Creating new databundle.";
+            typed_frame_bundle = new JLightweightDatabundleT<podio::Frame>;
+            facset.Add(typed_frame_bundle);
+        }
+        else {
+            typed_frame_bundle = dynamic_cast<JLightweightDatabundleT<podio::Frame>*>(frame_bundle);
+            if (typed_frame_bundle == nullptr) {
+                throw JException("Databundle with unique_name 'podio::Frame' is not a JLightweightDatabundleT");
+            }
+        }
+        if (typed_frame_bundle->GetSize() == 0) {
+            LOG << "Found typed bundle with no frame. Creating new frame.";
+            typed_frame_bundle->GetData().push_back(new podio::Frame);
+            typed_frame_bundle->SetStatus(JDatabundle::Status::Inserted);
+        }
+        podio::Frame* frame = typed_frame_bundle->GetData().at(0);
+
+
+        int i=0;
+        for (auto& collection : m_transient_collections) {
+            frame->put(std::move(collection), m_databundles[i]->GetUniqueName());
+            const auto* moved = &frame->template get<typename PodioT::collection_type>(m_databundles[i]->GetUniqueName());
+
+            JPodioDatabundle* typed_collection_bundle = nullptr;
+            auto collection_bundle = facset.GetDatabundle(m_databundles[i]->GetTypeIndex(), m_databundles[i]->GetUniqueName());
+
+            if (collection_bundle == nullptr) {
+                // No databundle present. In this case we create it, using m_databundles[i] as a template
+                typed_collection_bundle = new JPodioDatabundle(*m_databundles[i]);
+                facset.Add(typed_collection_bundle);
+            }
+            else {
+                typed_collection_bundle = dynamic_cast<JPodioDatabundle*>(collection_bundle);
+                if (typed_collection_bundle == nullptr) {
+                    // Wrong databundle present
+                    throw JException("Databundle with unique_name '%s' is not a JPodioDatabundle", m_databundles[i]->GetUniqueName().c_str());
+                }
+            }
+
+            // Then we store the collection itself
+            typed_collection_bundle->SetCollection(moved);
+            typed_collection_bundle->SetStatus(status);
+            i += 1;
+        }
+        m_transient_collections.clear();
+    }
+
 
     void Reset() override {
         for (auto& coll_name : GetDatabundles()) {
