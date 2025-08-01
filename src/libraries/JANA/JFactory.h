@@ -10,8 +10,10 @@
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Components/JComponent.h>
 #include <JANA/Components/JHasInputs.h>
-#include <JANA/Components/JHasDatabundleOutputs.h>
+#include <JANA/Components/JHasOutputs.h>
 #include <JANA/Components/JHasRunCallbacks.h>
+#include <JANA/Components/JPodioOutput.h>
+#include <JANA/Components/JLightweightOutput.h>
 
 #include <string>
 #include <typeindex>
@@ -28,7 +30,7 @@ class JApplication;
 class JFactory : public jana::components::JComponent,
                  public jana::components::JHasRunCallbacks,
                  public jana::components::JHasInputs,
-                 public jana::components::JHasDatabundleOutputs {
+                 public jana::components::JHasOutputs {
 public:
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Excepted, Finished};
@@ -128,10 +130,10 @@ public:
         this->mStatus = JFactory::Status::Unprocessed;
         this->mCreationStatus = JFactory::CreationStatus::NotCreatedYet;
 
-        for (auto* output: GetDatabundleOutputs()) {
+        for (auto* output: GetOutputs()) {
             output->ClearData();
         }
-        for (auto* variadic_output : GetVariadicDatabundleOutputs()) {
+        for (auto* variadic_output : GetVariadicOutputs()) {
             variadic_output->ClearData();
         }
     }

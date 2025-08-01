@@ -177,8 +177,11 @@ JEventSource::Result JEventSource::DoNext(std::shared_ptr<JEvent> event) {
             m_events_emitted += 1;
             // We end up here if we read an entry in our file or retrieved a message from our socket,
             // and believe we could obtain another one immediately if we wanted to
-            for (auto* output : m_outputs) {
-                output->InsertCollection(*event);
+            for (auto* output : GetOutputs()) {
+                output->EulerianStore(*event->GetFactorySet());
+            }
+            for (auto* output : GetVariadicOutputs()) {
+                output->EulerianStore(*event->GetFactorySet());
             }
             return Result::Success;
         }
@@ -219,13 +222,7 @@ void JEventSource::Summarize(JComponentSummary& summary) const {
     auto* result = new JComponentSummary::Component(
         "Source", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
-    for (const auto* output : m_outputs) {
-        size_t suboutput_count = output->collection_names.size();
-        for (size_t i=0; i<suboutput_count; ++i) {
-            result->AddOutput(new JComponentSummary::Collection("", output->collection_names[i], output->type_name, GetLevel()));
-        }
-    }
-
+    SummarizeOutputs(*result);
     summary.Add(result);
 }
 

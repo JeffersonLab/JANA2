@@ -1,7 +1,7 @@
 #pragma once
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/JFactorySet.h>
-#include <JANA/Components/JHasDatabundleOutputs.h>
+#include <JANA/Components/JHasOutputs.h>
 #include <JANA/Components/JPodioDatabundle.h>
 #include <JANA/Components/JLightweightDatabundle.h>
 #include <podio/Frame.h>
@@ -12,20 +12,20 @@ namespace jana::components {
 
 
 template <typename PodioT>
-class PodioOutput : public JHasDatabundleOutputs::OutputBase {
+class PodioOutput : public JHasOutputs::OutputBase {
 private:
     std::unique_ptr<typename PodioT::collection_type> m_transient_collection;
     bool m_is_subset = false;
     JPodioDatabundle* m_podio_databundle;
 
 public:
-    PodioOutput(JHasDatabundleOutputs* owner) {
+    PodioOutput(JHasOutputs* owner, std::string collection_name="") {
 
         owner->RegisterOutput(this);
         this->m_podio_databundle = new JPodioDatabundle;
         SetDatabundle(m_podio_databundle);
 
-        m_podio_databundle->SetShortName("");
+        m_podio_databundle->SetShortName(collection_name);
         m_podio_databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
         m_podio_databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
 
@@ -57,7 +57,7 @@ protected:
         JLightweightDatabundleT<podio::Frame>* typed_bundle = nullptr;
 
         if (bundle == nullptr) {
-            LOG << "No frame databundle found. Creating new databundle.";
+            // LOG << "No frame databundle found. Creating new databundle.";
             typed_bundle = new JLightweightDatabundleT<podio::Frame>;
             facset.Add(typed_bundle);
         }
@@ -68,15 +68,15 @@ protected:
             }
         }
         if (typed_bundle->GetSize() == 0) {
-            LOG << "Found typed bundle with no frame. Creating new frame.";
+            // LOG << "Found typed bundle with no frame. Creating new frame.";
             typed_bundle->GetData().push_back(new podio::Frame);
             typed_bundle->SetStatus(JDatabundle::Status::Inserted);
         }
         podio::Frame* frame = typed_bundle->GetData().at(0);
 
-        LOG << "Storing podio collection with name=" << m_podio_databundle->GetUniqueName() << " to frame " << frame << "...";
+        // LOG << "Storing podio collection with name=" << m_podio_databundle->GetUniqueName() << " to frame " << frame << "...";
         frame->put(std::move(m_transient_collection), m_podio_databundle->GetUniqueName());
-        LOG << "...done";
+        // LOG << "...done";
         const auto* moved = &frame->template get<typename PodioT::collection_type>(m_podio_databundle->GetUniqueName());
         m_podio_databundle->SetCollection(moved);
         m_podio_databundle->SetStatus(status);
@@ -92,7 +92,7 @@ protected:
         JLightweightDatabundleT<podio::Frame>* typed_frame_bundle = nullptr;
 
         if (frame_bundle == nullptr) {
-            LOG << "No frame databundle found. Creating new databundle.";
+            // LOG << "No frame databundle found. Creating new databundle.";
             typed_frame_bundle = new JLightweightDatabundleT<podio::Frame>;
             facset.Add(typed_frame_bundle);
         }
@@ -103,7 +103,7 @@ protected:
             }
         }
         if (typed_frame_bundle->GetSize() == 0) {
-            LOG << "Found typed bundle with no frame. Creating new frame.";
+            // LOG << "Found typed bundle with no frame. Creating new frame.";
             typed_frame_bundle->GetData().push_back(new podio::Frame);
             typed_frame_bundle->SetStatus(JDatabundle::Status::Inserted);
         }
@@ -137,24 +137,26 @@ protected:
 
 
 template <typename PodioT>
-class VariadicPodioOutput : public JHasDatabundleOutputs::VariadicOutputBase {
+class VariadicPodioOutput : public JHasOutputs::VariadicOutputBase {
 private:
     std::vector<std::unique_ptr<typename PodioT::collection_type>> m_transient_collections;
     std::vector<JPodioDatabundle*> m_databundles;
 
 public:
-    VariadicPodioOutput(JHasDatabundleOutputs* owner, std::vector<std::string> default_collection_names={}) {
+    VariadicPodioOutput(JHasOutputs* owner, std::vector<std::string> default_collection_names={}) {
         owner->RegisterOutput(this);
         for (const std::string& name : default_collection_names) {
-            auto coll = std::make_unique<JPodioDatabundle>();
-            coll->SetUniqueName(name);
-            coll->SetTypeName(JTypeInfo::demangle<PodioT>());
-            m_transient_collections.push_back(std::move(coll));
-        }
-        for (auto& coll_name : GetDatabundles()) {
+            auto db = new JPodioDatabundle();
+            db->SetUniqueName(name);
+            db->SetTypeName(JTypeInfo::demangle<PodioT>());
+            m_databundles.push_back(db);
+            GetDatabundles().push_back(db);
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
         }
     }
+
+    std::vector<std::unique_ptr<typename PodioT::collection_type>>& operator()() { return m_transient_collections; }
+
     void LagrangianStore(JFactorySet& facset, JDatabundle::Status status) override {
         if (m_transient_collections.size() != GetDatabundles().size()) {
             throw JException("VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", GetDatabundles().size(), m_transient_collections.size());
@@ -197,7 +199,7 @@ public:
         JLightweightDatabundleT<podio::Frame>* typed_frame_bundle = nullptr;
 
         if (frame_bundle == nullptr) {
-            LOG << "No frame databundle found. Creating new databundle.";
+            // LOG << "No frame databundle found. Creating new databundle.";
             typed_frame_bundle = new JLightweightDatabundleT<podio::Frame>;
             facset.Add(typed_frame_bundle);
         }
@@ -208,7 +210,7 @@ public:
             }
         }
         if (typed_frame_bundle->GetSize() == 0) {
-            LOG << "Found typed bundle with no frame. Creating new frame.";
+            // LOG << "Found typed bundle with no frame. Creating new frame.";
             typed_frame_bundle->GetData().push_back(new podio::Frame);
             typed_frame_bundle->SetStatus(JDatabundle::Status::Inserted);
         }
@@ -245,6 +247,8 @@ public:
     }
 };
 
-
 } // namespace jana::components
+
+template <typename T> using PodioOutput = jana::components::PodioOutput<T>;
+template <typename T> using VariadicPodioOutput = jana::components::VariadicPodioOutput<T>;
 
