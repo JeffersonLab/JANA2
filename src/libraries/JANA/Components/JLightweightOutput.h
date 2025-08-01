@@ -20,7 +20,7 @@ public:
         m_databundle->SetTypeName(JTypeInfo::demangle<T>());
         m_databundle->SetTypeIndex(std::type_index(typeid(T)));
         m_databundle->SetShortName(short_name);
-        GetDatabundles().push_back(m_databundle);
+        SetDatabundle(m_databundle);
         // Factory will be set by JFactorySet, not here
     }
 
@@ -31,16 +31,8 @@ public:
         m_databundle->SetTypeIndex(std::type_index(typeid(T)));
         m_databundle->SetShortName(short_name);
         m_external_data = external_data;
-        GetDatabundles().push_back(m_databundle);
+        SetDatabundle(m_databundle);
         // Factory will be set by JFactorySet, not here
-    }
-
-    void SetShortName(std::string short_name) {
-        m_databundle->SetShortName(short_name);
-    }
-
-    void SetUniqueName(std::string unique_name) {
-        m_databundle->SetUniqueName(unique_name);
     }
 
     void SetNotOwnerFlag(bool not_owner) {
@@ -51,14 +43,12 @@ public:
 
     JLightweightDatabundleT<T>& GetDatabundle() { return *m_databundle; }
 
-    void StoreData(JFactorySet&, JDatabundle::Status status) override {
+    void LagrangianStore(JFactorySet&, JDatabundle::Status status) override {
         if (m_external_data == nullptr) {
             m_databundle->GetData() = std::move(m_transient_data);
         }
         m_databundle->SetStatus(status);
     }
-
-    void Reset() override { }
 };
 
 } // jana::components

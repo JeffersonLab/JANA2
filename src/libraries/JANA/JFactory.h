@@ -46,11 +46,11 @@ public:
     virtual ~JFactory() = default;
 
     void SetTag(std::string tag) {
-        GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->SetShortName(tag);
+        GetFirstDatabundle()->SetShortName(tag);
     }
 
     std::string GetTag() const { 
-        auto& db = GetDatabundleOutputs().at(0)->GetDatabundles().at(0);
+        auto db = GetFirstDatabundle();
         if (db->HasShortName()) {
             return db->GetShortName();
         }
@@ -103,11 +103,11 @@ public:
     }
 
     std::type_index GetObjectType() const {
-        return GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->GetTypeIndex();
+        return GetFirstDatabundle()->GetTypeIndex();
     }
 
     std::size_t GetNumObjects() const {
-        return GetDatabundleOutputs().at(0)->GetDatabundles().at(0)->GetSize();
+        return GetFirstDatabundle()->GetSize();
     }
 
     void ClearData() {
@@ -128,10 +128,11 @@ public:
         this->mStatus = JFactory::Status::Unprocessed;
         this->mCreationStatus = JFactory::CreationStatus::NotCreatedYet;
 
-        for (auto* output : this->GetDatabundleOutputs()) {
-            for (auto* db : output->GetDatabundles()) {
-                db->ClearData();
-            }
+        for (auto* output: GetDatabundleOutputs()) {
+            output->ClearData();
+        }
+        for (auto* variadic_output : GetVariadicDatabundleOutputs()) {
+            variadic_output->ClearData();
         }
     }
 
