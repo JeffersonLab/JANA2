@@ -96,7 +96,18 @@ bool JFactorySet::Add(JFactory* factory)
     mFactories.push_back(factory);
 
     for (auto* output : factory->GetDatabundleOutputs()) {
-        for (const auto& databundle : output->GetDatabundles()) {
+        if (output->GetLevel() != mLevel && output->GetLevel() != JEventLevel::None) {
+            throw JException("Factory outputs are required to be at the same level as the factory itself");
+        }
+        auto* databundle = output->GetDatabundle();
+        databundle->SetFactory(factory); // It's a little weird to set this here
+        Add(databundle);
+    }
+    for (auto* variadic_output : factory->GetVariadicDatabundleOutputs()) {
+        if (variadic_output->GetLevel() != mLevel && variadic_output->GetLevel() != JEventLevel::None) {
+            throw JException("Factory outputs are required to be at the same level as the factory itself");
+        }
+        for (const auto& databundle : variadic_output->GetDatabundles()) {
             databundle->SetFactory(factory); // It's a little weird to set this here
             Add(databundle);
         }
@@ -164,6 +175,20 @@ void JFactorySet::Print() const {
 
     for (auto* factory : mFactories) {
         for (auto* output: factory->GetDatabundleOutputs()) {
+            auto* databundle = output->GetDatabundle();
+            table | (factory->GetTypeName().empty() ? "[Unset]" : factory->GetTypeName());
+            table | factory->GetPrefix();
+            table | databundle->GetTypeName();
+            table | databundle->GetUniqueName();
+            switch (databundle->GetStatus()) {
+                case JDatabundle::Status::Empty:    table | "Empty";    break;
+                case JDatabundle::Status::Created:  table | "Created";  break;
+                case JDatabundle::Status::Inserted: table | "Inserted"; break;
+                case JDatabundle::Status::Excepted: table | "Excepted"; break;
+            }
+            table | databundle->GetSize();
+        }
+        for (auto* output: factory->GetVariadicDatabundleOutputs()) {
             for (auto* databundle: output->GetDatabundles()) {
                 table | (factory->GetTypeName().empty() ? "[Unset]" : factory->GetTypeName());
                 table | factory->GetPrefix();

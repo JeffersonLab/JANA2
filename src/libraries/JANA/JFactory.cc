@@ -118,7 +118,10 @@ void JFactory::Create(const JEvent& event) {
             mStatus = Status::Processed;
             mCreationStatus = CreationStatus::Created;
             for (auto* output : GetDatabundleOutputs()) {
-                output->StoreData(*event.GetFactorySet(), JDatabundle::Status::Created);
+                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
+            }
+            for (auto* output : GetVariadicDatabundleOutputs()) {
+                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
             }
         }
         catch (...) {
@@ -131,7 +134,10 @@ void JFactory::Create(const JEvent& event) {
             mStatus = Status::Excepted;
             mCreationStatus = CreationStatus::Created;
             for (auto* output : GetDatabundleOutputs()) {
-                output->StoreData(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+            }
+            for (auto* output : GetVariadicDatabundleOutputs()) {
+                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
             }
             throw;
         }
