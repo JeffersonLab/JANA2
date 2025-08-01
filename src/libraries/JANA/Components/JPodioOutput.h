@@ -150,7 +150,7 @@ private:
 public:
     VariadicPodioOutput(JHasDatabundleOutputs* owner, std::vector<std::string> default_collection_names={}) {
         owner->RegisterOutput(this);
-        this->is_variadic = true;
+        m_is_variadic = true;
         for (const std::string& name : default_collection_names) {
             auto coll = std::make_unique<JPodioDatabundle>();
             coll->SetUniqueName(name);
