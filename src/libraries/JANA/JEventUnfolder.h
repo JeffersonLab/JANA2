@@ -84,10 +84,10 @@ public:
             }
         }
         for (auto* input : m_inputs) {
-            input->PrefetchCollection(parent);
+            input->TriggerFactoryCreate(parent);
         }
         for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->PrefetchCollection(parent);
+            variadic_input->TriggerFactoryCreate(parent);
         }
         if (m_callback_style != CallbackStyle::DeclarativeMode) {
             CallWithJExceptionWrapper("JEventUnfolder::Preprocess", [&](){
@@ -123,13 +123,13 @@ public:
                 m_last_run_number = parent.GetRunNumber();
             }
             for (auto* input : m_inputs) {
-                input->GetCollection(parent);
+                input->Populate(parent);
                 // TODO: This requires that all inputs come from the parent.
                 //       However, eventually we will want to support inputs 
                 //       that come from the child.
             }
             for (auto* variadic_input : m_variadic_inputs) {
-                variadic_input->GetCollection(parent);
+                variadic_input->Populate(parent);
             }
             Result result;
             child.SetEventIndex(m_child_number);

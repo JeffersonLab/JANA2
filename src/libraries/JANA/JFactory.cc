@@ -115,10 +115,10 @@ void JFactory::Create(const JEvent& event) {
         }
         try {
             for (auto* input : GetInputs()) {
-                input->GetCollection(event);
+                input->Populate(event);
             }
             for (auto* input : GetVariadicInputs()) {
-                input->GetCollection(event);
+                input->Populate(event);
             }
             CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
             mStatus = Status::Processed;

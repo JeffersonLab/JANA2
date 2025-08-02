@@ -64,12 +64,15 @@ protected:
 
     class InputBase {
     protected:
+        std::type_index m_type_index = std::type_index(typeid(JDatabundle::NoTypeProvided));
         std::string m_type_name;
         std::string m_databundle_name;
         JEventLevel m_level = JEventLevel::None;
         bool m_is_optional = false;
 
     public:
+
+        virtual ~InputBase();
 
         void SetOptional(bool isOptional) {
             m_is_optional = isOptional;
@@ -101,8 +104,8 @@ protected:
             m_is_optional = options.is_optional;
         }
 
-        virtual void GetCollection(const JEvent& event) = 0;
-        virtual void PrefetchCollection(const JEvent& event) = 0;
+        void TriggerFactoryCreate(const JEvent& event);
+        virtual void Populate(const JEvent& event) = 0;
     };
 
     class VariadicInputBase {
@@ -110,6 +113,7 @@ protected:
         enum class EmptyInputPolicy { IncludeNothing, IncludeEverything };
 
     protected:
+        std::type_index m_type_index = std::type_index(typeid(JDatabundle::NoTypeProvided));
         std::string m_type_name;
         std::vector<std::string> m_requested_databundle_names;
         std::vector<std::string> m_realized_databundle_names;
@@ -118,6 +122,8 @@ protected:
         EmptyInputPolicy m_empty_input_policy = EmptyInputPolicy::IncludeNothing;
 
     public:
+
+        virtual ~VariadicInputBase();
 
         void SetOptional(bool isOptional) {
             m_is_optional = isOptional;
@@ -158,8 +164,8 @@ protected:
             m_is_optional = options.is_optional;
         }
 
-        virtual void GetCollection(const JEvent& event) = 0;
-        virtual void PrefetchCollection(const JEvent& event) = 0;
+        void TriggerFactoryCreate(const JEvent& event);
+        virtual void Populate(const JEvent& event) = 0;
     };
 
 
@@ -172,12 +178,14 @@ protected:
 
         Input(JHasInputs* owner) {
             owner->RegisterInput(this);
+            m_type_index = std::type_index(typeid(T));
             m_type_name = JTypeInfo::demangle<T>();
             m_level = JEventLevel::None;
         }
 
         Input(JHasInputs* owner, const InputOptions& options) {
             owner->RegisterInput(this);
+            m_type_index = std::type_index(typeid(T));
             m_type_name = JTypeInfo::demangle<T>();
             Configure(options);
         }
@@ -194,7 +202,7 @@ protected:
     private:
         friend class JComponentT;
 
-        void GetCollection(const JEvent& event) {
+        void Populate(const JEvent& event) {
 
             // Eventually, we might try maintaining a permanent link to the databundle
             // instead of having to retrieve it every time. This will only work if we are both on a
@@ -220,24 +228,6 @@ protected:
             m_data.clear();
             m_data.insert(m_data.end(), typed_databundle->GetData().begin(), typed_databundle->GetData().end());
         }
-
-        void PrefetchCollection(const JEvent& event) {
-            auto facset = GetFactorySetAtLevel(event, m_level);
-            if (facset == nullptr && !m_is_optional) {
-                throw JException("Could not find parent at level=" + toString(m_level));
-            }
-            auto coll = facset->GetDatabundle(std::type_index(typeid(T)), m_databundle_name);
-            if (coll == nullptr && !m_is_optional) {
-                facset->Print();
-                throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + m_databundle_name);
-            }
-            if (coll != nullptr) {
-                auto fac = coll->GetFactory();
-                if (fac != nullptr) {
-                    fac->Create(event);
-                }
-            }
-        }
     };
 
 #if JANA2_HAVE_PODIO
@@ -250,6 +240,7 @@ protected:
 
         PodioInput(JHasInputs* owner) {
             owner->RegisterInput(this);
+            m_type_index = std::type_index(typeid(PodioT));
             m_type_name = JTypeInfo::demangle<PodioT>();
             m_databundle_name = m_type_name;
             m_level = JEventLevel::None;
@@ -257,6 +248,7 @@ protected:
 
         PodioInput(JHasInputs* owner, const InputOptions& options) {
             owner->RegisterInput(this);
+            m_type_index = std::type_index(typeid(PodioT));
             m_type_name = JTypeInfo::demangle<PodioT>();
             m_databundle_name = m_type_name;
             Configure(options);
@@ -280,7 +272,7 @@ protected:
             m_databundle_name = m_type_name + ":" + tag;
         }
 
-        void GetCollection(const JEvent& event) {
+        void Populate(const JEvent& event) {
             auto facset = GetFactorySetAtLevel(event, m_level);
             auto databundle = facset->GetDatabundle(std::type_index(typeid(PodioT)), m_databundle_name);
             if (databundle == nullptr) {
@@ -302,24 +294,6 @@ protected:
                 throw JException("Databundle with unique name '%s' does not contain %s", m_databundle_name.c_str(), JTypeInfo::demangle<typename PodioT::collection_type>().c_str());
             }
         }
-
-        void PrefetchCollection(const JEvent& event) {
-            auto facset = GetFactorySetAtLevel(event, m_level);
-            if (facset == nullptr && !m_is_optional) {
-                throw JException("Could not find parent at level=" + toString(m_level));
-            }
-            auto coll = facset->GetDatabundle(std::type_index(typeid(PodioT)), m_databundle_name);
-            if (coll == nullptr && !m_is_optional) {
-                facset->Print();
-                throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<PodioT>() + " and tag=" + m_databundle_name);
-            }
-            if (coll != nullptr) {
-                auto fac = coll->GetFactory();
-                if (fac != nullptr) {
-                    fac->Create(event);
-                }
-            }
-        }
     };
 #endif
 
@@ -333,12 +307,14 @@ protected:
 
         VariadicInput(JHasInputs* owner) {
             owner->RegisterInput(this);
+            m_type_index = std::type_index(typeid(T));
             m_type_name = JTypeInfo::demangle<T>();
             m_level = JEventLevel::None;
         }
 
         VariadicInput(JHasInputs* owner, const VariadicInputOptions& options) {
             owner->RegisterInput(this);
+            m_type_index = std::type_index(typeid(T));
             m_type_name = JTypeInfo::demangle<T>();
             Configure(options);
         }
@@ -357,7 +333,7 @@ protected:
     private:
         friend class JComponentT;
 
-        void GetCollection(const JEvent& event) {
+        void Populate(const JEvent& event) {
             m_datas.clear();
             auto facset = GetFactorySetAtLevel(event, m_level);
             if (facset == nullptr && !m_is_optional) {
@@ -409,36 +385,6 @@ protected:
                 }
             }
         }
-        void PrefetchCollection(const JEvent& event) {
-            auto facset = GetFactorySetAtLevel(event, m_level);
-            if (facset == nullptr && !m_is_optional) {
-                throw JException("Could not find parent at level=" + toString(m_level));
-            }
-            if (!m_realized_databundle_names.empty()) {
-                for (auto& tag : m_requested_databundle_names) {
-                    auto coll = facset->GetDatabundle(std::type_index(typeid(T)), tag);
-                    if (coll == nullptr && !m_is_optional) {
-                        facset->Print();
-                        throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<T>() + " and tag=" + tag);
-                    }
-                    if (coll != nullptr) {
-                        auto fac = coll->GetFactory();
-                        if (fac != nullptr) {
-                            fac->Create(event);
-                        }
-                    }
-                }
-            }
-            else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
-                auto databundles = facset->GetDatabundles(std::type_index(typeid(T)));
-                for (auto* databundle : databundles) {
-                    auto* factory = databundle->GetFactory();
-                    if (factory != nullptr) {
-                        factory->Create(event);
-                    }
-                }
-            }
-        }
     };
 
 
@@ -453,11 +399,13 @@ protected:
 
         VariadicPodioInput(JHasInputs* owner) {
             owner->RegisterInput(this);
+            m_type_index = std::type_index(typeid(PodioT));
             m_type_name = JTypeInfo::demangle<PodioT>();
         }
 
         VariadicPodioInput(JHasInputs* owner, const VariadicInputOptions& options) {
             owner->RegisterInput(this);
+            m_type_index = std::type_index(typeid(PodioT));
             m_type_name = JTypeInfo::demangle<PodioT>();
             Configure(options);
         }
@@ -475,7 +423,7 @@ protected:
             return GetRealizedDatabundleNames();
         }
 
-        void GetCollection(const JEvent& event) {
+        void Populate(const JEvent& event) {
             auto facset = GetFactorySetAtLevel(event, m_level);
             if (facset == nullptr && !m_is_optional) {
                 throw JException("Could not find parent at level=" + toString(m_level));
@@ -531,40 +479,9 @@ protected:
                 }
             }
         }
-
-        void PrefetchCollection(const JEvent& event) {
-            auto facset = GetFactorySetAtLevel(event, m_level);
-            if (facset == nullptr && !m_is_optional) {
-                throw JException("Could not find parent at level=" + toString(m_level));
-            }
-
-            if (!m_requested_databundle_names.empty()) {
-                for (auto& short_or_unique_name : m_requested_databundle_names) {
-                    auto coll = facset->GetDatabundle(std::type_index(typeid(PodioT)), short_or_unique_name);
-                    if (coll == nullptr && !m_is_optional) {
-                        facset->Print();
-                        throw JException("Could not find databundle with type_index=" + JTypeInfo::demangle<PodioT>() + " and tag=" + short_or_unique_name);
-                    }
-                    if (coll != nullptr) {
-                        auto fac = coll->GetFactory();
-                        if (fac != nullptr) {
-                            fac->Create(event);
-                        }
-                    }
-                }
-            }
-            else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
-                auto databundles = facset->GetDatabundles(std::type_index(typeid(PodioT)));
-                for (auto* databundle : databundles) {
-                    auto* factory = databundle->GetFactory();
-                    if (factory != nullptr) {
-                        factory->Create(event);
-                    }
-                }
-            }
-        }
     };
 #endif
+
     void WireInputs(JEventLevel component_level,
                     const std::vector<JEventLevel>& single_input_levels,
                     const std::vector<std::string>& single_input_databundle_names,

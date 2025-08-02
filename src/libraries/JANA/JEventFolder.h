@@ -75,10 +75,10 @@ public:
             }
         }
         for (auto* input : m_inputs) {
-            input->PrefetchCollection(child);
+            input->TriggerFactoryCreate(child);
         }
         for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->PrefetchCollection(child);
+            variadic_input->TriggerFactoryCreate(child);
         }
         if (m_callback_style != CallbackStyle::DeclarativeMode) {
             CallWithJExceptionWrapper("JEventFolder::Preprocess", [&](){
@@ -114,10 +114,10 @@ public:
             m_last_run_number = parent.GetRunNumber();
         }
         for (auto* input : m_inputs) {
-            input->GetCollection(child);
+            input->Populate(child);
         }
         for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->GetCollection(child);
+            variadic_input->Populate(child);
         }
         auto child_number = child.GetEventIndex();
         CallWithJExceptionWrapper("JEventFolder::Fold", [&](){

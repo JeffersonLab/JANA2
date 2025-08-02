@@ -12,7 +12,10 @@
 #include <JANA/Components/JHasInputs.h>
 #include <JANA/Components/JHasOutputs.h>
 #include <JANA/Components/JHasRunCallbacks.h>
+#include <JANA/JVersion.h>
+#if JANA2_HAVE_PODIO
 #include <JANA/Components/JPodioOutput.h>
+#endif
 #include <JANA/Components/JLightweightOutput.h>
 
 #include <string>
