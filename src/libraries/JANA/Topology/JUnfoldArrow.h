@@ -68,11 +68,11 @@ public:
         // way to end up here is to override the JTopologyBuilder wiring and do it wrong
 
         if (m_parent_event->GetLevel() != m_unfolder->GetLevel()) {
-            throw JException("JUnfolder: Expected parent with level %d, got %d", m_unfolder->GetLevel(), m_parent_event->GetLevel());
+            throw JException("JUnfolder: Expected parent with level %s, got %s", toString(m_unfolder->GetLevel()).c_str(), toString(m_parent_event->GetLevel()).c_str());
         }
 
         if (m_child_event->GetLevel() != m_unfolder->GetChildLevel()) {
-            throw JException("JUnfolder: Expected child with level %d, got %d", m_unfolder->GetChildLevel(), m_child_event->GetLevel());
+            throw JException("JUnfolder: Expected child with level %s, got %s", toString(m_unfolder->GetChildLevel()).c_str(), toString(m_child_event->GetLevel()).c_str());
         }
 
         auto result = m_unfolder->DoUnfold(*m_parent_event, *m_child_event);

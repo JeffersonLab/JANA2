@@ -8,17 +8,15 @@
 
 namespace jana {
 
-template <typename OutputCollectionT, typename MultifactoryT>
-MultifactoryT* RetrieveMultifactory(JFactorySet* facset, std::string output_collection_name) {
-    auto fac = facset->GetFactory<OutputCollectionT>(output_collection_name);
+template <typename OutputCollectionT, typename FacT>
+FacT* RetrieveFactory(JFactorySet* facset, std::string short_name) {
+    auto databundle = facset->GetDatabundle(std::type_index(typeid(OutputCollectionT)), short_name);
+    REQUIRE(databundle != nullptr);
+    auto fac = databundle->GetFactory();
     REQUIRE(fac != nullptr);
-    auto helper = dynamic_cast<JMultifactoryHelper<OutputCollectionT>*>(fac);
-    REQUIRE(helper != nullptr);
-    auto multifactory = helper->GetMultifactory();
-    REQUIRE(multifactory != nullptr);
-    auto typed = dynamic_cast<MultifactoryT*>(multifactory);
-    REQUIRE(typed != nullptr);
-    return typed;
+    auto typed_fac = dynamic_cast<FacT*>(fac);
+    REQUIRE(typed_fac != nullptr);
+    return typed_fac;
 }
 
 namespace component_unfolder_param_tests {
@@ -156,7 +154,8 @@ TEST_CASE("JOmniFactoryParametersTests") {
         JFactorySet facset;
         facgen.SetApplication(&app);
         facgen.GenerateFactories(&facset);
-        auto sut = RetrieveMultifactory<MyCluster,TestFac>(&facset, "specific_clusters_out");
+        facset.Print();
+        auto sut = RetrieveFactory<MyCluster,TestFac>(&facset, "specific_clusters_out");
         // RetrieveMultifactory() will call DoInitialize() for us
 
         REQUIRE(sut->threshold() == 16.0);
@@ -170,7 +169,7 @@ TEST_CASE("JOmniFactoryParametersTests") {
         JFactorySet facset;
         facgen.SetApplication(&app);
         facgen.GenerateFactories(&facset);
-        auto sut = RetrieveMultifactory<MyCluster,TestFac>(&facset, "specific_clusters_out");
+        auto sut = RetrieveFactory<MyCluster,TestFac>(&facset, "specific_clusters_out");
         // RetrieveMultifactory() will call DoInitialize() for us
 
         REQUIRE(sut->threshold() == 16.0);
@@ -186,7 +185,7 @@ TEST_CASE("JOmniFactoryParametersTests") {
         JFactorySet facset;
         facgen.SetApplication(&app);
         facgen.GenerateFactories(&facset);
-        auto sut = RetrieveMultifactory<MyCluster,TestFac>(&facset, "specific_clusters_out");
+        auto sut = RetrieveFactory<MyCluster,TestFac>(&facset, "specific_clusters_out");
         sut->DoInit();
 
         REQUIRE(sut->threshold() == 12.0);
