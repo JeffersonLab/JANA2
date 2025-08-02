@@ -146,11 +146,37 @@ public:
     VariadicPodioOutput(JHasOutputs* owner, std::vector<std::string> default_collection_names={}) {
         owner->RegisterOutput(this);
         for (const std::string& name : default_collection_names) {
-            auto db = new JPodioDatabundle();
-            db->SetUniqueName(name);
-            db->SetTypeName(JTypeInfo::demangle<PodioT>());
-            m_databundles.push_back(db);
-            GetDatabundles().push_back(db);
+            auto databundle = new JPodioDatabundle;
+            databundle->SetUniqueName(name);
+            databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
+            databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
+            m_databundles.push_back(databundle);
+            m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
+        }
+    }
+
+    void SetShortNames(std::vector<std::string> short_names) override {
+        m_databundles.clear();
+        m_transient_collections.clear();
+        for (const std::string& name : short_names) {
+            auto databundle = new JPodioDatabundle;
+            databundle->SetShortName(name);
+            databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
+            databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
+            m_databundles.push_back(databundle);
+            m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
+        }
+    }
+
+    void SetUniqueNames(std::vector<std::string> unique_names) override {
+        m_databundles.clear();
+        m_transient_collections.clear();
+        for (const std::string& name : unique_names) {
+            auto databundle = new JPodioDatabundle;
+            databundle->SetShortName(name);
+            databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
+            databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
+            m_databundles.push_back(databundle);
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
         }
     }
@@ -161,7 +187,6 @@ public:
         if (m_transient_collections.size() != GetDatabundles().size()) {
             throw JException("VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", GetDatabundles().size(), m_transient_collections.size());
         }
-
         auto* bundle = facset.GetDatabundle("podio::Frame");
         JLightweightDatabundleT<podio::Frame>* typed_bundle = nullptr;
 

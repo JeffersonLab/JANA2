@@ -289,7 +289,7 @@ protected:
                 facset->Print();
                 throw JException("Databundle with unique name '%s' does not inherit from JPodioDatabundle", m_databundle_name.c_str());
             }
-            m_data = dynamic_cast<const PodioT::collection_type*>(typed_databundle->GetCollection());
+            m_data = dynamic_cast<const typename PodioT::collection_type*>(typed_databundle->GetCollection());
             if (m_data == nullptr) {
                 throw JException("Databundle with unique name '%s' does not contain %s", m_databundle_name.c_str(), JTypeInfo::demangle<typename PodioT::collection_type>().c_str());
             }
@@ -449,7 +449,7 @@ protected:
                         facset->Print();
                         throw JException("Databundle with name '%s' does not inherit from JPodioDatabundle", short_or_unique_name.c_str());
                     }
-                    auto* typed_collection = dynamic_cast<const PodioT::collection_type*>(typed_databundle->GetCollection());
+                    auto* typed_collection = dynamic_cast<const typename PodioT::collection_type*>(typed_databundle->GetCollection());
                     if (typed_collection == nullptr) {
                         throw JException("Databundle with unique name '%s' does not contain %s", short_or_unique_name.c_str(), JTypeInfo::demangle<typename PodioT::collection_type>().c_str());
                     }

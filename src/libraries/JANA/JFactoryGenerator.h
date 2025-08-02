@@ -6,8 +6,9 @@
 
 #include <JANA/JFactorySet.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <JANA/JApplicationFwd.h>
+#include <JANA/Services/JParameterManager.h>
 
-class JApplication;
 
 class JFactoryGenerator {
 
