@@ -25,7 +25,6 @@
 
 #include <typeindex>
 #include <vector>
-#include <cstddef>
 #include <memory>
 #include <atomic>
 
@@ -220,14 +219,14 @@ template<class T>
 inline std::vector<JFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) const {
     std::vector<JFactoryT<T>*> factories;
     for (auto* factory : mFactorySet.GetAllFactories()) {
-        if (dynamic_cast<JFactoryT<T>*>(factory) != nullptr) {
-            factories.push_back(factory);
+        auto typed_factory = dynamic_cast<JFactoryT<T>*>(factory);
+        if (typed_factory != nullptr) {
+            factories.push_back(typed_factory);
         }
     }
     if (factories.size() == 0) {
         if (throw_on_missing) {
             JException ex("Could not find any JFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
-            ex.show_stacktrace = false;
             throw ex;
         }
     };
@@ -238,8 +237,7 @@ inline std::vector<JFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) c
 /// C-style getters
 
 template<class T>
-JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_not_one) const
-{
+JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_not_one) const {
     /// This is a convenience method that can be used to get a pointer to the single
     /// object of type T from the specified factory. It simply calls the Get(vector<...>) method
     /// and copies the first pointer into "t" (or NULL if something other than 1 object is returned).
@@ -252,18 +250,17 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     /// exception_if_not_one to false. In that case, you will have to check if t==NULL to
     /// know if the call succeeded.
 
-    std::vector<const T*> v;
-    auto fac = GetFactory<T>(tag, true); // throw exception if factory not found
-    JCallGraphEntryMaker cg_entry(mCallGraph, fac); // times execution until this goes out of scope
-    Get(v, tag);
-    if(v.size()!=1){
-        t = NULL;
-        if(exception_if_not_one) {
-            throw JException("GetSingle<%s>: Factory has wrong number of items: 1 expected, %d found.", JTypeInfo::demangle<T>().c_str(), v.size());
+    auto* databundle = GetLightweightDatabundle<T>(tag, true, true); // throw exception if databundle not found
+    if (databundle->GetSize() != 1) {
+        t = nullptr;
+        if (exception_if_not_one) {
+            throw JException("GetSingle<%s>: Databundle has wrong number of items: 1 expected, %d found.", JTypeInfo::demangle<T>().c_str(), databundle->GetSize());
         }
     }
-    t = v[0];
-    return fac;
+    else {
+        t = databundle->GetData().at(0);
+    }
+    return dynamic_cast<JFactoryT<T>*>(databundle->GetFactory());
 }
 
 /// Get conveniently returns one item from inside the JFactory. This should be used when the data in question
@@ -274,32 +271,28 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
 /// - If the factory contains exactly one item, GetSingle updates the `destination` to point to that item.
 /// - If the factory contains more than one item, GetSingle updates the `destination` to point to the first time.
 template<class T>
-JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
-{
-    auto factory = GetFactory<T>(tag, true);
-    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->CreateAndGetData(*this);
-    if (std::distance(iterators.first, iterators.second) == 0) {
+JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const {
+    auto* databundle = GetLightweightDatabundle<T>(tag, true, true); // throw exception if databundle not found
+    if (databundle->GetSize() == 0) {
         *destination = nullptr;
     }
     else {
-        *destination = *iterators.first;
+        *destination = databundle->GetData().at(0);
     }
-    return factory;
+    return dynamic_cast<JFactoryT<T>*>(databundle->GetFactory());
 }
 
 
 template<class T>
 JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string& tag, bool strict) const
 {
-    auto factory = GetFactory<T>(tag, strict);
-    if (factory == nullptr) return nullptr; // Will have thrown already if strict==true
-    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->CreateAndGetData(*this);
-    for (auto it=iterators.first; it!=iterators.second; it++) {
-        destination.push_back(*it);
+    auto* databundle = GetLightweightDatabundle<T>(tag, strict, true); // throw exception if databundle not found
+    if (databundle != nullptr) {
+        for (auto* item : databundle->GetData()) {
+            destination.push_back(item);
+        }
     }
-    return factory;
+    return dynamic_cast<JFactoryT<T>*>(databundle->GetFactory());
 }
 
 
@@ -375,26 +368,31 @@ std::vector<const T*> JEvent::Get(const std::string& tag, bool strict) const {
 
 template<class T>
 typename JFactoryT<T>::PairType JEvent::GetIterators(const std::string& tag) const {
-    auto factory = GetFactory<T>(tag, true);
-    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iters = factory->CreateAndGetData(*this);
-    return iters;
+
+    auto databundle = GetLightweightDatabundle<T>(tag, true, true);
+    auto& data = databundle->GetData();
+    return std::make_pair(data.cbegin(), data.cend());
 }
 
 /// GetAll returns all JObjects of (child) type T, regardless of tag.
 template<class T>
 std::vector<const T*> JEvent::GetAll() const {
-    std::vector<const T*> vec;
-    auto factories = GetFactoryAll<T>(true);
 
-    for (auto factory : factories) {
-        auto iters = factory->CreateAndGetData(*this);
-        std::vector<const T*> vec;
-        for (auto it = iters.first; it != iters.second; ++it) {
-            vec.push_back(*it);
+    std::vector<const T*> results;
+
+    for (auto databundle : mFactorySet.GetDatabundles(std::type_index(typeid(T)))) {
+        auto fac = databundle->GetFactory();
+        if (fac != nullptr) {
+            fac->Create(*this);
+        }
+        auto typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
+        if (typed_databundle != nullptr) {
+            for (auto* item : typed_databundle->GetData()) {
+                results.push_back(item);
+            }
         }
     }
-    return vec; // Assumes RVO
+    return results;
 }
 
 // GetAllChildren will furnish a map { (type_name,tag_name) : [BaseClass*] } containing all JFactoryT<T> data where
@@ -424,45 +422,55 @@ std::map<std::pair<std::string, std::string>, std::vector<S*>> JEvent::GetAllChi
 template <class T>
 inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
 
-    std::string resolved_tag = tag;
-    if (mUseDefaultTags && tag.empty()) {
-        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
-        if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
-    }
-    auto factory = GetFactory<T>(resolved_tag);
-    if (factory == nullptr) {
-        factory = new JFactoryT<T>;
+    auto* databundle = GetLightweightDatabundle<T>(tag, false, false);
+
+    if (databundle == nullptr) {
+        auto* factory = new JFactoryT<T>;
         factory->SetTag(tag);
         factory->SetLevel(mFactorySet.GetLevel());
         mFactorySet.Add(factory);
+        databundle = GetLightweightDatabundle<T>(tag, false, false);
     }
-    factory->Insert(item);
-    factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
-    return factory;
+
+    databundle->SetStatus(JDatabundle::Status::Inserted);
+    databundle->GetData().push_back(item);
+
+    auto* factory = databundle->GetFactory();
+    if (factory != nullptr) {
+        factory->SetStatus(JFactory::Status::Inserted); // for when items is empty
+        factory->SetCreationStatus(JFactory::CreationStatus::Inserted); // for when items is empty
+        factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
+        return dynamic_cast<JFactoryT<T>*>(factory);
+    }
+    throw JException("Attempted to call JEvent::Insert without an underlying JFactoryT. Hint: Did you previously use Output<T>?");
+    // TODO: Have Insert() return the databundle instead of the factory
 }
 
 template <class T>
 inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::string& tag) const {
 
-    std::string resolved_tag = tag;
-    if (mUseDefaultTags && tag.empty()) {
-        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
-        if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
-    }
-    auto factory = GetFactory<T>(resolved_tag);
-    if (factory == nullptr) {
-        factory = new JFactoryT<T>;
+    auto* databundle = GetLightweightDatabundle<T>(tag, false, false);
+
+    if (databundle == nullptr) {
+        auto* factory = new JFactoryT<T>;
         factory->SetTag(tag);
         factory->SetLevel(mFactorySet.GetLevel());
         mFactorySet.Add(factory);
+        databundle = GetLightweightDatabundle<T>(tag, false, false);
     }
-    for (T* item : items) {
-        factory->Insert(item);
+
+    databundle->SetStatus(JDatabundle::Status::Inserted);
+    databundle->GetData() = items;
+
+    auto* factory = databundle->GetFactory();
+    if (factory != nullptr) {
+        factory->SetStatus(JFactory::Status::Inserted); // for when items is empty
+        factory->SetCreationStatus(JFactory::CreationStatus::Inserted); // for when items is empty
+        factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
+        return dynamic_cast<JFactoryT<T>*>(factory);
     }
-    factory->SetStatus(JFactory::Status::Inserted); // for when items is empty
-    factory->SetCreationStatus(JFactory::CreationStatus::Inserted); // for when items is empty
-    factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
-    return factory;
+    throw JException("Attempted to call JEvent::Insert without an underlying JFactoryT. Hint: Did you previously use Output<T>?");
+    // TODO: Have Insert() return the databundle instead of the factory
 }
 
 
