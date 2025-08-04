@@ -20,6 +20,7 @@ namespace jana::components {
 
 // Free function in order to break circular dependence on JEvent
 JFactorySet* GetFactorySetAtLevel(const JEvent& event, JEventLevel desired_level);
+void FactoryCreate(const JEvent& event, JFactory* factory);
 
 struct JHasInputs {
 protected:
@@ -209,6 +210,12 @@ protected:
             // JFactory in the same JFactorySet, though.
 
             auto facset = GetFactorySetAtLevel(event, m_level);
+            if (facset == nullptr) {
+                if (m_is_optional) {
+                    return;
+                }
+                throw JException("Could not find parent at level=" + toString(m_level));
+            }
             auto databundle = facset->GetDatabundle(std::type_index(typeid(T)), m_databundle_name);
             if (databundle == nullptr) {
                 if (!m_is_optional) {
@@ -274,6 +281,12 @@ protected:
 
         void Populate(const JEvent& event) {
             auto facset = GetFactorySetAtLevel(event, m_level);
+            if (facset == nullptr) {
+                if (m_is_optional) {
+                    return;
+                }
+                throw JException("Could not find parent at level=" + toString(m_level));
+            }
             auto databundle = facset->GetDatabundle(std::type_index(typeid(PodioT)), m_databundle_name);
             if (databundle == nullptr) {
                 if (!m_is_optional) {
@@ -284,6 +297,9 @@ protected:
                 m_data = nullptr;
                 return;
             };
+            if (databundle->GetFactory() != nullptr) {
+                FactoryCreate(event, databundle->GetFactory());
+            }
             auto* typed_databundle = dynamic_cast<JPodioDatabundle*>(databundle);
             if (typed_databundle == nullptr) {
                 facset->Print();
@@ -336,7 +352,10 @@ protected:
         void Populate(const JEvent& event) {
             m_datas.clear();
             auto facset = GetFactorySetAtLevel(event, m_level);
-            if (facset == nullptr && !m_is_optional) {
+            if (facset == nullptr) {
+                if (m_is_optional) {
+                    return;
+                }
                 throw JException("Could not find parent at level=" + toString(m_level));
             }
             if (!m_requested_databundle_names.empty()) {
@@ -351,6 +370,9 @@ protected:
                         m_datas.push_back({}); // If a databundle is optional and missing, we still insert an empty vector for it
                         continue;
                     };
+                    if (databundle->GetFactory() != nullptr) {
+                        FactoryCreate(event, databundle->GetFactory());
+                    }
                     auto* typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
                     if (typed_databundle == nullptr) {
                         facset->Print();
@@ -425,7 +447,10 @@ protected:
 
         void Populate(const JEvent& event) {
             auto facset = GetFactorySetAtLevel(event, m_level);
-            if (facset == nullptr && !m_is_optional) {
+            if (facset == nullptr) {
+                if (m_is_optional) {
+                    return;
+                }
                 throw JException("Could not find parent at level=" + toString(m_level));
             }
             bool need_dynamic_realized_databundle_names = (m_requested_databundle_names.empty()) && (m_empty_input_policy != EmptyInputPolicy::IncludeNothing);
@@ -444,6 +469,9 @@ protected:
                         m_datas.push_back(nullptr);
                         continue;
                     }
+                    if (databundle->GetFactory() != nullptr) {
+                        FactoryCreate(event, databundle->GetFactory());
+                    }
                     auto* typed_databundle = dynamic_cast<JPodioDatabundle*>(databundle);
                     if (typed_databundle == nullptr) {
                         facset->Print();
@@ -460,6 +488,9 @@ protected:
             else if (m_empty_input_policy == EmptyInputPolicy::IncludeEverything) {
                 auto databundles = facset->GetDatabundles(std::type_index(typeid(PodioT)));
                 for (auto* databundle : databundles) {
+                    if (databundle->GetFactory() != nullptr) {
+                        FactoryCreate(event, databundle->GetFactory());
+                    }
                     auto typed_databundle = dynamic_cast<JPodioDatabundle*>(databundle);
                     if (typed_databundle == nullptr) {
                         throw JException("Not a JPodioDatabundle: type_name=%s, unique_name=%s", databundle->GetTypeName().c_str(), databundle->GetUniqueName().c_str());

@@ -536,7 +536,7 @@ void JEvent::InsertCollection(typename T::collection_type&& collection, std::str
     auto* bundle = mFactorySet.GetDatabundle("podio::Frame");
 
     if (bundle == nullptr) {
-        LOG << "No frame databundle found, inserting new dummy JFactoryT.";
+        //LOG << "No frame databundle found, inserting new dummy JFactoryT.";
         frame = new podio::Frame();
         Insert(frame, ""); 
         // Eventually we'll insert a databundle directly without the dummy JFactoryT
@@ -550,7 +550,7 @@ void JEvent::InsertCollection(typename T::collection_type&& collection, std::str
             throw JException("Databundle with unique_name 'podio::Frame' is not a JLightweightDatabundleT");
         }
         if (typed_bundle->GetSize() == 0) {
-            LOG << "Found typed bundle with no frame. Creating new frame.";
+            //LOG << "Found typed bundle with no frame. Creating new frame.";
             typed_bundle->GetData().push_back(new podio::Frame);
             typed_bundle->SetStatus(JDatabundle::Status::Inserted);
         }
