@@ -146,14 +146,12 @@ protected:
     class Input : public InputBase {
 
         std::vector<const T*> m_data;
-        std::string m_tag;
 
     public:
 
         Input(JHasInputs* owner) {
             owner->RegisterInput(this);
             m_type_name = JTypeInfo::demangle<T>();
-            m_databundle_name = m_type_name;
             m_level = JEventLevel::None;
         }
 
@@ -164,8 +162,7 @@ protected:
         }
 
         void SetTag(std::string tag) {
-            m_tag = tag;
-            m_databundle_name = m_type_name + ":" + tag;
+            m_databundle_name = tag;
         }
 
         const std::vector<const T*>& operator()() { return m_data; }
@@ -180,23 +177,23 @@ protected:
             auto& level = m_level;
             m_data.clear();
             if (level == event.GetLevel() || level == JEventLevel::None) {
-                event.Get<T>(m_data, m_tag, !m_is_optional);
+                event.Get<T>(m_data, m_databundle_name, !m_is_optional);
             }
             else {
                 if (m_is_optional && !event.HasParent(level)) return;
-                event.GetParent(level).template Get<T>(m_data, m_tag, !m_is_optional);
+                event.GetParent(level).template Get<T>(m_data, m_databundle_name, !m_is_optional);
             }
         }
         void PrefetchCollection(const JEvent& event) {
             if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                auto fac = event.GetFactory<T>(m_tag, !m_is_optional);
+                auto fac = event.GetFactory<T>(m_databundle_name, !m_is_optional);
                 if (fac != nullptr) {
                     fac->Create(event);
                 }
             }
             else {
                 if (m_is_optional && !event.HasParent(m_level)) return;
-                auto fac = event.GetParent(m_level).template GetFactory<T>(m_tag, !m_is_optional);
+                auto fac = event.GetParent(m_level).template GetFactory<T>(m_databundle_name, !m_is_optional);
                 if (fac != nullptr) {
                     fac->Create(event);
                 }
