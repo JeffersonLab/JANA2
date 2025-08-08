@@ -72,7 +72,9 @@ public:
             auto fac = event.Insert(m_data, this->collection_names[0]);
             fac->SetNotOwnerFlag(is_not_owner);
         }
-        void Reset() override { }
+        void Reset() override { 
+            m_data.clear();
+        }
 
     };
 
@@ -174,7 +176,7 @@ public:
 
         void Reset() override {
             m_data.clear();
-            for (auto& coll_name : this->collection_names) {
+            for (size_t i=0; i<collection_names.size(); ++i) {
                 m_data.push_back(std::make_unique<typename PodioT::collection_type>());
             }
         }
