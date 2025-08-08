@@ -20,13 +20,16 @@ protected:
 
     std::vector<InputBase*> m_inputs;
     std::vector<VariadicInputBase*> m_variadic_inputs;
+    std::vector<std::pair<InputBase*, VariadicInputBase*>> m_ordered_inputs;
 
     void RegisterInput(InputBase* input) {
         m_inputs.push_back(input);
+        m_ordered_inputs.push_back({input, nullptr});
     }
 
     void RegisterInput(VariadicInputBase* input) {
         m_variadic_inputs.push_back(input);
+        m_ordered_inputs.push_back({nullptr, input});
     }
 
     struct InputOptions {
@@ -464,6 +467,11 @@ protected:
                     const std::vector<JEventLevel>& variadic_input_levels,
                     const std::vector<std::vector<std::string>>& variadic_input_databundle_names) {
 
+        if (m_variadic_inputs.size() == 1 && variadic_input_databundle_names.size() == 0) {
+            WireInputsCompatibility(component_level, single_input_levels, single_input_databundle_names);
+            return;
+        }
+
         // Validate that we have the correct number of input databundle names
         if (single_input_databundle_names.size() != m_inputs.size()) {
             throw JException("Wrong number of (nonvariadic) input databundle names! Expected %d, found %d", m_inputs.size(), single_input_databundle_names.size());
@@ -495,6 +503,47 @@ protected:
                 variadic_input->SetLevel(variadic_input_levels.at(i));
             }
             i += 1;
+        }
+    }
+
+    void WireInputsCompatibility(JEventLevel component_level,
+                    const std::vector<JEventLevel>& single_input_levels,
+                    const std::vector<std::string>& single_input_databundle_names) {
+
+        // Figure out how many collection names belong to the variadic input
+        int variadic_databundle_count = single_input_databundle_names.size() - m_inputs.size();
+        int databundle_name_index = 0;
+        int databundle_level_index = 0;
+
+        for (auto& pair : m_ordered_inputs) {
+            auto* single_input = pair.first;
+            auto* variadic_input = pair.second;
+            if (single_input != nullptr) {
+                single_input->SetDatabundleName(single_input_databundle_names.at(databundle_name_index));
+                if (single_input_levels.empty()) {
+                    single_input->SetLevel(component_level);
+                }
+                else {
+                    single_input->SetLevel(single_input_levels.at(databundle_level_index));
+                }
+                databundle_name_index += 1;
+                databundle_level_index += 1;
+            }
+            else {
+                std::vector<std::string> variadic_databundle_names;
+                for (int i=0; i<variadic_databundle_count; ++i) {
+                    variadic_databundle_names.push_back(single_input_databundle_names.at(databundle_name_index+i));
+                }
+                variadic_input->SetRequestedDatabundleNames(variadic_databundle_names);
+                if (single_input_levels.empty()) {
+                    variadic_input->SetLevel(component_level);
+                }
+                else {
+                    variadic_input->SetLevel(single_input_levels.at(databundle_level_index)); // Last one wins!
+                }
+                databundle_name_index += variadic_databundle_count;
+                databundle_level_index += 1;
+            }
         }
     }
 

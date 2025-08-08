@@ -38,12 +38,14 @@ struct MyFac : public JOmniFactory<MyFac> {
         }
 
         podio_hits_out()->setSubsetCollection();
+        variadic_podio_hits_out().at(0)->setSubsetCollection();
+
         for (auto hit : *podio_hits_in) {
             podio_hits_out()->push_back(hit);
             variadic_podio_hits_out().at(0)->push_back(hit);
         }
 
-        variadic_podio_hits_out().at(1)->push_back(ExampleHit(22, 1.1, 1.1, 1.1, 10, 0));
+        variadic_podio_hits_out().at(1)->push_back(MutableExampleHit(22, 1.1, 1.1, 1.1, 10, 0));
     }
 };
 
