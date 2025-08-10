@@ -20,13 +20,16 @@ protected:
 
     std::vector<InputBase*> m_inputs;
     std::vector<VariadicInputBase*> m_variadic_inputs;
+    std::vector<std::pair<InputBase*, VariadicInputBase*>> m_ordered_inputs;
 
     void RegisterInput(InputBase* input) {
         m_inputs.push_back(input);
+        m_ordered_inputs.push_back({input, nullptr});
     }
 
     void RegisterInput(VariadicInputBase* input) {
         m_variadic_inputs.push_back(input);
+        m_ordered_inputs.push_back({nullptr, input});
     }
 
     struct InputOptions {
@@ -146,14 +149,12 @@ protected:
     class Input : public InputBase {
 
         std::vector<const T*> m_data;
-        std::string m_tag;
 
     public:
 
         Input(JHasInputs* owner) {
             owner->RegisterInput(this);
             m_type_name = JTypeInfo::demangle<T>();
-            m_databundle_name = m_type_name;
             m_level = JEventLevel::None;
         }
 
@@ -164,8 +165,7 @@ protected:
         }
 
         void SetTag(std::string tag) {
-            m_tag = tag;
-            m_databundle_name = m_type_name + ":" + tag;
+            m_databundle_name = tag;
         }
 
         const std::vector<const T*>& operator()() { return m_data; }
@@ -180,23 +180,23 @@ protected:
             auto& level = m_level;
             m_data.clear();
             if (level == event.GetLevel() || level == JEventLevel::None) {
-                event.Get<T>(m_data, m_tag, !m_is_optional);
+                event.Get<T>(m_data, m_databundle_name, !m_is_optional);
             }
             else {
                 if (m_is_optional && !event.HasParent(level)) return;
-                event.GetParent(level).template Get<T>(m_data, m_tag, !m_is_optional);
+                event.GetParent(level).template Get<T>(m_data, m_databundle_name, !m_is_optional);
             }
         }
         void PrefetchCollection(const JEvent& event) {
             if (m_level == event.GetLevel() || m_level == JEventLevel::None) {
-                auto fac = event.GetFactory<T>(m_tag, !m_is_optional);
+                auto fac = event.GetFactory<T>(m_databundle_name, !m_is_optional);
                 if (fac != nullptr) {
                     fac->Create(event);
                 }
             }
             else {
                 if (m_is_optional && !event.HasParent(m_level)) return;
-                auto fac = event.GetParent(m_level).template GetFactory<T>(m_tag, !m_is_optional);
+                auto fac = event.GetParent(m_level).template GetFactory<T>(m_databundle_name, !m_is_optional);
                 if (fac != nullptr) {
                     fac->Create(event);
                 }
@@ -467,6 +467,11 @@ protected:
                     const std::vector<JEventLevel>& variadic_input_levels,
                     const std::vector<std::vector<std::string>>& variadic_input_databundle_names) {
 
+        if (m_variadic_inputs.size() == 1 && variadic_input_databundle_names.size() == 0) {
+            WireInputsCompatibility(component_level, single_input_levels, single_input_databundle_names);
+            return;
+        }
+
         // Validate that we have the correct number of input databundle names
         if (single_input_databundle_names.size() != m_inputs.size()) {
             throw JException("Wrong number of (nonvariadic) input databundle names! Expected %d, found %d", m_inputs.size(), single_input_databundle_names.size());
@@ -498,6 +503,47 @@ protected:
                 variadic_input->SetLevel(variadic_input_levels.at(i));
             }
             i += 1;
+        }
+    }
+
+    void WireInputsCompatibility(JEventLevel component_level,
+                    const std::vector<JEventLevel>& single_input_levels,
+                    const std::vector<std::string>& single_input_databundle_names) {
+
+        // Figure out how many collection names belong to the variadic input
+        int variadic_databundle_count = single_input_databundle_names.size() - m_inputs.size();
+        int databundle_name_index = 0;
+        int databundle_level_index = 0;
+
+        for (auto& pair : m_ordered_inputs) {
+            auto* single_input = pair.first;
+            auto* variadic_input = pair.second;
+            if (single_input != nullptr) {
+                single_input->SetDatabundleName(single_input_databundle_names.at(databundle_name_index));
+                if (single_input_levels.empty()) {
+                    single_input->SetLevel(component_level);
+                }
+                else {
+                    single_input->SetLevel(single_input_levels.at(databundle_level_index));
+                }
+                databundle_name_index += 1;
+                databundle_level_index += 1;
+            }
+            else {
+                std::vector<std::string> variadic_databundle_names;
+                for (int i=0; i<variadic_databundle_count; ++i) {
+                    variadic_databundle_names.push_back(single_input_databundle_names.at(databundle_name_index+i));
+                }
+                variadic_input->SetRequestedDatabundleNames(variadic_databundle_names);
+                if (single_input_levels.empty()) {
+                    variadic_input->SetLevel(component_level);
+                }
+                else {
+                    variadic_input->SetLevel(single_input_levels.at(databundle_level_index)); // Last one wins!
+                }
+                databundle_name_index += variadic_databundle_count;
+                databundle_level_index += 1;
+            }
         }
     }
 

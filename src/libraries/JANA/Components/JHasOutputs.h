@@ -61,7 +61,7 @@ public:
     protected:
 
         void CreateHelperFactory(JMultifactory& fac) override {
-            fac.DeclareOutput<T>(this->collection_names[0]);
+            fac.DeclareOutput<T>(this->collection_names[0], !is_not_owner);
         }
 
         void SetCollection(JMultifactory& fac) override {
@@ -72,7 +72,9 @@ public:
             auto fac = event.Insert(m_data, this->collection_names[0]);
             fac->SetNotOwnerFlag(is_not_owner);
         }
-        void Reset() override { }
+        void Reset() override { 
+            m_data.clear();
+        }
 
     };
 
@@ -174,7 +176,7 @@ public:
 
         void Reset() override {
             m_data.clear();
-            for (auto& coll_name : this->collection_names) {
+            for (size_t i=0; i<collection_names.size(); ++i) {
                 m_data.push_back(std::make_unique<typename PodioT::collection_type>());
             }
         }
@@ -186,14 +188,45 @@ public:
         size_t single_output_index = 0;
         size_t variadic_output_index = 0;
 
+        size_t variadic_output_count = 0;
         for (auto* output : m_outputs) {
-            output->collection_names.clear();
-            output->level = component_level;
             if (output->is_variadic) {
-                output->collection_names = variadic_output_databundle_names.at(variadic_output_index++);
+                variadic_output_count += 1;
             }
-            else {
-                output->collection_names.push_back(single_output_databundle_names.at(single_output_index++));
+        }
+        if (variadic_output_count == 1 && variadic_output_databundle_names.size() == 0) {
+            // Obtain variadic databundle names from excess single-output databundle names
+            int variadic_databundle_count = single_output_databundle_names.size() - m_outputs.size() + 1;
+            int current_databundle_index = 0;
+
+            for (auto* output : m_outputs) {
+                output->collection_names.clear();
+                output->level = component_level;
+                if (output->is_variadic) {
+                    std::vector<std::string> variadic_names;
+                    for (int i=0; i<variadic_databundle_count; ++i) {
+                        variadic_names.push_back(single_output_databundle_names.at(current_databundle_index+i));
+                    }
+                    output->collection_names = variadic_names;
+                    current_databundle_index += variadic_databundle_count;
+                }
+                else {
+                    output->collection_names.push_back(single_output_databundle_names.at(current_databundle_index));
+                    current_databundle_index += 1;
+                }
+            }
+        }
+        else {
+            // Do the obvious, sensible thing instead
+            for (auto* output : m_outputs) {
+                output->collection_names.clear();
+                output->level = component_level;
+                if (output->is_variadic) {
+                    output->collection_names = variadic_output_databundle_names.at(variadic_output_index++);
+                }
+                else {
+                    output->collection_names.push_back(single_output_databundle_names.at(single_output_index++));
+                }
             }
         }
     }
