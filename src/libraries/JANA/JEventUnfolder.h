@@ -84,10 +84,10 @@ public:
             }
         }
         for (auto* input : m_inputs) {
-            input->PrefetchCollection(parent);
+            input->TriggerFactoryCreate(parent);
         }
         for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->PrefetchCollection(parent);
+            variadic_input->TriggerFactoryCreate(parent);
         }
         if (m_callback_style != CallbackStyle::DeclarativeMode) {
             CallWithJExceptionWrapper("JEventUnfolder::Preprocess", [&](){
@@ -123,16 +123,13 @@ public:
                 m_last_run_number = parent.GetRunNumber();
             }
             for (auto* input : m_inputs) {
-                input->GetCollection(parent);
+                input->Populate(parent);
                 // TODO: This requires that all inputs come from the parent.
                 //       However, eventually we will want to support inputs 
                 //       that come from the child.
             }
             for (auto* variadic_input : m_variadic_inputs) {
-                variadic_input->GetCollection(parent);
-            }
-            for (auto* output : m_outputs) {
-                output->Reset();
+                variadic_input->Populate(parent);
             }
             Result result;
             child.SetEventIndex(m_child_number);
@@ -150,8 +147,11 @@ public:
                 // If the user returns KeepChildNextParent, JANA cannot publish any output databundles (not even empty ones)
                 // because on the next call to Unfold(), podio will throw an exception about inserting the collection twice.
                 // Any data put in an output databundle will be automatically cleared via OutputBase::Reset() before the next Unfold().
-                for (auto* output : m_outputs) {
-                    output->InsertCollection(child);
+                for (auto* output : GetOutputs()) {
+                    output->EulerianStore(*child.GetFactorySet());
+                }
+                for (auto* output : GetVariadicOutputs()) {
+                    output->EulerianStore(*child.GetFactorySet());
                 }
             }
             m_child_number += 1;
@@ -179,21 +179,8 @@ public:
         auto* us = new JComponentSummary::Component( 
             "Unfolder", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
-        for (const auto* input : m_inputs) {
-            us->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->GetTypeName(), input->GetLevel()));
-        }
-        for (const auto* input : m_variadic_inputs) {
-            size_t subinput_count = input->GetRequestedDatabundleNames().size();
-            for (size_t i=0; i<subinput_count; ++i) {
-                us->AddInput(new JComponentSummary::Collection("", input->GetRequestedDatabundleNames().at(i), input->GetTypeName(), input->GetLevel()));
-            }
-        }
-        for (const auto* output : m_outputs) {
-            size_t suboutput_count = output->collection_names.size();
-            for (size_t i=0; i<suboutput_count; ++i) {
-                us->AddOutput(new JComponentSummary::Collection("", output->collection_names[i], output->type_name, GetLevel()));
-            }
-        }
+        SummarizeInputs(*us);
+        SummarizeOutputs(*us);
         summary.Add(us);
     }
 

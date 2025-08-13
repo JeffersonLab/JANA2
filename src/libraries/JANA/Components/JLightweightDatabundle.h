@@ -4,6 +4,7 @@
 #include <JANA/Components/JDatabundle.h>
 #include <JANA/JObject.h> 
 #include <JANA/Utils/JTypeInfo.h>
+#include <typeindex>
 
 #if JANA2_HAVE_ROOT
 #include <TObject.h>
@@ -13,13 +14,14 @@ template <typename T>
 class JLightweightDatabundleT : public JDatabundle {
 private:
     std::vector<T*>* m_data = nullptr;
-    bool m_is_owned = false;
+    bool m_owns_data = false;
     bool m_is_persistent = false;
     bool m_not_object_owner = false;
 
 public:
-    JLightweightDatabundleT();
-    void AttachData(std::vector<T*>* data) { m_data = data; }
+    JLightweightDatabundleT(std::vector<T*>* external_data=nullptr);
+    ~JLightweightDatabundleT();
+
     void ClearData() override;
 
     size_t GetSize() const override { return m_data->size();}
@@ -46,13 +48,30 @@ public:
 // Template definitions
 
 template <typename T>
-JLightweightDatabundleT<T>::JLightweightDatabundleT() {
+JLightweightDatabundleT<T>::JLightweightDatabundleT(std::vector<T*>* external_data) {
+    if (external_data != nullptr) {
+        m_data = external_data;
+        m_owns_data = false;
+    }
+    else {
+        m_data = new std::vector<T*>;
+        m_owns_data = true;
+    }
+
     SetTypeName(JTypeInfo::demangle<T>());
+    SetTypeIndex(std::type_index(typeid(T)));
     EnableGetAs<T>();
     EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
 #if JANA2_HAVE_ROOT
     EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
 #endif
+}
+
+template <typename T>
+JLightweightDatabundleT<T>::~JLightweightDatabundleT() {
+    if (m_owns_data) {
+        delete m_data;
+    }
 }
 
 template <typename T>

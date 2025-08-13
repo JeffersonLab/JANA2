@@ -1,246 +1,183 @@
-// Copyright 2023, Jefferson Science Associates, LLC.
-// Subject to the terms in the LICENSE file found in the top-level directory.
-// Created by Nathan Brei
 
 #pragma once
+#include <JANA/Components/JDatabundle.h>
+#include <JANA/Components/JComponentSummary.h>
+#include <JANA/Utils/JEventLevel.h>
 
-#include "JANA/Components/JComponentSummary.h"
-#include "JANA/Utils/JEventLevel.h"
-#include <JANA/JEvent.h>
-#include <JANA/JMultifactory.h>
+class JFactorySet;
 
 namespace jana::components {
 
 
-
-struct JHasOutputs {
+class JHasOutputs {
 public:
-    struct OutputBase;
 
-protected:
-    std::vector<OutputBase*> m_outputs;
+    class OutputBase {
+    private:
+        JDatabundle* m_databundle;
+        JEventLevel m_level = JEventLevel::None; // By default we inherit this from the component that owns this
+
+    public:
+        virtual ~OutputBase() = default;
+        JDatabundle* GetDatabundle() { return m_databundle; }
+        JEventLevel GetLevel() const { return m_level; }
+
+        void SetDatabundle(JDatabundle* databundle) { m_databundle = databundle; }
+        void SetLevel(JEventLevel level) { m_level = level; }
+        void SetShortName(std::string short_name) { m_databundle->SetShortName(short_name); }
+        void SetUniqueName(std::string unique_name) { m_databundle->SetUniqueName(unique_name); }
+
+        virtual void LagrangianStore(JFactorySet&, JDatabundle::Status) {}
+        virtual void EulerianStore(JFactorySet&) {}
+
+        void ClearData() { m_databundle->ClearData(); }
+    };
+
+
+    class VariadicOutputBase {
+    private:
+        std::vector<JDatabundle*> m_databundles;
+        JEventLevel m_level = JEventLevel::PhysicsEvent;
+
+    public:
+        virtual ~VariadicOutputBase() = default;
+        std::vector<JDatabundle*>& GetDatabundles() { return m_databundles; }
+        JEventLevel GetLevel() const { return m_level; }
+
+        void SetLevel(JEventLevel level) { m_level = level; }
+        virtual void SetShortNames(std::vector<std::string>) {}
+        virtual void SetUniqueNames(std::vector<std::string>) {}
+
+        virtual void LagrangianStore(JFactorySet&, JDatabundle::Status) {}
+        virtual void EulerianStore(JFactorySet&) {}
+
+        void ClearData() {
+            for (auto* databundle : m_databundles) {
+                databundle->ClearData();
+            }
+        }
+    };
+
+private:
+    std::vector<OutputBase*> m_outputs;;
+    std::vector<VariadicOutputBase*> m_variadic_outputs;
+    std::vector<std::pair<OutputBase*, VariadicOutputBase*>> m_ordered_outputs;
 
 public:
-    void RegisterOutput(OutputBase* output) {
-        m_outputs.push_back(output);
+
+    const std::vector<OutputBase*>& GetOutputs() const {
+        return m_outputs;
     }
 
-    struct OutputBase {
-        std::string type_name;
-        std::vector<std::string> collection_names;
-        JEventLevel level = JEventLevel::None;
-        bool is_variadic = false;
+    const std::vector<VariadicOutputBase*>& GetVariadicOutputs() const {
+        return m_variadic_outputs;
+    }
 
-        virtual void CreateHelperFactory(JMultifactory& fac) = 0;
-        virtual void SetCollection(JMultifactory& fac) = 0;
-        virtual void InsertCollection(JEvent& event) = 0;
-        virtual void Reset() = 0;
-    };
-
-    template <typename T>
-    class Output : public OutputBase {
-        std::vector<T*> m_data;
-        bool is_not_owner = false;
-
-    public:
-        Output(JHasOutputs* owner, std::string default_tag_name="") {
-            owner->RegisterOutput(this);
-            this->collection_names.push_back(default_tag_name);
-            this->type_name = JTypeInfo::demangle<T>();
+    JDatabundle* GetFirstDatabundle() const {
+        if (m_outputs.size() > 0) {
+            return m_outputs.at(0)->GetDatabundle();
         }
+        return m_variadic_outputs.at(0)->GetDatabundles().at(0);
+        // TODO: This will except if our first databundle is an empty variadic one
+    }
 
-        void SetTag(std::string tag) {
-            this->collection_names.clear();
-            this->collection_names.push_back(tag);
-        }
+    void RegisterOutput(OutputBase* output) {
+        m_outputs.push_back(output);
+        m_ordered_outputs.push_back({output, nullptr});
+    }
 
-        std::vector<T*>& operator()() { return m_data; }
+    void RegisterOutput(VariadicOutputBase* output) {
+        m_variadic_outputs.push_back(output);
+        m_ordered_outputs.push_back({nullptr, output});
+    }
 
-        void SetNotOwnerFlag(bool not_owner=true) { is_not_owner = not_owner; }
+    void SummarizeOutputs(JComponentSummary::Component& summary) const {
 
-    protected:
-
-        void CreateHelperFactory(JMultifactory& fac) override {
-            fac.DeclareOutput<T>(this->collection_names[0], !is_not_owner);
-        }
-
-        void SetCollection(JMultifactory& fac) override {
-            fac.SetData<T>(this->collection_names[0], this->m_data);
-        }
-
-        void InsertCollection(JEvent& event) override {
-            auto fac = event.Insert(m_data, this->collection_names[0]);
-            fac->SetNotOwnerFlag(is_not_owner);
-        }
-        void Reset() override { 
-            m_data.clear();
-        }
-
-    };
-
-
-#if JANA2_HAVE_PODIO
-    template <typename PodioT>
-    class PodioOutput : public OutputBase {
-
-        std::unique_ptr<typename PodioT::collection_type> m_data;
-
-    public:
-
-        PodioOutput(JHasOutputs* owner, std::string default_collection_name="") {
-            owner->RegisterOutput(this);
-            this->collection_names.push_back(default_collection_name);
-            this->type_name = JTypeInfo::demangle<PodioT>();
-        }
-
-        std::unique_ptr<typename PodioT::collection_type>& operator()() { return m_data; }
-
-        void SetCollectionName(std::string name) {
-            this->collection_names.clear();
-            this->collection_names.push_back(name);
-        }
-
-    protected:
-
-        void CreateHelperFactory(JMultifactory& fac) override {
-            fac.DeclarePodioOutput<PodioT>(this->collection_names[0]);
-        }
-
-        void SetCollection(JMultifactory& fac) override {
-            if (m_data == nullptr) {
-                throw JException("JOmniFactory: SetCollection failed due to missing output collection '%s'", this->collection_names[0].c_str());
-                // Otherwise this leads to a PODIO segfault
-            }
-            fac.SetCollection<PodioT>(this->collection_names[0], std::move(this->m_data));
-        }
-
-        void InsertCollection(JEvent& event) override {
-            event.InsertCollection<PodioT>(std::move(*m_data), this->collection_names[0]);
-        }
-
-        void Reset() override {
-            m_data = std::move(std::make_unique<typename PodioT::collection_type>());
-        }
-    };
-
-
-    template <typename PodioT>
-    class VariadicPodioOutput : public OutputBase {
-
-        std::vector<std::unique_ptr<typename PodioT::collection_type>> m_data;
-
-    public:
-
-        VariadicPodioOutput(JHasOutputs* owner, std::vector<std::string> default_collection_names={}) {
-            owner->RegisterOutput(this);
-            this->collection_names = default_collection_names;
-            this->type_name = JTypeInfo::demangle<PodioT>();
-            this->is_variadic = true;
-        }
-
-        std::vector<std::unique_ptr<typename PodioT::collection_type>>& operator()() { return m_data; }
-
-        void SetCollectionNames(std::vector<std::string> names) {
-            this->collection_names = names;
-        }
-
-    protected:
-
-        void CreateHelperFactory(JMultifactory& fac) override {
-            for (auto& coll_name : this->collection_names) {
-                fac.DeclarePodioOutput<PodioT>(coll_name);
-            }
-        }
-
-        void SetCollection(JMultifactory& fac) override {
-            if (m_data.size() != this->collection_names.size()) {
-                throw JException("JOmniFactory: VariadicPodioOutput SetCollection failed: Declared %d collections, but provided %d.", this->collection_names.size(), m_data.size());
-                // Otherwise this leads to a PODIO segfault
-            }
-            size_t i = 0;
-            for (auto& coll_name : this->collection_names) {
-                fac.SetCollection<PodioT>(coll_name, std::move(this->m_data[i++]));
-            }
-        }
-
-        void InsertCollection(JEvent& event) override {
-            if (m_data.size() != this->collection_names.size()) {
-                throw JException("VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", this->collection_names.size(), m_data.size());
-                // Otherwise this leads to a PODIO segfault
-            }
-            size_t i = 0;
-            for (auto& coll_name : this->collection_names) {
-                event.InsertCollection<PodioT>(std::move(*(m_data[i++])), coll_name);
-            }
-        }
-
-        void Reset() override {
-            m_data.clear();
-            for (size_t i=0; i<collection_names.size(); ++i) {
-                m_data.push_back(std::make_unique<typename PodioT::collection_type>());
-            }
-        }
-    };
-#endif
-
-
-    void WireOutputs(JEventLevel component_level, const std::vector<std::string>& single_output_databundle_names, const std::vector<std::vector<std::string>>& variadic_output_databundle_names) {
-        size_t single_output_index = 0;
-        size_t variadic_output_index = 0;
-
-        size_t variadic_output_count = 0;
         for (auto* output : m_outputs) {
-            if (output->is_variadic) {
-                variadic_output_count += 1;
+            auto* databundle = output->GetDatabundle();
+            summary.AddOutput(new JComponentSummary::Collection(databundle->GetShortName(), 
+                                                                  databundle->GetUniqueName(), 
+                                                             databundle->GetTypeName(), 
+                                                                 output->GetLevel()));
+        }
+
+        for (auto* output : m_variadic_outputs) {
+            for (auto* databundle : output->GetDatabundles()) {
+                summary.AddOutput(new JComponentSummary::Collection(databundle->GetShortName(), 
+                                                                      databundle->GetUniqueName(), 
+                                                                 databundle->GetTypeName(), 
+                                                                     output->GetLevel()));
             }
         }
-        if (variadic_output_count == 1 && variadic_output_databundle_names.size() == 0) {
+    }
+
+    void WireOutputs(JEventLevel component_level,
+                               const std::vector<std::string>& single_output_databundle_names,
+                               const std::vector<std::vector<std::string>>& variadic_output_databundle_names,
+                               bool use_short_names) {
+
+        if (m_variadic_outputs.size() == 1 && variadic_output_databundle_names.size() == 0) {
             // Obtain variadic databundle names from excess single-output databundle names
-            int variadic_databundle_count = single_output_databundle_names.size() - m_outputs.size() + 1;
+            int variadic_databundle_count = single_output_databundle_names.size() - m_outputs.size();
             int current_databundle_index = 0;
 
-            for (auto* output : m_outputs) {
-                output->collection_names.clear();
-                output->level = component_level;
-                if (output->is_variadic) {
+            for (auto& pair : m_ordered_outputs) {
+                auto* single_output = pair.first;
+                auto* variadic_output = pair.second;
+
+                if (variadic_output != nullptr) {
+
+                    variadic_output->SetLevel(component_level);
                     std::vector<std::string> variadic_names;
                     for (int i=0; i<variadic_databundle_count; ++i) {
                         variadic_names.push_back(single_output_databundle_names.at(current_databundle_index+i));
                     }
-                    output->collection_names = variadic_names;
+                    if (use_short_names) {
+                        variadic_output->SetShortNames(variadic_names);
+                    } else {
+                        variadic_output->SetUniqueNames(variadic_names);
+                    }
                     current_databundle_index += variadic_databundle_count;
                 }
                 else {
-                    output->collection_names.push_back(single_output_databundle_names.at(current_databundle_index));
+                    single_output->SetLevel(component_level);
+                    if (use_short_names) {
+                        single_output->SetShortName(single_output_databundle_names.at(current_databundle_index));
+                    }
+                    else {
+                        single_output->SetUniqueName(single_output_databundle_names.at(current_databundle_index));
+                    }
                     current_databundle_index += 1;
                 }
             }
         }
         else {
             // Do the obvious, sensible thing instead
+            size_t i = 0;
             for (auto* output : m_outputs) {
-                output->collection_names.clear();
-                output->level = component_level;
-                if (output->is_variadic) {
-                    output->collection_names = variadic_output_databundle_names.at(variadic_output_index++);
+                output->SetLevel(component_level);
+                if (use_short_names) {
+                    output->SetShortName(single_output_databundle_names.at(i));
                 }
                 else {
-                    output->collection_names.push_back(single_output_databundle_names.at(single_output_index++));
+                    output->SetUniqueName(single_output_databundle_names.at(i));
                 }
+                i += 1;
+            }
+            i = 0;
+            for (auto* variadic_output : m_variadic_outputs) {
+                variadic_output->SetLevel(component_level);
+                if (use_short_names) {
+                    variadic_output->SetShortNames(variadic_output_databundle_names.at(i));
+                }
+                else {
+                    variadic_output->SetUniqueNames(variadic_output_databundle_names.at(i));
+                }
+                i += 1;
             }
         }
     }
-
-    void SummarizeOutputs(JComponentSummary::Component& summary) const {
-        for (const auto* output : m_outputs) {
-            size_t suboutput_count = output->collection_names.size();
-            for (size_t i=0; i<suboutput_count; ++i) {
-                summary.AddOutput(new JComponentSummary::Collection("", output->collection_names[i], output->type_name, output->level));
-            }
-        }
-    }
-
 };
 
-
 } // namespace jana::components
+

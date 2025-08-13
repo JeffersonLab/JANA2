@@ -91,6 +91,7 @@ TEST_CASE("JOmniFactoryTests_VariadicWiring") {
         {"lw2", "v_podio_2", "v_podio_3", "podio2"}));
 
     auto event = std::make_shared<JEvent>(&app);
+    event->GetFactorySet()->Print();
     test_single_event(*event);
     event->Clear();
     test_single_event(*event);

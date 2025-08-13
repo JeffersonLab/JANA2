@@ -1,52 +1,56 @@
 #pragma once
 #include "JANA/Components/JDatabundle.h"
-#include <JANA/Components/JHasDatabundleOutputs.h>
+#include <JANA/Components/JHasOutputs.h>
 #include <JANA/Components/JLightweightDatabundle.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <typeindex>
 
 namespace jana::components {
 
 template <typename T>
-class Output : public JHasDatabundleOutputs::OutputBase {
-    std::vector<T*> m_data;
+class Output : public JHasOutputs::OutputBase {
+    std::vector<T*> m_transient_data;
+    std::vector<T*>* m_external_data = nullptr; // This is a hack for JFactoryT
     JLightweightDatabundleT<T>* m_databundle; // Just so that we have a typed reference
 
 public:
-    Output(JHasDatabundleOutputs* owner, std::string short_name="") {
+    Output(JHasOutputs* owner, std::string short_name="") {
         owner->RegisterOutput(this);
-        this->type_name = JTypeInfo::demangle<T>();
         m_databundle = new JLightweightDatabundleT<T>();
-        m_databundle->SetTypeName(this->type_name);
-        std::string unique_name = short_name.empty() ? this->type_name : this->type_name + ":" + short_name;
-        this->databundle_names.push_back(unique_name);
+        m_databundle->SetTypeName(JTypeInfo::demangle<T>());
+        m_databundle->SetTypeIndex(std::type_index(typeid(T)));
         m_databundle->SetShortName(short_name);
-        this->databundles.push_back(m_databundle);
+        SetDatabundle(m_databundle);
         // Factory will be set by JFactorySet, not here
     }
 
-    void SetShortName(std::string short_name) {
-        this->databundle_names.clear();
-        auto unique_name = type_name + ":" + short_name;
-        this->databundle_names.push_back(unique_name);
+    Output(JHasOutputs* owner, std::vector<T*>* external_data, std::string short_name="") {
+        owner->RegisterOutput(this);
+        m_databundle = new JLightweightDatabundleT<T>(external_data);
+        m_databundle->SetTypeName(JTypeInfo::demangle<T>());
+        m_databundle->SetTypeIndex(std::type_index(typeid(T)));
         m_databundle->SetShortName(short_name);
+        m_external_data = external_data;
+        SetDatabundle(m_databundle);
+        // Factory will be set by JFactorySet, not here
     }
 
-    void SetUniqueName(std::string unique_name) {
-        this->databundle_names.clear();
-        this->databundle_names.push_back(unique_name);
-        m_databundle->SetUniqueName(unique_name);
+    void SetNotOwnerFlag(bool not_owner) {
+        m_databundle->SetNotOwnerFlag(not_owner);
     }
 
-    std::vector<T*>& operator()() { return m_data; }
+    std::vector<T*>& operator()() { return (m_external_data == nullptr) ? m_transient_data : *m_external_data; }
 
     JLightweightDatabundleT<T>& GetDatabundle() { return *m_databundle; }
 
-
-    void StoreData(const JFactorySet&) override {
-    //    event.Insert(m_data, this->collection_names[0]);
+    void LagrangianStore(JFactorySet&, JDatabundle::Status status) override {
+        if (m_external_data == nullptr) {
+            m_databundle->GetData() = std::move(m_transient_data);
+        }
+        m_databundle->SetStatus(status);
     }
-
-    void Reset() override { }
 };
 
 } // jana::components
+
+template <typename T> using Output = jana::components::Output<T>;

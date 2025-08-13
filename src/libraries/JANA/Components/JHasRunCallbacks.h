@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include <JANA/JEvent.h>
+#include <JANA/JApplication.h>
 
+class JEvent;
 namespace jana::components {
 
 
@@ -45,10 +46,10 @@ public:
         }
     };
 
-    // Declarative interface
+    // DeclarativeMode
     virtual void ChangeRun(int32_t /*run_nr*/) {}
 
-    // Full interface
+    // ExpertMode
     virtual void ChangeRun(const JEvent&) {}
 
     // Compatibility interface

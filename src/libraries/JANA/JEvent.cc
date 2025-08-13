@@ -4,7 +4,6 @@
 
 
 JEvent::JEvent() : mInspector(this){
-    mFactorySet = new JFactorySet();
 }
 
 JEvent::JEvent(JApplication* app) : mInspector(this) {
@@ -14,43 +13,23 @@ JEvent::JEvent(JApplication* app) : mInspector(this) {
 }
 
 JEvent::~JEvent() {
-    if (mFactorySet != nullptr) {
-        // Prevent memory leaks of factory contents
-        mFactorySet->Clear();
-        // We mustn't call EndRun() or Finish() here because that would give us an excepting destructor
-    }
-    delete mFactorySet;
+    mFactorySet.Clear();
 }
-
-void JEvent::SetFactorySet(JFactorySet* factorySet) {
-    delete mFactorySet;
-    mFactorySet = factorySet;
-#if JANA2_HAVE_PODIO
-    // Maintain the index of PODIO factories
-    for (JFactory* factory : mFactorySet->GetAllFactories()) {
-        if (dynamic_cast<JFactoryPodio*>(factory) != nullptr) {
-            auto tag = factory->GetTag();
-            auto it = mPodioFactories.find(tag);
-            if (it != mPodioFactories.end()) {
-                throw JException("SetFactorySet failed because PODIO factory tag '%s' is not unique", tag.c_str());
-            }
-            mPodioFactories[tag] = factory;
-        }
-    }
-#endif
-}
-
 
 /// GetFactory() should be used with extreme care because it subverts the JEvent abstraction.
 /// Most historical uses of GetFactory are far better served by JMultifactory
 JFactory* JEvent::GetFactory(const std::string& object_name, const std::string& tag) const {
-    return mFactorySet->GetFactory(object_name, tag);
+    auto databundle = mFactorySet.GetDatabundle(object_name, tag);
+    if (databundle != nullptr) {
+        return databundle->GetFactory();
+    }
+    return nullptr;
 }
 
 /// GetAllFactories() should be used with extreme care because it subverts the JEvent abstraction.
 /// Most historical uses of GetFactory are far better served by JMultifactory
 std::vector<JFactory*> JEvent::GetAllFactories() const {
-    return mFactorySet->GetAllFactories();
+    return mFactorySet.GetAllFactories();
 }
 
 bool JEvent::HasParent(JEventLevel level) const {
@@ -115,14 +94,14 @@ void JEvent::Clear(bool processed_successfully) {
         mEventSource->DoFinishEvent(*this);
         mIsWarmedUp = true;
     }
-    mFactorySet->Clear();
+    mFactorySet.Clear();
     mInspector.Reset();
     mCallGraph.Reset();
     mReferenceCount = 1;
 }
 
 void JEvent::Finish() {
-    mFactorySet->Finish();
+    mFactorySet.Finish();
 }
 
 

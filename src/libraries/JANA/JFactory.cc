@@ -101,7 +101,9 @@ void JFactory::Create(const JEvent& event) {
 
     // If the data was Processed (instead of Inserted), it will be in cache, and we can just exit.
     // Otherwise we call Process() to create the data in the first place.
-    if (mStatus == Status::Unprocessed) {
+    // If we already ran Process() but it excepted, we re-run Process() to trigger the same exception, so that every consumer
+    // is forced to handle it. Otherwise one "fault-tolerant" consumer will swallow the exception for everybody else.
+    if (mStatus == Status::Unprocessed || mStatus == Status::Excepted) {
         auto run_number = event.GetRunNumber();
         if (mPreviousRunNumber != run_number) {
             if (mPreviousRunNumber != -1) {
@@ -111,14 +113,39 @@ void JFactory::Create(const JEvent& event) {
             CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
             mPreviousRunNumber = run_number;
         }
-        CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
+        try {
+            for (auto* input : GetInputs()) {
+                input->Populate(event);
+            }
+            for (auto* input : GetVariadicInputs()) {
+                input->Populate(event);
+            }
+            CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
+        }
+        catch (...) {
+            // Save everything already created even if we throw an exception
+            // This is so that we leave everything in a valid state just in case someone tries to catch the exception recover,
+            // such as EICrecon. (Remember that a missing collection in the podio frame will segfault if anyone tries to write that frame)
+            // Note that the collections themselves won't know that they exited early
+
+            LOG << "Exception in JFactory::Create, prefix=" << GetPrefix();
+            mStatus = Status::Excepted;
+            mCreationStatus = CreationStatus::Created;
+            for (auto* output : GetOutputs()) {
+                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+            }
+            for (auto* output : GetVariadicOutputs()) {
+                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+            }
+            throw;
+        }
         mStatus = Status::Processed;
         mCreationStatus = CreationStatus::Created;
-
-        for (auto* output : GetDatabundleOutputs()) {
-            for (auto* databundle : output->databundles) {
-                databundle->SetStatus(JDatabundle::Status::Created);
-            }
+        for (auto* output : GetOutputs()) {
+            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
+        }
+        for (auto* output : GetVariadicOutputs()) {
+            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
         }
     }
 }
@@ -156,13 +183,8 @@ void JFactory::Summarize(JComponentSummary& summary) const {
             GetLevel(),
             GetPluginName());
 
-    auto coll = new JComponentSummary::Collection(
-            GetTag(), 
-            GetTag(),
-            GetObjectName(), 
-            GetLevel());
-
-    fs->AddOutput(coll);
+    SummarizeInputs(*fs);
+    SummarizeOutputs(*fs);
     summary.Add(fs);
 }
 

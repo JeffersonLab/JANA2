@@ -63,11 +63,10 @@ TEST_CASE("SmallDefTags") {
 
     using namespace deftagstest;
     auto event = std::make_shared<JEvent>();
-    auto fs = new JFactorySet;
+    auto fs = event->GetFactorySet();
     fs->Add(new Fac1);
     fs->Add(new Fac2);
     fs->Add(new Fac3);
-    event->SetFactorySet(fs);
 
     auto objsA = event->Get<Obj>("");
     REQUIRE(objsA[0]->E == 22.2);

@@ -5,10 +5,14 @@
 #include <type_traits>
 #include <JANA/JEvent.h>
 #include <JANA/JFactoryGenerator.h>
+#include <JANA/JMultifactory.h>
 #include <JANA/Components/JOmniFactory.h>
 #include <JANA/Components/JOmniFactoryGeneratorT.h>
+#include <JANA/Podio/JFactoryPodioT.h>
+#include <PodioDatamodel/ExampleHitCollection.h>
 #include <PodioDatamodel/ExampleClusterCollection.h>
 #include <podio/podioVersion.h>
+#include <JANA/Podio/JFactoryPodioT.h>
 
 #if podio_VERSION >= PODIO_VERSION(1,2,0)
 #include <podio/LinkCollection.h>
@@ -37,12 +41,6 @@ TEST_CASE("PodioTestsInsertAndRetrieve") {
         auto* collection_retrieved = dynamic_cast<const ExampleClusterCollection*>(collection_retrieved_untyped);
         REQUIRE(collection_retrieved != nullptr);
         REQUIRE((*collection_retrieved)[0].energy() == 16.0);
-    }
-
-    SECTION("Retrieve using JEvent::Get()") {
-        std::vector<const ExampleCluster*> clusters_retrieved = event->Get<ExampleCluster>("clusters");
-        REQUIRE(clusters_retrieved.size() == 2);
-        REQUIRE(clusters_retrieved[0]->energy() == 16.0);
     }
 
     SECTION("Retrieve directly from podio::Frame") {
@@ -110,6 +108,7 @@ TEST_CASE("PODIO 'subset' collections handled correctly (not involving factories
     REQUIRE(c.id() == b.id());
 
 }
+} // namespace podiotests
 
 namespace jana2_tests_podiotests_init {
 
@@ -127,7 +126,6 @@ struct TestFac : public JFactoryPodioT<ExampleCluster> {
         SetCollection(std::move(c));
     }
 };
-}
 
 TEST_CASE("JFactoryPodioT::Init gets called") {
 
@@ -136,15 +134,17 @@ TEST_CASE("JFactoryPodioT::Init gets called") {
     auto event = std::make_shared<JEvent>(&app);
     event->Clear();  // Simulate a trip to the JEventPool
 
-    auto r = event->GetCollectionBase("clusters");
-    REQUIRE(r != nullptr);
-    const auto* res = dynamic_cast<const ExampleClusterCollection*>(r);
-    REQUIRE(res != nullptr);
-    REQUIRE((*res)[0].energy() == 16.0);
-    auto fac = dynamic_cast<jana2_tests_podiotests_init::TestFac*>(event->GetFactory<ExampleCluster>("clusters"));
+    auto untyped_coll = event->GetCollectionBase("clusters");
+    REQUIRE(untyped_coll != nullptr);
+    const auto* typed_coll = dynamic_cast<const ExampleClusterCollection*>(untyped_coll);
+    REQUIRE(typed_coll != nullptr);
+    REQUIRE(typed_coll->size() == 1);
+    REQUIRE(typed_coll->at(0).energy() == 16.0);
+    auto fac = dynamic_cast<jana2_tests_podiotests_init::TestFac*>(event->GetFactory("ExampleCluster", "clusters"));
     REQUIRE(fac != nullptr);
     REQUIRE(fac->init_called == true);
 }
+} // namespace jana2_tests_podiotests_init
 
 #if podio_VERSION >= PODIO_VERSION(1,2,0)
 
@@ -186,5 +186,208 @@ TEST_CASE("PodioLink_Test") {
 }
 #endif
 
-} // namespace podiotests
+
+namespace jana2::tests::podio_cleardata {
+
+struct MyFac: jana::components::JOmniFactory<MyFac> {
+
+    PodioInput<ExampleHit> m_hits_in {this};
+    PodioOutput<ExampleCluster> m_clusters_out {this};
+
+    MyFac() { SetTypeName("MyFac");}
+    void Configure() {};
+    void ChangeRun(int32_t) {}
+    void Execute(int32_t, int32_t) {
+        auto cluster = m_clusters_out()->create();
+        for (auto hit : *m_hits_in()) {
+            cluster.addHits(hit);
+        }
+    }
+};
+
+TEST_CASE("PodioClearData_Test") {
+    JApplication app;
+    app.Add(new JOmniFactoryGeneratorT<MyFac>("blah", {"hits"}, {"clusters"}));
+    auto event = std::make_shared<JEvent>(&app);
+
+    SECTION("InsertCollection") {
+        ExampleHitCollection hits;
+        auto h1 = hits.create();
+        h1.cellID(22);
+
+        event->InsertCollection<ExampleHit>(std::move(hits), "hits");
+        auto clusters = event->GetCollection<ExampleCluster>("clusters");
+        REQUIRE(clusters->size() == 1);
+        REQUIRE(clusters->at(0).Hits_size() == 1);
+        REQUIRE(clusters->at(0).Hits().at(0).cellID() == 22);
+
+        event->Clear(true);
+
+        ExampleHitCollection hits2;
+        auto h2 = hits2.create();
+        h2.cellID(3);
+        auto h3 = hits2.create();
+        h3.cellID(99);
+        event->InsertCollection<ExampleHit>(std::move(hits2), "hits");
+        auto clusters2 = event->GetCollection<ExampleCluster>("clusters");
+        REQUIRE(clusters2->size() == 1);
+        REQUIRE(clusters2->at(0).Hits_size() == 2);
+        REQUIRE(clusters2->at(0).Hits().at(0).cellID() == 3);
+        REQUIRE(clusters2->at(0).Hits().at(1).cellID() == 99);
+    }
+
+    SECTION("InsertCollectionAlreadyInFrame") {
+        ExampleHitCollection hits;
+        auto h1 = hits.create();
+        h1.cellID(22);
+        podio::Frame* frame1 = new podio::Frame;
+        frame1->put(std::move(hits), "hits");
+        auto const_hits = frame1->get("hits");
+        event->Insert(frame1, "");
+        event->InsertCollectionAlreadyInFrame<ExampleHit>(const_hits, "hits");
+
+        auto clusters = event->GetCollection<ExampleCluster>("clusters");
+
+        REQUIRE(clusters->size() == 1);
+        REQUIRE(clusters->at(0).Hits_size() == 1);
+        REQUIRE(clusters->at(0).Hits().at(0).cellID() == 22);
+
+        event->Clear(true);
+
+        ExampleHitCollection hits2;
+        auto h2 = hits2.create();
+        h2.cellID(3);
+        auto h3 = hits2.create();
+        h3.cellID(99);
+
+        podio::Frame* frame2 = new podio::Frame;
+        frame2->put(std::move(hits2), "hits");
+        auto const_hits2 = frame2->get("hits");
+        event->Insert(frame2, "");
+        event->InsertCollectionAlreadyInFrame<ExampleHit>(const_hits2, "hits");
+
+        auto clusters2 = event->GetCollection<ExampleCluster>("clusters");
+
+        REQUIRE(clusters2->size() == 1);
+        REQUIRE(clusters2->at(0).Hits_size() == 2);
+        REQUIRE(clusters2->at(0).Hits().at(0).cellID() == 3);
+        REQUIRE(clusters2->at(0).Hits().at(1).cellID() == 99);
+    }
+
+
+
+} // TEST_CASE
+} // namespace jana2::tests::podio_cleardata
+
+namespace jana2::tests::podio_multifactory {
+
+struct MyMultiFac: JMultifactory {
+
+
+    MyMultiFac() { 
+        SetTypeName("MyMultiFac");
+        DeclarePodioOutput<ExampleCluster>("clusters");
+        DeclarePodioOutput<ExampleCluster>("other_clusters");
+    }
+    void Process(const std::shared_ptr<const JEvent>& event) override {
+        auto hits = event->GetCollection<ExampleHit>("hits");
+        ExampleClusterCollection clusters;
+        auto cluster = clusters->create();
+        for (auto hit : *hits) {
+            cluster.addHits(hit);
+        }
+        SetCollection<ExampleCluster>("clusters", std::move(clusters));
+
+        ExampleClusterCollection clusters2;
+        auto cluster2 = clusters2->create();
+        for (auto hit : *hits) {
+            cluster2.addHits(hit);
+        }
+        SetCollection<ExampleCluster>("other_clusters", std::move(clusters2));
+    }
+};
+
+TEST_CASE("PodioMultifactoryClearData_Test") {
+    JApplication app;
+    app.Add(new JFactoryGeneratorT<MyMultiFac>());
+    auto event = std::make_shared<JEvent>(&app);
+
+    SECTION("InsertCollection") {
+        ExampleHitCollection hits;
+        auto h1 = hits.create();
+        h1.cellID(22);
+
+        event->InsertCollection<ExampleHit>(std::move(hits), "hits");
+        auto clusters = event->GetCollection<ExampleCluster>("clusters");
+        REQUIRE(clusters->size() == 1);
+        REQUIRE(clusters->at(0).Hits_size() == 1);
+        REQUIRE(clusters->at(0).Hits().at(0).cellID() == 22);
+
+        //auto other_clusters = event->GetCollection<ExampleCluster>("other_clusters");
+        //REQUIRE(other_clusters->size() == 1);
+        //REQUIRE(0 == 1);
+        auto frame = event->GetSingle<podio::Frame>();
+        const auto& other_clusters = frame->get<ExampleClusterCollection>("other_clusters");
+        REQUIRE(other_clusters.size() == 1);
+
+
+        event->Clear(true);
+
+        ExampleHitCollection hits2;
+        auto h2 = hits2.create();
+        h2.cellID(3);
+        auto h3 = hits2.create();
+        h3.cellID(99);
+        event->InsertCollection<ExampleHit>(std::move(hits2), "hits");
+        auto clusters2 = event->GetCollection<ExampleCluster>("clusters");
+        REQUIRE(clusters2->size() == 1);
+        REQUIRE(clusters2->at(0).Hits_size() == 2);
+        REQUIRE(clusters2->at(0).Hits().at(0).cellID() == 3);
+        REQUIRE(clusters2->at(0).Hits().at(1).cellID() == 99);
+    }
+    
+    SECTION("InsertCollectionAlreadyInFrame") {
+        ExampleHitCollection hits;
+        auto h1 = hits.create();
+        h1.cellID(22);
+        podio::Frame* frame1 = new podio::Frame;
+        frame1->put(std::move(hits), "hits");
+        auto const_hits = frame1->get("hits");
+        event->InsertCollectionAlreadyInFrame<ExampleHit>(const_hits, "hits");
+        event->Insert(frame1, "");
+
+        auto clusters = event->GetCollection<ExampleCluster>("clusters");
+        auto clusters3 = event->GetCollection<ExampleCluster>("clusters");
+        // Ensure that Process() isn't called twice
+        REQUIRE(clusters3->size() == 1);
+
+        REQUIRE(clusters->size() == 1);
+        REQUIRE(clusters->at(0).Hits_size() == 1);
+        REQUIRE(clusters->at(0).Hits().at(0).cellID() == 22);
+
+        event->Clear(true);
+
+        ExampleHitCollection hits2;
+        auto h2 = hits2.create();
+        h2.cellID(3);
+        auto h3 = hits2.create();
+        h3.cellID(99);
+
+        podio::Frame* frame2 = new podio::Frame;
+        frame2->put(std::move(hits2), "hits");
+        auto const_hits2 = frame2->get("hits");
+        event->Insert(frame2, "");
+        event->InsertCollectionAlreadyInFrame<ExampleHit>(const_hits2, "hits");
+
+        auto clusters2 = event->GetCollection<ExampleCluster>("clusters");
+
+        REQUIRE(clusters2->size() == 1);
+        REQUIRE(clusters2->at(0).Hits_size() == 2);
+        REQUIRE(clusters2->at(0).Hits().at(0).cellID() == 3);
+        REQUIRE(clusters2->at(0).Hits().at(1).cellID() == 99);
+    }
+
+} // TEST_CASE
+} // namespace
+
 

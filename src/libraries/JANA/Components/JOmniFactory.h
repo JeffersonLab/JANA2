@@ -15,8 +15,6 @@
 #include <JANA/JEvent.h>
 #include <JANA/JMultifactory.h>
 #include <JANA/JVersion.h>
-#include <JANA/Components/JHasInputs.h>
-#include <JANA/Components/JHasOutputs.h>
 
 #include <string>
 #include <vector>
@@ -26,9 +24,7 @@ namespace jana::components {
 struct EmptyConfig {};
 
 template <typename AlgoT, typename ConfigT=EmptyConfig>
-class JOmniFactory : public JMultifactory, 
-                     public jana::components::JHasInputs,
-                     public jana::components::JHasOutputs {
+class JOmniFactory : public JMultifactory {
 private:
 
     ConfigT m_config;
@@ -57,12 +53,7 @@ public:
         m_app->SetDefaultParameter(m_prefix + ":OutputTags", output_collection_names, "Output collection names");
 
         WireInputs(level, input_collection_levels, input_collection_names, variadic_input_collection_levels, variadic_input_collection_names);
-        WireOutputs(level, output_collection_names, variadic_output_collection_names);
-
-        // Handle the JMultifactory-specific wiring details
-        for (auto* output: m_outputs) {
-            output->CreateHelperFactory(*this);
-        }
+        WireOutputs(level, output_collection_names, variadic_output_collection_names, false);
 
         // Configure logger. Priority = [JParameterManager, system log level]
         // std::string default_log_level = eicrecon::LogLevelToString(m_logger->level());
@@ -71,41 +62,17 @@ public:
     }
 
     void Init() override {
-        for (auto* parameter : m_parameters) {
-            parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
-        }
-        for (auto* service : m_services) {
-            service->Fetch(m_app);
-        }
         static_cast<AlgoT*>(this)->Configure();
     }
 
-    void BeginRun(const std::shared_ptr<const JEvent>& event) override {
-        for (auto* resource : m_resources) {
-            resource->ChangeRun(event->GetRunNumber(), m_app);
-        }
+    void ChangeRun(const std::shared_ptr<const JEvent>& event) override {
         static_cast<AlgoT*>(this)->ChangeRun(event->GetRunNumber());
     }
 
+    void ChangeRun(int32_t) override {};
+
     void Process(const std::shared_ptr<const JEvent> &event) override {
-        try {
-            for (auto* input : m_inputs) {
-                input->GetCollection(*event);
-            }
-            for (auto* variadic_input : m_variadic_inputs) {
-                variadic_input->GetCollection(*event);
-            }
-            for (auto* output : m_outputs) {
-                output->Reset();
-            }
-            static_cast<AlgoT*>(this)->Execute(event->GetRunNumber(), event->GetEventNumber());
-            for (auto* output : m_outputs) {
-                output->SetCollection(*this);
-            }
-        }
-        catch(std::exception &e) {
-            throw JException(e.what());
-        }
+        static_cast<AlgoT*>(this)->Execute(event->GetRunNumber(), event->GetEventNumber());
     }
 
     using ConfigType = ConfigT;

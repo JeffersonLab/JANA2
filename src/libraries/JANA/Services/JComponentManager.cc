@@ -130,7 +130,11 @@ void JComponentManager::initialize_components() {
         unfolder->Summarize(m_summary);
     }
 
-    JFactorySet dummy_fac_set(m_fac_gens);
+    JFactorySet dummy_fac_set;
+    for (auto* fac_gen : m_fac_gens) {
+        // TODO: Get rid of this
+        fac_gen->GenerateFactories(&dummy_fac_set);
+    }
 
     // Factories
     for (auto* fac : dummy_fac_set.GetAllFactories()) {
@@ -145,17 +149,6 @@ void JComponentManager::initialize_components() {
             // Everything in dummy_fac_set will be destroyed immediately after this.
             // The same exception will be thrown from a fresh factory
             // set once processing begins, unless the factory is never used.
-        }
-        fac->Summarize(m_summary);
-    }
-
-    // Multifactories
-    for (auto* fac : dummy_fac_set.GetAllMultifactories()) {
-        try {
-            fac->DoInit();
-        }
-        catch (...) {
-            // Swallow any exceptions! See above.
         }
         fac->Summarize(m_summary);
     }
@@ -196,8 +189,10 @@ void JComponentManager::add(JEventUnfolder* unfolder) {
 }
 
 void JComponentManager::configure_event(JEvent& event) {
-    auto factory_set = new JFactorySet(m_fac_gens);
-    event.SetFactorySet(factory_set);
+    auto* factory_set = event.GetFactorySet();
+    for (auto gen : m_fac_gens) {
+        gen->GenerateFactories(factory_set);
+    }
     event.SetDefaultTags(m_default_tags);
     event.GetJCallGraphRecorder()->SetEnabled(m_enable_call_graph_recording);
     event.SetJApplication(GetApplication());

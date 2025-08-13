@@ -51,10 +51,10 @@ public:
             throw JException("Called DoMap() on a legacy-mode JEventProcessor");
         }
         for (auto* input : m_inputs) {
-            input->PrefetchCollection(event);
+            input->TriggerFactoryCreate(event);
         }
         for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->PrefetchCollection(event);
+            variadic_input->TriggerFactoryCreate(event);
         }
         if (m_callback_style == CallbackStyle::ExpertMode) {
             ProcessParallel(event);
@@ -85,10 +85,10 @@ public:
             // This collection should have already been computed during DoMap()
             // We do this before ChangeRun() just in case we will need to pull data out of
             // a begin-of-run event.
-            input->GetCollection(event);
+            input->Populate(event);
         }
         for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->GetCollection(event);
+            variadic_input->Populate(event);
         }
         auto run_number = event.GetRunNumber();
         if (m_last_run_number != run_number) {

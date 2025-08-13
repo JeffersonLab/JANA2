@@ -9,7 +9,14 @@
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Components/JComponent.h>
-#include <JANA/Components/JHasDatabundleOutputs.h>
+#include <JANA/Components/JHasInputs.h>
+#include <JANA/Components/JHasOutputs.h>
+#include <JANA/Components/JHasRunCallbacks.h>
+#include <JANA/JVersion.h>
+#if JANA2_HAVE_PODIO
+#include <JANA/Components/JPodioOutput.h>
+#endif
+#include <JANA/Components/JLightweightOutput.h>
 
 #include <string>
 #include <typeindex>
@@ -23,11 +30,13 @@ class JEvent;
 class JObject;
 class JApplication;
 
-class JFactory : public jana::components::JComponent, 
-                 public jana::components::JHasDatabundleOutputs {
+class JFactory : public jana::components::JComponent,
+                 public jana::components::JHasRunCallbacks,
+                 public jana::components::JHasInputs,
+                 public jana::components::JHasOutputs {
 public:
 
-    enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Finished};
+    enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Excepted, Finished};
     enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
 
     enum JFactory_Flags_t {
@@ -41,8 +50,12 @@ public:
     JFactory() = default;
     virtual ~JFactory() = default;
 
+    void SetTag(std::string tag) {
+        GetFirstDatabundle()->SetShortName(tag);
+    }
+
     std::string GetTag() const { 
-        auto& db = GetDatabundleOutputs().at(0)->GetDatabundles().at(0);
+        auto db = GetFirstDatabundle();
         if (db->HasShortName()) {
             return db->GetShortName();
         }
@@ -69,11 +82,14 @@ public:
 
     virtual void SetFactoryFlag(JFactory_Flags_t f) {
         switch (f) {
+            case JFactory::PERSISTENT: SetPersistentFlag(true); break;
             case JFactory::REGENERATE: SetRegenerateFlag(false); break;
             case JFactory::WRITE_TO_OUTPUT: SetWriteToOutputFlag(false); break;
             default: throw JException("Unsupported factory flag");
         }
     };
+
+    void SetPersistentFlag(bool persistent) { mPersistent = persistent; }
     void SetRegenerateFlag(bool regenerate) { mRegenerate = regenerate; }
     void SetWriteToOutputFlag(bool write_to_output) { mWriteToOutput = write_to_output; }
     bool GetWriteToOutputFlag() { return mWriteToOutput; }
@@ -91,23 +107,46 @@ public:
         return datasource;
     }
 
-    // Overloaded by JFactoryT
-    virtual std::type_index GetObjectType() const = 0;
+    std::type_index GetObjectType() const {
+        return GetFirstDatabundle()->GetTypeIndex();
+    }
 
-    virtual void ClearData() = 0;
+    std::size_t GetNumObjects() const {
+        return GetFirstDatabundle()->GetSize();
+    }
+
+    void ClearData() {
+        if (this->mStatus == JFactory::Status::Uninitialized) {
+            return;
+        }
+
+        if (mPersistent) {
+            // Persistence is a property of both the factory AND the databundle
+            // - "Don't re-run this factory on the next event"
+            // - "Don't clear this databundle every time the JEvent gets recycled"
+            // Factory is persistent <=> All databundles are persistent
+            // We ARE allowing databundles to be persistent even if they don't have a JFactory
+            // We don't have a way to enforce this generally yet
+            return;
+        }
+
+        this->mStatus = JFactory::Status::Unprocessed;
+        this->mCreationStatus = JFactory::CreationStatus::NotCreatedYet;
+
+        for (auto* output: GetOutputs()) {
+            output->ClearData();
+        }
+        for (auto* variadic_output : GetVariadicOutputs()) {
+            variadic_output->ClearData();
+        }
+    }
 
 
     // Overloaded by user Factories
     virtual void Init() {}
-    virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
-    virtual void ChangeRun(const std::shared_ptr<const JEvent>&) {}
-    virtual void EndRun() {}
     virtual void Process(const std::shared_ptr<const JEvent>&) {}
     virtual void Finish() {}
 
-    virtual std::size_t GetNumObjects() const {
-        return 0;
-    }
 
 
     /// Access the encapsulated data, performing an upcast if necessary. This is useful for extracting data from
@@ -133,15 +172,15 @@ public:
     void DoFinish();
     void Summarize(JComponentSummary& summary) const override;
 
-
-    virtual void Set(const std::vector<JObject *> &data) = 0;
-    virtual void Insert(JObject *data) = 0;
+    virtual void Set(const std::vector<JObject *>&) { throw JException("Not supported!"); }
 
 
 protected:
 
     bool mRegenerate = false;
     bool mWriteToOutput = true;
+    bool mPersistent = false;
+
     int32_t mPreviousRunNumber = -1;
     bool mInsideCreate = false; // Use this to detect cycles in factory dependencies
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;

@@ -10,9 +10,9 @@
 #include <JANA/JEvent.h>
 
 class JApplication;
-class JEventFolder : public jana::components::JComponent, 
+class JEventFolder : public jana::components::JComponent,
                      public jana::components::JHasRunCallbacks,
-                     public jana::components::JHasInputs, 
+                     public jana::components::JHasInputs,
                      public jana::components::JHasOutputs {
 
 private:
@@ -75,10 +75,10 @@ public:
             }
         }
         for (auto* input : m_inputs) {
-            input->PrefetchCollection(child);
+            input->TriggerFactoryCreate(child);
         }
         for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->PrefetchCollection(child);
+            variadic_input->TriggerFactoryCreate(child);
         }
         if (m_callback_style != CallbackStyle::DeclarativeMode) {
             CallWithJExceptionWrapper("JEventFolder::Preprocess", [&](){
@@ -114,21 +114,21 @@ public:
             m_last_run_number = parent.GetRunNumber();
         }
         for (auto* input : m_inputs) {
-            input->GetCollection(child);
+            input->Populate(child);
         }
         for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->GetCollection(child);
-        }
-        for (auto* output : m_outputs) {
-            output->Reset();
+            variadic_input->Populate(child);
         }
         auto child_number = child.GetEventIndex();
         CallWithJExceptionWrapper("JEventFolder::Fold", [&](){
             Fold(child, parent, child_number);
         });
 
-        for (auto* output : m_outputs) {
-            output->InsertCollection(parent);
+        for (auto* output : GetOutputs()) {
+            output->EulerianStore(*parent.GetFactorySet());
+        }
+        for (auto* output : GetVariadicOutputs()) {
+            output->EulerianStore(*parent.GetFactorySet());
         }
     }
 
@@ -146,21 +146,8 @@ public:
         auto* us = new JComponentSummary::Component( 
             "Folder", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
-        for (const auto* input : m_inputs) {
-            us->AddInput(new JComponentSummary::Collection("", input->GetDatabundleName(), input->GetTypeName(), input->GetLevel()));
-        }
-        for (const auto* input : m_variadic_inputs) {
-            size_t subinput_count = input->GetRequestedDatabundleNames().size();
-            for (size_t i=0; i<subinput_count; ++i) {
-                us->AddInput(new JComponentSummary::Collection("", input->GetRequestedDatabundleNames().at(i), input->GetTypeName(), input->GetLevel()));
-            }
-        }
-        for (const auto* output : m_outputs) {
-            size_t suboutput_count = output->collection_names.size();
-            for (size_t i=0; i<suboutput_count; ++i) {
-                us->AddOutput(new JComponentSummary::Collection("", output->collection_names[i], output->type_name, GetLevel()));
-            }
-        }
+        SummarizeInputs(*us);
+        SummarizeOutputs(*us);
         summary.Add(us);
     }
 

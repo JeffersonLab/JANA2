@@ -8,7 +8,6 @@ set(JANA2_SOURCES
     JEventSource.cc
     JFactory.cc
     JFactorySet.cc
-    JMultifactory.cc
     JService.cc
     JVersion.cc
     JEvent.cc
@@ -28,6 +27,7 @@ set(JANA2_SOURCES
     Services/JWiringService.cc
 
     Components/JComponentSummary.cc
+    Components/JHasInputs.cc
 
     Utils/JCpuInfo.cc
     Utils/JProcessorMapping.cc
