@@ -189,10 +189,8 @@ void JComponentManager::add(JEventUnfolder* unfolder) {
 }
 
 void JComponentManager::configure_event(JEvent& event) {
-    LOG << "Configuring event with level " << toString(event.GetLevel());
     auto* factory_set = event.GetFactorySet();
     for (auto gen : m_fac_gens) {
-        LOG << "  Adding fac to event with level " << toString(event.GetLevel());
         gen->GenerateFactories(factory_set);
     }
     event.SetDefaultTags(m_default_tags);

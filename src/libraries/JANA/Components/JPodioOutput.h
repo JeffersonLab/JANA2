@@ -150,6 +150,7 @@ public:
             databundle->SetUniqueName(name);
             databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
             databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
+            GetDatabundles().push_back(databundle);
             m_databundles.push_back(databundle);
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
         }
@@ -163,6 +164,7 @@ public:
             databundle->SetShortName(name);
             databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
             databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
+            GetDatabundles().push_back(databundle);
             m_databundles.push_back(databundle);
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
         }
@@ -173,9 +175,10 @@ public:
         m_transient_collections.clear();
         for (const std::string& name : unique_names) {
             auto databundle = new JPodioDatabundle;
-            databundle->SetShortName(name);
+            databundle->SetUniqueName(name);
             databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
             databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
+            GetDatabundles().push_back(databundle);
             m_databundles.push_back(databundle);
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
         }
@@ -185,7 +188,7 @@ public:
 
     void LagrangianStore(JFactorySet& facset, JDatabundle::Status status) override {
         if (m_transient_collections.size() != GetDatabundles().size()) {
-            throw JException("VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", GetDatabundles().size(), m_transient_collections.size());
+            throw JException("VariadicPodioOutput::LagrangianStore() failed: Declared %d collections, but provided %d.", GetDatabundles().size(), m_transient_collections.size());
         }
         auto* bundle = facset.GetDatabundle("podio::Frame");
         JLightweightDatabundleT<podio::Frame>* typed_bundle = nullptr;
@@ -207,13 +210,12 @@ public:
         for (auto& collection : m_transient_collections) {
             frame->put(std::move(collection), m_databundles[i]->GetUniqueName());
             const auto* moved = &frame->template get<typename PodioT::collection_type>(m_databundles[i]->GetUniqueName());
-            collection = nullptr;
             const auto &databundle = dynamic_cast<JPodioDatabundle*>(m_databundles[i]);
             databundle->SetCollection(moved);
             databundle->SetStatus(status);
             i += 1;
+            collection = std::make_unique<typename PodioT::collection_type>();
         }
-        m_transient_collections.clear();
     }
 
     void EulerianStore(JFactorySet& facset) override {

@@ -61,6 +61,7 @@ public:
 private:
     std::vector<OutputBase*> m_outputs;;
     std::vector<VariadicOutputBase*> m_variadic_outputs;
+    std::vector<std::pair<OutputBase*, VariadicOutputBase*>> m_ordered_outputs;
 
 public:
 
@@ -82,10 +83,12 @@ public:
 
     void RegisterOutput(OutputBase* output) {
         m_outputs.push_back(output);
+        m_ordered_outputs.push_back({output, nullptr});
     }
 
     void RegisterOutput(VariadicOutputBase* output) {
         m_variadic_outputs.push_back(output);
+        m_ordered_outputs.push_back({nullptr, output});
     }
 
     void SummarizeOutputs(JComponentSummary::Component& summary) const {
@@ -108,31 +111,69 @@ public:
         }
     }
 
-    void WireOutputs(JEventLevel component_level, 
-                               const std::vector<std::string>& single_output_databundle_names, 
-                               const std::vector<std::vector<std::string>>& variadic_output_databundle_names, 
+    void WireOutputs(JEventLevel component_level,
+                               const std::vector<std::string>& single_output_databundle_names,
+                               const std::vector<std::vector<std::string>>& variadic_output_databundle_names,
                                bool use_short_names) {
 
+        if (m_variadic_outputs.size() == 1 && variadic_output_databundle_names.size() == 0) {
+            // Obtain variadic databundle names from excess single-output databundle names
+            int variadic_databundle_count = single_output_databundle_names.size() - m_outputs.size();
+            int current_databundle_index = 0;
 
-        size_t i=0;
-        for (auto* output: m_outputs) {
-            output->SetLevel(component_level);
-            if (use_short_names) {
-                output->SetShortName(single_output_databundle_names.at(i++));
-            }
-            else {
-                output->SetUniqueName(single_output_databundle_names.at(i++));
+            for (auto& pair : m_ordered_outputs) {
+                auto* single_output = pair.first;
+                auto* variadic_output = pair.second;
+
+                if (variadic_output != nullptr) {
+
+                    variadic_output->SetLevel(component_level);
+                    std::vector<std::string> variadic_names;
+                    for (int i=0; i<variadic_databundle_count; ++i) {
+                        variadic_names.push_back(single_output_databundle_names.at(current_databundle_index+i));
+                    }
+                    if (use_short_names) {
+                        variadic_output->SetShortNames(variadic_names);
+                    } else {
+                        variadic_output->SetUniqueNames(variadic_names);
+                    }
+                    current_databundle_index += variadic_databundle_count;
+                }
+                else {
+                    single_output->SetLevel(component_level);
+                    if (use_short_names) {
+                        single_output->SetShortName(single_output_databundle_names.at(current_databundle_index));
+                    }
+                    else {
+                        single_output->SetUniqueName(single_output_databundle_names.at(current_databundle_index));
+                    }
+                    current_databundle_index += 1;
+                }
             }
         }
-
-        i = 0;
-        for (auto* output: m_variadic_outputs) {
-            output->SetLevel(component_level);
-            if (use_short_names) {
-                output->SetShortNames(variadic_output_databundle_names.at(i++));
+        else {
+            // Do the obvious, sensible thing instead
+            size_t i = 0;
+            for (auto* output : m_outputs) {
+                output->SetLevel(component_level);
+                if (use_short_names) {
+                    output->SetShortName(single_output_databundle_names.at(i));
+                }
+                else {
+                    output->SetUniqueName(single_output_databundle_names.at(i));
+                }
+                i += 1;
             }
-            else {
-                output->SetUniqueNames(variadic_output_databundle_names.at(i++));
+            i = 0;
+            for (auto* variadic_output : m_variadic_outputs) {
+                variadic_output->SetLevel(component_level);
+                if (use_short_names) {
+                    variadic_output->SetShortNames(variadic_output_databundle_names.at(i));
+                }
+                else {
+                    variadic_output->SetUniqueNames(variadic_output_databundle_names.at(i));
+                }
+                i += 1;
             }
         }
     }

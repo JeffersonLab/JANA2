@@ -121,14 +121,6 @@ void JFactory::Create(const JEvent& event) {
                 input->Populate(event);
             }
             CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
-            mStatus = Status::Processed;
-            mCreationStatus = CreationStatus::Created;
-            for (auto* output : GetOutputs()) {
-                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
-            }
-            for (auto* output : GetVariadicOutputs()) {
-                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
-            }
         }
         catch (...) {
             // Save everything already created even if we throw an exception
@@ -147,7 +139,14 @@ void JFactory::Create(const JEvent& event) {
             }
             throw;
         }
-
+        mStatus = Status::Processed;
+        mCreationStatus = CreationStatus::Created;
+        for (auto* output : GetOutputs()) {
+            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
+        }
+        for (auto* output : GetVariadicOutputs()) {
+            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
+        }
     }
 }
 
