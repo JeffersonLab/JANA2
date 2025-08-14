@@ -1,5 +1,5 @@
 
-#include <JANA/Topology/JMultilevelArrow.h>
+#include <JANA/Topology/JArrow.h>
 
 
 class JMultilevelSourceArrow : public JArrow {
