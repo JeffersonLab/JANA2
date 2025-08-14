@@ -5,6 +5,7 @@ set(TEST_SOURCES
     Topology/JPoolTests.cc
     Topology/MultiLevelTopologyTests.cc
     Topology/QueueTests.cc
+    Topology/JTopologyBuilderTests.cc
     #Topology/SubeventTests.cc
 
     Components/BarrierEventTests.cc

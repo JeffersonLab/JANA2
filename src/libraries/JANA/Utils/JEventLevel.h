@@ -23,6 +23,20 @@ inline std::ostream& operator<<(std::ostream& os, JEventLevel level) {
     return os;
 }
 
+inline char toChar(JEventLevel level) {
+    switch (level) {
+        case JEventLevel::Run: return 'R';
+        case JEventLevel::Subrun: return 'r';
+        case JEventLevel::Timeslice: return 'T';
+        case JEventLevel::Block: return 'B';
+        case JEventLevel::SlowControls: return 'C';
+        case JEventLevel::PhysicsEvent: return 'P';
+        case JEventLevel::Subevent: return 'p';
+        case JEventLevel::Task: return 't';
+        default: return 'X';
+    }
+}
+
 inline std::string toString(JEventLevel level) {
     std::stringstream ss;
     ss << level;

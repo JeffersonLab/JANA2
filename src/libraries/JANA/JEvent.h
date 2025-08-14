@@ -24,6 +24,7 @@
 #include <JANA/Utils/JInspector.h>
 
 #include <typeindex>
+#include <cstdint>
 #include <vector>
 #include <memory>
 #include <atomic>
@@ -42,6 +43,7 @@ private:
     mutable JFactorySet mFactorySet;
     mutable JCallGraphRecorder mCallGraph;
     mutable JInspector mInspector;
+    mutable std::string mEventStamp;
     bool mUseDefaultTags = false;
     std::map<std::string, std::string> mDefaultTags;
     JEventSource* mEventSource = nullptr;
@@ -49,18 +51,19 @@ private:
     bool mIsWarmedUp = false;
 
     // Hierarchical event memory management
-    std::vector<std::pair<JEventLevel, JEvent*>> mParents;
-    std::atomic_int mReferenceCount {1};
+    std::vector<std::pair<JEventLevel, std::pair<JEvent*, uint64_t>>> mParents;
+    std::atomic_int mReferenceCount {0};
     int64_t mEventIndex = -1;
 
+    void MakeEventStamp() const;
 
 public:
     JEvent();
     explicit JEvent(JApplication* app);
     virtual ~JEvent();
 
-    void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber;}
-    void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
+    void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber; MakeEventStamp(); }
+    void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber; MakeEventStamp(); }
     void SetJApplication(JApplication* app){mApplication = app;}
     void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
     void SetDefaultTags(std::map<std::string, std::string> aDefaultTags){mDefaultTags=aDefaultTags; mUseDefaultTags = !mDefaultTags.empty();}
@@ -82,12 +85,19 @@ public:
     void SetLevel(JEventLevel level) { mFactorySet.SetLevel(level); }
     void SetEventIndex(int event_index) { mEventIndex = event_index; }
     int64_t GetEventIndex() const { return mEventIndex; }
+    const std::string& GetEventStamp() const;
 
     bool HasParent(JEventLevel level) const;
     const JEvent& GetParent(JEventLevel level) const;
     void SetParent(JEvent* parent);
     JEvent* ReleaseParent(JEventLevel level);
-    int Release();
+    std::vector<JEvent*> ReleaseAllParents();
+    int GetChildCount();
+    uint64_t GetParentNumber(JEventLevel level) const;
+    void SetParentNumber(JEventLevel level, uint64_t number);
+
+    void TakeRefToSelf();
+    int ReleaseRefToSelf();
 
     // Lifecycle
     void Clear(bool processed_successfully=true);
