@@ -15,6 +15,7 @@
 ///
 /// Users should declare their accept() implementation as `final`, so that JANA can devirtualize it.
 
+class JEvent;
 struct JTrigger {
 
     virtual bool accept(JEvent&) { return true; }

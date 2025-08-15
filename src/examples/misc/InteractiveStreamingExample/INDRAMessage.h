@@ -12,7 +12,7 @@
 
 #include <JANA/JException.h>
 #include <JANA/JApplication.h>
-#include <JANA/Streaming/JMessage.h>
+#include "JMessage.h"
 
 // INDRAMessage should be exactly the same as INDRA_Stream_Test's stream_buffer struct
 struct INDRAMessage {
