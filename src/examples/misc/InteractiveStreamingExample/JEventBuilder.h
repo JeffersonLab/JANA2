@@ -7,10 +7,10 @@
 
 #include <JANA/JEvent.h>
 #include <JANA/JEventSource.h>
-#include <JANA/Streaming/JTransport.h>
-#include <JANA/Streaming/JTrigger.h>
-#include <JANA/Streaming/JDiscreteJoin.h>
-#include <JANA/Streaming/JWindow.h>
+#include "JTransport.h"
+#include "JTrigger.h"
+#include "JDiscreteJoin.h"
+#include "JWindow.h"
 
 #include <cstdint>
 #include <cstddef>

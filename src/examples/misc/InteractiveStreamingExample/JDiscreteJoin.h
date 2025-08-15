@@ -11,8 +11,8 @@
 
 #include <JANA/JEvent.h>
 #include <JANA/JEventSource.h>
-#include <JANA/Streaming/JTransport.h>
-#include <JANA/Streaming/JTrigger.h>
+#include "JTransport.h"
+#include "JTrigger.h"
 
 /// JEventBuilder pulls JMessages off of a user-specified JTransport, aggregates them into
 /// JEvents using the JWindow of their choice, and decides which to keep via a user-specified

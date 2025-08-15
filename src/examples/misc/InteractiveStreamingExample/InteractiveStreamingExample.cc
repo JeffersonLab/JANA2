@@ -3,7 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#include <JANA/Streaming/JStreamingEventSource.h>
+#include "JStreamingEventSource.h"
 #include <JANA/JEventSourceGeneratorT.h>
 #include <JANA/Utils/JBenchUtils.h>
 

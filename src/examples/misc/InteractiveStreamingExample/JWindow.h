@@ -3,7 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
-#include <JANA/Streaming/JMessage.h>
+#include "JMessage.h"
 #include <JANA/JEvent.h>
 
 #include <queue>
@@ -27,19 +27,6 @@ struct JWindow {
 };
 
 
-
-/// JFixedWindow partitions time into fixed, contiguous buckets, and emits a JEvent containing
-/// all JMessages for all sources which fall into that bucket.
-template <typename T>
-class JFixedWindow : public JWindow<T> {
-public:
-    void pushMessage(T* message) final;
-    bool pullEvent(JEvent& event) final;
-private:
-};
-
-
-/// JSessionWindow aggregates JMessages adaptively, i.e. a JEvent's time interval starts with the
 /// first JMessage and ends once there are no more JMessages timestamped before a configurable
 /// max interval width. This is usually what is meant by 'event-building'.
 template <typename T>

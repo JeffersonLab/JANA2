@@ -7,7 +7,7 @@
 #define _ZmqTransport_h_
 
 #include <JANA/Services/JParameterManager.h>
-#include <JANA/Streaming/JTransport.h>
+#include "JTransport.h"
 
 #include <zmq.h>
 #include <errno.h>

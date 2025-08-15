@@ -61,7 +61,7 @@ endfunction()
 #----------------------
 
 option(USE_ROOT "Include ROOT dependency." OFF)
-option(USE_ZEROMQ "Include ZeroMQ dependency. (Needed for examples/StreamingExample, plugins/streamDet, plugins/janacontrol), " OFF)
+option(USE_ZEROMQ "Include ZeroMQ dependency. (Needed for plugins/janacontrol, examples/misc/InteractiveStreamingExample), " OFF)
 option(USE_XERCES "Include XercesC 3 dependency. (Needed for JGeometryXML)" OFF)
 option(USE_PYTHON "Include Python dependency. This requires python-devel and python-distutils." OFF)
 option(USE_ASAN "Compile with address sanitizer" OFF)

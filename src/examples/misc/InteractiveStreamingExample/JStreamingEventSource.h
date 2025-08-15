@@ -9,7 +9,7 @@
 #include <queue>
 
 #include <JANA/JEventSource.h>
-#include <JANA/Streaming/JTransport.h>
+#include "JTransport.h"
 
 /// JStreamingEventSource is a class template which simplifies streaming events into JANA.
 ///

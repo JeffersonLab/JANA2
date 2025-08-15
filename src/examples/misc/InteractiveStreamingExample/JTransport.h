@@ -3,7 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
-#include <JANA/Streaming/JMessage.h>
+#include "JMessage.h"
 
 /// JTransport is a lightweight wrapper for integrating different messaging systems with JANA.
 
