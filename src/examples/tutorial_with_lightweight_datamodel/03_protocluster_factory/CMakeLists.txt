@@ -1,0 +1,5 @@
+
+add_jana_plugin(lw_clustering_algorithm)
+target_link_libraries(lw_clustering_algorithm PUBLIC lw_datamodel)
+
+
