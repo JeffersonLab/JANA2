@@ -64,9 +64,9 @@ void Protocluster_factory_v3::ChangeRun(const JEvent& event) {
     // This is where you should fetch any data from your JServices that IS keyed off of the run number
 }
 
-void Protocluster_factory_v3::Process(const std::shared_ptr<const JEvent> &event) {
-    LOG_DEBUG(GetLogger()) << "Inside Execute() with run_number=" << event->GetRunNumber()
-                          << ", event_number=" << event->GetEventNumber();
+void Protocluster_factory_v3::Process(const JEvent& event) {
+    LOG_DEBUG(GetLogger()) << "Inside Execute() with run_number=" << event.GetRunNumber()
+                          << ", event_number=" << event.GetEventNumber();
 
     // The Input helpers will already have been filled by the time Execute() gets called. You can access
     // the data using the () operator. Parameter values may also be accessed using the () operator.

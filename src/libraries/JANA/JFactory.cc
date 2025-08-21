@@ -106,11 +106,19 @@ void JFactory::Create(const JEvent& event) {
     if (mStatus == Status::Unprocessed || mStatus == Status::Excepted) {
         auto run_number = event.GetRunNumber();
         if (mPreviousRunNumber != run_number) {
-            if (mPreviousRunNumber != -1) {
-                CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
+            if (m_callback_style == CallbackStyle::LegacyMode) {
+                if (mPreviousRunNumber != -1) {
+                    CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
+                }
+                CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.shared_from_this()); });
+                CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
             }
-            CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.shared_from_this()); });
-            CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
+            else if (m_callback_style == CallbackStyle::DeclarativeMode) {
+                CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.GetRunNumber()); });
+            }
+            else if (m_callback_style == CallbackStyle::ExpertMode) {
+                CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
+            }
             mPreviousRunNumber = run_number;
         }
         try {
@@ -120,7 +128,18 @@ void JFactory::Create(const JEvent& event) {
             for (auto* input : GetVariadicInputs()) {
                 input->Populate(event);
             }
-            CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
+            if (m_callback_style == CallbackStyle::LegacyMode) {
+                CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
+            }
+            else if (m_callback_style == CallbackStyle::DeclarativeMode) {
+                CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.GetRunNumber(), event.GetEventNumber()); });
+            }
+            else if (m_callback_style == CallbackStyle::ExpertMode) {
+                CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event); });
+            }
+            else {
+                throw JException("Invalid callback style");
+            }
         }
         catch (...) {
             // Save everything already created even if we throw an exception

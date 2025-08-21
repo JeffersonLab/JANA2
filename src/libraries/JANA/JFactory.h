@@ -144,7 +144,9 @@ public:
 
     // Overloaded by user Factories
     virtual void Init() {}
-    virtual void Process(const std::shared_ptr<const JEvent>&) {}
+    virtual void Process(const std::shared_ptr<const JEvent>&) {}      // CallbackStyle::LegacyMode
+    virtual void Process(const JEvent&) {}                             // CallbackStyle::ExpertMode
+    virtual void Process(int32_t /*run_nr*/, uint64_t /*event_nr*/) {} // CallbackStyle::DeclarativeMode
     virtual void Finish() {}
 
 
