@@ -2,7 +2,6 @@
 #pragma once
 #include <JANA/JFactoryT.h>
 #include <CalorimeterCluster.h>
-#include "Protocluster_algorithm.h"
 
 class Protocluster_factory_v1 : public JFactoryT<CalorimeterCluster> {
     // GlueX uses JFactoryT for all of their factories. JFactoryT is a templated JFactory
@@ -15,13 +14,12 @@ class Protocluster_factory_v1 : public JFactoryT<CalorimeterCluster> {
 
 private:
     // Parameter and calibration values are cached locally as member variables
-    double m_energy_threshold;
+    double m_log_weight_energy;
 
     // The algorithm can also be a member variable, and store whatever local state it needs.
     // Just remember that there are multiple instances of each factory class in memory at the
     // same time, and that they are isolated from each other. Each factory will only see SOME
-    // of the events in the event stream.
-    Protocluster_algorithm m_algorithm;
+    // of the events in the event stream. If your algorithm is just a free function, that's preferred.
 
 public:
     Protocluster_factory_v1();

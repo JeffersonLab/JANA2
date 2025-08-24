@@ -35,7 +35,7 @@ void InitPlugin(JApplication* app) {
             .tag = "refined_protoclusterizer",
             .input_names = {"raw"},
             .output_names = {"proto_refined"},
-            .configs = {.energy_threshold = 8.0}
+            .configs = {.log_weight_energy = 8.0}
         }));
 
         // Some notes regarding JOmniFactoryGeneratorT:

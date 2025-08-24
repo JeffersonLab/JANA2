@@ -1,5 +1,6 @@
 
 #include "Protocluster_factory_v2.h"
+#include "Protocluster_algorithm.h"
 
 
 Protocluster_factory_v2::Protocluster_factory_v2() {
@@ -76,7 +77,7 @@ void Protocluster_factory_v2::Execute(int32_t run_number, uint64_t event_number)
     //   config().energy_threshold
     //   m_energy_threshold()
 
-    m_clusters_out() = m_algorithm.Execute(m_hits_in(), config().energy_threshold);
+    m_clusters_out() = calculate_protoclusters(m_hits_in(), config().log_weight_energy);
 
     // While you are inside Execute(), you can populate your output databundles however you like. Once Execute()
     // returns, JANA2 will store and retrieve them automatically.

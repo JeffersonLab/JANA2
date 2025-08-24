@@ -1,6 +1,7 @@
 
 #include "Protocluster_factory_v3.h"
 #include "JANA/Utils/JTypeInfo.h"
+#include "Protocluster_algorithm.h"
 
 
 Protocluster_factory_v3::Protocluster_factory_v3() {
@@ -71,7 +72,7 @@ void Protocluster_factory_v3::Process(const JEvent& event) {
     // The Input helpers will already have been filled by the time Execute() gets called. You can access
     // the data using the () operator. Parameter values may also be accessed using the () operator.
 
-    m_clusters_out() = m_algorithm.Execute(m_hits_in(), m_energy_threshold());
+    m_clusters_out() = calculate_protoclusters(m_hits_in(), m_log_weight_energy());
 
     // While you are inside Execute(), you can populate your output databundles however you like. Once Execute()
     // returns, JANA2 will store and retrieve them automatically.

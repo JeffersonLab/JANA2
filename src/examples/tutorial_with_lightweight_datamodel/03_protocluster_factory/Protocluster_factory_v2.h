@@ -3,10 +3,9 @@
 #include <JANA/Components/JOmniFactory.h>
 #include <CalorimeterHit.h>
 #include <CalorimeterCluster.h>
-#include "Protocluster_algorithm.h"
 
 // A `Config` struct is used to hold configuration parameters
-struct ProtoclusterConfigs { double energy_threshold = 5.0; };
+struct ProtoclusterConfigs { double log_weight_energy = 5.0; };
 
 // ePIC uses `JOmniFactory` as the base class for all of their factories.
 // Note that while there is an implementation of `JOmniFactory` inside JANA2, it is slightly different
@@ -26,15 +25,14 @@ private:
 
     // Parameter values (and their defaults) are cached on the Config struct
     // Parameters themselves are declared as members like so:
-    ParameterRef<double> m_energy_threshold {this, "energy_threshold", config().energy_threshold };
+    ParameterRef<double> m_log_weight_energy {this, "m_log_weight_energy", config().log_weight_energy };
 
     // Calibrations are not needed in this example, but they would be cached as member variables NOT on the Config struct.
 
     // The algorithm can also be a member variable, and store whatever local state it needs.
     // Just remember that there are multiple instances of each factory class in memory at the
     // same time, and that they are isolated from each other. Each factory will only see SOME
-    // of the events in the event stream.
-    Protocluster_algorithm m_algorithm;
+    // of the events in the event stream. If your algorithm is just a free function, that's preferred.
 
 public:
 

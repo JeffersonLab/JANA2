@@ -1,5 +1,7 @@
 
 #include "Protocluster_factory_v1.h"
+#include "Protocluster_algorithm.h"
+
 #include <JANA/JEvent.h>
 #include <CalorimeterHit.h>
 
@@ -29,7 +31,7 @@ void Protocluster_factory_v1::Init() {
     auto app = GetApplication();
 
     // Acquire any parameters
-    app->SetDefaultParameter("protoclusterizer:energy_threshold", m_energy_threshold,
+    app->SetDefaultParameter("protoclusterizer:log_weight_energy", m_log_weight_energy,
                              "Energy threshold in [units]");
 
     // Acquire any services
@@ -61,7 +63,7 @@ void Protocluster_factory_v1::Process(const std::shared_ptr<const JEvent> &event
     auto hits = event->Get<CalorimeterHit>("");
 
     // Run the algorithm (Note that it is okay if you put all the algorithm's code directly inside Process())
-    auto clusters = m_algorithm.Execute(hits, m_energy_threshold);
+    auto clusters = calculate_protoclusters(hits, m_log_weight_energy);
 
     // Store the output collection
     Set(clusters);
