@@ -31,6 +31,7 @@ public:
         SetPrefix(mOutput.GetDatabundle().GetUniqueName());
         SetObjectName(mOutput.GetDatabundle().GetTypeName());
         SetTypeName(NAME_OF_THIS);
+        SetCallbackStyle(CallbackStyle::LegacyMode);
 
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it

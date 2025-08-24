@@ -47,7 +47,11 @@ public:
         REGENERATE = 0x08        // Replaces JANA1 JFactory_base::use_factory and JFactory::GetCheckSourceFirst()
     };
 
-    JFactory() = default;
+    JFactory() {
+        // Use CallbackStyle::ExpertMode any time we are NOT using JFactoryT
+        // This retains backwards compatibility but also moves new code forward by default
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
     virtual ~JFactory() = default;
 
     void SetTag(std::string tag) {

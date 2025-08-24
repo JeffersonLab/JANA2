@@ -14,16 +14,6 @@ Protocluster_factory_v3::Protocluster_factory_v3() {
     // In ePIC, this is usually overridden by the JOmniFactoryGenerator
     SetPrefix("protoclusterizer");
 
-    // Set the callback style. There are three available:
-    //   - LegacyMode:        `void Process(const std::shared_ptr<const JEvent>&)`
-    //   - DeclarativeMode:   `void Process(int32_t run_number, uint64_t event_number)`
-    //   - ExpertMode:        `void Process(const JEvent&)`
-    //
-    // We recommend using ExpertMode for new projects. LegacyMode should _only_ be used in GlueX code. DeclarativeMode
-    // is useful for constraining user code to avoid deep framework dependencies.
-
-    SetCallbackStyle(CallbackStyle::ExpertMode);
-
     // Set the default output name(s). If you don't, they will default to "". Note that ePIC always sets their
     // output names in the JOmniFactoryGenerator instead.
     m_clusters_out.SetShortName("proto");
