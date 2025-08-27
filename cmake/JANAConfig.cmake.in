@@ -4,6 +4,20 @@ find_package(Threads REQUIRED)
 
 include("${CMAKE_CURRENT_LIST_DIR}/JANATargets.cmake")
 
+# Expose public dependencies
+include(CMakeFindDependencyMacro)
+set(USE_PODIO @USE_PODIO@)
+if(USE_PODIO)
+    find_dependency(podio REQUIRED)
+endif()
+set(USE_ROOT @USE_ROOT@)
+if(USE_ROOT)
+    find_dependency(ROOT REQUIRED)
+endif()
+set(USE_ZEROMQ @USE_ZEROMQ@)
+if(USE_ZEROMQ)
+    find_dependency(ZeroMQ REQUIRED)
+endif()
 
 # Provide user with shared libraries by default if JANA was built with them. 
 # Otherwise, provide them with the static version. They can always specify themselves
