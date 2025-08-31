@@ -542,6 +542,10 @@ template <typename T>
 void JEvent::InsertCollection(typename T::collection_type&& collection, std::string name) {
     /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JPodioDatabundle
 
+    if (name.empty()) {
+        throw JException("JEvent::InsertCollection: Podio collection names must be non-empty!");
+    }
+
     podio::Frame* frame = nullptr;
     auto* bundle = mFactorySet.GetDatabundle("podio::Frame");
 
