@@ -3,7 +3,7 @@
 #include <JANA/JFactoryT.h>
 #include <CalorimeterCluster.h>
 
-class Protocluster_factory_v1 : public JFactoryT<CalorimeterCluster> {
+class Protocluster_factory_gluex : public JFactoryT<CalorimeterCluster> {
     // GlueX uses JFactoryT for all of their factories. JFactoryT is a templated JFactory
     // that assumes that each factory outputs exactly one databundle. This assumption
     // is a holdover from JANA1. Modern JANA2 `JFactory`s support much more sophisticated
@@ -22,7 +22,7 @@ private:
     // of the events in the event stream. If your algorithm is just a free function, that's preferred.
 
 public:
-    Protocluster_factory_v1();
+    Protocluster_factory_gluex();
 
     void Init() override;
     void ChangeRun(const std::shared_ptr<const JEvent> &event) override;

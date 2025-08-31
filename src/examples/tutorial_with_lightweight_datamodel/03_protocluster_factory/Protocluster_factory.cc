@@ -1,10 +1,10 @@
 
-#include "Protocluster_factory_v3.h"
+#include "Protocluster_factory.h"
 #include "JANA/Utils/JTypeInfo.h"
 #include "Protocluster_algorithm.h"
 
 
-Protocluster_factory_v3::Protocluster_factory_v3() {
+Protocluster_factory::Protocluster_factory() {
 
 
     // Set the type name of this class, in order to have more informative error messages
@@ -33,7 +33,7 @@ Protocluster_factory_v3::Protocluster_factory_v3() {
 
 }
 
-void Protocluster_factory_v3::Init() {
+void Protocluster_factory::Init() {
     // Init() is called sequentially before any processing starts. It is safe to modify state
     // that is not a member variable of the factory itself.
 
@@ -49,13 +49,13 @@ void Protocluster_factory_v3::Init() {
     // This is also where you should initialize your algorithm, if necessary.
 }
 
-void Protocluster_factory_v3::ChangeRun(const JEvent& event) {
+void Protocluster_factory::ChangeRun(const JEvent& event) {
     LOG_DEBUG(GetLogger()) << "Inside ChangeRun() with run_number=" << event.GetRunNumber();
 
     // This is where you should fetch any data from your JServices that IS keyed off of the run number
 }
 
-void Protocluster_factory_v3::Process(const JEvent& event) {
+void Protocluster_factory::Process(const JEvent& event) {
     LOG_DEBUG(GetLogger()) << "Inside Execute() with run_number=" << event.GetRunNumber()
                           << ", event_number=" << event.GetEventNumber();
 
@@ -69,7 +69,7 @@ void Protocluster_factory_v3::Process(const JEvent& event) {
 
 }
 
-void Protocluster_factory_v3::Finish() {
+void Protocluster_factory::Finish() {
     LOG_DEBUG(GetLogger()) << "Inside Finish()";
 }
 

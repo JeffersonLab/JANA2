@@ -7,7 +7,9 @@
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 #include "Protocluster_algorithm.h"
-#include "Protocluster_factory_v1.h"
+#include "Protocluster_factory.h"
+#include "Protocluster_factory_gluex.h"
+#include "Protocluster_factory_epic.h"
 
 
 std::vector<const CalorimeterHit*> populateHits(size_t rows, size_t cols, std::vector<double> energies) {
@@ -146,16 +148,7 @@ TEST_CASE("Protocluster_algorithm_tests") {
 };
 
 
-// If you need to incorporate other JFactories into your test case, you can do it like so:
-TEST_CASE("Protocluster_factory_v1_tests") {
-    // ----------------------
-    // Two distinct clusters
-    // ----------------------
-
-    JApplication app;
-    app.Add(new JFactoryGeneratorT<Protocluster_factory_v1>());
-    auto event = std::make_shared<JEvent>(&app);
-
+std::vector<CalorimeterHit*> make_two_cluster_hits() {
     std::vector<CalorimeterHit*> two_cluster_hits;
     two_cluster_hits.push_back(new CalorimeterHit(0, 2, 0, 0.0, 2.0, 0.0, 2.0, 0.0));
     two_cluster_hits.push_back(new CalorimeterHit(0, 3, 0, 0.0, 3.0, 0.0, 3.0, 0.0));
@@ -164,8 +157,54 @@ TEST_CASE("Protocluster_factory_v1_tests") {
 
     two_cluster_hits.push_back(new CalorimeterHit(0, 6, 3, 3.0, 6.0, 0.0, 6.0, 0.0));
     two_cluster_hits.push_back(new CalorimeterHit(0, 6, 4, 4.0, 6.0, 0.0, 7.0, 0.0));
+    return two_cluster_hits;
+}
 
-    event->Insert(two_cluster_hits, "");
+// If you need to incorporate other JFactories into your test case, you can do it like so:
+TEST_CASE("Protocluster_factory_tests") {
+    // ----------------------
+    // Two distinct clusters
+    // ----------------------
+
+    JApplication app;
+    app.Add(new JFactoryGeneratorT<Protocluster_factory>());
+    auto event = std::make_shared<JEvent>(&app);
+
+    event->Insert(make_two_cluster_hits(), "");
+    auto clusters = event->Get<CalorimeterCluster>("proto");
+
+    REQUIRE(clusters.size() == 2);
+    REQUIRE_THAT(clusters.at(0)->energy, Catch::Matchers::WithinRel(14.0));
+    REQUIRE_THAT(clusters.at(1)->energy, Catch::Matchers::WithinRel(13.0));
+}
+
+TEST_CASE("Protocluster_factory_epic_tests") {
+    // ----------------------
+    // Two distinct clusters
+    // ----------------------
+
+    JApplication app;
+    app.Add(new JFactoryGeneratorT<Protocluster_factory_epic>());
+    auto event = std::make_shared<JEvent>(&app);
+
+    event->Insert(make_two_cluster_hits(), "");
+    auto clusters = event->Get<CalorimeterCluster>("proto");
+
+    REQUIRE(clusters.size() == 2);
+    REQUIRE_THAT(clusters.at(0)->energy, Catch::Matchers::WithinRel(14.0));
+    REQUIRE_THAT(clusters.at(1)->energy, Catch::Matchers::WithinRel(13.0));
+}
+
+TEST_CASE("Protocluster_factory_gluex_tests") {
+    // ----------------------
+    // Two distinct clusters
+    // ----------------------
+
+    JApplication app;
+    app.Add(new JFactoryGeneratorT<Protocluster_factory_gluex>());
+    auto event = std::make_shared<JEvent>(&app);
+
+    event->Insert(make_two_cluster_hits(), "");
     auto clusters = event->Get<CalorimeterCluster>("proto");
 
     REQUIRE(clusters.size() == 2);

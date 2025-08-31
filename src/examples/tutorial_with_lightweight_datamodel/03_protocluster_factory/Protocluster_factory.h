@@ -7,7 +7,7 @@
 // If you are starting a new project, we recommend using the JFactory base class directly, since
 // it now has almost all of the functionality of JFactoryT and JOmniFactory, but with a simpler interface.
 
-class Protocluster_factory_v3 : public JFactory {
+class Protocluster_factory : public JFactory {
 
 private:
 
@@ -30,7 +30,7 @@ private:
 
 public:
 
-    Protocluster_factory_v3();
+    Protocluster_factory();
 
     void Init() override;
     void ChangeRun(const JEvent& event) override;

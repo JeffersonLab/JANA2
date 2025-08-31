@@ -11,14 +11,14 @@
 add_jana_library(lw_protocluster_facs
     SOURCES
         Protocluster_algorithm.cc
-        Protocluster_factory_v1.cc
-        Protocluster_factory_v2.cc
-        Protocluster_factory_v3.cc
+        Protocluster_factory.cc
+        Protocluster_factory_gluex.cc
+        Protocluster_factory_epic.cc
     PUBLIC_HEADER
         Protocluster_algorithm.h
-        Protocluster_factory_v1.h
-        Protocluster_factory_v2.h
-        Protocluster_factory_v3.h
+        Protocluster_factory.h
+        Protocluster_factory_gluex.h
+        Protocluster_factory_epic.h
     TESTS
         Protocluster_tests.cc
 )

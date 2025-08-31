@@ -1,9 +1,9 @@
 
-#include "Protocluster_factory_v2.h"
+#include "Protocluster_factory_epic.h"
 #include "Protocluster_algorithm.h"
 
 
-Protocluster_factory_v2::Protocluster_factory_v2() {
+Protocluster_factory_epic::Protocluster_factory_epic() {
 
     // Set the type name of this class, in order to have more informative error messages
     SetTypeName(NAME_OF_THIS);
@@ -46,7 +46,7 @@ Protocluster_factory_v2::Protocluster_factory_v2() {
 
 }
 
-void Protocluster_factory_v2::Configure() {
+void Protocluster_factory_epic::Configure() {
     // Configure() is called sequentially before any processing starts. It is safe to modify state
     // that is not a member variable of the factory itself.
 
@@ -62,12 +62,12 @@ void Protocluster_factory_v2::Configure() {
     // This is also where you should initialize your algorithm, if necessary.
 }
 
-void Protocluster_factory_v2::ChangeRun(int32_t run_number) {
+void Protocluster_factory_epic::ChangeRun(int32_t run_number) {
     LOG_DEBUG(GetLogger()) << "Inside ChangeRun() with run_number=" << run_number;
     // This is where you should fetch any data from your JServices that IS keyed off of the run number
 }
 
-void Protocluster_factory_v2::Execute(int32_t run_number, uint64_t event_number) {
+void Protocluster_factory_epic::Execute(int32_t run_number, uint64_t event_number) {
     LOG_DEBUG(GetLogger()) << "Inside Execute() with run_number=" << run_number 
                           << ", event_number=" << event_number;
 

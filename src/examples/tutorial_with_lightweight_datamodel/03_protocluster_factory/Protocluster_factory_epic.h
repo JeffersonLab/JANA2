@@ -1,6 +1,7 @@
 
 #pragma once
 #include <JANA/Components/JOmniFactory.h>
+
 #include <CalorimeterHit.h>
 #include <CalorimeterCluster.h>
 
@@ -12,7 +13,7 @@ struct ProtoclusterConfigs { double log_weight_energy = 5.0; };
 // from what ePIC uses. The main difference is that `eicrecon::JOmniFactory` has added support for
 // an `spdlog` logger.
 
-class Protocluster_factory_v2 : public JOmniFactory<Protocluster_factory_v2, ProtoclusterConfigs> {
+class Protocluster_factory_epic : public JOmniFactory<Protocluster_factory_epic, ProtoclusterConfigs> {
 
 private:
 
@@ -36,7 +37,7 @@ private:
 
 public:
 
-    Protocluster_factory_v2();
+    Protocluster_factory_epic();
 
     // JOmniFactory uses the Curiously Recurring Template Pattern to avoid introducing a second level of
     // virtual functions. This results in the callbacks we now use having different names, and also not
