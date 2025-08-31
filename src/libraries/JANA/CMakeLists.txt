@@ -54,11 +54,10 @@ set(JANA2_SOURCES
     CLI/JMain.cc
     )
 
-if (${USE_PODIO})
-    list(APPEND JANA2_SOURCES
-            Podio/JFactoryPodioT.cc
-        )
-endif()
+#if (${USE_PODIO})
+#    list(APPEND JANA2_SOURCES
+#   )
+#endif()
 
 if (NOT ${USE_XERCES})
     message(STATUS "Skipping support for libJANA's JGeometryXML because USE_XERCES=Off")
@@ -122,7 +121,7 @@ file(GLOB jana_utils_headers "Utils/*.h*")
 file(GLOB jana_calibs_headers "Calibrations/*.h*")
 file(GLOB jana_geometry_headers "Geometry/*.h*")
 file(GLOB jana_cli_headers "CLI/*.h*")
-file(GLOB jana_podio_headers "Podio/*.h*")
+#file(GLOB jana_podio_headers "Podio/*.h*")
 file(GLOB jana_component_headers "Components/*.h*")
 file(GLOB jana_topology_headers "Topology/*.h*")
 
@@ -136,9 +135,9 @@ install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
 install(FILES ${jana_component_headers} DESTINATION include/JANA/Components)
 install(FILES ${jana_topology_headers} DESTINATION include/JANA/Topology)
 
-if (${USE_PODIO})
-    install(FILES ${jana_podio_headers} DESTINATION include/JANA/Podio)
-endif()
+#if (${USE_PODIO})
+#    install(FILES ${jana_podio_headers} DESTINATION include/JANA/Podio)
+#endif()
 
 
 
