@@ -49,7 +49,7 @@ JEventSource::Result RandomHitSource::Emit(JEvent& event) {
         for (int row = 0; row < 2; ++row) {
             for (int col = 0; col < 2; ++col) {
 
-                auto hit = new CalorimeterHit();
+                auto hit = new CalorimeterHit(0, 0, 0, 0, 0, 0, 0, 0);
                 hit->row = cluster_row + row;
                 hit->col = cluster_col + col;
                 hit->x = hit->col * 10; // Pretend each cell is 10cm x 10cm

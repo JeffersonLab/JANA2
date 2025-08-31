@@ -4,6 +4,7 @@
 
 #pragma once
 #include <JANA/JObject.h>
+#include <cstdint>
 
 
 struct CalorimeterHit : public JObject {
@@ -23,10 +24,15 @@ struct CalorimeterHit : public JObject {
     uint64_t time;  // Time [ns]
 
 
+    // Define a constructor that forces all fields to be initialized
+    CalorimeterHit(int cell_id, int row, int col, double x, double y, double z, double energy, uint64_t time)
+    : cell_id(cell_id), row(row), col(col), x(x), y(y), z(z), energy(energy), time(time) {}
+
+
     void Summarize(JObjectSummary& summary) const override {
         summary.add(cell_id, NAME_OF(cell_id), "%d", "Cell ID");
-        summary.add(row, NAME_OF(cell_id), "%d", "Cell row (zero-indexed)");
-        summary.add(col, NAME_OF(cell_id), "%d", "Cell col (zero-indexed)");
+        summary.add(row, NAME_OF(row), "%d", "Cell row (zero-indexed)");
+        summary.add(col, NAME_OF(col), "%d", "Cell col (zero-indexed)");
         summary.add(x, NAME_OF(x), "%f", "x location of cell center [cm]");
         summary.add(y, NAME_OF(y), "%f", "y location of cell center [cm]");
         summary.add(z, NAME_OF(z), "%f", "z location of cell center [cm]");

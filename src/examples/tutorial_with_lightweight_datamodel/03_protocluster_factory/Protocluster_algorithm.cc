@@ -47,7 +47,7 @@ std::vector<CalorimeterCluster*> calculate_protoclusters(const std::vector<const
     for (size_t hit_index=0; hit_index < hits.size(); ++hit_index) {
         // Build map from cell row,col pairs to hit indices so that we can look up neighbors
         auto hit = hits[hit_index];
-        cell_to_hit_index[{hit->row, hit->col}] = hit_index++;
+        cell_to_hit_index[{hit->row, hit->col}] = hit_index;
     }
 
     UnionFind union_find_alg(hits.size());
@@ -86,6 +86,7 @@ std::vector<CalorimeterCluster*> calculate_protoclusters(const std::vector<const
         auto it = root_to_clusters.find(root);
         if (it == root_to_clusters.end()) {
             cluster = new CalorimeterCluster;
+            cluster->energy = 0;
             root_to_clusters[root] = cluster;
         }
         else {
@@ -125,7 +126,7 @@ std::vector<CalorimeterCluster*> calculate_protoclusters(const std::vector<const
         cluster->x_center = r_x;
         cluster->y_center = r_y;
 
-        clusters_out.push_back(it.second);
+        clusters_out.push_back(cluster);
     }
 
     return clusters_out;
