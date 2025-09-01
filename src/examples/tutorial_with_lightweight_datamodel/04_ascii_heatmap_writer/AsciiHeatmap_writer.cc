@@ -2,17 +2,17 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#include "HeatmapProcessor.h"
+#include "AsciiHeatmap_writer.h"
 #include "CalorimeterHit.h"
 
-HeatmapProcessor::HeatmapProcessor() {
+AsciiHeatmap_writer::AsciiHeatmap_writer() {
     SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
-    SetPrefix("heatmap_writer"); // Used for logger and parameters
-    SetCallbackStyle(CallbackStyle::LegacyMode);
+    SetPrefix("ascii_heatmap_writer");    // Used for logger and parameters
+    SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
-void HeatmapProcessor::Init() {
-    LOG_INFO(GetLogger()) << "HeatmapProcessor::Init: Initializing heatmap";
+void AsciiHeatmap_writer::Init() {
+    LOG_INFO(GetLogger()) << "AsciiHeatmap_writer::Init: Initializing heatmap";
 
     m_heatmap = std::make_unique<double[]>(m_cell_cols() * m_cell_rows());
 
@@ -23,19 +23,10 @@ void HeatmapProcessor::Init() {
     }
 }
 
-void HeatmapProcessor::Process(const std::shared_ptr<const JEvent>& event) {
-    LOG_INFO(GetLogger()) << "HeatmapProcessor::Process, Event #" << event->GetEventNumber();
+void AsciiHeatmap_writer::ProcessSequential(const JEvent& event) {
+    LOG_INFO(GetLogger()) << "AsciiHeatmap_writer::Process, Event #" << event.GetEventNumber();
 
-    /// Do everything we can in parallel
-    /// Warning: We are only allowed to use local variables and `event` here
-    auto hits = event->Get<CalorimeterHit>("raw");
-
-    /// Lock mutex
-    std::lock_guard<std::mutex>lock(m_mutex);
-
-    /// Do the rest sequentially
-    /// Now we are free to access shared state such as m_heatmap
-    for (const CalorimeterHit* hit : hits) {
+    for (const CalorimeterHit* hit : m_hits_in()) {
         if (hit->row < (int) m_cell_rows() && hit->col < (int) m_cell_cols()) {
             m_heatmap[hit->row* m_cell_cols() + hit->col] = hit->energy;
         }
@@ -45,9 +36,9 @@ void HeatmapProcessor::Process(const std::shared_ptr<const JEvent>& event) {
     }
 }
 
-void HeatmapProcessor::Finish() {
+void AsciiHeatmap_writer::Finish() {
     // Close any resources
-    LOG_INFO(GetLogger()) << "QuickTutorialProcessor::Finish: Displaying heatmap";
+    LOG_INFO(GetLogger()) << "AsciiHeatmap_writer::Finish: Displaying heatmap";
 
     double min_value = m_heatmap[0];
     double max_value = m_heatmap[0];
