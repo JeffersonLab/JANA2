@@ -99,7 +99,8 @@ public:
         // We store this so that we can reapply it in case the user
         // calls SetShortNames() afterwards
         for (auto* db : GetDatabundles()) {
-            db->SetNotOwnerFlag(not_owner);
+            auto typed_db = static_cast<JLightweightDatabundleT<T>*>(db);
+            typed_db->SetNotOwnerFlag(not_owner);
         }
     }
 
