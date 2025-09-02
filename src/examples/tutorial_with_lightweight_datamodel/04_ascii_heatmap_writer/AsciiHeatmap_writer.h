@@ -15,9 +15,19 @@ class AsciiHeatmap_writer : public JEventProcessor {
     // In a more realistic example, these would be obtained from the geometry interface
     Parameter<size_t> m_cell_cols {this, "cell_cols", 20, "Number of columns in the detector"};
     Parameter<size_t> m_cell_rows {this, "cell_rows", 10, "Number of rows in the detector"};
+    Parameter<bool> m_use_unicode {this, "use_unicode", true, "Use Unicode visualization vs plain ASCII"};
 
     // Declare the resource (or a handle to the resource) that is protected by this JEventProcessor
-    std::unique_ptr<double[]> m_heatmap;
+    std::vector<double> m_heatmap;
+
+    // Characters to print
+    std::vector<std::string> m_ramp;
+    std::string m_box_topleft;
+    std::string m_box_topright;
+    std::string m_box_bottomleft;
+    std::string m_box_bottomright;
+    std::string m_box_horizontal;
+    std::string m_box_vertical;
 
 public:
 

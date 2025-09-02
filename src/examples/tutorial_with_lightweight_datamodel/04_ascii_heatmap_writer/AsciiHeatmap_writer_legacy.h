@@ -11,8 +11,17 @@ class AsciiHeatmap_writer_legacy : public JEventProcessor {
 
     Parameter<size_t> m_cell_cols {this, "cell_cols", 20, "Number of columns in the detector"};
     Parameter<size_t> m_cell_rows {this, "cell_rows", 10, "Number of rows in the detector"};
+    Parameter<bool> m_use_unicode {this, "use_unicode", true, "Use Unicode visualization vs plain ASCII"};
 
-    std::unique_ptr<double[]> m_heatmap;
+    std::vector<double> m_heatmap;
+
+    std::vector<std::string> m_ramp;
+    std::string m_box_topleft;
+    std::string m_box_topright;
+    std::string m_box_bottomleft;
+    std::string m_box_bottomright;
+    std::string m_box_horizontal;
+    std::string m_box_vertical;
 
 public:
 
