@@ -33,7 +33,7 @@ void InitPlugin(JApplication* app) {
 
         app->Add(new JOmniFactoryGeneratorT<Protocluster_factory_epic>({
             .tag = "refined_protoclusterizer",
-            .input_names = {"raw"},
+            .input_names = {"rechits"},
             .output_names = {"proto_refined"},
             .configs = {.log_weight_energy = 8.0}
         }));

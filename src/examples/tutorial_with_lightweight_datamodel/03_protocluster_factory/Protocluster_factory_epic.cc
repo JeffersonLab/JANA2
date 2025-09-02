@@ -33,7 +33,7 @@ Protocluster_factory_epic::Protocluster_factory_epic() {
 
     // Set the default input name(s). If you don't, they will default to "". Note that ePIC always sets their input
     // names in the JOmniFactoryGenerator instead.
-    m_hits_in.SetDatabundleName("raw"); // Can be either short name or unique name
+    m_hits_in.SetDatabundleName("rechits"); // Can be either short name or unique name
 
     // If you declare an input as optional, JANA2 won't throw an exception if it can't find it. When you try to access
     // the missing input, it will present as an empty vector.

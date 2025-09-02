@@ -63,7 +63,7 @@ JEventSource::Result RandomHitSource::Emit(JEvent& event) {
         current_time_ns += intercluster_time_distribution(m_rng);
     }
 
-    event.Insert(output_hits, "raw");
+    event.Insert(output_hits, "rechits");
     m_event_start_timestamp_ns += *m_event_width_ns;
     return Result::Success;
 }

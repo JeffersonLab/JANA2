@@ -30,7 +30,7 @@ void AsciiHeatmap_writer_legacy::Process(const std::shared_ptr<const JEvent>& ev
 
     /// Do everything we can in parallel
     /// Warning: We are only allowed to use local variables and `event` here
-    auto hits = event->Get<CalorimeterHit>("");
+    auto hits = event->Get<CalorimeterHit>("rechits");
 
     /// Lock mutex
     std::lock_guard<std::mutex>lock(m_mutex);

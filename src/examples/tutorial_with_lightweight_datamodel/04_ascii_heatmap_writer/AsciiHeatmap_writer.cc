@@ -9,6 +9,8 @@ AsciiHeatmap_writer::AsciiHeatmap_writer() {
     SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
     SetPrefix("ascii_heatmap_writer");    // Used for logger and parameters
     SetCallbackStyle(CallbackStyle::ExpertMode);
+
+    m_hits_in.SetTag("rechits");
 }
 
 void AsciiHeatmap_writer::Init() {

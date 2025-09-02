@@ -60,7 +60,7 @@ void Protocluster_factory_gluex::Process(const std::shared_ptr<const JEvent> &ev
                            << ", event_number=" << event->GetEventNumber();
 
     // Retrieve each input directly from the JEvent
-    auto hits = event->Get<CalorimeterHit>("");
+    auto hits = event->Get<CalorimeterHit>("rechits");
 
     // Run the algorithm (Note that it is okay if you put all the algorithm's code directly inside Process())
     auto clusters = calculate_protoclusters(hits, m_log_weight_energy);
