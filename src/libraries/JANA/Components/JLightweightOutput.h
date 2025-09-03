@@ -77,6 +77,106 @@ public:
     }
 };
 
+
+template <typename T>
+class VariadicOutput : public JHasOutputs::VariadicOutputBase {
+    std::vector<std::vector<T*>> m_transient_datas;
+    bool m_not_owner_flag = false;
+
+public:
+    VariadicOutput(JHasOutputs* owner, std::string short_name="") {
+        owner->RegisterOutput(this);
+        auto* databundle = new JLightweightDatabundleT<T>();
+        databundle->SetTypeName(JTypeInfo::demangle<T>());
+        databundle->SetTypeIndex(std::type_index(typeid(T)));
+        databundle->SetShortName(short_name);
+        GetDatabundles().push_back(databundle);
+        // Factory will be set by JFactorySet, not here
+    }
+
+    void SetNotOwnerFlag(bool not_owner) {
+        m_not_owner_flag = not_owner;
+        // We store this so that we can reapply it in case the user
+        // calls SetShortNames() afterwards
+        for (auto* db : GetDatabundles()) {
+            auto typed_db = static_cast<JLightweightDatabundleT<T>*>(db);
+            typed_db->SetNotOwnerFlag(not_owner);
+        }
+    }
+
+    std::vector<std::vector<T*>>& operator()() { return m_transient_datas; }
+
+    void SetShortNames(std::vector<std::string> short_names) override {
+        GetDatabundles().clear(); // TODO: Tiny memory leak
+        m_transient_datas.clear();
+        for (const std::string& name : short_names) {
+            auto databundle = new JLightweightDatabundleT<T>;
+            databundle->SetShortName(name);
+            databundle->SetTypeName(JTypeInfo::demangle<T>());
+            databundle->SetTypeIndex(std::type_index(typeid(T)));
+            databundle->SetNotOwnerFlag(m_not_owner_flag);
+            GetDatabundles().push_back(databundle);
+            m_transient_datas.push_back({});
+        }
+    }
+    void SetUniqueNames(std::vector<std::string> unique_names) override {
+        GetDatabundles().clear(); // TODO: Tiny memory leak
+        m_transient_datas.clear();
+        for (const std::string& name : unique_names) {
+            auto databundle = new JLightweightDatabundleT<T>;
+            databundle->SetUniqueName(name);
+            databundle->SetTypeName(JTypeInfo::demangle<T>());
+            databundle->SetTypeIndex(std::type_index(typeid(T)));
+            databundle->SetNotOwnerFlag(m_not_owner_flag);
+            GetDatabundles().push_back(databundle);
+            m_transient_datas.push_back({});
+        }
+
+    }
+
+    void LagrangianStore(JFactorySet&, JDatabundle::Status status) override {
+        if (m_transient_datas.size() != GetDatabundles().size()) {
+            throw JException("Wrong number of output vectors in variadic output: Expected %d, found %d", GetDatabundles().size(), m_transient_datas.size());
+        }
+        size_t i=0;
+        for (auto* databundle : GetDatabundles()) {
+            JLightweightDatabundleT<T>* typed_bundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
+            if (typed_bundle == nullptr) {
+                throw JException("Databundle is not a JLightweightDatabundleT (Hint: This is an internal error)");
+            }
+            typed_bundle->GetData() = std::move(m_transient_datas.at(i));
+            typed_bundle->SetStatus(status);
+            i += 1;
+        }
+    }
+
+    void EulerianStore(JFactorySet& facset) override {
+
+        if (m_transient_datas.size() != GetDatabundles().size()) {
+            throw JException("Wrong number of output vectors in variadic output: Expected %d, found %d", GetDatabundles().size(), m_transient_datas.size());
+        }
+        size_t i=0;
+        for (auto* databundle_prototype : GetDatabundles()) {
+            JLightweightDatabundleT<T>* typed_databundle = nullptr;
+            auto* databundle = facset.GetDatabundle(databundle_prototype->GetUniqueName());
+            if (databundle == nullptr) {
+                auto* typed_databundle_prototype = dynamic_cast<JLightweightDatabundleT<T>*>(databundle_prototype);
+                typed_databundle = new JLightweightDatabundleT<T>(*typed_databundle_prototype);
+                facset.Add(typed_databundle);
+            }
+            else {
+                typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
+                if (typed_databundle == nullptr) {
+                    throw JException("Databundle with unique_name '%s' is not a JLightweightDatabundle<%s>", databundle_prototype->GetUniqueName().c_str(), JTypeInfo::demangle<T>().c_str());
+                }
+            }
+            typed_databundle->GetData() = std::move(m_transient_datas.at(i));
+            typed_databundle->SetStatus(JDatabundle::Status::Inserted);
+            i += 1;
+        }
+    }
+};
+
 } // jana::components
 
 template <typename T> using Output = jana::components::Output<T>;

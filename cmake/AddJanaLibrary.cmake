@@ -46,7 +46,7 @@ macro(add_jana_library library_name)
         # This is an external plugin
         # Figure out install namespace, which _might_ be different than PROJECT_NAME
         if (NOT DEFINED INSTALL_NAMESPACE)
-            set(INSTALL_NAMESPACE ${PROJECT_NAME} CACHE STRING "Project-specific namespace for installation paths, e.g. /lib/PROJECT_NAMESPACE/plugins")
+            set(INSTALL_NAMESPACE ${PROJECT_NAME} CACHE STRING "Project-specific namespace for installation paths, e.g. /lib/INSTALL_NAMESPACE/plugins")
         endif()
         set(JANA_NAMESPACE "JANA::")
     endif()
@@ -59,7 +59,7 @@ macro(add_jana_library library_name)
         SKIP_BUILD_RPATH FALSE
         BUILD_WITH_INSTALL_RPATH TRUE
         INSTALL_RPATH_USE_LINK_PATH TRUE
-        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
+        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
     )
 
     target_link_libraries(${library_name} PUBLIC "${JANA_NAMESPACE}jana2_static_lib")
@@ -72,15 +72,15 @@ macro(add_jana_library library_name)
         target_include_directories(${library_name}
             PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                $<INSTALL_INTERFACE:include/${INSTALL_NAMESPACE}/plugins/${library_name}>
+                $<INSTALL_INTERFACE:include/${INSTALL_NAMESPACE}/${library_name}>
         )
     endif()
 
     # Install target
     install(TARGETS ${library_name}
         EXPORT ${LIBRARY_EXPORT}
-        PUBLIC_HEADER DESTINATION include/${INSTALL_NAMESPACE}/plugins/${library_name}
-        LIBRARY DESTINATION lib/${INSTALL_NAMESPACE}/plugins
+        PUBLIC_HEADER DESTINATION include/${INSTALL_NAMESPACE}/${library_name}
+        LIBRARY DESTINATION lib
     )
 
     # Handle tests
@@ -91,7 +91,7 @@ macro(add_jana_library library_name)
             SKIP_BUILD_RPATH FALSE
             BUILD_WITH_INSTALL_RPATH TRUE
             INSTALL_RPATH_USE_LINK_PATH TRUE
-            INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
+            INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
         )
         #install(TARGETS ${library_name}_tests RUNTIME DESTINATION bin)
         add_test(NAME ${library_name}_tests COMMAND ${library_name}_tests)

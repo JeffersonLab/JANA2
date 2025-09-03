@@ -60,9 +60,9 @@ class MyFac : public JFactory {
 
     components::PodioOutput<ExampleHit> m_hits_out {this};
 
-    void Process(const std::shared_ptr<const JEvent>& event) {
+    void Process(const JEvent& event) {
         auto hit = MutableExampleHit();
-        hit.time(event->GetEventNumber() + 11);
+        hit.time(event.GetEventNumber() + 11);
         m_hits_out->push_back(std::move(hit));
     }
 };

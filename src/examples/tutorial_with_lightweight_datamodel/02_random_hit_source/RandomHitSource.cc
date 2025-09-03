@@ -14,6 +14,11 @@ RandomHitSource::RandomHitSource() : JEventSource() {
     SetTypeName(NAME_OF_THIS); // Used for error messages
     SetPrefix("random_hit_source");       // Used for log level and parameters
     SetCallbackStyle(CallbackStyle::ExpertMode); // Use new-style callbacks
+
+    // When multiple components reference the same parameter, we want to omit the component prefix
+    // In a more realistic example, we would implement these as geometry instead of parameters
+    m_cell_rows.SetShared(true);
+    m_cell_cols.SetShared(true);
 }
 
 void RandomHitSource::Init() {
@@ -49,7 +54,7 @@ JEventSource::Result RandomHitSource::Emit(JEvent& event) {
         for (int row = 0; row < 2; ++row) {
             for (int col = 0; col < 2; ++col) {
 
-                auto hit = new CalorimeterHit();
+                auto hit = new CalorimeterHit(0, 0, 0, 0, 0, 0, 0, 0);
                 hit->row = cluster_row + row;
                 hit->col = cluster_col + col;
                 hit->x = hit->col * 10; // Pretend each cell is 10cm x 10cm
@@ -63,7 +68,7 @@ JEventSource::Result RandomHitSource::Emit(JEvent& event) {
         current_time_ns += intercluster_time_distribution(m_rng);
     }
 
-    event.Insert(output_hits, "raw");
+    event.Insert(output_hits, "rechits");
     m_event_start_timestamp_ns += *m_event_width_ns;
     return Result::Success;
 }

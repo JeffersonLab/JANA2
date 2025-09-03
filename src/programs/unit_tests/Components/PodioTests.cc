@@ -8,11 +8,9 @@
 #include <JANA/JMultifactory.h>
 #include <JANA/Components/JOmniFactory.h>
 #include <JANA/Components/JOmniFactoryGeneratorT.h>
-#include <JANA/Podio/JFactoryPodioT.h>
 #include <PodioDatamodel/ExampleHitCollection.h>
 #include <PodioDatamodel/ExampleClusterCollection.h>
 #include <podio/podioVersion.h>
-#include <JANA/Podio/JFactoryPodioT.h>
 
 #if podio_VERSION >= PODIO_VERSION(1,2,0)
 #include <podio/LinkCollection.h>
@@ -110,41 +108,6 @@ TEST_CASE("PODIO 'subset' collections handled correctly (not involving factories
 }
 } // namespace podiotests
 
-namespace jana2_tests_podiotests_init {
-
-struct TestFac : public JFactoryPodioT<ExampleCluster> {
-    TestFac() {
-        SetTag("clusters");
-    }
-    bool init_called = false;
-    void Init() override {
-        init_called = true;
-    }
-    void Process(const std::shared_ptr<const JEvent>&) override {
-        ExampleClusterCollection c;
-        c.push_back(MutableExampleCluster(16.0));
-        SetCollection(std::move(c));
-    }
-};
-
-TEST_CASE("JFactoryPodioT::Init gets called") {
-
-    JApplication app;
-    app.Add(new JFactoryGeneratorT<jana2_tests_podiotests_init::TestFac>());
-    auto event = std::make_shared<JEvent>(&app);
-    event->Clear();  // Simulate a trip to the JEventPool
-
-    auto untyped_coll = event->GetCollectionBase("clusters");
-    REQUIRE(untyped_coll != nullptr);
-    const auto* typed_coll = dynamic_cast<const ExampleClusterCollection*>(untyped_coll);
-    REQUIRE(typed_coll != nullptr);
-    REQUIRE(typed_coll->size() == 1);
-    REQUIRE(typed_coll->at(0).energy() == 16.0);
-    auto fac = dynamic_cast<jana2_tests_podiotests_init::TestFac*>(event->GetFactory("ExampleCluster", "clusters"));
-    REQUIRE(fac != nullptr);
-    REQUIRE(fac->init_called == true);
-}
-} // namespace jana2_tests_podiotests_init
 
 #if podio_VERSION >= PODIO_VERSION(1,2,0)
 

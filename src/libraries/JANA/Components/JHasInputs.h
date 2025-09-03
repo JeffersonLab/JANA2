@@ -303,11 +303,11 @@ protected:
             auto* typed_databundle = dynamic_cast<JPodioDatabundle*>(databundle);
             if (typed_databundle == nullptr) {
                 facset->Print();
-                throw JException("Databundle with unique name '%s' does not inherit from JPodioDatabundle", m_databundle_name.c_str());
+                throw JException("Databundle with unique name '%s' does not inherit from JPodioDatabundle", databundle->GetUniqueName().c_str());
             }
             m_data = dynamic_cast<const typename PodioT::collection_type*>(typed_databundle->GetCollection());
             if (m_data == nullptr) {
-                throw JException("Databundle with unique name '%s' does not contain %s", m_databundle_name.c_str(), JTypeInfo::demangle<typename PodioT::collection_type>().c_str());
+                throw JException("Databundle with unique name '%s' does not contain %s", databundle->GetUniqueName().c_str(), JTypeInfo::demangle<typename PodioT::collection_type>().c_str());
             }
         }
     };

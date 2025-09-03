@@ -202,6 +202,7 @@ endif()
 
 include(CTest)
 include(cmake/AddJanaPlugin.cmake)
+include(cmake/AddJanaLibrary.cmake)
 include(cmake/AddJanaTest.cmake)
 
 add_subdirectory(src/external)

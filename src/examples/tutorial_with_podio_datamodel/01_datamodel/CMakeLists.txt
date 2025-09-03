@@ -14,7 +14,7 @@ PODIO_ADD_ROOT_IO_DICT(jana2_tutorial_podio_datamodel_dict jana2_tutorial_podio_
 install(TARGETS jana2_tutorial_podio_datamodel
     EXPORT jana2_targets
     LIBRARY DESTINATION lib
-    PUBLIC_HEADER DESTINATION include/jana2_tutorial_podio/datamodel
+    PUBLIC_HEADER DESTINATION include/jana2_tutorial_podio_datamodel
 )
 
 install(TARGETS jana2_tutorial_podio_datamodel_dict

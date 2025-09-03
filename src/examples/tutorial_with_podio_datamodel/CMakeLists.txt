@@ -4,7 +4,7 @@ if (USE_PODIO)
 
     add_subdirectory(01_datamodel)
     add_subdirectory(02_random_hit_source)
-    add_subdirectory(03_clustering_algorithm)
+    add_subdirectory(03_protocluster_factory)
     add_subdirectory(04_ascii_heatmap_writer)
     add_subdirectory(05_csv_file_writer)
     add_subdirectory(06_csv_file_reader)

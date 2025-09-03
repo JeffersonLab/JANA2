@@ -33,3 +33,5 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddJanaLibrary.cmake"
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddJanaTest.cmake"
     DESTINATION "lib/JANA/cmake")
 
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindZeroMQ.cmake"
+    DESTINATION "lib/JANA/cmake")

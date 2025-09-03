@@ -22,7 +22,9 @@ private:
     std::map<std::pair<std::type_index, std::string>, OutputBase*> m_output_index;
 
 public:
-    JMultifactory() = default;
+    JMultifactory() {
+        SetCallbackStyle(CallbackStyle::LegacyMode);
+    }
     virtual ~JMultifactory() {
         for (auto* output : m_owned_outputs) {
             delete output;
