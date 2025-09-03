@@ -11,6 +11,10 @@ AsciiHeatmap_writer::AsciiHeatmap_writer() {
     SetPrefix("ascii_heatmap_writer");    // Used for logger and parameters
     SetCallbackStyle(CallbackStyle::ExpertMode);
 
+    // Detector dimensions are shared with RandomHitSource
+    m_cell_cols.SetShared(true);
+    m_cell_rows.SetShared(true);
+
     m_hits_in.SetTag("rechits");
 }
 

@@ -14,6 +14,11 @@ RandomHitSource::RandomHitSource() : JEventSource() {
     SetTypeName(NAME_OF_THIS); // Used for error messages
     SetPrefix("random_hit_source");       // Used for log level and parameters
     SetCallbackStyle(CallbackStyle::ExpertMode); // Use new-style callbacks
+
+    // When multiple components reference the same parameter, we want to omit the component prefix
+    // In a more realistic example, we would implement these as geometry instead of parameters
+    m_cell_rows.SetShared(true);
+    m_cell_cols.SetShared(true);
 }
 
 void RandomHitSource::Init() {
