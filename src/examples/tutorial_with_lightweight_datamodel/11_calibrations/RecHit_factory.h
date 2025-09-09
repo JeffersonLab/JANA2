@@ -12,15 +12,17 @@ private:
 
     VariadicInput<ADCPulse> m_adc_pulses_in {this};
 
-
     VariadicOutput<CalorimeterHit> m_calo_hits_out {this};
 
+    Service<TranslationTable_service> m_translation_table_svc {this};
 
-    Service<TranslationTable_service> m_translation_table{this};
+    TranslationTable_service::DAQLookupTable m_lookup_table;
 
 public:
 
     RecHit_factory();
+
+    void ChangeRun(const JEvent& event) override;
 
     void Process(const JEvent& event) override;
 

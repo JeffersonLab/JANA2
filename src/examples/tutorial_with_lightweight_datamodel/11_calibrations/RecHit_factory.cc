@@ -9,12 +9,19 @@ RecHit_factory::RecHit_factory() {
     m_calo_hits_out.SetShortNames({"rechits"});
 }
 
-void RecHit_factory::Process(const JEvent& event) {
+void RecHit_factory::ChangeRun(const JEvent& event) {
 
-    auto name = m_adc_pulses_in.GetRealizedDatabundleNames();
+    // We use ChangeRun to obtain any run-level data we need. This is ONLY called when the run number has changed.
+    // We cache the run-encoded data on the factory directly (Remember that there are many factories in memory at any given time!)
+    // If the data is large, we use shared_ptrs (under the hood here) to ensure that there is only one copy in memory, and that 
+    // it gets deleted once the run number changes.
 
+    m_lookup_table = m_translation_table_svc->GetDAQLookupTable(event.GetRunNumber());
+}
 
-    // This time we iterate over EACH input databundle we've been provided
+void RecHit_factory::Process(const JEvent&) {
+
+    // We iterate over EACH input databundle we've been provided
     for (size_t pulse_databundle_index = 0; pulse_databundle_index<m_adc_pulses_in->size(); ++pulse_databundle_index) {
 
 
@@ -28,25 +35,32 @@ void RecHit_factory::Process(const JEvent& event) {
             throw JException("Found wrong number of ADCPulse inputs!");
         }
 
-        LOG_DEBUG(GetLogger()) << "Reconstructing hits. " 
-                               << m_adc_pulses_in.GetRealizedDatabundleNames().at(pulse_databundle_index) 
+        LOG_DEBUG(GetLogger()) << "Reconstructing hits. "
+                               << m_adc_pulses_in.GetRealizedDatabundleNames().at(pulse_databundle_index)
                                << " -> "
                                << m_calo_hits_out.GetUniqueNames().at(pulse_databundle_index);
 
         // Process each pulse in this databundle
+
         for (const auto* pulse: m_adc_pulses_in->at(pulse_databundle_index)) {
 
             // Translate from DAQ coordinates to detector coordinates
-            auto& detector_coords = m_translation_table->TranslateDAQCoordinates(event.GetRunNumber(), {pulse->crate, pulse->slot, pulse->channel});
+
+            auto& row = m_lookup_table->at({pulse->crate, pulse->slot, pulse->channel});
+            auto& detector_coords = std::get<0>(row);
+            auto& calib = std::get<1>(row);
 
             auto hit = new CalorimeterHit(detector_coords.cell_id, 
                                                             detector_coords.indices.at(0), detector_coords.indices.at(1), 
                                                             detector_coords.x, detector_coords.y, detector_coords.z, 
                                                             0, 0);
 
-            // TODO: Apply energy calibrations
-            hit->energy = pulse->amplitude;
-            hit->time = pulse->timestamp;
+            // Apply gains and offsets
+
+            hit->energy = ((pulse->integral - pulse->pedestal) * calib.gain) - calib.pedestal;
+            hit->time = (pulse->timestamp * calib.tick_period) - calib.time_offset;
+
+            // Add hit to corresponding output databundle
 
             m_calo_hits_out->at(pulse_databundle_index).push_back(hit);
         }
