@@ -6,7 +6,7 @@
 #include "CalorimeterHit.h"
 #include "CalorimeterCluster.h"
 #include "SimParticle.h"
-#include "ADCHit.h"
+#include "ADCPulse.h"
 
 #include <JANA/JEventProcessor.h>
 
