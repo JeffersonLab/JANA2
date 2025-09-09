@@ -5,13 +5,13 @@
 
 add_jana_library(lw_hit_reco_common
     SOURCES
-        RecHit_factory.cc
+        HitReconstruction_factory.cc
         TranslationTable_service.cc
     PUBLIC_HEADER
-        RecHit_factory.h
+        HitReconstruction_factory.h
         TranslationTable_service.h
     TESTS
-        RecHit_factory_tests.cc
+        HitReconstruction_factory_tests.cc
 )
 
 # `add_jana_library` will create a target for us, but we still need to link it against

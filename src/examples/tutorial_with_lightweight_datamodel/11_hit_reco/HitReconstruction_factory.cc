@@ -1,15 +1,15 @@
 
-#include "RecHit_factory.h"
+#include "HitReconstruction_factory.h"
 #include "ADCPulse.h"
 #include <JANA/JEvent.h>
 #include "CalorimeterHit.h"
 
-RecHit_factory::RecHit_factory() {
+HitReconstruction_factory::HitReconstruction_factory() {
     m_adc_pulses_in.SetRequestedDatabundleNames({"raw"});
     m_calo_hits_out.SetShortNames({"rechits"});
 }
 
-void RecHit_factory::ChangeRun(const JEvent& event) {
+void HitReconstruction_factory::ChangeRun(const JEvent& event) {
 
     // We use ChangeRun to obtain any run-level data we need. This is ONLY called when the run number has changed.
     // We cache the run-encoded data on the factory directly (Remember that there are many factories in memory at any given time!)
@@ -19,7 +19,7 @@ void RecHit_factory::ChangeRun(const JEvent& event) {
     m_lookup_table = m_translation_table_svc->GetDAQLookupTable(event.GetRunNumber());
 }
 
-void RecHit_factory::Process(const JEvent&) {
+void HitReconstruction_factory::Process(const JEvent&) {
 
     // We iterate over EACH input databundle we've been provided
     for (size_t pulse_databundle_index = 0; pulse_databundle_index<m_adc_pulses_in->size(); ++pulse_databundle_index) {

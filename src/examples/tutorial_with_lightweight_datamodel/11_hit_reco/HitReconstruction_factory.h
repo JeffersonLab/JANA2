@@ -6,7 +6,7 @@
 #include <ADCPulse.h>
 
 
-class RecHit_factory : public JFactory {
+class HitReconstruction_factory : public JFactory {
 
 private:
 
@@ -20,7 +20,7 @@ private:
 
 public:
 
-    RecHit_factory();
+    HitReconstruction_factory();
 
     void ChangeRun(const JEvent& event) override;
 
