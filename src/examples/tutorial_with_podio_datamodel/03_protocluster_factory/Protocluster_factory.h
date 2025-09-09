@@ -1,6 +1,7 @@
 
 #pragma once
-#include <JANA/Components/JOmniFactory.h>
+#include <JANA/JFactory.h>
+#include <JANA/JEvent.h>
 #include <jana2_tutorial_podio_datamodel/CalorimeterHitCollection.h>
 #include <jana2_tutorial_podio_datamodel/CalorimeterClusterCollection.h>
 
