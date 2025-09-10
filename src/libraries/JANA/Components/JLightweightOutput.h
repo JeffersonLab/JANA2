@@ -105,6 +105,7 @@ public:
     }
 
     std::vector<std::vector<T*>>& operator()() { return m_transient_datas; }
+    std::vector<std::vector<T*>>* operator->() { return &m_transient_datas; }
 
     void SetShortNames(std::vector<std::string> short_names) override {
         GetDatabundles().clear(); // TODO: Tiny memory leak
@@ -180,3 +181,4 @@ public:
 } // jana::components
 
 template <typename T> using Output = jana::components::Output<T>;
+template <typename T> using VariadicOutput = jana::components::VariadicOutput<T>;

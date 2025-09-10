@@ -48,6 +48,14 @@ public:
         virtual void SetShortNames(std::vector<std::string>) {}
         virtual void SetUniqueNames(std::vector<std::string>) {}
 
+        std::vector<std::string> GetUniqueNames() {
+            std::vector<std::string> results;
+            for (auto* databundle: m_databundles) {
+                results.push_back(databundle->GetUniqueName());
+            }
+            return results;
+        };
+
         virtual void LagrangianStore(JFactorySet&, JDatabundle::Status) {}
         virtual void EulerianStore(JFactorySet&) {}
 
