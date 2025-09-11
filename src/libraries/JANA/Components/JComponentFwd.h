@@ -69,6 +69,9 @@ public:
     // ---------------------
     // Meant to be called by JANA
     // ---------------------
+
+    void Wire(JApplication* app);
+
     std::string GetPrefix() const { return m_prefix.empty() ? m_type_name : m_prefix; }
 
     JEventLevel GetLevel() const { return m_level; }

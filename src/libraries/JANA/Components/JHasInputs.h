@@ -23,15 +23,17 @@ JFactorySet* GetFactorySetAtLevel(const JEvent& event, JEventLevel desired_level
 void FactoryCreate(const JEvent& event, JFactory* factory);
 
 struct JHasInputs {
-protected:
 
     class InputBase;
     class VariadicInputBase;
+
+protected:
 
     std::vector<InputBase*> m_inputs;
     std::vector<VariadicInputBase*> m_variadic_inputs;
     std::vector<std::pair<InputBase*, VariadicInputBase*>> m_ordered_inputs;
 
+public:
 
     void RegisterInput(InputBase* input) {
         m_inputs.push_back(input);
