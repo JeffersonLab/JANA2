@@ -13,7 +13,7 @@
 static constexpr std::string_view some_wiring = R"(
     include = ["asdf.toml"]
 
-    [[factory]]
+    [[wiring]]
     plugin_name = "BCAL"
     type_name = "MyFac"
     prefix = "myfac"
@@ -21,18 +21,18 @@ static constexpr std::string_view some_wiring = R"(
     input_levels = ["Run", "Subrun"]
     output_names = ["output_coll_1", "output_coll_2"]
     
-        [factory.configs]
+        [wiring.configs]
         x = "22"
         y = "verbose"
 
-    [[factory]]
+    [[wiring]]
     plugin_name = "BCAL"
     type_name = "MyFac"
     prefix = "myfac_modified"
     input_names = ["input_coll_1", "input_coll_3"]
     output_names = ["output_coll_1_modified", "output_coll_2_modified"]
 
-        [factory.configs]
+        [wiring.configs]
         x = "100"
         y = "verbose"
 
@@ -62,12 +62,12 @@ TEST_CASE("WiringTests") {
 }
 
 static constexpr std::string_view duplicate_prefixes = R"(
-    [[factory]]
+    [[wiring]]
     plugin_name = "BCAL"
     type_name = "MyFac"
     prefix = "myfac"
 
-    [[factory]]
+    [[wiring]]
     plugin_name = "BCAL"
     type_name = "MyFac"
     prefix = "myfac"
@@ -113,30 +113,30 @@ TEST_CASE("WiringTests_Overlay") {
 }
 
 static constexpr std::string_view fake_wiring_file = R"(
-    [[factory]]
+    [[wiring]]
     plugin_name = "ECAL"
     type_name = "ClusteringFac"
     prefix = "myfac"
 
-        [factory.configs]
+        [wiring.configs]
         x = "22"
         y = "verbose"
 
-    [[factory]]
+    [[wiring]]
     plugin_name = "ECAL"
     type_name = "ClusteringFac"
     prefix = "variantfac"
 
-        [factory.configs]
+        [wiring.configs]
         x = "49"
         y = "silent"
 
-    [[factory]]
+    [[wiring]]
     plugin_name = "BCAL"
     type_name = "ClusteringFac"
     prefix = "sillyfac"
 
-        [factory.configs]
+        [wiring.configs]
         x = "618"
         y = "mediocre"
 )";
@@ -206,23 +206,23 @@ struct WiredOmniFac : jana::components::JOmniFactory<WiredOmniFac> {
 };
 
 static constexpr std::string_view realfacgen_wiring = R"(
-    [[factory]]
+    [[wiring]]
     type_name = "WiredOmniFac"
     prefix = "myfac"
     input_names = ["usual_input"]
     output_names = ["usual_output"]
 
-        [factory.configs]
+        [wiring.configs]
         x = "22"
         y = "verbose"
 
-    [[factory]]
+    [[wiring]]
     type_name = "WiredOmniFac"
     prefix = "myfac_modified"
     input_names = ["different_input"]
     output_names = ["different_output"]
 
-        [factory.configs]
+        [wiring.configs]
         x = "100"
         y = "silent"
 
@@ -292,22 +292,22 @@ static constexpr std::string_view sharedparam_wiring = R"(
     [configs]
     shared = "28"
 
-    [[factory]]
+    [[wiring]]
     type_name = "WiredOmniFacWithShared"
     prefix = "myfac"
     input_names = ["usual_input"]
     output_names = ["usual_output"]
 
-        [factory.configs]
+        [wiring.configs]
         isolated = "22"
 
-    [[factory]]
+    [[wiring]]
     type_name = "WiredOmniFacWithShared"
     prefix = "myfac_modified"
     input_names = ["different_input"]
     output_names = ["different_output"]
 
-        [factory.configs]
+        [wiring.configs]
         isolated = "100"
 )";
 
@@ -342,5 +342,11 @@ TEST_CASE("WiringTests_SharedParam") {
     //app.GetJParameterManager()->PrintParameters(2, 0);
     //auto event = std::make_shared<JEvent>(&app);
     //auto facs = event->GetFactorySet()->GetAllMultifactories();
+
+}
+
+
+
+TEST_CASE("WiringTests_OtherComponents") {
 
 }

@@ -64,17 +64,17 @@ void JWiringService::AddWirings(std::vector<std::unique_ptr<Wiring>>& wirings_bu
 void JWiringService::AddWirings(const toml::table& table, const std::string& source) {
 
     std::vector<std::unique_ptr<Wiring>> wirings;
-    auto facs = table["factory"].as_array();
-    if (facs == nullptr) {
-        throw JException("No factories found!");
+    auto wirings_array = table["wiring"].as_array();
+    if (wirings_array == nullptr) {
+        throw JException("No wirings found!");
     }
-    for (const auto& fac : *facs) {
+    for (const auto& wiring_node : *wirings_array) {
         auto wiring = std::make_unique<Wiring>();
 
-        if (fac.as_table() == nullptr) {
+        if (wiring_node.as_table() == nullptr) {
             throw JException("Invalid format: 'factory' is not a table");
         }
-        auto& f = *fac.as_table();
+        auto& f = *wiring_node.as_table();
 
         wiring->plugin_name = f["plugin_name"].value<std::string>().value_or("");
         wiring->type_name = f["type_name"].value<std::string>().value();
