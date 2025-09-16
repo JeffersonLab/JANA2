@@ -43,7 +43,9 @@ macro(add_jana_plugin plugin_name)
 
     if (${PROJECT_NAME} STREQUAL "jana2")
         # This is an internal plugin
-        set(INSTALL_NAMESPACE "JANA")
+        if (NOT DEFINED INSTALL_NAMESPACE)
+            set(INSTALL_NAMESPACE "JANA")
+        endif()
         set(JANA_NAMESPACE "")
         if (NOT PLUGIN_EXPORT)
             set(PLUGIN_EXPORT "jana2_targets")
