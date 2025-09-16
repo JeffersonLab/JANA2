@@ -1,4 +1,6 @@
 
+set(INSTALL_NAMESPACE jana2_tutorial_lightweight)
+
 add_subdirectory(01_datamodel)
 add_subdirectory(02_random_hit_source)
 add_subdirectory(03_protocluster_factory)
@@ -20,4 +22,4 @@ add_subdirectory(18_subevent_splitter_merger_cuda)
 add_subdirectory(19_wrapper_program)
 add_subdirectory(20_streaming_actor)
 
-
+set(INSTALL_NAMESPACE JANA)
