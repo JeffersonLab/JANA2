@@ -41,7 +41,8 @@ protected:
     };
 
     std::vector<std::unique_ptr<LocalQueue>> m_local_queues;
-    size_t m_capacity;
+    size_t m_capacity = 0;
+    bool m_enforces_ordering = false;
 
 public:
     inline JEventQueue(size_t initial_capacity, size_t locations_count) {
@@ -50,11 +51,19 @@ public:
         for (size_t location=0; location<locations_count; ++location) {
             m_local_queues.push_back(std::make_unique<LocalQueue>());
         }
-        m_capacity = initial_capacity;
         Scale(initial_capacity);
     }
 
     virtual ~JEventQueue() = default;
+
+    void EnableOrdering() {
+        m_enforces_ordering = true;
+        if (m_local_queues.size() != 1) {
+            m_local_queues.clear();
+            m_local_queues.push_back(std::make_unique<LocalQueue>());
+            Scale(m_capacity);
+        }
+    }
 
     virtual void Scale(size_t capacity) {
         if (capacity < m_capacity) {

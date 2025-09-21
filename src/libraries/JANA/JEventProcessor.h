@@ -31,6 +31,10 @@ public:
 
     uint64_t GetEventCount() const { return m_event_count; };
 
+    bool IsOrderingEnabled() const { return m_enable_ordering; }
+
+    void EnableOrdering(bool enable=true) { m_enable_ordering = enable; }
+
 
     virtual void DoInitialize() {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -225,6 +229,7 @@ protected:
 
 
 private:
+    bool m_enable_ordering = false;
     std::string m_resource_name;
     std::atomic_ullong m_event_count {0};
 
