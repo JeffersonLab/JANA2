@@ -422,6 +422,12 @@ void JExecutionEngine::RunWorker(Worker worker) {
         }
         LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker.worker_id << LOG_END;
     }
+    catch(JException& ex) {
+        LOG_ERROR(GetLogger()) << "Exception on worker thread " << worker.worker_id << ": " << ex.GetMessage();
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_runstatus = RunStatus::Failed;
+        m_worker_states.at(worker.worker_id)->stored_exception = std::current_exception();
+    }
     catch (...) {
         LOG_ERROR(GetLogger()) << "Exception on worker thread " << worker.worker_id << LOG_END;
         std::unique_lock<std::mutex> lock(m_mutex);
