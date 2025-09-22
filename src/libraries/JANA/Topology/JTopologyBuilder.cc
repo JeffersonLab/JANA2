@@ -153,11 +153,14 @@ void JTopologyBuilder::connect(JArrow* upstream, size_t upstream_port_id, JArrow
         queues.push_back(queue);
     }
     downstream_port.pool = nullptr;
+    if (downstream_port.enforces_ordering) {
+        queue->SetEnforcesOrdering();
+    }
 
     JArrow::Port& upstream_port = upstream->m_ports.at(upstream_port_id);
     upstream_port.queue = queue;
-    if (upstream_port.is_ordered) {
-        queue->EnableOrdering();
+    if (upstream_port.establishes_ordering) {
+        queue->SetEstablishesOrdering(true);
     }
     upstream_port.pool = nullptr;
 }

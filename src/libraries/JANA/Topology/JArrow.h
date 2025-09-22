@@ -23,7 +23,8 @@ public:
         JEventQueue* queue = nullptr;
         JEventPool* pool = nullptr;
         bool is_input = false;
-        bool is_ordered = false;
+        bool establishes_ordering = false;
+        bool enforces_ordering = false;
     };
 
 private:

@@ -28,7 +28,7 @@ public:
         set_name(name);
         create_ports(1, 2);
         m_next_input_port = CHILD_IN;
-        m_ports[CHILD_IN].is_ordered = true;
+        m_ports[CHILD_IN].enforces_ordering = true;
     }
 
     void set_folder(JEventFolder* folder) {

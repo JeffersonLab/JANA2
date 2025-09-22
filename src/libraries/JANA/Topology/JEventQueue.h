@@ -43,6 +43,8 @@ protected:
     std::vector<std::unique_ptr<LocalQueue>> m_local_queues;
     size_t m_capacity = 0;
     bool m_enforces_ordering = false;
+    bool m_establishes_ordering = false;
+    size_t m_next_event_index = 0;
 
 public:
     inline JEventQueue(size_t initial_capacity, size_t locations_count) {
@@ -56,7 +58,12 @@ public:
 
     virtual ~JEventQueue() = default;
 
-    void EnableOrdering() {
+
+    void SetEstablishesOrdering(bool establishes_ordering) {
+        m_establishes_ordering = true;
+    }
+
+    void SetEnforcesOrdering() {
         m_enforces_ordering = true;
         if (m_local_queues.size() != 1) {
             m_local_queues.clear();
@@ -113,6 +120,11 @@ public:
         local_queue.ringbuffer[local_queue.back] = nullptr;
         local_queue.back = (local_queue.back + 1) % local_queue.capacity;
         local_queue.size -= 1;
+
+        if (m_establishes_ordering) {
+            result->SetEventIndex(m_next_event_index);
+            m_next_event_index += 1;
+        }
         return result;
     };
 

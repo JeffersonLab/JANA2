@@ -15,7 +15,7 @@ JEventTapArrow::JEventTapArrow(std::string name) {
 
 void JEventTapArrow::add_processor(JEventProcessor* proc) {
     if (proc->IsOrderingEnabled()) {
-        m_ports[EVENT_IN].is_ordered = true;
+        m_ports[EVENT_IN].enforces_ordering = true;
     }
     m_procs.push_back(proc);
 }

@@ -14,6 +14,13 @@ JEventSourceArrow::JEventSourceArrow(std::string name, std::vector<JEventSource*
     set_name(name);
     set_is_source(true);
     create_ports(1, 1);
+    m_ports[EVENT_OUT].establishes_ordering = true;
+    // All event sources establish their own ordering by default,
+    // which is sufficient for the kinds of topologies we can create
+    // using JTopologyBuilder. In the future we may need something
+    // more sophisticated. Note that establishing the ordering here is a
+    // no-op if there are no components in the topology that need it enforced,
+    // so it doesn't hurt NUMA performance.
 }
 
 
