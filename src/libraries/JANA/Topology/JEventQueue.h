@@ -74,6 +74,14 @@ public:
         m_enforces_ordering = enforces_ordering;
     }
 
+    bool GetEstablishesOrdering() const { 
+        return m_establishes_ordering;
+    }
+
+    bool GetEnforcesOrdering() const {
+        return m_enforces_ordering;
+    }
+
     virtual void Scale(size_t capacity) {
         if (capacity < m_capacity) {
             for (auto& local_queue : m_local_queues) {
