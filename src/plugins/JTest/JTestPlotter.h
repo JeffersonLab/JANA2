@@ -23,10 +23,11 @@ class JTestPlotter : public JEventProcessor {
 
 public:
 
-    JTestPlotter() {
+    JTestPlotter(bool order_output=false) {
         SetPrefix("jtest:plotter");
         SetTypeName(NAME_OF_THIS);
         SetCallbackStyle(CallbackStyle::ExpertMode);
+        EnableOrdering(order_output);
     }
 
     void ProcessSequential(const JEvent& event) override {

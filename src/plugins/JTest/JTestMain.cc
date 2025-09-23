@@ -22,12 +22,14 @@ void InitPlugin(JApplication *app){
 	app->Add(new JFactoryGeneratorT<JTestDisentangler>());
 	app->Add(new JFactoryGeneratorT<JTestTracker>());
 
+    bool order_output = app->RegisterParameter("jtest:order_output", false);
+
     bool use_legacy_plotter = app->RegisterParameter("jtest:use_legacy_plotter", false);
     if (use_legacy_plotter) {
         app->Add(new JTestPlotterLegacy);
     }
     else {
-        app->Add(new JTestPlotter);
+        app->Add(new JTestPlotter {order_output});
     }
 
     bool except_on_loading = app->RegisterParameter("jtest:except_on_loading", false);
