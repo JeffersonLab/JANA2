@@ -41,7 +41,17 @@ protected:
     };
 
     std::vector<std::unique_ptr<LocalQueue>> m_local_queues;
-    size_t m_capacity;
+    size_t m_capacity = 0;
+
+    // Order-establishing state
+    bool m_establishes_ordering = false;
+    size_t m_next_event_index = 0;
+
+    // Order-enforcing state
+    bool m_enforces_ordering = false;
+    size_t m_next_slot = 0;
+    int m_min_index = 0;
+    int m_max_index = 0;
 
 public:
     inline JEventQueue(size_t initial_capacity, size_t locations_count) {
@@ -50,11 +60,27 @@ public:
         for (size_t location=0; location<locations_count; ++location) {
             m_local_queues.push_back(std::make_unique<LocalQueue>());
         }
-        m_capacity = initial_capacity;
         Scale(initial_capacity);
     }
 
     virtual ~JEventQueue() = default;
+
+
+    void SetEstablishesOrdering(bool establishes_ordering=true) {
+        m_establishes_ordering = establishes_ordering;
+    }
+
+    void SetEnforcesOrdering(bool enforces_ordering=true) {
+        m_enforces_ordering = enforces_ordering;
+    }
+
+    bool GetEstablishesOrdering() const { 
+        return m_establishes_ordering;
+    }
+
+    bool GetEnforcesOrdering() const {
+        return m_enforces_ordering;
+    }
 
     virtual void Scale(size_t capacity) {
         if (capacity < m_capacity) {
@@ -65,6 +91,7 @@ public:
             }
         }
         m_capacity = capacity;
+        m_max_index = capacity - 1; // zero-indexed
         for (auto& local_queue: m_local_queues) {
             local_queue->ringbuffer.resize(capacity, nullptr);
             local_queue->capacity = capacity;
@@ -85,26 +112,67 @@ public:
     }
 
     inline void Push(JEvent* event, size_t location) {
-        auto& local_queue = *m_local_queues[location];
-        if (local_queue.size == local_queue.capacity) {
-            throw JException("Attempted to push to a full JEventQueue. This probably means there is an error in your topology wiring");
-        }
 
-        local_queue.ringbuffer[local_queue.front] = event;
-        local_queue.front = (local_queue.front + 1) % local_queue.capacity;
-        local_queue.size += 1;
+        if (m_enforces_ordering) {
+            // Repurpose m_local_queues[0] as an associative array instead of a queue
+            auto index = event->GetEventIndex();
+            if (m_max_index < index) {
+                throw JException("Event index=%lu is above max=%lu", index, m_max_index);
+            }
+            if (m_min_index > index) {
+                throw JException("Event index=%lu is below min=%lu", index, m_min_index);
+            }
+            size_t slot = index % m_capacity;
+            auto& buffer = m_local_queues[0]->ringbuffer;
+
+            if (buffer[slot] != nullptr) {
+                throw JException("Collision when pushing to ordered queue. slot=%lu", slot);
+            }
+            buffer[slot] = event;
+        }
+        else {
+            // Use local_queue as intended
+            auto& local_queue = *m_local_queues[location];
+            if (local_queue.size == local_queue.capacity) {
+                throw JException("Attempted to push to a full JEventQueue. This probably means there is an error in your topology wiring");
+            }
+
+            local_queue.ringbuffer[local_queue.front] = event;
+            local_queue.front = (local_queue.front + 1) % local_queue.capacity;
+            local_queue.size += 1;
+        }
     }
 
     inline JEvent* Pop(size_t location) {
-        auto& local_queue= *m_local_queues[location];
-        if (local_queue.size == 0) {
-            return nullptr;
+        if (m_enforces_ordering) {
+            auto& buffer = m_local_queues[0]->ringbuffer;
+            auto event = buffer[m_next_slot];
+            if (event == nullptr) {
+                return nullptr;
+            }
+            buffer[m_next_slot] = nullptr;
+            m_min_index += 1;
+            m_max_index += 1;
+            m_next_slot += 1;
+            m_next_slot %= m_capacity;
+            return event;
         }
-        JEvent* result = local_queue.ringbuffer[local_queue.back];
-        local_queue.ringbuffer[local_queue.back] = nullptr;
-        local_queue.back = (local_queue.back + 1) % local_queue.capacity;
-        local_queue.size -= 1;
-        return result;
+        else {
+            auto& local_queue= *m_local_queues[location];
+            if (local_queue.size == 0) {
+                return nullptr;
+            }
+            JEvent* result = local_queue.ringbuffer[local_queue.back];
+            local_queue.ringbuffer[local_queue.back] = nullptr;
+            local_queue.back = (local_queue.back + 1) % local_queue.capacity;
+            local_queue.size -= 1;
+
+            if (m_establishes_ordering) {
+                result->SetEventIndex(m_next_event_index);
+                m_next_event_index += 1;
+            }
+            return result;
+        }
     };
 
 };

@@ -300,7 +300,7 @@ bool JExecutionEngine::CheckTimeout() {
     for (auto& worker: m_worker_states) {
         auto timeout_s = (worker->is_event_warmed_up) ? m_timeout_s : m_warmup_timeout_s;
         auto duration_s = std::chrono::duration_cast<std::chrono::seconds>(now - worker->last_checkout_time).count();
-        if (duration_s > timeout_s) {
+        if (duration_s > timeout_s && worker->last_arrow_id != static_cast<uint64_t>(-1)) {
             worker->is_timed_out = true;
             timeout_detected = true;
             m_runstatus = RunStatus::Failed;
@@ -315,14 +315,15 @@ void JExecutionEngine::HandleFailures() {
 
     // First, we log all of the failures we've found
     for (auto& worker: m_worker_states) {
-        const auto& arrow_name = m_topology->arrows[worker->last_arrow_id]->get_name();
         if (worker->is_timed_out) {
+            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->arrows[worker->last_arrow_id]->get_name();
             LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
             pthread_kill(worker->thread->native_handle(), SIGUSR2);
             LOG_INFO(GetLogger()) << "Worker thread signalled; waiting for backtrace capture." << LOG_END;
             worker->backtrace.WaitForCapture();
         }
         if (worker->stored_exception != nullptr) {
+            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->arrows[worker->last_arrow_id]->get_name();
             LOG_FATAL(GetLogger()) << "Exception in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
         }
     }
@@ -421,6 +422,12 @@ void JExecutionEngine::RunWorker(Worker worker) {
             task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
         }
         LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker.worker_id << LOG_END;
+    }
+    catch(JException& ex) {
+        LOG_ERROR(GetLogger()) << "Exception on worker thread " << worker.worker_id << ": " << ex.GetMessage();
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_runstatus = RunStatus::Failed;
+        m_worker_states.at(worker.worker_id)->stored_exception = std::current_exception();
     }
     catch (...) {
         LOG_ERROR(GetLogger()) << "Exception on worker thread " << worker.worker_id << LOG_END;

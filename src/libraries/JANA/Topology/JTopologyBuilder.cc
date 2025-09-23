@@ -102,6 +102,21 @@ void JTopologyBuilder::create_topology() {
     for (auto* arrow : arrows) {
         arrow->set_logger(GetLogger());
     }
+
+    // _Don't_ establish ordering if nobody needs it!
+    // This hopefully prevents a small hit to NUMA performance
+    // because we don't need to update next_event_index across NUMA nodes
+    bool need_ordering = false;
+    for (auto* queue : queues) {
+        if (queue->GetEnforcesOrdering()) {
+            need_ordering = true;
+        }
+    }
+    if (!need_ordering) {
+        for (auto* queue : queues) {
+            queue->SetEstablishesOrdering(false);
+        }
+    }
 }
 
 
@@ -153,9 +168,15 @@ void JTopologyBuilder::connect(JArrow* upstream, size_t upstream_port_id, JArrow
         queues.push_back(queue);
     }
     downstream_port.pool = nullptr;
+    if (downstream_port.enforces_ordering) {
+        queue->SetEnforcesOrdering();
+    }
 
     JArrow::Port& upstream_port = upstream->m_ports.at(upstream_port_id);
     upstream_port.queue = queue;
+    if (upstream_port.establishes_ordering) {
+        queue->SetEstablishesOrdering(true);
+    }
     upstream_port.pool = nullptr;
 }
 
@@ -221,7 +242,17 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     std::vector<JEventProcessor*> tappable_procs_at_level;
 
     for (JEventProcessor* proc : m_components->get_evt_procs()) {
+
         if (proc->GetLevel() == current_level) {
+
+            // This may be a weird place to do it, but let's quickly validate that users aren't
+            // trying to enable ordering on a legacy event processor. We don't do this in the constructor
+            // because we don't want to put constraints on the order in which setters can be called, apart from "before Init()"
+
+            if (proc->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode && proc->IsOrderingEnabled()) {
+                throw JException("%s: Ordering can only be used with non-legacy JEventProcessors", proc->GetTypeName().c_str());
+            }
+
             mappable_procs_at_level.push_back(proc);
             if (proc->GetCallbackStyle() != JEventProcessor::CallbackStyle::LegacyMode) {
                 tappable_procs_at_level.push_back(proc);

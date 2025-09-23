@@ -20,6 +20,7 @@ public:
         set_name(name);
         create_ports(2, 2);
         m_next_input_port = PARENT_IN;
+        m_ports[CHILD_OUT].establishes_ordering=true; // Just in case there's a folder that needs this
     }
 
     void initialize() final {
