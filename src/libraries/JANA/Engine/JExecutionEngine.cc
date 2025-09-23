@@ -300,7 +300,7 @@ bool JExecutionEngine::CheckTimeout() {
     for (auto& worker: m_worker_states) {
         auto timeout_s = (worker->is_event_warmed_up) ? m_timeout_s : m_warmup_timeout_s;
         auto duration_s = std::chrono::duration_cast<std::chrono::seconds>(now - worker->last_checkout_time).count();
-        if (duration_s > timeout_s) {
+        if (duration_s > timeout_s && worker->last_arrow_id != static_cast<uint64_t>(-1)) {
             worker->is_timed_out = true;
             timeout_detected = true;
             m_runstatus = RunStatus::Failed;
