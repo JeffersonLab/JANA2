@@ -117,7 +117,7 @@ jobs:
           export JANA_HOME=$GITHUB_WORKSPACE
           export LD_LIBRARY_PATH=$JANA_HOME/lib:$LD_LIBRARY_PATH
           cd ..
-          git clone -b nbrei_disable_omnifactory_tests https://github.com/eic/EICrecon
+          git clone -b main https://github.com/eic/EICrecon
           cd EICrecon
           cmake -S . -B build -DJANA_DIR=$JANA_HOME/lib/JANA/cmake -DCMAKE_BUILD_TYPE=Debug
           cmake --build build --target install -- -j8
