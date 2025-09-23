@@ -315,14 +315,15 @@ void JExecutionEngine::HandleFailures() {
 
     // First, we log all of the failures we've found
     for (auto& worker: m_worker_states) {
-        const auto& arrow_name = m_topology->arrows[worker->last_arrow_id]->get_name();
         if (worker->is_timed_out) {
+            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->arrows[worker->last_arrow_id]->get_name();
             LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
             pthread_kill(worker->thread->native_handle(), SIGUSR2);
             LOG_INFO(GetLogger()) << "Worker thread signalled; waiting for backtrace capture." << LOG_END;
             worker->backtrace.WaitForCapture();
         }
         if (worker->stored_exception != nullptr) {
+            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->arrows[worker->last_arrow_id]->get_name();
             LOG_FATAL(GetLogger()) << "Exception in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
         }
     }
