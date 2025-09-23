@@ -9,6 +9,9 @@
 #include <chrono>
 #include <thread>
 
+
+namespace jana::engine::ordering_tests {
+
 struct MyData {int x;};
 
 class MyFac : public JFactory {
@@ -86,3 +89,4 @@ TEST_CASE("OrderingTests_FullyParallel") {
     app.Run();
 }
 
+} // namespace jana::engine::ordering_tests
