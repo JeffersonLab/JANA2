@@ -410,4 +410,62 @@ TEST_CASE("WiringTests_Proc") {
 }
 
 
+struct WiredFac : public JFactory {
+    Input<Cluster> m_protoclusters_in {this};
+    Output<Cluster> m_clusters_out {this};
+
+    Parameter<int> m_x {this, "x", 1, "x"};
+
+    WiredFac() {
+        SetPrefix("wiredfac");
+    }
+    void Process(const JEvent&) {
+        for (auto protocluster : *m_protoclusters_in) {
+            m_clusters_out().push_back(new Cluster {protocluster->x, protocluster->y, protocluster->E + *m_x});
+        }
+    }
+};
+
+static constexpr std::string_view facgen_wiring = R"(
+    [[wiring]]
+    type_name = "WiredFac"
+    prefix = "wiredfac"
+    input_names = ["usual_input"]
+    output_names = ["usual_output"]
+
+        [wiring.configs]
+        x = "22"
+)";
+
+TEST_CASE("WiringTests_FacGen") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(facgen_wiring);
+    wiring_svc->AddWirings(table, "testcase");
+
+    auto gen = new JFactoryGeneratorT<WiredFac>;
+    app.Add(gen);
+    app.Initialize();
+
+    auto& summary = app.GetComponentSummary();
+    jout << summary;
+    auto vf = summary.FindComponents("wiredfac");
+    REQUIRE(vf.size() == 1);
+    REQUIRE(vf.at(0)->GetOutputs().at(0)->GetName() == "usual_output");
+
+    REQUIRE(app.GetParameterValue<int>("wiredfac:x") == 22);
+
+    auto event = std::make_shared<JEvent>(&app);
+    std::vector<Cluster*> test_data;
+    test_data.push_back(new Cluster{0, 0, 22.2});
+    event->Insert<Cluster>(test_data, "usual_input");
+
+    auto results = event->Get<Cluster>("usual_output");
+    REQUIRE(results.size() == 1);
+    REQUIRE(results.at(0)->E == 44.2);
+
+}
+
 
