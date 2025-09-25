@@ -18,7 +18,9 @@ class JEventProcessor : public jana::components::JComponent,
                         public jana::components::JHasInputs {
 public:
 
-    JEventProcessor() = default;
+    JEventProcessor() {
+        m_type_name = "JEventProcessor";
+    }
     virtual ~JEventProcessor() = default;
 
     [[deprecated]]
@@ -34,19 +36,6 @@ public:
     bool IsOrderingEnabled() const { return m_enable_ordering; }
 
     void EnableOrdering(bool enable=true) { m_enable_ordering = enable; }
-
-
-    virtual void DoInitialize() {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        for (auto* parameter : m_parameters) {
-            parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
-        }
-        for (auto* service : m_services) {
-            service->Fetch(m_app);
-        }
-        CallWithJExceptionWrapper("JEventProcessor::Init", [&](){ Init(); });
-        m_status = Status::Initialized;
-    }
 
 
     virtual void DoMap(const JEvent& event) {
@@ -181,9 +170,6 @@ public:
         }
         summary.Add(result);
     }
-
-
-    virtual void Init() {}
 
 
     // LegacyMode-specific callbacks

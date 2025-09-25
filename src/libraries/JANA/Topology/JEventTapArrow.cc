@@ -39,7 +39,7 @@ void JEventTapArrow::initialize() {
     LOG_DEBUG(m_logger) << "Initializing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_procs) {
         LOG_DEBUG(m_logger) << "Initializing JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
-        processor->DoInitialize();
+        processor->DoInit();
         LOG_INFO(m_logger) << "Initialized JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
     }
     LOG_DEBUG(m_logger) << "Initialized arrow '" << get_name() << "'" << LOG_END;

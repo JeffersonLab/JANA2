@@ -139,6 +139,7 @@ void JEventSourceArrow::initialize() {
     // We initialize everything immediately, but don't open any resources until we absolutely have to; see process(): source->DoNext()
     for (JEventSource* source : m_sources) {
         source->DoInit();
+        LOG_INFO(m_logger) << "Initialized JEventSource '" << source->GetTypeName() << "' ('" << source->GetResourceName() << "')" << LOG_END;
     }
 }
 

@@ -42,6 +42,9 @@ protected:
     JLogger m_logger;
 
 public:
+    JComponent() = default;
+    virtual ~JComponent() = default;
+
     // ---------------------
     // Meant to be called by users, or alternatively from a Generator
     // ---------------------
@@ -111,6 +114,12 @@ public:
 
     template <typename F> 
     inline void CallWithJExceptionWrapper(std::string func_name, F func);
+
+    void DoInit();
+
+    // `Init` is where the user requests parameters and services. If the user requests all parameters and services here,
+    // JANA can report them back to the user without having to open the resource and run the topology.
+    virtual void Init() {};
 
     // ---------------------
     // "Registered member" helpers

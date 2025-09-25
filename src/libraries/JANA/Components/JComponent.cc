@@ -38,3 +38,19 @@ void jana::components::JComponent::Wire(JApplication* app) {
     }
 }
 
+void jana::components::JComponent::DoInit() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    if (m_status == Status::Initialized) return;
+    for (auto* parameter : m_parameters) {
+        parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
+    }
+    for (auto* service : m_services) {
+        service->Fetch(m_app);
+    }
+    CallWithJExceptionWrapper("Init", [&](){ Init(); });
+
+    // Don't set status until Init() succeeds, so that if an exception gets swallowed
+    // once it doesn't get accidentally swallowed everywhere
+    m_status = Status::Initialized;
+}

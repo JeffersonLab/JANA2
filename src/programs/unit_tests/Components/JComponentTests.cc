@@ -86,21 +86,21 @@ TEST_CASE("JEventProcessorParametersTests") {
 
     SECTION("JEventProcessor using default parameters") {
         app.Initialize();
-        sut->DoInitialize();
+        sut->DoInit();
         REQUIRE(sut->threshold() == 16.0);
         REQUIRE(sut->bucket_count() == 22);
     }
     SECTION("JEventProcessor using overridden parameters") {
         app.SetParameterValue("my_proc:threshold", 12.0);
         app.Initialize();
-        sut->DoInitialize();
+        sut->DoInit();
         REQUIRE(sut->threshold() == 12.0);
         REQUIRE(sut->bucket_count() == 22);
     }
     SECTION("OverrideSharedParameter") {
         app.SetParameterValue("bucket_count", 33);
         app.Initialize();
-        sut->DoInitialize();
+        sut->DoInit();
         REQUIRE(sut->threshold() == 16.0);
         REQUIRE(sut->bucket_count() == 33);
     }
@@ -156,7 +156,7 @@ TEST_CASE("JOmniFactoryParametersTests") {
         facgen.GenerateFactories(&facset);
         facset.Print();
         auto sut = RetrieveFactory<MyCluster,TestFac>(&facset, "specific_clusters_out");
-        // RetrieveMultifactory() will call DoInitialize() for us
+        // RetrieveMultifactory() will call DoInit() for us
 
         REQUIRE(sut->threshold() == 16.0);
         REQUIRE(sut->bucket_count() == 22);
@@ -170,7 +170,7 @@ TEST_CASE("JOmniFactoryParametersTests") {
         facgen.SetApplication(&app);
         facgen.GenerateFactories(&facset);
         auto sut = RetrieveFactory<MyCluster,TestFac>(&facset, "specific_clusters_out");
-        // RetrieveMultifactory() will call DoInitialize() for us
+        // RetrieveMultifactory() will call DoInit() for us
 
         REQUIRE(sut->threshold() == 16.0);
         REQUIRE(sut->bucket_count() == 444);

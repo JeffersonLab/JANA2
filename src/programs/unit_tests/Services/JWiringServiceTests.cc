@@ -404,7 +404,7 @@ TEST_CASE("WiringTests_Proc") {
     test_data.push_back(new Cluster{0, 0, 22.2});
     event->Insert<Cluster>(test_data, "myclusters");
 
-    proc->DoInitialize();
+    proc->DoInit();
     proc->DoMap(*event);
     proc->DoTap(*event);
 }

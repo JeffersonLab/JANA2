@@ -22,12 +22,11 @@ private:
 
 
 public:
-    
-    JEventFolder() = default;
+    JEventFolder() {
+        m_type_name = "JEventFolder";
+    }
     virtual ~JEventFolder() {};
  
-    virtual void Init() {};
-    
     virtual void Preprocess(const JEvent& /*parent*/) const {};
 
     virtual void Fold(const JEvent& /*child*/, JEvent& /*parent*/, int /*item_nr*/) {
@@ -50,22 +49,6 @@ public:
 
  public:
     // Backend
-    
-    void DoInit() {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_status != Status::Uninitialized) {
-            throw JException("JEventFolder: Attempting to initialize twice or from an invalid state");
-        }
-        // TODO: Obtain overrides of collection names from param manager
-        for (auto* parameter : m_parameters) {
-            parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
-        }
-        for (auto* service : m_services) {
-            service->Fetch(m_app);
-        }
-        CallWithJExceptionWrapper("JEventFolder::Init", [&](){Init();});
-        m_status = Status::Initialized;
-    }
 
     void DoPreprocess(const JEvent& child) {
         {

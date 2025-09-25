@@ -25,13 +25,15 @@ private:
 
 public:
     // JEventUnfolder interface
-    
+
+    JEventUnfolder() {
+        m_type_name = "JEventUnfolder";
+    }
+
     virtual ~JEventUnfolder() {};
  
     enum class Result { NextChildNextParent, NextChildKeepParent, KeepChildNextParent };
 
-    virtual void Init() {};
-    
     virtual void Preprocess(const JEvent& /*parent*/) const {};
 
     virtual Result Unfold(const JEvent& /*parent*/, JEvent& /*child*/, int /*item_nr*/) {
@@ -58,29 +60,12 @@ public:
 
  public:
     // Backend
-    
-    void DoInit() {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_status != Status::Uninitialized) {
-            throw JException("JEventUnfolder: Attempting to initialize twice or from an invalid state");
-        }
-        // TODO: Obtain overrides of collection names from param manager
-        for (auto* parameter : m_parameters) {
-            parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
-        }
-        for (auto* service : m_services) {
-            service->Fetch(m_app);
-        }
-        CallWithJExceptionWrapper("JEventUnfolder::Init", [&](){Init();});
-        m_status = Status::Initialized;
-    }
 
     void DoPreprocess(const JEvent& parent) {
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (m_status != Status::Initialized) {
                 throw JException("JEventUnfolder: Component needs to be initialized and not finalized before Unfold can be called");
-                // TODO: Consider calling Initialize(with_lock=false) like we do elsewhere
             }
         }
         for (auto* input : m_inputs) {

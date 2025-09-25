@@ -18,9 +18,8 @@ struct JService : public jana::components::JComponent {
 
     virtual ~JService() = default;
 
+    // JService has its own DoInit() for the sake of acquire_services()
     void DoInit(JServiceLocator*);
-
-    virtual void Init() {};
 
     // This will be deprecated eventually
     virtual void acquire_services(JServiceLocator*) {};

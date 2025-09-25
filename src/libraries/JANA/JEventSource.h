@@ -49,14 +49,11 @@ public:
             m_app = app;
         }
 
-    JEventSource() = default;
+    JEventSource() {
+        m_type_name = "JEventSource";
+    }
     virtual ~JEventSource() = default;
 
-
-    // `Init` is where the user requests parameters and services. If the user requests all parameters and services here,
-    // JANA can report them back to the user without having to open the resource and run the topology.
-
-    virtual void Init() {}
 
 
     /// `Open` is called by JANA when it is ready to accept events from this event source. The implementor should open
@@ -186,12 +183,10 @@ public:
 
     // Internal
 
-    virtual void DoInit();
-
     void DoOpen(bool with_lock=true);
 
     void DoClose(bool with_lock=true);
-    
+
     Result DoNext(std::shared_ptr<JEvent> event);
 
     Result DoNextCompatibility(std::shared_ptr<JEvent> event);
