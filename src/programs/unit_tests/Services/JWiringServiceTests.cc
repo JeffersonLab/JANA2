@@ -1,6 +1,7 @@
 
 #include "JANA/Components/JOmniFactory.h"
 #include "JANA/Components/JWiredFactoryGeneratorT.h"
+#include "JANA/JEventProcessor.h"
 #include "JANA/JException.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <JANA/Services/JWiringService.h>
@@ -346,7 +347,67 @@ TEST_CASE("WiringTests_SharedParam") {
 }
 
 
+class WiredEvtProc : public JEventProcessor {
 
-TEST_CASE("WiringTests_OtherComponents") {
+    Parameter<int> m_x {this, "x", 22};
+    Input<Cluster> m_cluster_in {this};
+    //Input<Cluster> m_different_cluster_in {this};
+    //VariadicInput<Cluster> m_even_more_in {this};
 
+public:
+
+    WiredEvtProc() {
+        SetTypeName("WiredEvtProc");
+        SetPrefix("myproc");
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
+    void Init() override {
+        REQUIRE(*m_x == 99); // Set by wiring file
+    }
+
+    void ProcessSequential(const JEvent&) override {
+
+        // Set by wiring file
+        REQUIRE(GetPrefix() == "myproc");
+        REQUIRE(m_cluster_in.GetDatabundleName() == "myclusters");
+
+        // Data is reachable
+        REQUIRE(m_cluster_in->size() == 1); 
+    }
+};
+
+static constexpr std::string_view evtproc_wiring = R"(
+    [[wiring]]
+    type_name = "WiredEvtProc"
+    prefix = "myproc"
+    input_names = ["myclusters"]
+
+        [wiring.configs]
+        x = "99"
+)";
+
+TEST_CASE("WiringTests_Proc") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(evtproc_wiring);
+    wiring_svc->AddWirings(table, "testcase");
+
+    auto proc = new WiredEvtProc;
+    app.Add(proc);
+
+    app.Initialize();
+    auto event = std::make_shared<JEvent>(&app);
+    std::vector<Cluster*> test_data;
+    test_data.push_back(new Cluster{0, 0, 22.2});
+    event->Insert<Cluster>(test_data, "myclusters");
+
+    proc->DoInitialize();
+    proc->DoMap(*event);
+    proc->DoTap(*event);
 }
+
+
+
