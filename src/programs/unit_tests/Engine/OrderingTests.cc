@@ -20,6 +20,10 @@ class MyFac : public JFactory {
     int m_delays_s[4] = {2, 0, 5, 1};
 
 public:
+    MyFac() {
+        SetPrefix("myfac");
+        SetTypeName("MyFac");
+    }
     void Process(const JEvent& event) override {
         auto event_nr = event.GetEventNumber();
         auto delay = m_delays_s[event_nr % 4];
@@ -38,6 +42,7 @@ class MyProc : public JEventProcessor {
 
 public:
     MyProc(bool enable_ordering=true) {
+        SetPrefix("myproc");
         SetTypeName("MyProc");
         SetCallbackStyle(CallbackStyle::ExpertMode);
         EnableOrdering(enable_ordering);
@@ -59,8 +64,8 @@ TEST_CASE("OrderingTests") {
     app.Add(new MyProc);
     app.Add(new JFactoryGeneratorT<MyFac>);
     app.SetParameterValue("jana:nevents", 20);
-    app.SetParameterValue("MyFac:loglevel", "debug");
-    app.SetParameterValue("MyProc:loglevel", "debug");
+    app.SetParameterValue("myfac:loglevel", "debug");
+    app.SetParameterValue("myproc:loglevel", "debug");
     app.SetParameterValue("nthreads", "4");
     app.Run();
 }
@@ -71,8 +76,8 @@ TEST_CASE("OrderingTests_SequentialBaseline") {
     app.Add(new MyProc);
     app.Add(new JFactoryGeneratorT<MyFac>);
     app.SetParameterValue("jana:nevents", 20);
-    app.SetParameterValue("MyFac:loglevel", "debug");
-    app.SetParameterValue("MyProc:loglevel", "debug");
+    app.SetParameterValue("myfac:loglevel", "debug");
+    app.SetParameterValue("myproc:loglevel", "debug");
     app.SetParameterValue("nthreads", "1");
     app.Run();
 }
@@ -83,8 +88,8 @@ TEST_CASE("OrderingTests_FullyParallel") {
     app.Add(new MyProc{false});
     app.Add(new JFactoryGeneratorT<MyFac>);
     app.SetParameterValue("jana:nevents", 20);
-    app.SetParameterValue("MyFac:loglevel", "debug");
-    app.SetParameterValue("MyProc:loglevel", "debug");
+    app.SetParameterValue("myfac:loglevel", "debug");
+    app.SetParameterValue("myproc:loglevel", "debug");
     app.SetParameterValue("nthreads", "4");
     app.Run();
 }
