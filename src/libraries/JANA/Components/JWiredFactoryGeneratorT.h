@@ -25,7 +25,7 @@ public:
         const auto& shared_params = wiring_svc->GetSharedParameters();
 
         const auto& type_name = JTypeInfo::demangle<FactoryT>();
-        for (const auto* wiring : wiring_svc->GetWirings(GetPluginName(), type_name)) {
+        for (const auto* wiring : wiring_svc->GetAddedWirings(GetPluginName(), type_name)) {
 
             FactoryT *factory = new FactoryT;
             factory->SetApplication(GetApplication());

@@ -16,7 +16,9 @@ namespace jana::services {
 class JWiringService : public JService {
 
 public:
+    enum class Action { Add, Update, Remove };
     struct Wiring {
+        Action action;
         std::string plugin_name;
         std::string type_name;
         std::string prefix;
@@ -40,8 +42,8 @@ private:
 
     std::vector<std::unique_ptr<Wiring>> m_wirings;
     std::map<std::string, Wiring*> m_wirings_from_prefix;
-    std::map<std::pair<std::string,std::string>, std::vector<Wiring*>> m_wirings_from_type_and_plugin_names;
-    std::vector<Wiring*> m_no_wirings;
+    std::map<std::pair<std::string,std::string>, std::vector<Wiring*>> m_added_wirings;
+    std::vector<Wiring*> m_no_wirings; // Because we can't use std::optional yet
     std::map<std::string, std::string> m_shared_parameters;
 
 public:
@@ -59,7 +61,7 @@ public:
     GetWiring(const std::string& prefix) const;
 
     const std::vector<Wiring*>&
-    GetWirings(const std::string& plugin_name, const std::string& type_name) const;
+    GetAddedWirings(const std::string& plugin_name, const std::string& type_name) const;
 
     const std::vector<std::unique_ptr<Wiring>>& 
     GetWirings() const { return m_wirings; }
