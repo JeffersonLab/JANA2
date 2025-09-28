@@ -160,7 +160,7 @@ void JApplication::Initialize() {
     auto execution_engine = m_service_locator->get<JExecutionEngine>();
 
     // Make sure that Init() is called on any remaining JServices
-    m_service_locator->wire_everything();
+    m_service_locator->InitAllServices();
 
     m_initialized = true;
     // This needs to be at the end so that m_initialized==false while InitPlugin() is being called

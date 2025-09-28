@@ -73,7 +73,7 @@ public:
         return svc_typed;
     }
 
-    void wire_everything() {
+    void InitAllServices() {
         /// Make sure that all Services have been finalized. This is not strictly necessary,
         /// but it makes user errors easier to understand, and it prevents Services from being
         /// unpredictably finalized later on, particularly during computation.
