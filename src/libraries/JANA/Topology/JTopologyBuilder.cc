@@ -120,9 +120,9 @@ void JTopologyBuilder::create_topology() {
 }
 
 
-void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
+void JTopologyBuilder::Init() {
 
-    m_components = sl->get<JComponentManager>();
+    m_components = GetApplication()->GetService<JComponentManager>();
 
     // We default event pool size to be equal to nthreads
     // We parse the 'nthreads' parameter two different ways for backwards compatibility.

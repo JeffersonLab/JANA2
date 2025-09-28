@@ -6,15 +6,19 @@
 class JServiceLocator;
 struct JService : public jana::components::JComponent {
 
-    /// acquire_services is a callback which allows the user to configure a JService
-    /// which relies on other JServices. The idea is that the user uses a constructor
-    /// or initialize() method to configure things which don't rely on other JServices, and
-    /// then use acquire_services() to configure the things which do. We need this because
-    /// due to JANA's plugin architecture, we can't guarantee the order in which JServices
-    /// get provided. So instead, we collect all of the JServices first and wire them
-    /// together afterwards in a separate phase.
+    /// JServices may require other JServices, which may be loaded out of order from
+    /// different plugins. For this reason, initialization of JServices is delayed until
+    /// all plugins are loaded. Suppose you are writing Service B which depends on Service A. 
+    /// To acquire A during B's initialization, you should
+    /// either declare a `Service<A> m_a_svc{this}` helper member, or fetch it manually by calling 
+    /// `GetApplication()->GetService<A>()` from inside `B::Init()`. Either way, the JServices will 
+    /// be initialized recursively and in the correct order.
     ///
-    /// Note: Don't call JApplication::GetService() or JServiceLocator::get() from InitPlugin()!
+    /// Note that historically JServices used the `acquire_services()` callback instead of `Init()`.
+    /// While `acquire_services` hasn't been deprecated yet, it is on the roadmap, so we strongly
+    /// recommend you override `Init()` instead.
+    ///
+    /// Note: Don't call JApplication::GetService<SvcT>() or JServiceLocator::get<SvcT>() from InitPlugin()!
 
     virtual ~JService() = default;
 

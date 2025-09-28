@@ -52,11 +52,7 @@ public:
 
     template<typename T>
     std::shared_ptr<T> get() {
-        /// Retrieve a JService. If acquire_services() has not yet been called, it will be.
-        /// Usually called from Service::finalize(). It may be called from anywhere,
-        /// but it is generally safer to retrieve the services we need during acquire_dependencies()
-        /// and keep pointers to those, instead of keeping a pointer to the ServiceLocator itself.
-        /// (This also makes it easier to migrate to dependency injection if we so desire)
+        /// Retrieve a JService. If Init() and acquire_services() have not yet been called, they will be.
 
         auto iter = underlying.find(std::type_index(typeid(T)));
         if (iter == underlying.end()) {
@@ -74,9 +70,9 @@ public:
     }
 
     void InitAllServices() {
-        /// Make sure that all Services have been finalized. This is not strictly necessary,
+        /// Make sure that all Services have been initialized. This is not strictly necessary,
         /// but it makes user errors easier to understand, and it prevents Services from being
-        /// unpredictably finalized later on, particularly during computation.
+        /// unpredictably initialized later on.
 
         for (auto& entry : underlying) {
             entry.second->DoInit(this); 
