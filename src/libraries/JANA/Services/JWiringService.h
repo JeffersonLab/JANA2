@@ -58,13 +58,13 @@ public:
     const std::map<std::string, std::string>& GetSharedParameters() const;
 
     const Wiring*
-    GetWiring(const std::string& prefix) const;
+    GetWiringForExistingInstance(const std::string& prefix) const;
 
     const std::vector<Wiring*>&
-    GetAddedWirings(const std::string& plugin_name, const std::string& type_name) const;
+    GetWiringsForNewInstances(const std::string& plugin_name, const std::string& type_name) const;
 
     const std::vector<std::unique_ptr<Wiring>>& 
-    GetWirings() const { return m_wirings; }
+    GetAllWirings() const { return m_wirings; }
 
     static void Overlay(Wiring& above, const Wiring& below);
 };

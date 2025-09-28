@@ -47,7 +47,7 @@ TEST_CASE("WiringTests") {
     toml::table table = toml::parse(some_wiring);
     sut.AddWirings(table, "testcase");
 
-    const auto& wirings = sut.GetWirings();
+    const auto& wirings = sut.GetAllWirings();
     REQUIRE(wirings.size() == 2);
     REQUIRE(wirings[0]->prefix == "myfac");
     REQUIRE(wirings[1]->prefix == "myfac_modified");
@@ -176,7 +176,7 @@ TEST_CASE("WiringTests_FakeFacGen") {
 
     // We should end up with three in total
     sut.AddWirings(fake_facgen_wirings, "fake_facgen");
-    auto final_wirings = sut.GetAddedWirings("ECAL", "ClusteringFac");
+    auto final_wirings = sut.GetWiringsForNewInstances("ECAL", "ClusteringFac");
 
     REQUIRE(final_wirings.size() == 3);
 

@@ -17,7 +17,7 @@ void jana::components::JComponent::Wire(JApplication* app) {
     m_logger = m_app->GetService<JParameterManager>()->GetLogger(GetLoggerName());
 
     auto wiring_svc = m_app->GetService<services::JWiringService>();
-    auto wiring = wiring_svc->GetWiring(m_prefix);
+    auto wiring = wiring_svc->GetWiringForExistingInstance(m_prefix);
 
     if (wiring != nullptr) {
 
