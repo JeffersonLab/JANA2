@@ -118,6 +118,7 @@ void JApplication::Initialize() {
     auto component_manager = m_service_locator->get<JComponentManager>();
     auto plugin_loader = m_service_locator->get<JPluginLoader>();
     auto topology_builder = m_service_locator->get<JTopologyBuilder>();
+    auto wiring_service = m_service_locator->get<jana::services::JWiringService>();
 
     // Set logger on JApplication itself
     m_logger = m_params->GetLogger("jana");
@@ -141,6 +142,9 @@ void JApplication::Initialize() {
 
     // Resolve and initialize all components
     component_manager->configure_components();
+
+    // Once all components have been wired in jcm::configure_components(), there shouldn't be any unused wirings
+    wiring_service->CheckAllWiringsAreUsed();
 
     // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
     m_desired_nthreads = 1;

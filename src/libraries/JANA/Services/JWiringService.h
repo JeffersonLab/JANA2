@@ -31,6 +31,7 @@ public:
         std::vector<JEventLevel> output_levels;
         std::vector<std::vector<std::string>> variadic_output_names;
         std::map<std::string, std::string> configs;
+        bool is_used = false;
     };
 
 private:
@@ -57,14 +58,13 @@ public:
     void AddSharedParameters(const toml::table& table, const std::string& source);
     const std::map<std::string, std::string>& GetSharedParameters() const;
 
-    const Wiring*
-    GetWiringForExistingInstance(const std::string& prefix) const;
+    Wiring* GetWiringForExistingInstance(const std::string& prefix) const;
 
-    const std::vector<Wiring*>&
-    GetWiringsForNewInstances(const std::string& plugin_name, const std::string& type_name) const;
+    const std::vector<Wiring*>& GetWiringsForNewInstances(const std::string& plugin_name, const std::string& type_name) const;
 
-    const std::vector<std::unique_ptr<Wiring>>& 
-    GetAllWirings() const { return m_wirings; }
+    const std::vector<std::unique_ptr<Wiring>>& GetAllWirings() const { return m_wirings; }
+
+    void CheckAllWiringsAreUsed();
 
     static void Overlay(Wiring& above, const Wiring& below);
 };

@@ -200,7 +200,7 @@ void JWiringService::AddWiringFile(const std::string& filename) {
     }
 }
 
-const JWiringService::Wiring* JWiringService::GetWiringForExistingInstance(const std::string& prefix) const {
+JWiringService::Wiring* JWiringService::GetWiringForExistingInstance(const std::string& prefix) const {
     auto it = m_wirings_from_prefix.find(prefix);
     if (it == m_wirings_from_prefix.end()) {
         return nullptr;
@@ -264,5 +264,20 @@ const std::map<std::string, std::string>& JWiringService::GetSharedParameters() 
     return m_shared_parameters;
 }
 
+void JWiringService::CheckAllWiringsAreUsed() {
+    std::vector<JWiringService::Wiring*> m_unused_wirings;
+    for (const auto& wiring : m_wirings) {
+        if (wiring->is_used == false) {
+            m_unused_wirings.push_back(wiring.get());
+        }
+    }
+    if (m_unused_wirings.size() != 0) {
+        LOG_ERROR(GetLogger()) << "Wirings were found but never used:";
+        for (auto wiring : m_unused_wirings) {
+            LOG_ERROR(GetLogger()) << "  " << wiring->type_name << " " << wiring->prefix;
+        }
+        throw JException("Unused wirings found");
+    }
+}
 
 } // namespace jana::services

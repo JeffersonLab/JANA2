@@ -20,6 +20,7 @@ void jana::components::JComponent::Wire(JApplication* app) {
     auto wiring = wiring_svc->GetWiringForExistingInstance(m_prefix);
 
     if (wiring != nullptr) {
+        wiring->is_used = true;
 
         m_level = wiring->level;
 
