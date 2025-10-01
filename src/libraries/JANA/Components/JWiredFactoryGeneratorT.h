@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <JANA/Services/JParameterManager.h>
 #include <JANA/JFactorySet.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/Services/JWiringService.h>
@@ -15,47 +16,20 @@ template<class FactoryT>
 class JWiredFactoryGeneratorT : public JFactoryGenerator {
 
 public:
-    using FactoryConfigType = typename FactoryT::ConfigType;
-
     explicit JWiredFactoryGeneratorT() = default;
 
     void GenerateFactories(JFactorySet *factory_set) override {
 
         auto wiring_svc = GetApplication()->template GetService<jana::services::JWiringService>();
-        const auto& shared_params = wiring_svc->GetSharedParameters();
-
         const auto& type_name = JTypeInfo::demangle<FactoryT>();
-        for (auto* wiring : wiring_svc->GetWiringsForNewInstances(GetPluginName(), type_name)) {
 
-            wiring->is_used = true;
+        for (const auto& prefix : wiring_svc->GetPrefixesForAddedInstances(GetPluginName(), type_name)) {
 
             FactoryT *factory = new FactoryT;
-            factory->SetApplication(GetApplication());
             factory->SetPluginName(GetPluginName());
             factory->SetTypeName(type_name);
-
-            // Set the parameter values on the factory. This way, the values in the wiring file
-            // show up as "defaults" and the values set on the command line show up as "overrides".
-            for (auto parameter : factory->GetAllParameters()) {
-                parameter->Wire(wiring->configs, shared_params);
-            }
-
-            // Check that output levels in wiring file match the factory's level
-            for (auto output_level : wiring->output_levels) {
-                if (output_level != wiring->level) {
-                    throw JException("JOmniFactories are constrained to a single output level");
-                }
-            }
-
-            factory->PreInit(wiring->prefix,
-                             wiring->level,
-                             wiring->input_names,
-                             wiring->input_levels,
-                             wiring->variadic_input_names,
-                             wiring->variadic_input_levels,
-                             wiring->output_names,
-                             wiring->variadic_output_names);
-
+            factory->SetPrefix(prefix);
+            factory->Wire(GetApplication());
             factory_set->Add(factory);
         }
     }

@@ -176,18 +176,17 @@ TEST_CASE("WiringTests_FakeFacGen") {
 
     // We should end up with three in total
     sut.AddWirings(fake_facgen_wirings, "fake_facgen");
-    auto final_wirings = sut.GetWiringsForNewInstances("ECAL", "ClusteringFac");
+    auto final_wirings = sut.GetPrefixesForAddedInstances("ECAL", "ClusteringFac");
 
     REQUIRE(final_wirings.size() == 3);
 
-    REQUIRE(final_wirings[0]->prefix == "myfac");
-    REQUIRE(final_wirings[1]->prefix == "variantfac");
-    REQUIRE(final_wirings[2]->prefix == "exuberantfac");
+    REQUIRE(final_wirings[0] == "myfac");
+    REQUIRE(final_wirings[1] == "variantfac");
+    REQUIRE(final_wirings[2] == "exuberantfac");
 
-    REQUIRE(final_wirings[0]->configs["x"] == "22"); // from file only
-    REQUIRE(final_wirings[1]->configs["x"] == "49"); // file overrides facgen
-    REQUIRE(final_wirings[2]->configs["x"] == "27"); // from facgen only
-
+    REQUIRE(sut.GetWiring(final_wirings[0])->configs["x"] == "22"); // from file only
+    REQUIRE(sut.GetWiring(final_wirings[1])->configs["x"] == "49"); // file overrides facgen
+    REQUIRE(sut.GetWiring(final_wirings[2])->configs["x"] == "27"); // from facgen only
 }
 
 struct Cluster { double x,y,E; };

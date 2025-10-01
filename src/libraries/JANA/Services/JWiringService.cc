@@ -42,7 +42,7 @@ void JWiringService::AddWirings(std::vector<std::unique_ptr<Wiring>>& wirings_bu
             m_wirings_from_prefix[wiring->prefix] = wiring.get();
 
             if (wiring->action == Action::Add) {
-                m_added_wirings[{wiring->type_name, wiring->plugin_name}].push_back(wiring.get());
+                m_added_prefixes[{wiring->type_name, wiring->plugin_name}].push_back(wiring->prefix);
             }
             m_wirings.push_back(std::move(wiring));
         }
@@ -200,23 +200,20 @@ void JWiringService::AddWiringFile(const std::string& filename) {
     }
 }
 
-JWiringService::Wiring* JWiringService::GetWiringForExistingInstance(const std::string& prefix) const {
+JWiringService::Wiring* JWiringService::GetWiring(const std::string& prefix) const {
     auto it = m_wirings_from_prefix.find(prefix);
     if (it == m_wirings_from_prefix.end()) {
         return nullptr;
     }
-    if (it->second->action == Action::Add) {
-        throw JException("Attempting to apply a wiring to an existing instance with prefix=%s, but wiring.action=Add", prefix.c_str());
-    }
     return it->second;
 }
 
-const std::vector<JWiringService::Wiring*>&
-JWiringService::GetWiringsForNewInstances(const std::string& plugin_name, const std::string& type_name) const {
+const std::vector<std::string>&
+JWiringService::GetPrefixesForAddedInstances(const std::string& plugin_name, const std::string& type_name) const {
 
-    auto it = m_added_wirings.find({type_name, plugin_name});
-    if (it == m_added_wirings.end()) {
-        return m_no_wirings;
+    auto it = m_added_prefixes.find({type_name, plugin_name});
+    if (it == m_added_prefixes.end()) {
+        return m_no_added_prefixes;
     }
     return it->second;
 }

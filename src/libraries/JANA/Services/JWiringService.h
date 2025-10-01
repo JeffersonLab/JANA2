@@ -43,8 +43,8 @@ private:
 
     std::vector<std::unique_ptr<Wiring>> m_wirings;
     std::map<std::string, Wiring*> m_wirings_from_prefix;
-    std::map<std::pair<std::string,std::string>, std::vector<Wiring*>> m_added_wirings;
-    std::vector<Wiring*> m_no_wirings; // Because we can't use std::optional yet
+    std::map<std::pair<std::string,std::string>, std::vector<std::string>> m_added_prefixes;
+    std::vector<std::string> m_no_added_prefixes; // Because we can't use std::optional yet
     std::map<std::string, std::string> m_shared_parameters;
 
 public:
@@ -58,9 +58,9 @@ public:
     void AddSharedParameters(const toml::table& table, const std::string& source);
     const std::map<std::string, std::string>& GetSharedParameters() const;
 
-    Wiring* GetWiringForExistingInstance(const std::string& prefix) const;
+    Wiring* GetWiring(const std::string& prefix) const;
 
-    const std::vector<Wiring*>& GetWiringsForNewInstances(const std::string& plugin_name, const std::string& type_name) const;
+    const std::vector<std::string>& GetPrefixesForAddedInstances(const std::string& plugin_name, const std::string& type_name) const;
 
     const std::vector<std::unique_ptr<Wiring>>& GetAllWirings() const { return m_wirings; }
 
