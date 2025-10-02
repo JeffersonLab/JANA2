@@ -40,6 +40,7 @@ protected:
     mutable std::mutex m_mutex;
     JApplication* m_app = nullptr;
     JLogger m_logger;
+    bool m_is_enabled = true;
 
 public:
     JComponent() = default;
@@ -74,6 +75,10 @@ public:
     // ---------------------
 
     void Wire(JApplication* app);
+
+    bool IsEnabled() const { return m_is_enabled; }
+
+    void SetEnabled(bool is_enabled){ m_is_enabled = is_enabled; }
 
     std::string GetPrefix() const { return m_prefix.empty() ? m_type_name : m_prefix; }
 

@@ -22,6 +22,15 @@ void jana::components::JComponent::Wire(JApplication* app) {
     if (wiring != nullptr) {
         wiring->is_used = true;
 
+        if (wiring->action == services::JWiringService::Action::Remove) {
+            m_is_enabled = false;
+        }
+        else {
+            m_is_enabled = true;
+            // The user can provide a component which is disabled by default,
+            // in which case the wiring file is the only way to enable it.
+        }
+
         m_level = wiring->level;
 
         for (auto param : m_parameters) {
