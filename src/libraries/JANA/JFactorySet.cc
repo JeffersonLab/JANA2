@@ -72,7 +72,7 @@ void JFactorySet::Add(JDatabundle* databundle) {
 //---------------------------------
 // Add
 //---------------------------------
-bool JFactorySet::Add(JFactory* factory)
+void JFactorySet::Add(JFactory* factory)
 {
     /// Add a JFactory to this JFactorySet. The JFactorySet assumes ownership of this factory.
     /// If the JFactorySet already contains a JFactory with the same key,
@@ -85,7 +85,8 @@ bool JFactorySet::Add(JFactory* factory)
         //LOG << "    Skipping factory with type_name=" << factory->GetTypeName()
         //    << ", level=" << toString(factory->GetLevel())
         //    << " to event with level= " << toString(mLevel);
-        return false;
+        delete factory;
+        return;
     }
     /*
     else {
@@ -114,7 +115,6 @@ bool JFactorySet::Add(JFactory* factory)
             Add(databundle);
         }
     }
-    return true;
 }
 
 //---------------------------------
