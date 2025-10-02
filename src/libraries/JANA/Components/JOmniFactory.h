@@ -31,36 +31,6 @@ private:
 
 public:
 
-    inline void PreInit(std::string tag,
-                        JEventLevel level,
-                        std::vector<std::string> input_collection_names,
-                        std::vector<JEventLevel> input_collection_levels,
-                        std::vector<std::vector<std::string>> variadic_input_collection_names,
-                        std::vector<JEventLevel> variadic_input_collection_levels, 
-                        std::vector<std::string> output_collection_names,
-                        std::vector<std::vector<std::string>> variadic_output_collection_names
-                        ) {
-
-        m_prefix = (this->GetPluginName().empty()) ? tag : this->GetPluginName() + ":" + tag;
-        m_level = level;
-
-        // Obtain logger
-        m_logger = m_app->GetService<JParameterManager>()->GetLogger(m_prefix);
-
-        // Obtain collection name overrides if provided.
-        // Priority = [JParameterManager, JOmniFactoryGenerator]
-        m_app->SetDefaultParameter(m_prefix + ":InputTags", input_collection_names, "Input collection names");
-        m_app->SetDefaultParameter(m_prefix + ":OutputTags", output_collection_names, "Output collection names");
-
-        WireInputs(level, input_collection_levels, input_collection_names, variadic_input_collection_levels, variadic_input_collection_names);
-        WireOutputs(level, output_collection_names, variadic_output_collection_names, false);
-
-        // Configure logger. Priority = [JParameterManager, system log level]
-        // std::string default_log_level = eicrecon::LogLevelToString(m_logger->level());
-        // m_app->SetDefaultParameter(m_prefix + ":LogLevel", default_log_level, "LogLevel: trace, debug, info, warn, err, critical, off");
-        // m_logger->set_level(eicrecon::ParseLogLevel(default_log_level));
-    }
-
     void Init() override {
         static_cast<AlgoT*>(this)->Configure();
     }
