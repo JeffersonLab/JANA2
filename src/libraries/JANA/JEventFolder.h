@@ -52,8 +52,7 @@ public:
 
     void DoPreprocess(const JEvent& child) {
         {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_status != Status::Initialized) {
+            if (!m_is_initialized) {
                 throw JException("JEventFolder: Component needs to be initialized and not finalized before Fold can be called");
             }
         }
@@ -72,7 +71,7 @@ public:
 
     void DoFold(const JEvent& child, JEvent& parent) {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_status != Status::Initialized) {
+        if (!m_is_initialized) {
             throw JException("Component needs to be initialized and not finalized before Fold() can be called");
         }
         if (!m_call_preprocess_upstream) {
@@ -117,11 +116,11 @@ public:
 
     void DoFinish() {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_status != Status::Finalized) {
+        if (!m_is_finalized) {
             CallWithJExceptionWrapper("JEventFolder::Finish", [&](){
                 Finish();
             });
-            m_status = Status::Finalized;
+            m_is_finalized = true;
         }
     }
 

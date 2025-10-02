@@ -95,7 +95,6 @@ TEST_CASE("JService Omni interface") {
     app.ProvideService(std::make_shared<OmniService>());
     app.Initialize();
     auto sut = app.GetService<OmniService>();
-    REQUIRE(sut->GetStatus() == JService::Status::Initialized);
     REQUIRE(sut->bucket_count() == 22);
 
     // Fetch again to make sure Init() is only called once

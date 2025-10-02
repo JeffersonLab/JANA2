@@ -64,7 +64,7 @@ public:
     void DoPreprocess(const JEvent& parent) {
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_status != Status::Initialized) {
+            if (!m_is_initialized) {
                 throw JException("JEventUnfolder: Component needs to be initialized and not finalized before Unfold can be called");
             }
         }
@@ -83,7 +83,7 @@ public:
 
     Result DoUnfold(const JEvent& parent, JEvent& child) {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_status == Status::Initialized) {
+        if (m_is_initialized) {
             if (!m_call_preprocess_upstream) {
                 if (!m_enable_simplified_callbacks) {
                     CallWithJExceptionWrapper("JEventUnfolder::Preprocess", [&](){
@@ -152,11 +152,11 @@ public:
 
     void DoFinish() {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_status != Status::Finalized) {
+        if (!m_is_finalized) {
             CallWithJExceptionWrapper("JEventUnfolder::Finish", [&](){
                 Finish();
             });
-            m_status = Status::Finalized;
+            m_is_finalized = true;
         }
     }
 

@@ -27,6 +27,7 @@ public:
     /// The user is supposed to _throw_ RETURN_STATUS::kNO_MORE_EVENTS or kBUSY from GetEvent()
     enum class RETURN_STATUS { kSUCCESS, kNO_MORE_EVENTS, kBUSY, kTRY_AGAIN, kERROR, kUNKNOWN };
 
+    enum class Status { Unopened, Opened, Closed };
 
 private:
     std::string m_resource_name;
@@ -38,6 +39,7 @@ private:
     bool m_enable_finish_event = false;
     bool m_enable_get_objects = false;
     bool m_enable_process_parallel = false;
+    Status m_status = Status::Unopened;
 
     std::vector<JEventLevel> m_event_levels;
     JEventLevel m_next_level = JEventLevel::None;
@@ -158,6 +160,8 @@ public:
     virtual std::string GetVDescription() const {
         return "<description unavailable>";
     } ///< Optional for getting description via source rather than JEventSourceGenerator
+
+    Status GetStatus() const { return m_status; }
 
 
     // Setters

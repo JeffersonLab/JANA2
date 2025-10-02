@@ -20,7 +20,6 @@ namespace jana::components {
 
 
 struct JComponent {
-    enum class Status { Uninitialized, Initialized, Opened, Closed, Finalized };
     enum class CallbackStyle { LegacyMode, ExpertMode, DeclarativeMode };
 
     struct ParameterBase;
@@ -36,7 +35,8 @@ protected:
     std::string m_plugin_name;
     std::string m_logger_name;
     std::string m_type_name;
-    Status m_status = Status::Uninitialized;
+    std::atomic_bool m_is_initialized {false};
+    std::atomic_bool m_is_finalized {false};
     mutable std::mutex m_mutex;
     JApplication* m_app = nullptr;
     JLogger m_logger;
@@ -102,11 +102,6 @@ public:
     virtual void Summarize(JComponentSummary&) const {};
 
     CallbackStyle GetCallbackStyle() const { return m_callback_style; }
-
-    Status GetStatus() const { 
-        std::lock_guard<std::mutex> lock(m_mutex);
-        return m_status; 
-    }
 
     void SetApplication(JApplication* app) { 
         if (app == nullptr) {

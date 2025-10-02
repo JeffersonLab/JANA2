@@ -3,7 +3,7 @@
 void JEventSource::DoOpen(bool with_lock) {
     if (with_lock) {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_status != Status::Initialized) {
+        if (!m_is_initialized) {
             throw JException("Attempted to open a JEventSource that hasn't been initialized!");
         }
         CallWithJExceptionWrapper("JEventSource::Open", [&](){ Open();});
@@ -16,7 +16,7 @@ void JEventSource::DoOpen(bool with_lock) {
         m_status = Status::Opened;
     }
     else {
-        if (m_status != Status::Initialized) {
+        if (!m_is_initialized) {
             throw JException("Attempted to open a JEventSource that hasn't been initialized!");
         }
         CallWithJExceptionWrapper("JEventSource::Open", [&](){ Open();});
@@ -63,10 +63,10 @@ JEventSource::Result JEventSource::DoNext(std::shared_ptr<JEvent> event) {
 
     std::lock_guard<std::mutex> lock(m_mutex); // In general, DoNext must be synchronized.
 
-    if (m_status == Status::Uninitialized) {
+    if (!m_is_initialized) {
         throw JException("JEventSource has not been initialized!");
     }
-    if (m_status == Status::Initialized) {
+    if (m_status == Status::Unopened) {
         DoOpen(false);
     }
     if (m_status == Status::Opened) {
