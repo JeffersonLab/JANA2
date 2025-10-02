@@ -1,6 +1,7 @@
 
 #include "JANA/Components/JOmniFactory.h"
 #include "JANA/Components/JWiredFactoryGeneratorT.h"
+#include "JANA/JEventProcessor.h"
 #include "JANA/JException.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <JANA/Services/JWiringService.h>
@@ -13,26 +14,28 @@
 static constexpr std::string_view some_wiring = R"(
     include = ["asdf.toml"]
 
-    [[factory]]
+    [[wiring]]
+    action = "add"
     plugin_name = "BCAL"
     type_name = "MyFac"
     prefix = "myfac"
     input_names = ["input_coll_1", "input_coll_2"]
     input_levels = ["Run", "Subrun"]
     output_names = ["output_coll_1", "output_coll_2"]
-    
-        [factory.configs]
+
+        [wiring.configs]
         x = "22"
         y = "verbose"
 
-    [[factory]]
+    [[wiring]]
+    action = "add"
     plugin_name = "BCAL"
     type_name = "MyFac"
     prefix = "myfac_modified"
     input_names = ["input_coll_1", "input_coll_3"]
     output_names = ["output_coll_1_modified", "output_coll_2_modified"]
 
-        [factory.configs]
+        [wiring.configs]
         x = "100"
         y = "verbose"
 
@@ -44,7 +47,7 @@ TEST_CASE("WiringTests") {
     toml::table table = toml::parse(some_wiring);
     sut.AddWirings(table, "testcase");
 
-    const auto& wirings = sut.GetWirings();
+    const auto& wirings = sut.GetAllWirings();
     REQUIRE(wirings.size() == 2);
     REQUIRE(wirings[0]->prefix == "myfac");
     REQUIRE(wirings[1]->prefix == "myfac_modified");
@@ -62,12 +65,14 @@ TEST_CASE("WiringTests") {
 }
 
 static constexpr std::string_view duplicate_prefixes = R"(
-    [[factory]]
+    [[wiring]]
+    action = "add"
     plugin_name = "BCAL"
     type_name = "MyFac"
     prefix = "myfac"
 
-    [[factory]]
+    [[wiring]]
+    action = "add"
     plugin_name = "BCAL"
     type_name = "MyFac"
     prefix = "myfac"
@@ -113,30 +118,33 @@ TEST_CASE("WiringTests_Overlay") {
 }
 
 static constexpr std::string_view fake_wiring_file = R"(
-    [[factory]]
+    [[wiring]]
+    action = "add"
     plugin_name = "ECAL"
     type_name = "ClusteringFac"
     prefix = "myfac"
 
-        [factory.configs]
+        [wiring.configs]
         x = "22"
         y = "verbose"
 
-    [[factory]]
+    [[wiring]]
+    action = "add"
     plugin_name = "ECAL"
     type_name = "ClusteringFac"
     prefix = "variantfac"
 
-        [factory.configs]
+        [wiring.configs]
         x = "49"
         y = "silent"
 
-    [[factory]]
+    [[wiring]]
+    action = "add"
     plugin_name = "BCAL"
     type_name = "ClusteringFac"
     prefix = "sillyfac"
 
-        [factory.configs]
+        [wiring.configs]
         x = "618"
         y = "mediocre"
 )";
@@ -168,18 +176,17 @@ TEST_CASE("WiringTests_FakeFacGen") {
 
     // We should end up with three in total
     sut.AddWirings(fake_facgen_wirings, "fake_facgen");
-    auto final_wirings = sut.GetWirings("ECAL", "ClusteringFac");
+    auto final_wirings = sut.GetPrefixesForAddedInstances("ECAL", "ClusteringFac");
 
     REQUIRE(final_wirings.size() == 3);
 
-    REQUIRE(final_wirings[0]->prefix == "myfac");
-    REQUIRE(final_wirings[1]->prefix == "variantfac");
-    REQUIRE(final_wirings[2]->prefix == "exuberantfac");
+    REQUIRE(final_wirings[0] == "myfac");
+    REQUIRE(final_wirings[1] == "variantfac");
+    REQUIRE(final_wirings[2] == "exuberantfac");
 
-    REQUIRE(final_wirings[0]->configs["x"] == "22"); // from file only
-    REQUIRE(final_wirings[1]->configs["x"] == "49"); // file overrides facgen
-    REQUIRE(final_wirings[2]->configs["x"] == "27"); // from facgen only
-
+    REQUIRE(sut.GetWiring(final_wirings[0])->configs["x"] == "22"); // from file only
+    REQUIRE(sut.GetWiring(final_wirings[1])->configs["x"] == "49"); // file overrides facgen
+    REQUIRE(sut.GetWiring(final_wirings[2])->configs["x"] == "27"); // from facgen only
 }
 
 struct Cluster { double x,y,E; };
@@ -206,23 +213,25 @@ struct WiredOmniFac : jana::components::JOmniFactory<WiredOmniFac> {
 };
 
 static constexpr std::string_view realfacgen_wiring = R"(
-    [[factory]]
+    [[wiring]]
+    action = "add"
     type_name = "WiredOmniFac"
     prefix = "myfac"
     input_names = ["usual_input"]
     output_names = ["usual_output"]
 
-        [factory.configs]
+        [wiring.configs]
         x = "22"
         y = "verbose"
 
-    [[factory]]
+    [[wiring]]
+    action = "add"
     type_name = "WiredOmniFac"
     prefix = "myfac_modified"
     input_names = ["different_input"]
     output_names = ["different_output"]
 
-        [factory.configs]
+        [wiring.configs]
         x = "100"
         y = "silent"
 
@@ -292,22 +301,24 @@ static constexpr std::string_view sharedparam_wiring = R"(
     [configs]
     shared = "28"
 
-    [[factory]]
+    [[wiring]]
+    action = "add"
     type_name = "WiredOmniFacWithShared"
     prefix = "myfac"
     input_names = ["usual_input"]
     output_names = ["usual_output"]
 
-        [factory.configs]
+        [wiring.configs]
         isolated = "22"
 
-    [[factory]]
+    [[wiring]]
+    action = "add"
     type_name = "WiredOmniFacWithShared"
     prefix = "myfac_modified"
     input_names = ["different_input"]
     output_names = ["different_output"]
 
-        [factory.configs]
+        [wiring.configs]
         isolated = "100"
 )";
 
@@ -344,3 +355,129 @@ TEST_CASE("WiringTests_SharedParam") {
     //auto facs = event->GetFactorySet()->GetAllMultifactories();
 
 }
+
+
+class WiredEvtProc : public JEventProcessor {
+
+    Parameter<int> m_x {this, "x", 22};
+    Input<Cluster> m_cluster_in {this};
+    //Input<Cluster> m_different_cluster_in {this};
+    //VariadicInput<Cluster> m_even_more_in {this};
+
+public:
+
+    WiredEvtProc() {
+        SetTypeName("WiredEvtProc");
+        SetPrefix("myproc");
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
+    void Init() override {
+        REQUIRE(*m_x == 99); // Set by wiring file
+    }
+
+    void ProcessSequential(const JEvent&) override {
+
+        // Set by wiring file
+        REQUIRE(GetPrefix() == "myproc");
+        REQUIRE(m_cluster_in.GetDatabundleName() == "myclusters");
+
+        // Data is reachable
+        REQUIRE(m_cluster_in->size() == 1); 
+    }
+};
+
+static constexpr std::string_view evtproc_wiring = R"(
+    [[wiring]]
+    action = "update"
+    type_name = "WiredEvtProc"
+    prefix = "myproc"
+    input_names = ["myclusters"]
+
+        [wiring.configs]
+        x = "99"
+)";
+
+TEST_CASE("WiringTests_Proc") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(evtproc_wiring);
+    wiring_svc->AddWirings(table, "testcase");
+
+    auto proc = new WiredEvtProc;
+    app.Add(proc);
+
+    app.Initialize();
+    auto event = std::make_shared<JEvent>(&app);
+    std::vector<Cluster*> test_data;
+    test_data.push_back(new Cluster{0, 0, 22.2});
+    event->Insert<Cluster>(test_data, "myclusters");
+
+    proc->DoInit();
+    proc->DoMap(*event);
+    proc->DoTap(*event);
+}
+
+
+struct WiredFac : public JFactory {
+    Input<Cluster> m_protoclusters_in {this};
+    Output<Cluster> m_clusters_out {this};
+
+    Parameter<int> m_x {this, "x", 1, "x"};
+
+    WiredFac() {
+        SetPrefix("wiredfac");
+    }
+    void Process(const JEvent&) {
+        for (auto protocluster : *m_protoclusters_in) {
+            m_clusters_out().push_back(new Cluster {protocluster->x, protocluster->y, protocluster->E + *m_x});
+        }
+    }
+};
+
+static constexpr std::string_view facgen_wiring = R"(
+    [[wiring]]
+    action = "update"
+    type_name = "WiredFac"
+    prefix = "wiredfac"
+    input_names = ["usual_input"]
+    output_names = ["usual_output"]
+
+        [wiring.configs]
+        x = "22"
+)";
+
+TEST_CASE("WiringTests_FacGen") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(facgen_wiring);
+    wiring_svc->AddWirings(table, "testcase");
+
+    auto gen = new JFactoryGeneratorT<WiredFac>;
+    app.Add(gen);
+    app.Initialize();
+
+    auto& summary = app.GetComponentSummary();
+    jout << summary;
+    auto vf = summary.FindComponents("wiredfac");
+    REQUIRE(vf.size() == 1);
+    REQUIRE(vf.at(0)->GetOutputs().at(0)->GetName() == "usual_output");
+
+    REQUIRE(app.GetParameterValue<int>("wiredfac:x") == 22);
+
+    auto event = std::make_shared<JEvent>(&app);
+    std::vector<Cluster*> test_data;
+    test_data.push_back(new Cluster{0, 0, 22.2});
+    event->Insert<Cluster>(test_data, "usual_input");
+
+    auto results = event->Get<Cluster>("usual_output");
+    REQUIRE(results.size() == 1);
+    REQUIRE(results.at(0)->E == 44.2);
+
+}
+
+

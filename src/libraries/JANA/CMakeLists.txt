@@ -28,6 +28,7 @@ set(JANA2_SOURCES
     Services/JPluginLoader.cc
     Services/JWiringService.cc
 
+    Components/JComponent.cc
     Components/JComponentSummary.cc
     Components/JHasInputs.cc
 

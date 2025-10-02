@@ -7,7 +7,7 @@
 
 void JService::DoInit(JServiceLocator* sl) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    if (this->m_status != Status::Uninitialized) return; 
+    if (this->m_is_initialized) return; 
 
     if (m_app != nullptr) {
 
@@ -26,5 +26,5 @@ void JService::DoInit(JServiceLocator* sl) {
     CallWithJExceptionWrapper("JService::acquire_services", [&](){ this->acquire_services(sl); });
     CallWithJExceptionWrapper("JService::Init", [&](){ this->Init(); });
 
-    this->m_status = Status::Initialized;
+    this->m_is_initialized = true;
 }

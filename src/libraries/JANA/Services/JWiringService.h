@@ -16,7 +16,9 @@ namespace jana::services {
 class JWiringService : public JService {
 
 public:
+    enum class Action { Add, Update, Remove };
     struct Wiring {
+        Action action;
         std::string plugin_name;
         std::string type_name;
         std::string prefix;
@@ -29,6 +31,7 @@ public:
         std::vector<JEventLevel> output_levels;
         std::vector<std::vector<std::string>> variadic_output_names;
         std::map<std::string, std::string> configs;
+        bool is_used = false;
     };
 
 private:
@@ -40,8 +43,8 @@ private:
 
     std::vector<std::unique_ptr<Wiring>> m_wirings;
     std::map<std::string, Wiring*> m_wirings_from_prefix;
-    std::map<std::pair<std::string,std::string>, std::vector<Wiring*>> m_wirings_from_type_and_plugin_names;
-    std::vector<Wiring*> m_no_wirings;
+    std::map<std::pair<std::string,std::string>, std::vector<std::string>> m_added_prefixes;
+    std::vector<std::string> m_no_added_prefixes; // Because we can't use std::optional yet
     std::map<std::string, std::string> m_shared_parameters;
 
 public:
@@ -55,14 +58,13 @@ public:
     void AddSharedParameters(const toml::table& table, const std::string& source);
     const std::map<std::string, std::string>& GetSharedParameters() const;
 
-    const Wiring*
-    GetWiring(const std::string& prefix) const;
+    Wiring* GetWiring(const std::string& prefix) const;
 
-    const std::vector<Wiring*>&
-    GetWirings(const std::string& plugin_name, const std::string& type_name) const;
+    const std::vector<std::string>& GetPrefixesForAddedInstances(const std::string& plugin_name, const std::string& type_name) const;
 
-    const std::vector<std::unique_ptr<Wiring>>& 
-    GetWirings() const { return m_wirings; }
+    const std::vector<std::unique_ptr<Wiring>>& GetAllWirings() const { return m_wirings; }
+
+    void CheckAllWiringsAreUsed();
 
     static void Overlay(Wiring& above, const Wiring& below);
 };

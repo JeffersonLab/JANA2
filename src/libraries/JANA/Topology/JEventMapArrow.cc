@@ -60,7 +60,7 @@ void JEventMapArrow::initialize() {
     for (auto processor : m_procs) {
         if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {
             LOG_DEBUG(m_logger) << "Initializing JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
-            processor->DoInitialize();
+            processor->DoInit();
             LOG_INFO(m_logger) << "Initialized JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
         }
     }

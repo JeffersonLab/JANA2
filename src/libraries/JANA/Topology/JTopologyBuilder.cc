@@ -120,9 +120,9 @@ void JTopologyBuilder::create_topology() {
 }
 
 
-void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
+void JTopologyBuilder::Init() {
 
-    m_components = sl->get<JComponentManager>();
+    m_components = GetApplication()->GetService<JComponentManager>();
 
     // We default event pool size to be equal to nthreads
     // We parse the 'nthreads' parameter two different ways for backwards compatibility.
@@ -224,7 +224,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // Find all event sources at this level
     std::vector<JEventSource*> sources_at_level;
     for (JEventSource* source : m_components->get_evt_srces()) {
-        if (source->GetLevel() == current_level) {
+        if (source->GetLevel() == current_level && source->IsEnabled()) {
             sources_at_level.push_back(source);
         }
     }
@@ -232,7 +232,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // Find all unfolders at this level
     std::vector<JEventUnfolder*> unfolders_at_level;
     for (JEventUnfolder* unfolder : m_components->get_unfolders()) {
-        if (unfolder->GetLevel() == current_level) {
+        if (unfolder->GetLevel() == current_level && unfolder->IsEnabled()) {
             unfolders_at_level.push_back(unfolder);
         }
     }
@@ -243,7 +243,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
 
     for (JEventProcessor* proc : m_components->get_evt_procs()) {
 
-        if (proc->GetLevel() == current_level) {
+        if (proc->GetLevel() == current_level && proc->IsEnabled()) {
 
             // This may be a weird place to do it, but let's quickly validate that users aren't
             // trying to enable ordering on a legacy event processor. We don't do this in the constructor

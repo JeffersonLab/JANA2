@@ -12,7 +12,7 @@
 
 TEST_CASE("JServiceLocatorMissingServiceTest") {
     JServiceLocator sut;
-    sut.wire_everything();
+    sut.InitAllServices();
     REQUIRE_THROWS(sut.get<ParameterSvc>());
     /*
     try {
@@ -59,10 +59,10 @@ TEST_CASE("JServiceLocator chicken-and-egg tests") {
     REQUIRE(parameterSvc->get("EIC:MagneticFieldDatabaseURL") == "");  // MagneticFieldSvc doesn't have its params yet
 
 
-    // PHASE 5: Once all plugins are loaded and all Services are provided, we wire them all up _before_ any
+    // PHASE 5: Once all plugins are loaded and all Services are provided, we initialize them _before_ any
     // processing starts. This involves JServiceLocator calling acquire_services() on everything
     // MagneticFieldService retrieves its database URL or sets a default which the user can see.
-    sl.wire_everything();
+    sl.InitAllServices();
     REQUIRE(parameterSvc->get("EIC:MagneticFieldDatabaseURL") == "mysql://127.0.0.1");
 
     // PHASE 6: Everything is ready, we can do whatever we want.
@@ -95,7 +95,6 @@ TEST_CASE("JService Omni interface") {
     app.ProvideService(std::make_shared<OmniService>());
     app.Initialize();
     auto sut = app.GetService<OmniService>();
-    REQUIRE(sut->GetStatus() == JService::Status::Initialized);
     REQUIRE(sut->bucket_count() == 22);
 
     // Fetch again to make sure Init() is only called once

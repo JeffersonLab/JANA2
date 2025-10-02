@@ -78,27 +78,31 @@ public:
 
         if (m_typed_wirings.size() == 0) {
             FactoryT *factory = new FactoryT;
-            factory->SetApplication(GetApplication());
             factory->SetPluginName(this->GetPluginName());
             factory->SetTypeName(JTypeInfo::demangle<FactoryT>());
-            factory->SetLogger(GetApplication()->template GetService<JParameterManager>()->GetLogger(factory->GetPrefix()));
+            factory->Wire(GetApplication());
             factory_set->Add(factory);
         }
 
-        for (const auto& wiring : m_typed_wirings) {
+        for (auto& wiring : m_typed_wirings) {
+
+            auto prefix = (GetPluginName().empty()) ? wiring.tag : this->GetPluginName() + ":" + wiring.tag;
+            GetApplication()->SetDefaultParameter(prefix + ":InputTags", wiring.input_names, "Input collection names");
+            GetApplication()->SetDefaultParameter(prefix + ":OutputTags", wiring.output_names, "Output collection names");
 
             FactoryT *factory = new FactoryT;
-            factory->SetApplication(GetApplication());
             factory->SetPluginName(this->GetPluginName());
             factory->SetTypeName(JTypeInfo::demangle<FactoryT>());
+            factory->SetPrefix(prefix);
+
+            // Apply the wiring information passed to the generator
+            factory->SetLevel(wiring.level);
+            factory->WireInputs(wiring.level, wiring.input_levels, wiring.input_names, wiring.variadic_input_levels, wiring.variadic_input_names);
+            factory->WireOutputs(wiring.level, wiring.output_names, wiring.variadic_output_names, false);
             factory->config() = wiring.configs;
 
-            // Set up all of the wiring prereqs so that Init() can do its thing
-            // Specifically, it needs valid input/output tags, a valid logger, and
-            // valid default values in its Config object
-            factory->PreInit(wiring.tag, wiring.level, wiring.input_names, wiring.input_levels,
-                             wiring.variadic_input_names, wiring.variadic_input_levels,
-                             wiring.output_names, wiring.variadic_output_names);
+            // Apply the wiring information from file
+            factory->Wire(GetApplication());
 
             // Factory is ready
             factory_set->Add(factory);

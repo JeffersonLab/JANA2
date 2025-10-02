@@ -20,7 +20,6 @@ namespace jana::components {
 
 
 struct JComponent {
-    enum class Status { Uninitialized, Initialized, Opened, Closed, Finalized };
     enum class CallbackStyle { LegacyMode, ExpertMode, DeclarativeMode };
 
     struct ParameterBase;
@@ -36,12 +35,17 @@ protected:
     std::string m_plugin_name;
     std::string m_logger_name;
     std::string m_type_name;
-    Status m_status = Status::Uninitialized;
+    std::atomic_bool m_is_initialized {false};
+    std::atomic_bool m_is_finalized {false};
     mutable std::mutex m_mutex;
     JApplication* m_app = nullptr;
     JLogger m_logger;
+    bool m_is_enabled = true;
 
 public:
+    JComponent() = default;
+    virtual ~JComponent() = default;
+
     // ---------------------
     // Meant to be called by users, or alternatively from a Generator
     // ---------------------
@@ -69,6 +73,13 @@ public:
     // ---------------------
     // Meant to be called by JANA
     // ---------------------
+
+    void Wire(JApplication* app);
+
+    bool IsEnabled() const { return m_is_enabled; }
+
+    void SetEnabled(bool is_enabled){ m_is_enabled = is_enabled; }
+
     std::string GetPrefix() const { return m_prefix.empty() ? m_type_name : m_prefix; }
 
     JEventLevel GetLevel() const { return m_level; }
@@ -92,11 +103,6 @@ public:
 
     CallbackStyle GetCallbackStyle() const { return m_callback_style; }
 
-    Status GetStatus() const { 
-        std::lock_guard<std::mutex> lock(m_mutex);
-        return m_status; 
-    }
-
     void SetApplication(JApplication* app) { 
         if (app == nullptr) {
             throw JException("Attempting to set a null JApplication pointer!");
@@ -108,6 +114,12 @@ public:
 
     template <typename F> 
     inline void CallWithJExceptionWrapper(std::string func_name, F func);
+
+    void DoInit();
+
+    // `Init` is where the user requests parameters and services. If the user requests all parameters and services here,
+    // JANA can report them back to the user without having to open the resource and run the topology.
+    virtual void Init() {};
 
     // ---------------------
     // "Registered member" helpers

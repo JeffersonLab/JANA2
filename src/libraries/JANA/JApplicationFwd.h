@@ -118,7 +118,6 @@ public:
 
     /// Use this in EventSources, Factories, or EventProcessors. Do not call this
     /// from InitPlugin(), as not all JServices may have been loaded yet.
-    /// When initializing a Service, use acquire_services() instead.
     template <typename T>
     std::shared_ptr<T> GetService();
 

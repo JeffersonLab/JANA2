@@ -48,7 +48,7 @@ public:
     JTopologyBuilder();
     ~JTopologyBuilder() override;
 
-    void acquire_services(JServiceLocator *sl) override;
+    void Init() override;
 
     /// set_cofigure_fn lets the user provide a lambda that sets up a topology after all components have been loaded.
     /// It provides an 'empty' JArrowTopology which has been furnished with a pointer to the JComponentManager, the JEventPool,

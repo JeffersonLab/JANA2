@@ -79,6 +79,7 @@ void JComponentManager::configure_components() {
     preinitialize_components();
 
     // Resolve all event sources now that all plugins have been loaded
+    // (Note that we need to wire the event source generators beforehand)
     resolve_event_sources();
 
     // Call Summarize() and Init() in order to populate JComponentSummary and JParameterManager, respectively
@@ -87,12 +88,10 @@ void JComponentManager::configure_components() {
 
 void JComponentManager::preinitialize_components() {
     for (auto* src : m_evt_srces) {
-        src->SetApplication(GetApplication());
-        src->SetLogger(m_params->GetLogger(src->GetLoggerName()));
+        src->Wire(GetApplication());
     }
     for (auto* proc : m_evt_procs) {
-        proc->SetApplication(GetApplication());
-        proc->SetLogger(m_params->GetLogger(proc->GetLoggerName()));
+        proc->Wire(GetApplication());
     }
     for (auto* fac_gen : m_fac_gens) {
         fac_gen->SetApplication(GetApplication());
@@ -103,8 +102,7 @@ void JComponentManager::preinitialize_components() {
         //src_gen->SetLogger(m_logging->get_logger(src_gen->GetLoggerName()));
     }
     for (auto* unfolder : m_unfolders) {
-        unfolder->SetApplication(GetApplication());
-        unfolder->SetLogger(m_params->GetLogger(unfolder->GetLoggerName()));
+        unfolder->Wire(GetApplication());
     }
 }
 
@@ -207,7 +205,7 @@ void JComponentManager::resolve_event_sources() {
         auto* generator = resolve_event_source(source_name);
         auto source = generator->MakeJEventSource(source_name);
         source->SetPluginName(generator->GetPluginName());
-        source->SetApplication(GetApplication());
+        source->Wire(GetApplication());
         m_evt_srces.push_back(source);
     }
 

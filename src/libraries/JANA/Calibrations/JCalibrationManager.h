@@ -37,7 +37,7 @@ public:
         SetPrefix("jana"); 
     }
 
-    void acquire_services(JServiceLocator* sl) {
+    void Init() {
 
         // Url and context may be passed in either as environment variables
         // or configuration parameters. Default values are used if neither is available.
@@ -45,7 +45,7 @@ public:
         if (getenv("JANA_CALIB_URL") != nullptr) m_url = getenv("JANA_CALIB_URL");
         if (getenv("JANA_CALIB_CONTEXT") != nullptr) m_context = getenv("JANA_CALIB_CONTEXT");
 
-        m_params = sl->get<JParameterManager>();
+        m_params = GetApplication()->GetService<JParameterManager>();
         m_params->SetDefaultParameter("JANA:CALIB_URL", m_url, "URL used to access calibration constants");
         m_params->SetDefaultParameter("JANA:CALIB_CONTEXT", m_context,
                                     "Calibration context to pass on to concrete JCalibration derived class");

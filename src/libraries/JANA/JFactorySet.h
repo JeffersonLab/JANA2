@@ -32,7 +32,7 @@ public:
     JFactorySet();
     virtual ~JFactorySet();
 
-    bool Add(JFactory* aFactory);
+    void Add(JFactory* factory);
     void Add(JDatabundle* databundle);
     void Print() const;
     void Clear();

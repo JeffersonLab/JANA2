@@ -18,7 +18,9 @@ class JEventProcessor : public jana::components::JComponent,
                         public jana::components::JHasInputs {
 public:
 
-    JEventProcessor() = default;
+    JEventProcessor() {
+        m_type_name = "JEventProcessor";
+    }
     virtual ~JEventProcessor() = default;
 
     [[deprecated]]
@@ -34,19 +36,6 @@ public:
     bool IsOrderingEnabled() const { return m_enable_ordering; }
 
     void EnableOrdering(bool enable=true) { m_enable_ordering = enable; }
-
-
-    virtual void DoInitialize() {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        for (auto* parameter : m_parameters) {
-            parameter->Init(*(m_app->GetJParameterManager()), m_prefix);
-        }
-        for (auto* service : m_services) {
-            service->Fetch(m_app);
-        }
-        CallWithJExceptionWrapper("JEventProcessor::Init", [&](){ Init(); });
-        m_status = Status::Initialized;
-    }
 
 
     virtual void DoMap(const JEvent& event) {
@@ -79,10 +68,10 @@ public:
         // so that this runs correctly even if that isn't happening. This lock shouldn't experience
         // any contention.
 
-        if (m_status == Status::Uninitialized) {
+        if (!m_is_initialized) {
             throw JException("JEventProcessor: Attempted to call DoTap() before Initialize()");
         }
-        else if (m_status == Status::Finalized) {
+        else if (m_is_finalized) {
             throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
         }
         for (auto* input : m_inputs) {
@@ -132,10 +121,10 @@ public:
             // Protect the call to BeginRun(), etc, to prevent some threads from running Process() before BeginRun().
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            if (m_status == Status::Uninitialized) {
+            if (!m_is_initialized) {
                 throw JException("JEventProcessor: Attempted to call DoLegacyProcess() before Initialize()");
             }
-            else if (m_status == Status::Finalized) {
+            else if (m_is_finalized) {
                 throw JException("JEventProcessor: Attempted to call DoLegacyProcess() after Finalize()");
             }
             if (m_last_run_number != run_number) {
@@ -156,12 +145,12 @@ public:
 
     virtual void DoFinalize() {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_status != Status::Finalized) {
+        if (!m_is_finalized) {
             if (m_last_run_number != -1) {
                 CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
             }
             CallWithJExceptionWrapper("JEventProcessor::Finish", [&](){ Finish(); });
-            m_status = Status::Finalized;
+            m_is_finalized = true;
         }
     }
 
@@ -181,9 +170,6 @@ public:
         }
         summary.Add(result);
     }
-
-
-    virtual void Init() {}
 
 
     // LegacyMode-specific callbacks

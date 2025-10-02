@@ -72,7 +72,7 @@ void JFactorySet::Add(JDatabundle* databundle) {
 //---------------------------------
 // Add
 //---------------------------------
-bool JFactorySet::Add(JFactory* factory)
+void JFactorySet::Add(JFactory* factory)
 {
     /// Add a JFactory to this JFactorySet. The JFactorySet assumes ownership of this factory.
     /// If the JFactorySet already contains a JFactory with the same key,
@@ -85,7 +85,8 @@ bool JFactorySet::Add(JFactory* factory)
         //LOG << "    Skipping factory with type_name=" << factory->GetTypeName()
         //    << ", level=" << toString(factory->GetLevel())
         //    << " to event with level= " << toString(mLevel);
-        return false;
+        delete factory;
+        return;
     }
     /*
     else {
@@ -99,7 +100,13 @@ bool JFactorySet::Add(JFactory* factory)
 
     for (auto* output : factory->GetOutputs()) {
         if (output->GetLevel() != mLevel && output->GetLevel() != JEventLevel::None) {
-            throw JException("Factory outputs are required to be at the same level as the factory itself");
+            auto ex = JException("Factory outputs are required to be at the same level as the factory itself. Factory level = %s, output level = %s", 
+                             toString(factory->GetLevel()).c_str(), 
+                             toString(output->GetLevel()).c_str());
+            ex.instance_name = factory->GetPrefix();
+            ex.function_name = "JFactorySet::Add";
+            ex.plugin_name = factory->GetPluginName();
+            throw ex;
         }
         auto* databundle = output->GetDatabundle();
         databundle->SetFactory(factory); // It's a little weird to set this here
@@ -107,14 +114,19 @@ bool JFactorySet::Add(JFactory* factory)
     }
     for (auto* variadic_output : factory->GetVariadicOutputs()) {
         if (variadic_output->GetLevel() != mLevel && variadic_output->GetLevel() != JEventLevel::None) {
-            throw JException("Factory outputs are required to be at the same level as the factory itself");
+            auto ex = JException("Factory outputs are required to be at the same level as the factory itself. Factory level = %s, output level = %s", 
+                             toString(factory->GetLevel()).c_str(), 
+                             toString(variadic_output->GetLevel()).c_str());
+            ex.instance_name = factory->GetPrefix();
+            ex.function_name = "JFactorySet::Add";
+            ex.plugin_name = factory->GetPluginName();
+            throw ex;
         }
         for (const auto& databundle : variadic_output->GetDatabundles()) {
             databundle->SetFactory(factory); // It's a little weird to set this here
             Add(databundle);
         }
     }
-    return true;
 }
 
 //---------------------------------
