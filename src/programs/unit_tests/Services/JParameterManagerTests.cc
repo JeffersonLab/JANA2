@@ -235,15 +235,14 @@ TEST_CASE("JParameterManager_VectorParams") {
         inputs.emplace_back(42.0);
 
         jpm.SetDefaultParameter("test", inputs);
-        std::vector<float> outputs;
-        auto param = jpm.GetParameter("test", outputs);
-        REQUIRE(param->GetValue() == "22,49.2,42");
+
+        std::vector<float> outputs = jpm.GetParameterValue<std::vector<float>>("test");
+        REQUIRE(outputs == std::vector<float>{22,49.2,42});
     }
     SECTION("Reading a vector of functions with commas") {
         // As of Mon Jan 27, JParameterManager does not allow an escape key to prevent splitting on the next comma)
         jpm.SetParameter("test", "phi-fmod(phi\\,5),theta-fmod(theta\\,10),omega-fmod(omega\\,15)"); // Issue #380 (Feature request)
         std::vector<std::string> vals;
-        std::cout << "Problem detected" << std::endl;
         jpm.GetParameter<std::vector<std::string>>("test", vals);
         auto stringification = jpm.Stringify(vals);
 
@@ -385,9 +384,9 @@ TEST_CASE("JParameterManager_ArrayParams") {
     SECTION("Writing a array of floats") {
         std::array<float,3> inputs = {22.0,49.2,42.0};
         jpm.SetDefaultParameter("test", inputs);
-        std::array<float,3> outputs;
-        auto param = jpm.GetParameter("test", outputs);
-        REQUIRE(param->GetValue() == "22,49.2,42");
+
+        std::array<float,3> outputs = jpm.GetParameterValue<std::array<float,3>>("test");
+        REQUIRE(outputs == std::array<float,3>{22.0, 49.2, 42.0});
     }
     SECTION("Reading a array of functions with commas") {
         // As of Mon Jan 27, JParameterManager does not allow an escape key to prevent splitting on the next comma)
