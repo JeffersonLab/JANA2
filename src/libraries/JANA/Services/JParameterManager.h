@@ -540,11 +540,11 @@ inline std::string JParameterManager::Stringify(const std::vector<T> &values) {
     std::stringstream ss;
     size_t len = values.size();
     for (size_t i = 0; i+1 < len; ++i) {
-        ss << values[i];
+        ss << Stringify(values[i]);
         ss << ",";
     }
     if (len != 0) {
-        ss << values[len-1];
+        ss << Stringify(values[len-1]);
     }
     return ss.str();
 }
@@ -587,11 +587,11 @@ inline std::string JParameterManager::Stringify(const std::array<T,N> &values) {
     std::stringstream ss;
     size_t len = values.size();
     for (size_t i = 0; i+1 < N; ++i) {
-        ss << values[i];
+        ss << Stringify(values[i]);
         ss << ",";
     }
     if (len != 0) {
-        ss << values[len-1];
+        ss << Stringify(values[len-1]);
     }
     return ss.str();
 }
