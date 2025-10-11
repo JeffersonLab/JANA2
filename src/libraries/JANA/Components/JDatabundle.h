@@ -66,28 +66,9 @@ public:
 
     // Setters
     void SetStatus(Status s) { m_status = s;}
-    void SetUniqueName(std::string unique_name) { m_unique_name = unique_name; m_has_short_name = false; }
-    void SetShortName(std::string short_name) {
-        m_short_name = short_name;
-        if (m_short_name.empty()) {
-            m_unique_name = m_type_name;
-        }
-        else {
-            m_unique_name = m_type_name + ":" + short_name;
-        }
-        m_has_short_name = true;
-    }
-    void SetTypeName(std::string type_name) {
-        m_type_name = type_name; 
-        if (m_has_short_name) {
-            if (m_short_name.empty()) {
-                m_unique_name = type_name;
-            }
-            else {
-                m_unique_name = type_name + ":" + m_short_name;
-            }
-        }
-    }
+    void SetUniqueName(std::string unique_name);
+    void SetShortName(std::string short_name);
+    void SetTypeName(std::string type_name);
     void SetTypeIndex(std::type_index index) { m_inner_type_index = index; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
     void SetFactory(JFactory* fac) { m_factory = fac; }
