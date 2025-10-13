@@ -44,7 +44,7 @@ void JWiringService::AddWirings(std::vector<std::unique_ptr<Wiring>>& wirings_bu
             if (wiring->action == Action::Add) {
                 m_added_prefixes[{wiring->type_name, wiring->plugin_name}].push_back(wiring->prefix);
             }
-            m_wirings.push_back(std::move(wiring));
+            m_wiring_set.wirings.push_back(std::move(wiring));
         }
         else {
             // Wiring is already defined; overlay this wiring _below_ the existing wiring
@@ -251,19 +251,19 @@ void JWiringService::AddSharedParameters(const toml::table& table, const std::st
     for (const auto& param : *shared_params) {
         std::string key(param.first);
         std::string val = *param.second.value<std::string>();
-        m_shared_parameters[key] = val;
+        m_wiring_set.shared_parameters[key] = val;
     }
 }
 
 
 
 const std::map<std::string, std::string>& JWiringService::GetSharedParameters() const {
-    return m_shared_parameters;
+    return m_wiring_set.shared_parameters;
 }
 
 void JWiringService::CheckAllWiringsAreUsed() {
     std::vector<JWiringService::Wiring*> m_unused_wirings;
-    for (const auto& wiring : m_wirings) {
+    for (const auto& wiring : m_wiring_set.wirings) {
         if (wiring->is_used == false) {
             m_unused_wirings.push_back(wiring.get());
         }

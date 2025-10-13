@@ -34,18 +34,22 @@ public:
         bool is_used = false;
     };
 
+    struct WiringSet {
+        std::vector<std::string> include_file_names;
+        std::vector<std::string> plugin_names;
+        std::map<std::string,std::string> shared_parameters;
+        std::vector<std::unique_ptr<Wiring>> wirings;
+        bool use_short_names=false;
+    };
+
 private:
     Parameter<std::string> m_wirings_input_file {this, "jana:wiring_file", "", 
         "Path to TOML file containing wiring definitions"};
 
-    Parameter<bool> m_strict_inheritance {this, "jana:wiring_strictness", true,
-        "Allow multiple definitions inside wiring files"};
-
-    std::vector<std::unique_ptr<Wiring>> m_wirings;
+    WiringSet m_wiring_set;
     std::map<std::string, Wiring*> m_wirings_from_prefix;
     std::map<std::pair<std::string,std::string>, std::vector<std::string>> m_added_prefixes;
     std::vector<std::string> m_no_added_prefixes; // Because we can't use std::optional yet
-    std::map<std::string, std::string> m_shared_parameters;
 
 public:
     JWiringService();
@@ -62,7 +66,7 @@ public:
 
     const std::vector<std::string>& GetPrefixesForAddedInstances(const std::string& plugin_name, const std::string& type_name) const;
 
-    const std::vector<std::unique_ptr<Wiring>>& GetAllWirings() const { return m_wirings; }
+    const std::vector<std::unique_ptr<Wiring>>& GetAllWirings() const { return m_wiring_set.wirings; }
 
     void CheckAllWiringsAreUsed();
 
