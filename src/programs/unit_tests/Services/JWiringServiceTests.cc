@@ -328,7 +328,6 @@ TEST_CASE("WiringTests_SharedParam") {
 
     auto wiring_svc = app.GetService<jana::services::JWiringService>();
     toml::table table = toml::parse(sharedparam_wiring);
-    wiring_svc->AddSharedParameters(table, "testcase");
     wiring_svc->AddWirings(table, "testcase");
 
     auto gen = new jana::components::JWiredFactoryGeneratorT<WiredOmniFacWithShared>;
@@ -479,5 +478,46 @@ TEST_CASE("WiringTests_FacGen") {
     REQUIRE(results.at(0)->E == 44.2);
 
 }
+
+
+static constexpr std::string_view facgen_shortnames_true = R"(
+    use_short_names = true
+
+    [[wiring]]
+    action = "update"
+    type_name = "WiredFac"
+    prefix = "wiredfac"
+    input_names = ["usual_input"]
+    output_names = ["usual_output"]
+
+        [wiring.configs]
+        x = "22"
+)";
+
+TEST_CASE("WiringTests_FacGenShortnames") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(facgen_shortnames_true);
+    wiring_svc->AddWirings(table, "testcase");
+
+    REQUIRE(wiring_svc->UseShortNames() == true);
+
+    auto gen = new JFactoryGeneratorT<WiredFac>;
+    app.Add(gen);
+    app.Initialize();
+
+    auto event = std::make_shared<JEvent>(&app);
+    std::vector<Cluster*> test_data;
+    test_data.push_back(new Cluster{0, 0, 22.2});
+    event->Insert<Cluster>(test_data, "usual_input");
+
+    auto results = event->Get<Cluster>("usual_output");
+    REQUIRE(results.size() == 1);
+    REQUIRE(results.at(0)->E == 44.2);
+
+}
+
 
 

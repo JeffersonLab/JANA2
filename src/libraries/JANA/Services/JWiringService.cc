@@ -172,6 +172,23 @@ std::unique_ptr<JWiringService::Wiring> ParseWiring(const toml::table& f) {
 
 void JWiringService::AddWirings(const toml::table& table, const std::string& source) {
 
+    // Parse shared parameters
+    auto shared_params = table["configs"].as_table();
+    if (shared_params != nullptr) {
+        for (const auto& param : *shared_params) {
+            std::string key(param.first);
+            std::string val = *param.second.value<std::string>();
+            m_wiring_set.shared_parameters[key] = val;
+        }
+    }
+
+    // Parse use_short_names
+    auto use_short_names = table["use_short_names"].as<bool>();
+    if (use_short_names != nullptr) {
+        m_wiring_set.use_short_names = use_short_names->get();
+    }
+
+    // Parse wirings
     std::vector<std::unique_ptr<Wiring>> wirings;
 
     auto wirings_array = table["wiring"].as_array();
@@ -190,7 +207,6 @@ void JWiringService::AddWirings(const toml::table& table, const std::string& sou
 void JWiringService::AddWiringFile(const std::string& filename) {
     try {
         auto tbl = toml::parse_file(filename);
-        AddSharedParameters(tbl, filename);
         AddWirings(tbl, filename);
     }
     catch (const toml::parse_error& err) {
@@ -240,22 +256,6 @@ void JWiringService::Overlay(Wiring& above, const Wiring& below) {
         }
     }
 }
-
-
-void JWiringService::AddSharedParameters(const toml::table& table, const std::string& /*source*/) {
-    auto shared_params = table["configs"].as_table();
-    if (shared_params == nullptr) {
-        LOG_INFO(GetLogger()) << "No configs found!" << LOG_END;
-        return;
-    }
-    for (const auto& param : *shared_params) {
-        std::string key(param.first);
-        std::string val = *param.second.value<std::string>();
-        m_wiring_set.shared_parameters[key] = val;
-    }
-}
-
-
 
 const std::map<std::string, std::string>& JWiringService::GetSharedParameters() const {
     return m_wiring_set.shared_parameters;
