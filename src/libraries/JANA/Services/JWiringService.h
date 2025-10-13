@@ -60,6 +60,7 @@ public:
     void AddWiringFile(const std::string& filename);
 
     const std::map<std::string, std::string>& GetSharedParameters() const;
+    const std::vector<std::string>& GetPluginNames() const { return m_wiring_set.plugin_names; }
     bool UseShortNames() const { return m_wiring_set.use_short_names; }
 
     Wiring* GetWiring(const std::string& prefix) const;

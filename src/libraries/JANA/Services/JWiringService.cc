@@ -172,6 +172,22 @@ std::unique_ptr<JWiringService::Wiring> ParseWiring(const toml::table& f) {
 
 void JWiringService::AddWirings(const toml::table& table, const std::string& source) {
 
+    // Parse include file names
+    auto includes = table["includes"].as_array();
+    if (includes != nullptr) {
+        for (const auto& include : *includes) {
+            m_wiring_set.include_file_names.push_back(include.as<std::string>()->get());
+        }
+    }
+
+    // Parse plugin names
+    auto plugins = table["plugins"].as_array();
+    if (plugins != nullptr) {
+        for (const auto& plugin_name : *plugins) {
+            m_wiring_set.include_file_names.push_back(plugin_name.as<std::string>()->get());
+        }
+    }
+
     // Parse shared parameters
     auto shared_params = table["configs"].as_table();
     if (shared_params != nullptr) {

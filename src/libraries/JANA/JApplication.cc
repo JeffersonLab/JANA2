@@ -138,6 +138,9 @@ void JApplication::Initialize() {
     }
 
     // Attach all plugins
+    for (const auto& plugin_name : wiring_service->GetPluginNames()) {
+        plugin_loader->add_plugin(plugin_name);
+    }
     plugin_loader->attach_plugins(component_manager.get());
 
     // Resolve and initialize all components
