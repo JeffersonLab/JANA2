@@ -18,7 +18,7 @@ void jana::components::JComponent::Wire(JApplication* app) {
 
     auto wiring_svc = m_app->GetService<services::JWiringService>();
     auto wiring = wiring_svc->GetWiring(m_prefix);
-    bool use_short_names = wiring_svc->UseShortNames();
+    bool use_short_names = wiring_svc->AreShortNamesUsed();
 
     if (wiring != nullptr) {
         wiring->is_used = true;
