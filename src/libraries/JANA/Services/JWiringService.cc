@@ -281,6 +281,36 @@ void JWiringService::Overlay(Wiring& above, const Wiring& below) {
     if (above.plugin_name != below.plugin_name) throw JException("Plugin name mismatch!");
     if (above.type_name != below.type_name) throw JException("Type name mismatch!");
 
+    // Overlay actions
+    if (above.action == Action::Add) {
+        if (below.action != Action::Remove) {
+            throw JException("Attempted to add a wiring that is already present. plugin=%s, prefix=%s",
+                             above.plugin_name.c_str(), above.prefix.c_str());
+        }
+        else {
+            // Add(Remove(wiring)) = Update(wiring)
+            above.action = Action::Update;
+        }
+    }
+    else if (above.action == Action::Update) {
+        if (below.action == Action::Add) {
+            above.action = Action::Add;
+        }
+        else if (below.action == Action::Remove) {
+            throw JException("Attempted to update a wiring that has been removed. plugin=%s, prefix=%s",
+                             above.plugin_name.c_str(), above.prefix.c_str());
+        }
+        // Update(Update(wiring)) => Update(wiring)
+    }
+    else if (above.action == Action::Remove) {
+        if (below.action == Action::Remove) {
+            throw JException("Attempted to remove a wiring that has already been removed. plugin=%s, prefix=%s",
+                             above.plugin_name.c_str(), above.prefix.c_str());
+        }
+        // Remove(Add(wiring)) => Remove(wiring)  // This one is odd, might reconsider
+        // Remove(Update(wiring)) => Remove(wiring)
+    }
+
     if (above.input_names.empty() && !below.input_names.empty()) {
         above.input_names = std::move(below.input_names);
     }

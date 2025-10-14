@@ -132,7 +132,7 @@ static constexpr std::string_view fake_wiring_file = R"(
         y = "verbose"
 
     [[wiring]]
-    action = "add"
+    action = "update"
     plugin_name = "ECAL"
     type_name = "ClusteringFac"
     prefix = "variantfac"
