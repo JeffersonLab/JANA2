@@ -22,13 +22,15 @@ JFactorySet::JFactorySet(void)
 //---------------------------------
 JFactorySet::~JFactorySet()
 {
-    // Deleting the factories will clear their databundles but not delete them
-    for (auto* factory : mFactories) delete factory;
-
-    // Databundles are always owned by the factoryset and always deleted here
+    // Delete all databundles NOT owned by a factory
     for (auto* databundle : mDatabundles) {
-        delete databundle;
+        if (databundle->GetFactory() == nullptr) {
+            delete databundle;
+        }
     }
+
+    // Delete the factories, which clears and deletes THEIR databundles
+    for (auto* factory : mFactories) delete factory;
 }
 
 //---------------------------------

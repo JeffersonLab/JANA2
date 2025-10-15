@@ -18,7 +18,9 @@ public:
         JEventLevel m_level = JEventLevel::None; // By default we inherit this from the component that owns this
 
     public:
-        virtual ~OutputBase() = default;
+        virtual ~OutputBase() {
+            delete m_databundle;
+        }
         JDatabundle* GetDatabundle() { return m_databundle; }
         JEventLevel GetLevel() const { return m_level; }
 
@@ -40,7 +42,11 @@ public:
         JEventLevel m_level = JEventLevel::PhysicsEvent;
 
     public:
-        virtual ~VariadicOutputBase() = default;
+        virtual ~VariadicOutputBase() {
+            for (auto* db : m_databundles) {
+                delete db;
+            }
+        }
         std::vector<JDatabundle*>& GetDatabundles() { return m_databundles; }
         JEventLevel GetLevel() const { return m_level; }
 
