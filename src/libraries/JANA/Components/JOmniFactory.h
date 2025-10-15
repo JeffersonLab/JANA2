@@ -11,19 +11,23 @@
  */
 
 #include <JANA/JEvent.h>
-#include <JANA/JMultifactory.h>
+#include <JANA/JFactory.h>
 
 namespace jana::components {
 
 struct EmptyConfig {};
 
 template <typename FacT, typename ConfigT=EmptyConfig>
-class JOmniFactory : public JMultifactory {
+class JOmniFactory : public JFactory {
 private:
 
     ConfigT m_config;
 
 public:
+
+    JOmniFactory() {
+        SetCallbackStyle(CallbackStyle::LegacyMode);
+    }
 
     void Init() override {
         static_cast<FacT*>(this)->Configure();
@@ -34,7 +38,7 @@ public:
         static_cast<FacT*>(this)->ChangeRun(event->GetRunNumber());
     }
 
-    void Process(const std::shared_ptr<const JEvent> &event) override {
+    void Process(const std::shared_ptr<const JEvent>& event) override {
         static_cast<FacT*>(this)->Execute(event->GetRunNumber(), event->GetEventNumber());
     }
 
