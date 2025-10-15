@@ -134,7 +134,7 @@ struct TestFac : public JOmniFactory<TestFac, TestConfigT> {
     void Configure() {
     }
     
-    void ChangeRun(int32_t) final {
+    void ChangeRun(int32_t) {
     }
 
 

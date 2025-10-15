@@ -62,11 +62,9 @@ public:
         for (auto* variadic_input : m_variadic_inputs) {
             variadic_input->TriggerFactoryCreate(child);
         }
-        if (m_callback_style != CallbackStyle::DeclarativeMode) {
-            CallWithJExceptionWrapper("JEventFolder::Preprocess", [&](){
-                Preprocess(child);
-            });
-        }
+        CallWithJExceptionWrapper("JEventFolder::Preprocess", [&](){
+            Preprocess(child);
+        });
     }
 
     void DoFold(const JEvent& child, JEvent& parent) {
@@ -83,16 +81,9 @@ public:
             for (auto* resource : m_resources) {
                 resource->ChangeRun(parent.GetRunNumber(), m_app);
             }
-            if (m_callback_style == CallbackStyle::DeclarativeMode) {
-                CallWithJExceptionWrapper("JEventFolder::ChangeRun", [&](){
-                    ChangeRun(parent.GetRunNumber());
-                });
-            }
-            else {
-                CallWithJExceptionWrapper("JEventFolder::ChangeRun", [&](){
-                    ChangeRun(parent);
-                });
-            }
+            CallWithJExceptionWrapper("JEventFolder::ChangeRun", [&](){
+                ChangeRun(parent);
+            });
             m_last_run_number = parent.GetRunNumber();
         }
         for (auto* input : m_inputs) {

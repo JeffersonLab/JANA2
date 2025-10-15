@@ -20,7 +20,7 @@ namespace jana::components {
 
 
 struct JComponent {
-    enum class CallbackStyle { LegacyMode, ExpertMode, DeclarativeMode };
+    enum class CallbackStyle { LegacyMode, ExpertMode };
 
     struct ParameterBase;
     struct ServiceBase;

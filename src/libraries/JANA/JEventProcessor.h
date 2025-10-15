@@ -49,19 +49,14 @@ public:
         for (auto* variadic_input : m_variadic_inputs) {
             variadic_input->TriggerFactoryCreate(event);
         }
-        if (m_callback_style == CallbackStyle::ExpertMode) {
-            ProcessParallel(event);
-        }
-        else {
-            ProcessParallel(event.GetRunNumber(), event.GetEventNumber(), event.GetEventIndex());
-        }
+        ProcessParallel(event);
     }
 
 
     virtual void DoTap(const JEvent& event) {
 
         if (m_callback_style == CallbackStyle::LegacyMode) {
-            throw JException("Called DoReduce() on a legacy-mode JEventProcessor");
+            throw JException("Called DoTap() on a legacy-mode JEventProcessor");
         }
         std::lock_guard<std::mutex> lock(m_mutex);
         // In principle DoReduce() is being called by one thread at a time, but we hold a lock anyway 
@@ -91,14 +86,7 @@ public:
             m_last_run_number = run_number;
             CallWithJExceptionWrapper("JEventProcessor::ChangeRun", [&](){ ChangeRun(event); });
         }
-        if (m_callback_style == CallbackStyle::DeclarativeMode) {
-            CallWithJExceptionWrapper("JEventProcessor::ProcessSequential", [&](){ 
-                ProcessSequential(event.GetRunNumber(), event.GetEventNumber(), event.GetEventIndex());
-            });
-        }
-        else if (m_callback_style == CallbackStyle::ExpertMode) {
-            CallWithJExceptionWrapper("JEventProcessor::ProcessSequential", [&](){ ProcessSequential(event); });
-        }
+        CallWithJExceptionWrapper("JEventProcessor::ProcessSequential", [&](){ ProcessSequential(event); });
         m_event_count += 1;
     }
 
@@ -109,7 +97,7 @@ public:
         // Note that in LegacyMode, Process() requires the user to manage a _separate_ lock for its critical section.
         // This arrangement means that {Begin,Change,End}Run() will definitely be called at least once before `Process`, but there
         // may be races when there are multiple run numbers present in the stream. This isn't a problem in practice for now, 
-        // but future work should use ExpertMode or DeclarativeMode for this reason (but also for the usability improvements!)
+        // but future work should use ExpertMode for this reason (but also for the usability improvements!)
 
         if (m_callback_style != CallbackStyle::LegacyMode) {
             throw JException("Called DoLegacyProcess() on a non-legacy-mode JEventProcessor");
@@ -183,14 +171,6 @@ public:
     }
 
     virtual void ProcessSequential(const JEvent& /*event*/) {
-    }
-
-    // DeclarativeMode-specific callbacks
-
-    virtual void ProcessParallel(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
-    }
-
-    virtual void ProcessSequential(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
     }
 
 

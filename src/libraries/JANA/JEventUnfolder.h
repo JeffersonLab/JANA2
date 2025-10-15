@@ -74,11 +74,9 @@ public:
         for (auto* variadic_input : m_variadic_inputs) {
             variadic_input->TriggerFactoryCreate(parent);
         }
-        if (m_callback_style != CallbackStyle::DeclarativeMode) {
-            CallWithJExceptionWrapper("JEventUnfolder::Preprocess", [&](){
-                Preprocess(parent);
-            });
-        }
+        CallWithJExceptionWrapper("JEventUnfolder::Preprocess", [&](){
+            Preprocess(parent);
+        });
     }
 
     Result DoUnfold(const JEvent& parent, JEvent& child) {
@@ -95,16 +93,9 @@ public:
                 for (auto* resource : m_resources) {
                     resource->ChangeRun(parent.GetRunNumber(), m_app);
                 }
-                if (m_callback_style == CallbackStyle::DeclarativeMode) {
-                    CallWithJExceptionWrapper("JEventUnfolder::ChangeRun", [&](){
-                        ChangeRun(parent.GetRunNumber());
-                    });
-                }
-                else {
-                    CallWithJExceptionWrapper("JEventUnfolder::ChangeRun", [&](){
-                        ChangeRun(parent);
-                    });
-                }
+                CallWithJExceptionWrapper("JEventUnfolder::ChangeRun", [&](){
+                    ChangeRun(parent);
+                });
                 m_last_run_number = parent.GetRunNumber();
             }
             for (auto* input : m_inputs) {

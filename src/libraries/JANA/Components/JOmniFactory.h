@@ -39,7 +39,7 @@ public:
         static_cast<AlgoT*>(this)->ChangeRun(event->GetRunNumber());
     }
 
-    void ChangeRun(int32_t) override {};
+    void ChangeRun(int32_t) {};
 
     void Process(const std::shared_ptr<const JEvent> &event) override {
         static_cast<AlgoT*>(this)->Execute(event->GetRunNumber(), event->GetEventNumber());

@@ -46,9 +46,6 @@ public:
         }
     };
 
-    // DeclarativeMode
-    virtual void ChangeRun(int32_t /*run_nr*/) {}
-
     // ExpertMode
     virtual void ChangeRun(const JEvent&) {}
 
