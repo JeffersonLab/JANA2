@@ -10,20 +10,14 @@
  * which might be changed by user parameters.
  */
 
-#include "JANA/Services/JParameterManager.h"
-#include "JANA/Utils/JEventLevel.h"
 #include <JANA/JEvent.h>
 #include <JANA/JMultifactory.h>
-#include <JANA/JVersion.h>
-
-#include <string>
-#include <vector>
 
 namespace jana::components {
 
 struct EmptyConfig {};
 
-template <typename AlgoT, typename ConfigT=EmptyConfig>
+template <typename FacT, typename ConfigT=EmptyConfig>
 class JOmniFactory : public JMultifactory {
 private:
 
@@ -32,18 +26,22 @@ private:
 public:
 
     void Init() override {
-        static_cast<AlgoT*>(this)->Configure();
+        static_cast<FacT*>(this)->Configure();
     }
 
-    void ChangeRun(const std::shared_ptr<const JEvent>& event) override {
-        static_cast<AlgoT*>(this)->ChangeRun(event->GetRunNumber());
+    void BeginRun(const std::shared_ptr<const JEvent>& event) override {
+        // UserFac::ChangeRun() called from BeginRun() to avoid overloaded-virtual warning
+        static_cast<FacT*>(this)->ChangeRun(event->GetRunNumber());
     }
-
-    void ChangeRun(int32_t) {};
 
     void Process(const std::shared_ptr<const JEvent> &event) override {
-        static_cast<AlgoT*>(this)->Execute(event->GetRunNumber(), event->GetEventNumber());
+        static_cast<FacT*>(this)->Execute(event->GetRunNumber(), event->GetEventNumber());
     }
+
+    // This is more hackery to suppress the overloaded-virtual warning
+    using JFactory::ChangeRun;
+    void ChangeRun(int32_t);
+
 
     using ConfigType = ConfigT;
 
