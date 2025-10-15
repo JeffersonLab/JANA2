@@ -160,18 +160,7 @@ protected:
 template<typename T>
 template<typename S>
 void JFactoryT<T>::EnableGetAs() {
-
-    auto upcast_lambda = [this]() {
-        std::vector<S*> results;
-        for (auto t : mData) {
-            results.push_back(static_cast<S*>(t));
-        }
-        return results;
-    };
-
-    auto key = std::type_index(typeid(S));
-    using upcast_fn_t = std::function<std::vector<S*>()>;
-    mUpcastVTable[key] = std::unique_ptr<JAny>(new JAnyT<upcast_fn_t>(std::move(upcast_lambda)));
+    mOutput.GetDatabundle().template EnableGetAs<S>();
 }
 
 
