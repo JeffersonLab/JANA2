@@ -123,7 +123,7 @@ void JLightweightDatabundleT<T>::EnableGetAs() {
 
     auto key = std::type_index(typeid(S));
     using upcast_fn_t = std::function<std::vector<S*>()>;
-    mUpcastVTable[key] = std::unique_ptr<JAny>(new JAnyT<upcast_fn_t>(std::move(upcast_lambda)));
+    (*m_upcast_fns)[key] = std::unique_ptr<JAny>(new JAnyT<upcast_fn_t>(std::move(upcast_lambda)));
 }
 
 

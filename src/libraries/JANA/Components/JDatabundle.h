@@ -35,20 +35,28 @@ private:
 
 
 protected:
-    std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
+    std::shared_ptr<std::unordered_map<std::type_index, std::unique_ptr<JAny>>> m_upcast_fns;
 
 public:
     // Interface
-    JDatabundle() = default;
+    JDatabundle() {
+        m_upcast_fns = std::make_shared<std::unordered_map<std::type_index, std::unique_ptr<JAny>>>();
+    }
     JDatabundle(const JDatabundle& other) {
         m_status = other.m_status;
         m_unique_name = other.m_unique_name;
         m_short_name = other.m_short_name;
         m_type_name = other.m_type_name;
-        m_factory = other.m_factory; // Tricky, but doesn't matter much in practice
+        m_factory = nullptr;
+        // We do NOT propagate m_factory because JFactorySet assumes that
+        // m_factory is this object's owner.
+
         m_inner_type_index = other.m_inner_type_index;
         m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE;
-        // TODO: Get UpcastVTable working again
+        m_upcast_fns = other.m_upcast_fns;
+        // We use shared_ptr for upcast functions so that we can
+        // call EnableGetAs<> once from a JEventSource or JEventUnfolder ctor,
+        // and GetAs<> from JEventProcessor::Process succeeds
     }
     virtual ~JDatabundle() = default;
     virtual size_t GetSize() const = 0;
@@ -91,7 +99,7 @@ public:
 
 
 
-// Because C++ doesn't support templated virtual functions, we implement our own dispatch table, mUpcastVTable.
+// Because C++ doesn't support templated virtual functions, we implement our own dispatch table, m_upcast_fns.
 // This means that the JFactoryT is forced to manually populate this table by calling JFactoryT<T>::EnableGetAs.
 // We have the option to make the vtable be a static member of JFactoryT<T>, but we have chosen not to because:
 //
@@ -103,8 +111,8 @@ template<typename S>
 std::vector<S*> JDatabundle::GetAs() {
     std::vector<S*> results;
     auto ti = std::type_index(typeid(S));
-    auto search = mUpcastVTable.find(ti);
-    if (search != mUpcastVTable.end()) {
+    auto search = m_upcast_fns->find(ti);
+    if (search != m_upcast_fns->end()) {
         using upcast_fn_t = std::function<std::vector<S*>()>;
         auto temp = static_cast<JAnyT<upcast_fn_t>*>(&(*search->second));
         upcast_fn_t upcast_fn = temp->t;
