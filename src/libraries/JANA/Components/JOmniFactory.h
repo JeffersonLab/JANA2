@@ -43,8 +43,9 @@ public:
     }
 
     // This is more hackery to suppress the overloaded-virtual warning
+    // Has to virtual simply because EICrecon already declares it as override
     using JFactory::ChangeRun;
-    void ChangeRun(int32_t);
+    void ChangeRun(int32_t) {}; 
 
 
     using ConfigType = ConfigT;

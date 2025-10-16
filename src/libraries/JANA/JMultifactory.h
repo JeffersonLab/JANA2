@@ -31,6 +31,12 @@ public:
         }
     }
 
+    // This is a hack for EICrecon.
+    // Goes away once EICrecon migrates JOmniFactory onto JFactory
+    using JFactory::ChangeRun;
+    virtual void ChangeRun(int32_t) {};
+
+
     // IMPLEMENTED BY USERS
 
     void Init() override {}
