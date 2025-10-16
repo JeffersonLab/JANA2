@@ -139,5 +139,43 @@ TEST_CASE("JDatabundle_InsertCollection") {
 
 #endif
 
+} // namespace jana::databundletests::jfactoryt
+
+struct InterestingHit {};
+
+TEST_CASE("JDatabundle_SetUniqueName"){
+
+    JLightweightDatabundleT<InterestingHit> sut;
+
+    // Default setup
+    REQUIRE(sut.GetTypeName() == "InterestingHit");
+    REQUIRE(sut.GetUniqueName() == "InterestingHit");
+    REQUIRE(sut.HasShortName() == true);
+    REQUIRE(sut.GetShortName() == "");
+
+    // Set a unique name with NO short name
+    sut.SetUniqueName("Scintillation");
+
+    REQUIRE(sut.GetTypeName() == "InterestingHit");
+    REQUIRE(sut.GetUniqueName() == "Scintillation");
+    REQUIRE(sut.HasShortName() == false);
+    REQUIRE(sut.GetShortName() == "");
+
+    // Set a unique name with an implied nonempty short name
+    sut.SetUniqueName("InterestingHit:Fascination");
+
+    REQUIRE(sut.GetTypeName() == "InterestingHit");
+    REQUIRE(sut.GetUniqueName() == "InterestingHit:Fascination");
+    REQUIRE(sut.HasShortName() == true);
+    REQUIRE(sut.GetShortName() == "Fascination");
+
+    // Set a unique name with NO short name
+    sut.SetUniqueName("InterestingHit");
+
+    REQUIRE(sut.GetTypeName() == "InterestingHit");
+    REQUIRE(sut.GetUniqueName() == "InterestingHit");
+    REQUIRE(sut.HasShortName() == true);
+    REQUIRE(sut.GetShortName() == "");
 }
+
 

@@ -22,8 +22,6 @@
 #include <typeindex>
 #include <memory>
 #include <vector>
-#include <unordered_map>
-#include <functional>
 
 
 class JEvent;
@@ -149,7 +147,6 @@ public:
     // Overloaded by user Factories
     virtual void Process(const std::shared_ptr<const JEvent>&) {}      // CallbackStyle::LegacyMode
     virtual void Process(const JEvent&) {}                             // CallbackStyle::ExpertMode
-    virtual void Process(int32_t /*run_nr*/, uint64_t /*event_nr*/) {} // CallbackStyle::DeclarativeMode
     virtual void Finish() {}
 
 
@@ -188,7 +185,6 @@ protected:
 
     int32_t mPreviousRunNumber = -1;
     bool mInsideCreate = false; // Use this to detect cycles in factory dependencies
-    std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
     std::string mObjectName;
 
     mutable Status mStatus = Status::Uninitialized;
@@ -197,26 +193,10 @@ protected:
     CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
 };
 
-// Because C++ doesn't support templated virtual functions, we implement our own dispatch table, mUpcastVTable.
-// This means that the JFactoryT is forced to manually populate this table by calling JFactoryT<T>::EnableGetAs.
-// We have the option to make the vtable be a static member of JFactoryT<T>, but we have chosen not to because:
-//
-//   1. It would be inconsistent with the fact that the user is supposed to call EnableGetAs in the ctor
-//   2. People in the future may want to generalize GetAs to support user-defined S* -> T* conversions (which I don't recommend)
-//   3. The size of the vtable is expected to be very small (<10 elements, most likely 2)
-
+// We are moving away from JFactory::GetAs because it only considers the first databundle
 template<typename S>
 std::vector<S*> JFactory::GetAs() {
-    std::vector<S*> results;
-    auto ti = std::type_index(typeid(S));
-    auto search = mUpcastVTable.find(ti);
-    if (search != mUpcastVTable.end()) {
-        using upcast_fn_t = std::function<std::vector<S*>()>;
-        auto temp = static_cast<JAnyT<upcast_fn_t>*>(&(*search->second));
-        upcast_fn_t upcast_fn = temp->t;
-        results = upcast_fn();
-    }
-    return results;
+    return GetFirstDatabundle()->GetAs<S>();
 }
 
 

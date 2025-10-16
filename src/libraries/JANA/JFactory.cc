@@ -113,9 +113,6 @@ void JFactory::Create(const JEvent& event) {
                 CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.shared_from_this()); });
                 CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
             }
-            else if (m_callback_style == CallbackStyle::DeclarativeMode) {
-                CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.GetRunNumber()); });
-            }
             else if (m_callback_style == CallbackStyle::ExpertMode) {
                 CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
             }
@@ -130,9 +127,6 @@ void JFactory::Create(const JEvent& event) {
             }
             if (m_callback_style == CallbackStyle::LegacyMode) {
                 CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
-            }
-            else if (m_callback_style == CallbackStyle::DeclarativeMode) {
-                CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.GetRunNumber(), event.GetEventNumber()); });
             }
             else if (m_callback_style == CallbackStyle::ExpertMode) {
                 CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event); });

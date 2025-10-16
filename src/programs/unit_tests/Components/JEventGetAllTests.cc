@@ -72,6 +72,7 @@ TEST_CASE("JFactoryGetAs") {
         auto bases = f.GetAs<Base>();
         REQUIRE(bases.size() == 1);
         REQUIRE(bases[0]->base == 7);
+        f.ClearData();
     }
 
     SECTION("Upcast Derived to Base (multiple items inserted)") {
@@ -85,6 +86,7 @@ TEST_CASE("JFactoryGetAs") {
         REQUIRE(bases[0]->base == 7);
         REQUIRE(bases[1]->base == 8);
         REQUIRE(bases[2]->base == 9);
+        f.ClearData();
     }
 
     SECTION("Upcast Derived to Unrelated (single item inserted)") {
@@ -93,6 +95,7 @@ TEST_CASE("JFactoryGetAs") {
         auto bases = f.GetAs<Unrelated>();
         REQUIRE(bases.size() == 0);
         REQUIRE(bases.size() == 0);
+        f.ClearData();
     }
 
     SECTION("Upcast Derived to Derived (single item inserted)") {
@@ -101,6 +104,7 @@ TEST_CASE("JFactoryGetAs") {
         auto deriveds = f.GetAs<Derived>();
         REQUIRE(deriveds.size() == 1);
         REQUIRE(deriveds[0]->derived == 18);
+        f.ClearData();
     }
 
     SECTION("GetAs doesn't trigger Process()") {
@@ -110,6 +114,7 @@ TEST_CASE("JFactoryGetAs") {
         f.Process(std::make_shared<JEvent>());
         auto deriveds_after = f.GetAs<Derived>();
         REQUIRE(deriveds_after.size() == 2);
+        f.ClearData();
     }
 
     SECTION("Upcast Multiple to each of its bases") {
@@ -131,6 +136,8 @@ TEST_CASE("JFactoryGetAs") {
         auto multiples = f.GetAs<Multiple>();
         REQUIRE(multiples.size() == 1);
         REQUIRE(multiples[0]->multiple == 49);
+
+        f.ClearData();
     }
 
     SECTION("Upcast only succeeds if bases have been enabled") {
@@ -153,6 +160,8 @@ TEST_CASE("JFactoryGetAs") {
         REQUIRE(multiples[0]->derived == 27);
         REQUIRE(multiples[0]->unrelated == 42);
         REQUIRE(multiples[0]->multiple == 49);
+
+        f.ClearData();
     }
 }
 

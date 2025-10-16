@@ -45,22 +45,25 @@ TEST_CASE("WiringTests") {
 
     jana::services::JWiringService sut;
     toml::table table = toml::parse(some_wiring);
-    sut.AddWirings(table, "testcase");
+    sut.ApplyWiringSet(sut.ParseWiringSet(table));
 
     const auto& wirings = sut.GetAllWirings();
     REQUIRE(wirings.size() == 2);
-    REQUIRE(wirings[0]->prefix == "myfac");
-    REQUIRE(wirings[1]->prefix == "myfac_modified");
-    REQUIRE(wirings[0]->plugin_name == "BCAL");
-    REQUIRE(wirings[0]->input_names[1] == "input_coll_2");
-    REQUIRE(wirings[1]->input_names[1] == "input_coll_3");
-    REQUIRE(wirings[0]->input_levels.size() == 2);
-    REQUIRE(wirings[0]->input_levels[0] == JEventLevel::Run);
-    REQUIRE(wirings[0]->input_levels[1] == JEventLevel::Subrun);
-    REQUIRE(wirings[1]->input_levels.size() == 0);
-    REQUIRE(wirings[0]->configs.size() == 2);
-    REQUIRE(wirings[0]->configs["x"] == "22");
-    REQUIRE(wirings[0]->configs["y"] == "verbose");
+    auto& w0 = wirings.at("myfac");
+    auto& w1 = wirings.at("myfac_modified");
+
+    REQUIRE(w0->prefix == "myfac");
+    REQUIRE(w1->prefix == "myfac_modified");
+    REQUIRE(w0->plugin_name == "BCAL");
+    REQUIRE(w0->input_names[1] == "input_coll_2");
+    REQUIRE(w1->input_names[1] == "input_coll_3");
+    REQUIRE(w0->input_levels.size() == 2);
+    REQUIRE(w0->input_levels[0] == JEventLevel::Run);
+    REQUIRE(w0->input_levels[1] == JEventLevel::Subrun);
+    REQUIRE(w1->input_levels.size() == 0);
+    REQUIRE(w0->configs.size() == 2);
+    REQUIRE(w0->configs["x"] == "22");
+    REQUIRE(w0->configs["y"] == "verbose");
 
 }
 
@@ -83,7 +86,7 @@ TEST_CASE("WiringTests_DuplicatePrefixes") {
     jana::services::JWiringService sut;
     toml::table table = toml::parse(duplicate_prefixes);
     try {
-        sut.AddWirings(table,"testcase");
+        sut.ApplyWiringSet(sut.ParseWiringSet(table));
         REQUIRE(1 == 0);
     }
     catch (const JException& e) {
@@ -129,7 +132,7 @@ static constexpr std::string_view fake_wiring_file = R"(
         y = "verbose"
 
     [[wiring]]
-    action = "add"
+    action = "update"
     plugin_name = "ECAL"
     type_name = "ClusteringFac"
     prefix = "variantfac"
@@ -153,40 +156,42 @@ static constexpr std::string_view fake_wiring_file = R"(
 TEST_CASE("WiringTests_FakeFacGen") {
     jana::services::JWiringService sut;
     toml::table table = toml::parse(fake_wiring_file);
-    sut.AddWirings(table, "testcase");
+    auto wiring_set_file = sut.ParseWiringSet(table);
 
     using Wiring = jana::services::JWiringService::Wiring;
-    std::vector<std::unique_ptr<Wiring>> fake_facgen_wirings;
-    
+    using WiringSet = jana::services::JWiringService::WiringSet;
+    WiringSet wiring_set_facgen;
+
     // One gets overlaid with an existing wiring
     auto a = std::make_unique<Wiring>();
     a->plugin_name = "ECAL";
     a->type_name = "ClusteringFac";
     a->prefix = "variantfac";
     a->configs["x"] = "42";
-    fake_facgen_wirings.push_back(std::move(a));
-    
+    wiring_set_facgen.wirings["variantfac"] = std::move(a);
+
     // The other is brand new
     auto b = std::make_unique<Wiring>();
     b->plugin_name = "ECAL";
     b->type_name = "ClusteringFac";
     b->prefix = "exuberantfac";
     b->configs["x"] = "27";
-    fake_facgen_wirings.push_back(std::move(b));
+    wiring_set_facgen.wirings["exuberantfac"] = std::move(b);
 
-    // We should end up with three in total
-    sut.AddWirings(fake_facgen_wirings, "fake_facgen");
-    auto final_wirings = sut.GetPrefixesForAddedInstances("ECAL", "ClusteringFac");
+    sut.OverlayWiringSet(wiring_set_file, wiring_set_facgen);
+    sut.ApplyWiringSet(std::move(wiring_set_file));
 
-    REQUIRE(final_wirings.size() == 3);
+    auto myfac = sut.GetWiring("myfac");
+    auto variantfac = sut.GetWiring("variantfac");
+    auto exuberantfac = sut.GetWiring("exuberantfac");
 
-    REQUIRE(final_wirings[0] == "myfac");
-    REQUIRE(final_wirings[1] == "variantfac");
-    REQUIRE(final_wirings[2] == "exuberantfac");
+    REQUIRE(myfac != nullptr);
+    REQUIRE(variantfac != nullptr);
+    REQUIRE(exuberantfac != nullptr);
 
-    REQUIRE(sut.GetWiring(final_wirings[0])->configs["x"] == "22"); // from file only
-    REQUIRE(sut.GetWiring(final_wirings[1])->configs["x"] == "49"); // file overrides facgen
-    REQUIRE(sut.GetWiring(final_wirings[2])->configs["x"] == "27"); // from facgen only
+    REQUIRE(myfac->configs["x"] == "22"); // from file only
+    REQUIRE(variantfac->configs["x"] == "49"); // file overrides facgen
+    REQUIRE(exuberantfac->configs["x"] == "27"); // from facgen only
 }
 
 struct Cluster { double x,y,E; };
@@ -243,7 +248,7 @@ TEST_CASE("WiringTests_RealFacGen") {
 
     auto wiring_svc = app.GetService<jana::services::JWiringService>();
     toml::table table = toml::parse(realfacgen_wiring);
-    wiring_svc->AddWirings(table, "testcase");
+    wiring_svc->ApplyWiringSet(wiring_svc->ParseWiringSet(table));
 
     auto gen = new jana::components::JWiredFactoryGeneratorT<WiredOmniFac>;
     app.Add(gen);
@@ -328,8 +333,7 @@ TEST_CASE("WiringTests_SharedParam") {
 
     auto wiring_svc = app.GetService<jana::services::JWiringService>();
     toml::table table = toml::parse(sharedparam_wiring);
-    wiring_svc->AddSharedParameters(table, "testcase");
-    wiring_svc->AddWirings(table, "testcase");
+    wiring_svc->ApplyWiringSet(wiring_svc->ParseWiringSet(table));
 
     auto gen = new jana::components::JWiredFactoryGeneratorT<WiredOmniFacWithShared>;
     app.Add(gen);
@@ -404,7 +408,7 @@ TEST_CASE("WiringTests_Proc") {
 
     auto wiring_svc = app.GetService<jana::services::JWiringService>();
     toml::table table = toml::parse(evtproc_wiring);
-    wiring_svc->AddWirings(table, "testcase");
+    wiring_svc->ApplyWiringSet(wiring_svc->ParseWiringSet(table));
 
     auto proc = new WiredEvtProc;
     app.Add(proc);
@@ -455,7 +459,7 @@ TEST_CASE("WiringTests_FacGen") {
 
     auto wiring_svc = app.GetService<jana::services::JWiringService>();
     toml::table table = toml::parse(facgen_wiring);
-    wiring_svc->AddWirings(table, "testcase");
+    wiring_svc->ApplyWiringSet(wiring_svc->ParseWiringSet(table));
 
     auto gen = new JFactoryGeneratorT<WiredFac>;
     app.Add(gen);
@@ -479,5 +483,46 @@ TEST_CASE("WiringTests_FacGen") {
     REQUIRE(results.at(0)->E == 44.2);
 
 }
+
+
+static constexpr std::string_view facgen_shortnames_true = R"(
+    use_short_names = true
+
+    [[wiring]]
+    action = "update"
+    type_name = "WiredFac"
+    prefix = "wiredfac"
+    input_names = ["usual_input"]
+    output_names = ["usual_output"]
+
+        [wiring.configs]
+        x = "22"
+)";
+
+TEST_CASE("WiringTests_FacGenShortnames") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(facgen_shortnames_true);
+    wiring_svc->ApplyWiringSet(wiring_svc->ParseWiringSet(table));
+
+    REQUIRE(wiring_svc->AreShortNamesUsed() == true);
+
+    auto gen = new JFactoryGeneratorT<WiredFac>;
+    app.Add(gen);
+    app.Initialize();
+
+    auto event = std::make_shared<JEvent>(&app);
+    std::vector<Cluster*> test_data;
+    test_data.push_back(new Cluster{0, 0, 22.2});
+    event->Insert<Cluster>(test_data, "usual_input");
+
+    auto results = event->Get<Cluster>("usual_output");
+    REQUIRE(results.size() == 1);
+    REQUIRE(results.at(0)->E == 44.2);
+
+}
+
 
 

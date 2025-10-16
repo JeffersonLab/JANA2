@@ -413,10 +413,11 @@ std::vector<const T*> JEvent::GetAll() const {
 template<class S>
 std::map<std::pair<std::string, std::string>, std::vector<S*>> JEvent::GetAllChildren() const {
     std::map<std::pair<std::string, std::string>, std::vector<S*>> results;
-    for (JFactory* factory : mFactorySet.GetAllFactories()) {
-        auto val = factory->GetAs<S>();
+    for (JDatabundle* databundle: mFactorySet.GetAllDatabundles()) {
+        auto val = databundle->GetAs<S>();
         if (!val.empty()) {
-            auto key = std::make_pair(factory->GetObjectName(), factory->GetTag());
+            auto key = std::make_pair(databundle->GetTypeName(),
+                                      databundle->HasShortName() ? databundle->GetShortName() : databundle->GetUniqueName());
             results.insert(std::make_pair(key, val));
         }
     }

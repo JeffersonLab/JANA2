@@ -108,7 +108,10 @@ public:
     std::vector<std::vector<T*>>* operator->() { return &m_transient_datas; }
 
     void SetShortNames(std::vector<std::string> short_names) override {
-        GetDatabundles().clear(); // TODO: Tiny memory leak
+        for (auto& db : GetDatabundles()) {
+            delete db;
+        }
+        GetDatabundles().clear();
         m_transient_datas.clear();
         for (const std::string& name : short_names) {
             auto databundle = new JLightweightDatabundleT<T>;
@@ -121,7 +124,10 @@ public:
         }
     }
     void SetUniqueNames(std::vector<std::string> unique_names) override {
-        GetDatabundles().clear(); // TODO: Tiny memory leak
+        for (auto& db : GetDatabundles()) {
+            delete db;
+        }
+        GetDatabundles().clear();
         m_transient_datas.clear();
         for (const std::string& name : unique_names) {
             auto databundle = new JLightweightDatabundleT<T>;

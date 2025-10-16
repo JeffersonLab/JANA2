@@ -20,7 +20,8 @@ private:
 
 public:
     JLightweightDatabundleT(std::vector<T*>* external_data=nullptr);
-    ~JLightweightDatabundleT();
+    JLightweightDatabundleT(const JLightweightDatabundleT& other);
+    ~JLightweightDatabundleT() override;
 
     void ClearData() override;
 
@@ -68,6 +69,23 @@ JLightweightDatabundleT<T>::JLightweightDatabundleT(std::vector<T*>* external_da
 }
 
 template <typename T>
+JLightweightDatabundleT<T>::JLightweightDatabundleT(const JLightweightDatabundleT& other) : JDatabundle(other) {
+
+    m_data = new std::vector<T*>;
+    m_owns_data = true;
+
+    m_is_persistent = other.m_is_persistent;
+    m_not_object_owner = other.m_not_object_owner;
+
+    // TODO: This doesn't copy over any additional EnableGetAs()
+    EnableGetAs<T>();
+    EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
+#if JANA2_HAVE_ROOT
+    EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
+#endif
+}
+
+template <typename T>
 JLightweightDatabundleT<T>::~JLightweightDatabundleT() {
     if (m_owns_data) {
         delete m_data;
@@ -105,7 +123,7 @@ void JLightweightDatabundleT<T>::EnableGetAs() {
 
     auto key = std::type_index(typeid(S));
     using upcast_fn_t = std::function<std::vector<S*>()>;
-    mUpcastVTable[key] = std::unique_ptr<JAny>(new JAnyT<upcast_fn_t>(std::move(upcast_lambda)));
+    (*m_upcast_fns)[key] = std::unique_ptr<JAny>(new JAnyT<upcast_fn_t>(std::move(upcast_lambda)));
 }
 
 

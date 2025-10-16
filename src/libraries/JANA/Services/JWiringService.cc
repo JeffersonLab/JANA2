@@ -19,51 +19,35 @@ void JWiringService::Init() {
     // (recursively) load files
 
     if (!m_wirings_input_file().empty()) {
-        AddWiringFile(*m_wirings_input_file);
+        ApplyWiringSet(ParseWiringSetFromFilename(*m_wirings_input_file));
     }
 }
 
-void JWiringService::AddWirings(std::vector<std::unique_ptr<Wiring>>& wirings_bundle, const std::string& bundle_source) {
+void JWiringService::ApplyWiringSet(JWiringService::WiringSet&& wiring_set) {
 
-    std::set<std::string> prefixes_in_bundle;
-    for (auto& wiring: wirings_bundle) {
+    // Recursively overlay any included files
+    OverlayAllIncludes(wiring_set);
 
-        // Assert that this wiring's prefix is unique _within_ this bundle.
-        auto bundle_it = prefixes_in_bundle.find(wiring->prefix);
-        if (bundle_it != prefixes_in_bundle.end()) {
-            throw JException("Duplicated prefix '%s' in wiring bundle '%s'", wiring->prefix.c_str(), bundle_source.c_str());
-        }
-        prefixes_in_bundle.insert(wiring->prefix);
+    // Clear everything from before
+    m_wiring_set = std::move(wiring_set);
+    m_added_prefixes.clear();
 
-        // Check whether we have seen this prefix before
-        auto it = m_wirings_from_prefix.find(wiring->prefix);
-        if (it == m_wirings_from_prefix.end()) {
-            // This is a new wiring
-            m_wirings_from_prefix[wiring->prefix] = wiring.get();
-
-            if (wiring->action == Action::Add) {
-                m_added_prefixes[{wiring->type_name, wiring->plugin_name}].push_back(wiring->prefix);
-            }
-            m_wirings.push_back(std::move(wiring));
-        }
-        else {
-            // Wiring is already defined; overlay this wiring _below_ the existing wiring
-            // First we do some sanity checks
-            if (wiring->type_name != it->second->type_name) {
-                throw JException("Wiring mismatch: type name '%s' vs '%s'", wiring->type_name.c_str(), it->second->type_name.c_str());
-            }
-            if (wiring->plugin_name != it->second->plugin_name) {
-                throw JException("Wiring mismatch: plugin name '%s' vs '%s'", wiring->plugin_name.c_str(), it->second->plugin_name.c_str());
-            }
-            Overlay(*(it->second), *wiring);
-            // Useful information from `wiring` has been copied into `it->second`.
-            // `wiring` will now be automatically destroyed
+    // Populate lookup table
+    for (auto& it: m_wiring_set.wirings) {
+        if (it.second->action == Action::Add) {
+            auto& wiring = it.second;
+            m_added_prefixes[{wiring->type_name, wiring->plugin_name}].push_back(wiring->prefix);
         }
     }
-    // At this point all wirings have been moved out of wirings_bundle, so we clear it to avoid confusing callers
-    wirings_bundle.clear();
 }
 
+void JWiringService::OverlayAllIncludes(WiringSet &wiring_set) {
+    for (auto& include_file_name : wiring_set.include_file_names) {
+        auto include_wiring_set = ParseWiringSetFromFilename(include_file_name);
+        OverlayAllIncludes(include_wiring_set);
+        OverlayWiringSet(wiring_set, include_wiring_set);
+    }
+}
 
 std::unique_ptr<JWiringService::Wiring> ParseWiring(const toml::table& f) {
 
@@ -155,7 +139,6 @@ std::unique_ptr<JWiringService::Wiring> ParseWiring(const toml::table& f) {
         }
     }
 
-
     auto configs = f["configs"].as_table();
     if (configs != nullptr) {
         for (const auto& config : *configs) {
@@ -170,28 +153,69 @@ std::unique_ptr<JWiringService::Wiring> ParseWiring(const toml::table& f) {
 }
 
 
-void JWiringService::AddWirings(const toml::table& table, const std::string& source) {
+JWiringService::WiringSet JWiringService::ParseWiringSet(const toml::table& table) {
 
-    std::vector<std::unique_ptr<Wiring>> wirings;
+    WiringSet wiring_set;
 
+    // Parse include file names
+    auto includes = table["includes"].as_array();
+    if (includes != nullptr) {
+        for (const auto& include : *includes) {
+            wiring_set.include_file_names.push_back(include.as<std::string>()->get());
+        }
+    }
+
+    // Parse plugin names
+    auto plugins = table["plugins"].as_array();
+    if (plugins != nullptr) {
+        for (const auto& plugin_name : *plugins) {
+            wiring_set.include_file_names.push_back(plugin_name.as<std::string>()->get());
+        }
+    }
+
+    // Parse shared parameters
+    auto shared_params = table["configs"].as_table();
+    if (shared_params != nullptr) {
+        for (const auto& param : *shared_params) {
+            std::string key(param.first);
+            std::string val = *param.second.value<std::string>();
+            wiring_set.shared_parameters[key] = val;
+        }
+    }
+
+    // Parse use_short_names
+    auto use_short_names = table["use_short_names"].as<bool>();
+    if (use_short_names != nullptr) {
+        wiring_set.use_short_names = use_short_names->get();
+    }
+
+    // Parse wirings
     auto wirings_array = table["wiring"].as_array();
     if (wirings_array != nullptr) {
         for (const auto& wiring_node : *wirings_array) {
             auto wiring_table = wiring_node.as_table();
             if (wiring_table != nullptr) {
-                wirings.push_back(ParseWiring(*wiring_table));
+                auto wiring = ParseWiring(*wiring_table);
+
+                // Check for uniqueness before adding
+                auto it = wiring_set.wirings.find(wiring->prefix);
+                if (it != wiring_set.wirings.end()) {
+                    throw JException("Duplicated prefix '%s' in wiring set", wiring->prefix.c_str());
+                }
+
+                // Add to wiring set
+                wiring_set.wirings[wiring->prefix] = std::move(wiring);
             }
         }
     }
 
-    AddWirings(wirings, source);
+    return wiring_set;
 }
 
-void JWiringService::AddWiringFile(const std::string& filename) {
+JWiringService::WiringSet JWiringService::ParseWiringSetFromFilename(const std::string& filename) {
     try {
-        auto tbl = toml::parse_file(filename);
-        AddSharedParameters(tbl, filename);
-        AddWirings(tbl, filename);
+        auto table = toml::parse_file(filename);
+        return ParseWiringSet(table);
     }
     catch (const toml::parse_error& err) {
         auto e = JException("Error parsing TOML file: '%s'", filename.c_str());
@@ -201,11 +225,11 @@ void JWiringService::AddWiringFile(const std::string& filename) {
 }
 
 JWiringService::Wiring* JWiringService::GetWiring(const std::string& prefix) const {
-    auto it = m_wirings_from_prefix.find(prefix);
-    if (it == m_wirings_from_prefix.end()) {
+    auto it = m_wiring_set.wirings.find(prefix);
+    if (it == m_wiring_set.wirings.end()) {
         return nullptr;
     }
-    return it->second;
+    return it->second.get();
 }
 
 const std::vector<std::string>&
@@ -218,12 +242,74 @@ JWiringService::GetPrefixesForAddedInstances(const std::string& plugin_name, con
     return it->second;
 }
 
+void JWiringService::OverlayWiringSet(WiringSet &above, const WiringSet &below) {
+
+    // TODO: Figure out merging of includes, plugins, use_short_names
+
+    // Iterate over 'below' to ensure that every wiring from below propagates above
+    for (auto& below_it: below.wirings) {
+        auto& below_wiring = below_it.second;
+        auto& prefix = below_wiring->prefix;
+        const auto& above_it = above.wirings.find(prefix);
+        if (above_it == above.wirings.end()) {
+            // This is a new wiring, so we add it and we are done
+            above.wirings[prefix] = std::make_unique<Wiring>(*below_wiring);
+        }
+        else {
+            // Wiring shows up in both places, so we need to overlay the two
+            auto& above_wiring = above_it->second;
+
+            // First we validate that the two wirings are compatible
+            if (above_wiring->type_name != below_wiring->type_name) {
+                throw JException("Wiring mismatch: type name '%s' vs '%s'",
+                                 above_wiring->type_name.c_str(), below_wiring->type_name.c_str());
+            }
+            if (above_wiring->plugin_name != below_wiring->plugin_name) {
+                throw JException("Wiring mismatch: plugin name '%s' vs '%s'",
+                                 above_wiring->plugin_name.c_str(), below_wiring->plugin_name.c_str());
+            }
+
+            // Next we do the overlay, which modifies above_wiring
+            Overlay(*above_wiring, *below_wiring);
+        }
+    }
+}
 
 void JWiringService::Overlay(Wiring& above, const Wiring& below) {
 
     // In theory this should be handled by the caller, but let's check just in case
     if (above.plugin_name != below.plugin_name) throw JException("Plugin name mismatch!");
     if (above.type_name != below.type_name) throw JException("Type name mismatch!");
+
+    // Overlay actions
+    if (above.action == Action::Add) {
+        if (below.action != Action::Remove) {
+            throw JException("Attempted to add a wiring that is already present. plugin=%s, prefix=%s",
+                             above.plugin_name.c_str(), above.prefix.c_str());
+        }
+        else {
+            // Add(Remove(wiring)) = Update(wiring)
+            above.action = Action::Update;
+        }
+    }
+    else if (above.action == Action::Update) {
+        if (below.action == Action::Add) {
+            above.action = Action::Add;
+        }
+        else if (below.action == Action::Remove) {
+            throw JException("Attempted to update a wiring that has been removed. plugin=%s, prefix=%s",
+                             above.plugin_name.c_str(), above.prefix.c_str());
+        }
+        // Update(Update(wiring)) => Update(wiring)
+    }
+    else if (above.action == Action::Remove) {
+        if (below.action == Action::Remove) {
+            throw JException("Attempted to remove a wiring that has already been removed. plugin=%s, prefix=%s",
+                             above.plugin_name.c_str(), above.prefix.c_str());
+        }
+        // Remove(Add(wiring)) => Remove(wiring)  // This one is odd, might reconsider
+        // Remove(Update(wiring)) => Remove(wiring)
+    }
 
     if (above.input_names.empty() && !below.input_names.empty()) {
         above.input_names = std::move(below.input_names);
@@ -241,31 +327,15 @@ void JWiringService::Overlay(Wiring& above, const Wiring& below) {
     }
 }
 
-
-void JWiringService::AddSharedParameters(const toml::table& table, const std::string& /*source*/) {
-    auto shared_params = table["configs"].as_table();
-    if (shared_params == nullptr) {
-        LOG_INFO(GetLogger()) << "No configs found!" << LOG_END;
-        return;
-    }
-    for (const auto& param : *shared_params) {
-        std::string key(param.first);
-        std::string val = *param.second.value<std::string>();
-        m_shared_parameters[key] = val;
-    }
-}
-
-
-
 const std::map<std::string, std::string>& JWiringService::GetSharedParameters() const {
-    return m_shared_parameters;
+    return m_wiring_set.shared_parameters;
 }
 
 void JWiringService::CheckAllWiringsAreUsed() {
     std::vector<JWiringService::Wiring*> m_unused_wirings;
-    for (const auto& wiring : m_wirings) {
-        if (wiring->is_used == false) {
-            m_unused_wirings.push_back(wiring.get());
+    for (const auto& wiring : m_wiring_set.wirings) {
+        if (wiring.second->is_used == false) {
+            m_unused_wirings.push_back(wiring.second.get());
         }
     }
     if (m_unused_wirings.size() != 0) {

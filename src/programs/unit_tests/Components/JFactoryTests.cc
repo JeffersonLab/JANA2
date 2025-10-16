@@ -40,6 +40,7 @@ TEST_CASE("JFactoryTests") {
         REQUIRE(sut.change_run_call_count == 1);
         REQUIRE(sut.process_call_count == 2);
 
+        sut.ClearData();
     }
 
     SECTION("If no factory is present and nothing inserted, GetObjects called") {
@@ -91,6 +92,8 @@ TEST_CASE("JFactoryTests") {
         sut.ClearData();
         sut.CreateAndGetData(event);
         REQUIRE(sut.change_run_call_count == 3);
+
+        sut.ClearData();
     }
 
     SECTION("not PERSISTENT && not NOT_OBJECT_OWNER => JObject is cleared and deleted") {
@@ -112,11 +115,14 @@ TEST_CASE("JFactoryTests") {
         bool deleted_flag = false;
         sut.ClearFactoryFlag(JFactory::PERSISTENT);
         sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
-        sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
+        auto* obj = new JFactoryTestDummyObject(42, &deleted_flag);
+        sut.Insert(obj);
         sut.ClearData();
         auto results = sut.CreateAndGetData(event);
         REQUIRE(std::distance(results.first, results.second) == 0);
         REQUIRE(deleted_flag == false);
+        delete obj;
+        REQUIRE(deleted_flag == true);
     }
 
     SECTION("PERSISTENT && not NOT_OBJECT_OWNER => JObject is neither cleared nor deleted") {
@@ -125,11 +131,14 @@ TEST_CASE("JFactoryTests") {
         bool deleted_flag = false;
         sut.SetFactoryFlag(JFactory::PERSISTENT);
         sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
-        sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
+        auto* obj = new JFactoryTestDummyObject(42, &deleted_flag);
+        sut.Insert(obj);
         sut.ClearData();
         auto results = sut.CreateAndGetData(event);
         REQUIRE(std::distance(results.first, results.second) == 1);
         REQUIRE(deleted_flag == false);
+        delete obj;
+        REQUIRE(deleted_flag == true);
     }
 
     SECTION("PERSISTENT && NOT_OBJECT_OWNER => JObject is neither cleared nor deleted") {
@@ -138,11 +147,14 @@ TEST_CASE("JFactoryTests") {
         bool deleted_flag = false;
         sut.SetFactoryFlag(JFactory::PERSISTENT);
         sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
-        sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
+        auto* obj = new JFactoryTestDummyObject(42, &deleted_flag);
+        sut.Insert(obj);
         sut.ClearData();
         auto results = sut.CreateAndGetData(event);
         REQUIRE(std::distance(results.first, results.second) == 1);
         REQUIRE(deleted_flag == false);
+        delete obj;
+        REQUIRE(deleted_flag == true);
     }
 
     struct Issue135Factory : public JFactoryT<JFactoryTestDummyObject> {
@@ -172,6 +184,7 @@ TEST_CASE("JFactoryTests") {
             REQUIRE((*it)->data == data);
             data++;
         }
+        sut.ClearData();
     }
 
     struct RegenerateFactory : public JFactoryT<JFactoryTestDummyObject> {
@@ -199,6 +212,8 @@ TEST_CASE("JFactoryTests") {
         auto it = results.first;
         REQUIRE((*it)->data == 49);
         REQUIRE(sut.GetNumObjects() == 1);
+
+        sut.ClearData();
     }
 
     SECTION("Exception in JFactory::Process") {
@@ -572,6 +587,7 @@ TEST_CASE("JFactory_GetObjects_Caching") {
     app.Add(new JFactoryGeneratorT<JFactoryT<JFactoryTestDummyObject>>());
     app.Add(new JFactoryGeneratorT<JFactoryT<DifferentDummyObject>>());
     auto source = new JFactoryTestDummySource;
+    app.Add(source);
     auto event = std::make_shared<JEvent>(&app);
     event->SetJEventSource(source);
 
@@ -620,6 +636,13 @@ struct PersistentFactory: public JFactoryT<JFactoryTestDummyObject> {
         processed_count += 1;
         event->Insert(new JFactoryTestDummyObject(22));
     }
+
+    void Finish() override {
+        for (auto* item : mData) {
+            delete item;
+        }
+        mData.clear();
+    }
 };
 
 TEST_CASE("PersistentFactory_Test") {
@@ -635,6 +658,8 @@ TEST_CASE("PersistentFactory_Test") {
     event->Clear();
     REQUIRE(data.size() == 1);
     REQUIRE(data.at(0)->data == 22);
+
+    event->Finish();
 }
 
 
