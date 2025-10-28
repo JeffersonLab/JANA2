@@ -526,37 +526,44 @@ public:
             return;
         }
 
-        // Validate that we have the correct number of input databundle names
-        if (single_input_databundle_names.size() != m_inputs.size()) {
-            throw JException("Wrong number of (nonvariadic) input databundle names! Expected %d, found %d", m_inputs.size(), single_input_databundle_names.size());
+        if (!single_input_databundle_names.empty()) {
+
+            // Validate that we have the correct number of input databundle names
+            if (single_input_databundle_names.size() != m_inputs.size()) {
+                throw JException("Wrong number of (nonvariadic) input databundle names! Expected %d, found %d", m_inputs.size(), single_input_databundle_names.size());
+            }
+
+            size_t i = 0;
+            for (auto* input : m_inputs) {
+                input->SetDatabundleName(single_input_databundle_names.at(i));
+                if (single_input_levels.empty()) {
+                    input->SetLevel(component_level);
+                }
+                else {
+                    input->SetLevel(single_input_levels.at(i));
+                }
+                i += 1;
+            }
         }
 
-        if (variadic_input_databundle_names.size() != m_variadic_inputs.size()) {
-            throw JException("Wrong number of variadic input databundle names! Expected %d, found %d", m_variadic_inputs.size(), variadic_input_databundle_names.size());
-        }
+        if (!variadic_input_databundle_names.empty()) {
 
-        size_t i = 0;
-        for (auto* input : m_inputs) {
-            input->SetDatabundleName(single_input_databundle_names.at(i));
-            if (single_input_levels.empty()) {
-                input->SetLevel(component_level);
+            // Validate that we have the correct number of variadic input databundle names
+            if (variadic_input_databundle_names.size() != m_variadic_inputs.size()) {
+                throw JException("Wrong number of lists of variadic input databundle names! Expected %d, found %d", m_variadic_inputs.size(), variadic_input_databundle_names.size());
             }
-            else {
-                input->SetLevel(single_input_levels.at(i));
-            }
-            i += 1;
-        }
 
-        i = 0;
-        for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->SetRequestedDatabundleNames(variadic_input_databundle_names.at(i));
-            if (variadic_input_levels.empty()) {
-                variadic_input->SetLevel(component_level);
+            size_t i = 0;
+            for (auto* variadic_input : m_variadic_inputs) {
+                variadic_input->SetRequestedDatabundleNames(variadic_input_databundle_names.at(i));
+                if (variadic_input_levels.empty()) {
+                    variadic_input->SetLevel(component_level);
+                }
+                else {
+                    variadic_input->SetLevel(variadic_input_levels.at(i));
+                }
+                i += 1;
             }
-            else {
-                variadic_input->SetLevel(variadic_input_levels.at(i));
-            }
-            i += 1;
         }
     }
 
