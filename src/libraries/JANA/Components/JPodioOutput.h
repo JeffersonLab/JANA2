@@ -272,9 +272,11 @@ public:
             // Then we store the collection itself
             typed_collection_bundle->SetCollection(moved);
             typed_collection_bundle->SetStatus(JDatabundle::Status::Inserted);
+
+            // Replace the transient collection
+            collection = std::make_unique<typename PodioT::collection_type>();
             i += 1;
         }
-        m_transient_collections.clear();
     }
 };
 
