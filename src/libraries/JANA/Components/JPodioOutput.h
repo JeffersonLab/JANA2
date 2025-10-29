@@ -25,7 +25,7 @@ public:
         this->m_podio_databundle = new JPodioDatabundle;
         SetDatabundle(m_podio_databundle);
 
-        m_podio_databundle->SetShortName(collection_name);
+        m_podio_databundle->SetUniqueName(collection_name);
         m_podio_databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
         m_podio_databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
 
