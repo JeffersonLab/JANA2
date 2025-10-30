@@ -39,7 +39,7 @@ public:
     class VariadicOutputBase {
     private:
         std::vector<JDatabundle*> m_databundles;
-        JEventLevel m_level = JEventLevel::PhysicsEvent;
+        JEventLevel m_level = JEventLevel::None;
 
     public:
         virtual ~VariadicOutputBase() {
