@@ -140,6 +140,7 @@ template <typename PodioT>
 class VariadicPodioOutput : public JHasOutputs::VariadicOutputBase {
 private:
     std::vector<std::unique_ptr<typename PodioT::collection_type>> m_transient_collections;
+    bool m_is_subset = false;
 
 public:
     VariadicPodioOutput(JHasOutputs* owner, std::vector<std::string> default_collection_names={}) {
@@ -167,6 +168,7 @@ public:
             databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
             GetDatabundles().push_back(databundle);
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
+            m_transient_collections.back()->setSubsetCollection(m_is_subset);
         }
     }
 
@@ -184,10 +186,21 @@ public:
             databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
             GetDatabundles().push_back(databundle);
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
+            m_transient_collections.back()->setSubsetCollection(m_is_subset);
         }
     }
 
     std::vector<std::unique_ptr<typename PodioT::collection_type>>& operator()() { return m_transient_collections; }
+
+    void SetSubsetCollection(bool is_subset) {
+        m_is_subset = is_subset;
+        for (auto& coll : m_transient_collections) {
+            coll->setSubsetCollection(is_subset);
+        }
+    }
+
+    bool IsSubsetCollection() const { return m_is_subset; }
+
 
     void LagrangianStore(JFactorySet& facset, JDatabundle::Status status) override {
         if (m_transient_collections.size() != GetDatabundles().size()) {
@@ -218,6 +231,7 @@ public:
             databundle->SetStatus(status);
             i += 1;
             collection = std::make_unique<typename PodioT::collection_type>();
+            collection->setSubsetCollection(m_is_subset);
         }
     }
 
@@ -275,6 +289,7 @@ public:
 
             // Replace the transient collection
             collection = std::make_unique<typename PodioT::collection_type>();
+            collection->setSubsetCollection(m_is_subset);
             i += 1;
         }
     }

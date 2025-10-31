@@ -340,6 +340,7 @@ struct Splitter : public JEventUnfolder {
 
     Splitter() {
         info_out.SetSubsetCollection(true);
+        hits_out.SetSubsetCollection(true);
         SetParentLevel(JEventLevel::Timeslice);
         SetChildLevel(JEventLevel::PhysicsEvent);
     }
@@ -358,7 +359,6 @@ struct Splitter : public JEventUnfolder {
                 for (const auto& hit : *hit_coll) {
                     if (hit.time() == current_t) {
                         hits_found = true;
-                        hits_out().at(current_coll_idx)->setSubsetCollection(true);
                         hits_out().at(current_coll_idx)->push_back(hit);
                     }
                 }
