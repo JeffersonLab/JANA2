@@ -287,9 +287,8 @@ struct ePICSource : public JEventSource {
         }
 
         MutableEventInfo info;
-        info.TimesliceNumber(GetEmittedEventCount());
+        info.TimesliceNumber(next_idx);
         info_out()->push_back(info);
-        LOG << "Emitting timeslice " << GetEmittedEventCount();
 
         const auto& timeslice = datastream.at(next_idx);
         for (auto& hit_data: timeslice) {
@@ -301,6 +300,7 @@ struct ePICSource : public JEventSource {
             hit.energy(energy);
             hits_out().at(det)->push_back(hit);
         }
+        LOG << "Emitting timeslice " << next_idx << " containing " << timeslice.size() << " hits";
         next_idx += 1;
 
         return Result::Success;
@@ -453,9 +453,58 @@ TEST_CASE("ePIC_Timeframe_Splitting") {
         };
         checker->expected_timeslice_nrs = {0, 1, 2};
         checker->expected_hits = {
-            {{DetA, 8, 22.2}},
-            {{DetA, 8, 33.3}},
-            {{DetA, 8, 44.4}}
+            {{DetA, 1, 22.2}},
+            {{DetA, 1, 33.3}},
+            {{DetA, 1, 44.4}}
+        };
+        app.Run();
+    }
+    SECTION("OneOrZero") {
+        src->datastream = {
+            {{DetA, 0, 22.2}},
+            {},
+            {{DetA, 0, 33.3}},
+            {{DetA, 0, 44.4}}
+        };
+        checker->expected_timeslice_nrs = {0, 2, 3};
+        checker->expected_hits = {
+            {{DetA, 1, 22.2}},
+            {{DetA, 1, 33.3}},
+            {{DetA, 1, 44.4}}
+        };
+        app.Run();
+    }
+    SECTION("FlatMap") {
+        src->datastream = {
+            {{DetA, 0, 22.2}, {DetA, 1, 33.3}},
+            {{DetA, 0, 44.4}, {DetA, 1, 55.5}, {DetB, 2, 66.6}},
+            {{DetA, 0, 77.7}}
+        };
+        checker->expected_timeslice_nrs = {0,0,1,1,1,2};
+        checker->expected_hits = {
+            {{DetA, 1, 22.2}},
+            {{DetA, 2, 33.3}},
+            {{DetA, 1, 44.4}},
+            {{DetA, 2, 55.5}},
+            {{DetB, 3, 66.6}},
+            {{DetA, 1, 77.7}}
+        };
+        app.Run();
+    }
+    SECTION("UnFlatMap") {
+        src->datastream = {
+            {{DetA, 0, 22.2}, {DetA, 1, 33.3}, {DetA, 1, 19}, {DetB, 1, 22}},
+            {{DetA, 0, 44.4}, {DetA, 1, 55.5}, {DetB, 2, 66.6}},
+            {{DetA, 0, 77.7}, {DetA, 0, 88.8}, {DetA, 0, 99.9}}
+        };
+        checker->expected_timeslice_nrs = {0,0,1,1,1,2};
+        checker->expected_hits = {
+            {{DetA, 1, 22.2}},
+            {{DetA, 2, 33.3}, {DetA, 2, 19}, {DetB, 2, 22}},
+            {{DetA, 1, 44.4}},
+            {{DetA, 2, 55.5}},
+            {{DetB, 3, 66.6}},
+            {{DetA, 1, 77.7}, {DetA, 1, 88.8}, {DetA, 1, 99.9}}
         };
         app.Run();
     }
