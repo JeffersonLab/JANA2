@@ -139,6 +139,9 @@ public:
         void SetRequestedDatabundleNames(std::vector<std::string> names) {
             m_requested_databundle_names = names;
             m_realized_databundle_names = names;
+            // If options.names are empty, m_realized_databundle_names will be filled later
+            // Otherwise, m_realized_databundle_names always matches m_requested_databundle_names
+            // This weirdness is an optimization to avoid having to repopulate m_realized_databundle_names for every event
         }
 
         void SetEmptyInputPolicy(EmptyInputPolicy policy) {
@@ -163,6 +166,10 @@ public:
 
         void Configure(const VariadicInputOptions& options) {
             m_requested_databundle_names = options.names;
+            m_realized_databundle_names = options.names;
+            // If options.names are empty, m_realized_databundle_names will be filled later
+            // Otherwise, m_realized_databundle_names always matches m_requested_databundle_names
+            // This weirdness is an optimization to avoid having to repopulate m_realized_databundle_names for every event
             m_level = options.level;
             m_is_optional = options.is_optional;
         }
@@ -339,6 +346,7 @@ public:
 
         void SetTags(std::vector<std::string> tags) {
             m_requested_databundle_names = tags;
+            m_realized_databundle_names = tags;
         }
 
         const std::vector<std::vector<const T*>>& operator()() { return m_datas; }

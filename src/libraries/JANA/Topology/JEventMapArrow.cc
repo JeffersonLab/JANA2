@@ -38,7 +38,7 @@ void JEventMapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_cou
     }
     for (JEventUnfolder* unfolder : m_unfolders) {
         JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), unfolder->GetTypeName()); // times execution until this goes out of scope
-        unfolder->Preprocess(*event);
+        unfolder->DoPreprocess(*event);
     }
     for (JEventProcessor* processor : m_procs) {
         JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), processor->GetTypeName()); // times execution until this goes out of scope
