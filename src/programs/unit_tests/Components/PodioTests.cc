@@ -255,14 +255,14 @@ struct MyMultiFac: JMultifactory {
     void Process(const std::shared_ptr<const JEvent>& event) override {
         auto hits = event->GetCollection<ExampleHit>("hits");
         ExampleClusterCollection clusters;
-        auto cluster = clusters->create();
+        auto cluster = clusters.create();
         for (auto hit : *hits) {
             cluster.addHits(hit);
         }
         SetCollection<ExampleCluster>("clusters", std::move(clusters));
 
         ExampleClusterCollection clusters2;
-        auto cluster2 = clusters2->create();
+        auto cluster2 = clusters2.create();
         for (auto hit : *hits) {
             cluster2.addHits(hit);
         }
