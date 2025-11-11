@@ -43,7 +43,7 @@ public:
     };
 
 private:
-    Parameter<std::string> m_wirings_input_file {this, "jana:wiring_file", "", 
+    Parameter<std::string> m_wirings_input_file {this, "wiring_file", "",
         "Path to TOML file containing wiring definitions"};
 
     WiringSet m_wiring_set;
