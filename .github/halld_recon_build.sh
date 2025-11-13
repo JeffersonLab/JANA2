@@ -8,7 +8,7 @@ mount -t cvmfs oasis.opensciencegrid.org /cvmfs/oasis.opensciencegrid.org
 ln -s /cvmfs/oasis.opensciencegrid.org/gluex/group /group
 
 source /group/halld/Software/build_scripts/gluex_env_boot_jlab.sh
-gxenv /workspace/JANA2/.github/halld_recon_build_prereqs_version.xml
+gxenv /workspace/JANA2/.github/version.xml
 
 echo "ROOTSYS=$ROOTSYS"
 cd /workspace/halld_recon/src
