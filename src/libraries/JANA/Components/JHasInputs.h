@@ -139,6 +139,9 @@ public:
         void SetRequestedDatabundleNames(std::vector<std::string> names) {
             m_requested_databundle_names = names;
             m_realized_databundle_names = names;
+            // If options.names are empty, m_realized_databundle_names will be filled later
+            // Otherwise, m_realized_databundle_names always matches m_requested_databundle_names
+            // This weirdness is an optimization to avoid having to repopulate m_realized_databundle_names for every event
         }
 
         void SetEmptyInputPolicy(EmptyInputPolicy policy) {
@@ -163,6 +166,10 @@ public:
 
         void Configure(const VariadicInputOptions& options) {
             m_requested_databundle_names = options.names;
+            m_realized_databundle_names = options.names;
+            // If options.names are empty, m_realized_databundle_names will be filled later
+            // Otherwise, m_realized_databundle_names always matches m_requested_databundle_names
+            // This weirdness is an optimization to avoid having to repopulate m_realized_databundle_names for every event
             m_level = options.level;
             m_is_optional = options.is_optional;
         }
@@ -339,6 +346,7 @@ public:
 
         void SetTags(std::vector<std::string> tags) {
             m_requested_databundle_names = tags;
+            m_realized_databundle_names = tags;
         }
 
         const std::vector<std::vector<const T*>>& operator()() { return m_datas; }
@@ -526,37 +534,44 @@ public:
             return;
         }
 
-        // Validate that we have the correct number of input databundle names
-        if (single_input_databundle_names.size() != m_inputs.size()) {
-            throw JException("Wrong number of (nonvariadic) input databundle names! Expected %d, found %d", m_inputs.size(), single_input_databundle_names.size());
+        if (!single_input_databundle_names.empty()) {
+
+            // Validate that we have the correct number of input databundle names
+            if (single_input_databundle_names.size() != m_inputs.size()) {
+                throw JException("Wrong number of (nonvariadic) input databundle names! Expected %d, found %d", m_inputs.size(), single_input_databundle_names.size());
+            }
+
+            size_t i = 0;
+            for (auto* input : m_inputs) {
+                input->SetDatabundleName(single_input_databundle_names.at(i));
+                if (single_input_levels.empty()) {
+                    input->SetLevel(component_level);
+                }
+                else {
+                    input->SetLevel(single_input_levels.at(i));
+                }
+                i += 1;
+            }
         }
 
-        if (variadic_input_databundle_names.size() != m_variadic_inputs.size()) {
-            throw JException("Wrong number of variadic input databundle names! Expected %d, found %d", m_variadic_inputs.size(), variadic_input_databundle_names.size());
-        }
+        if (!variadic_input_databundle_names.empty()) {
 
-        size_t i = 0;
-        for (auto* input : m_inputs) {
-            input->SetDatabundleName(single_input_databundle_names.at(i));
-            if (single_input_levels.empty()) {
-                input->SetLevel(component_level);
+            // Validate that we have the correct number of variadic input databundle names
+            if (variadic_input_databundle_names.size() != m_variadic_inputs.size()) {
+                throw JException("Wrong number of lists of variadic input databundle names! Expected %d, found %d", m_variadic_inputs.size(), variadic_input_databundle_names.size());
             }
-            else {
-                input->SetLevel(single_input_levels.at(i));
-            }
-            i += 1;
-        }
 
-        i = 0;
-        for (auto* variadic_input : m_variadic_inputs) {
-            variadic_input->SetRequestedDatabundleNames(variadic_input_databundle_names.at(i));
-            if (variadic_input_levels.empty()) {
-                variadic_input->SetLevel(component_level);
+            size_t i = 0;
+            for (auto* variadic_input : m_variadic_inputs) {
+                variadic_input->SetRequestedDatabundleNames(variadic_input_databundle_names.at(i));
+                if (variadic_input_levels.empty()) {
+                    variadic_input->SetLevel(component_level);
+                }
+                else {
+                    variadic_input->SetLevel(variadic_input_levels.at(i));
+                }
+                i += 1;
             }
-            else {
-                variadic_input->SetLevel(variadic_input_levels.at(i));
-            }
-            i += 1;
         }
     }
 

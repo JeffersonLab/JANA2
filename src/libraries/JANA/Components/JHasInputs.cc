@@ -57,7 +57,7 @@ void JHasInputs::VariadicInputBase::TriggerFactoryCreate(const JEvent& event) {
         }
         throw JException("Could not find parent at level=" + toString(m_level));
     }
-    if (!m_realized_databundle_names.empty()) {
+    if (!m_requested_databundle_names.empty()) {
         for (auto& tag : m_requested_databundle_names) {
             auto coll = facset->GetDatabundle(m_type_index, tag);
             if (coll == nullptr && !m_is_optional) {

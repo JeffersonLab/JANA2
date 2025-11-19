@@ -433,6 +433,8 @@ struct WiredFac : public JFactory {
 
     WiredFac() {
         SetPrefix("wiredfac");
+        m_protoclusters_in.SetDatabundleName("default_protos");
+        m_clusters_out.SetUniqueName("default_clusters");
     }
     void Process(const JEvent&) {
         for (auto protocluster : *m_protoclusters_in) {
@@ -525,4 +527,64 @@ TEST_CASE("WiringTests_FacGenShortnames") {
 }
 
 
+static constexpr std::string_view facgen_partial_input_names_only = R"(
+    [[wiring]]
+    action = "update"
+    type_name = "WiredFac"
+    prefix = "wiredfac"
+    input_names = ["overridden_input"]
+)";
 
+TEST_CASE("WiringTests_Partial_InputNamesOnly") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(facgen_partial_input_names_only);
+    wiring_svc->ApplyWiringSet(wiring_svc->ParseWiringSet(table));
+
+    auto gen = new JFactoryGeneratorT<WiredFac>;
+    app.Add(gen);
+    app.Initialize();
+
+    auto event = std::make_shared<JEvent>(&app);
+    std::vector<Cluster*> test_data;
+    test_data.push_back(new Cluster{0, 0, 22.2});
+    event->Insert<Cluster>(test_data, "overridden_input");
+
+    auto results = event->Get<Cluster>("default_clusters");
+    REQUIRE(results.size() == 1);
+    REQUIRE(results.at(0)->E == 23.2);
+
+}
+
+static constexpr std::string_view facgen_partial_output_names_only = R"(
+    [[wiring]]
+    action = "update"
+    type_name = "WiredFac"
+    prefix = "wiredfac"
+    output_names = ["overridden_output"]
+)";
+
+TEST_CASE("WiringTests_Partial_OutputNamesOnly") {
+
+    JApplication app;
+
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(facgen_partial_output_names_only);
+    wiring_svc->ApplyWiringSet(wiring_svc->ParseWiringSet(table));
+
+    auto gen = new JFactoryGeneratorT<WiredFac>;
+    app.Add(gen);
+    app.Initialize();
+
+    auto event = std::make_shared<JEvent>(&app);
+    std::vector<Cluster*> test_data;
+    test_data.push_back(new Cluster{0, 0, 22.2});
+    event->Insert<Cluster>(test_data, "default_protos");
+
+    auto results = event->Get<Cluster>("overridden_output");
+    REQUIRE(results.size() == 1);
+    REQUIRE(results.at(0)->E == 23.2);
+
+}

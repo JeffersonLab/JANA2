@@ -25,7 +25,7 @@ public:
         this->m_podio_databundle = new JPodioDatabundle;
         SetDatabundle(m_podio_databundle);
 
-        m_podio_databundle->SetShortName(collection_name);
+        m_podio_databundle->SetUniqueName(collection_name);
         m_podio_databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
         m_podio_databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
 
@@ -130,6 +130,12 @@ protected:
         }
         typed_collection_bundle->SetCollection(published);
         typed_collection_bundle->SetStatus(JDatabundle::Status::Inserted);
+
+        auto fac = typed_collection_bundle->GetFactory();
+        if (fac != nullptr) {
+            UpdateFactoryStatusOnEulerianStore(fac);
+        }
+
         m_transient_collection = std::make_unique<typename PodioT::collection_type>();
         m_transient_collection->setSubsetCollection(m_is_subset);
     }
@@ -140,7 +146,7 @@ template <typename PodioT>
 class VariadicPodioOutput : public JHasOutputs::VariadicOutputBase {
 private:
     std::vector<std::unique_ptr<typename PodioT::collection_type>> m_transient_collections;
-    std::vector<JPodioDatabundle*> m_databundles;
+    bool m_is_subset = false;
 
 public:
     VariadicPodioOutput(JHasOutputs* owner, std::vector<std::string> default_collection_names={}) {
@@ -151,13 +157,15 @@ public:
             databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
             databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
             GetDatabundles().push_back(databundle);
-            m_databundles.push_back(databundle);
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
         }
     }
 
     void SetShortNames(std::vector<std::string> short_names) override {
-        m_databundles.clear();
+        for (auto* db : GetDatabundles()) {
+            delete db;
+        }
+        GetDatabundles().clear();
         m_transient_collections.clear();
         for (const std::string& name : short_names) {
             auto databundle = new JPodioDatabundle;
@@ -165,26 +173,40 @@ public:
             databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
             databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
             GetDatabundles().push_back(databundle);
-            m_databundles.push_back(databundle);
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
+            m_transient_collections.back()->setSubsetCollection(m_is_subset);
         }
     }
 
     void SetUniqueNames(std::vector<std::string> unique_names) override {
-        m_databundles.clear();
+        for (auto* db : GetDatabundles()) {
+            delete db;
+        }
+        GetDatabundles().clear();
         m_transient_collections.clear();
         for (const std::string& name : unique_names) {
             auto databundle = new JPodioDatabundle;
+            LOG << "SetUniqueNames: Adding databundle with unique_name " << name;
             databundle->SetUniqueName(name);
             databundle->SetTypeName(JTypeInfo::demangle<PodioT>());
             databundle->SetTypeIndex(std::type_index(typeid(PodioT)));
             GetDatabundles().push_back(databundle);
-            m_databundles.push_back(databundle);
             m_transient_collections.push_back(std::make_unique<typename PodioT::collection_type>());
+            m_transient_collections.back()->setSubsetCollection(m_is_subset);
         }
     }
 
     std::vector<std::unique_ptr<typename PodioT::collection_type>>& operator()() { return m_transient_collections; }
+
+    void SetSubsetCollection(bool is_subset) {
+        m_is_subset = is_subset;
+        for (auto& coll : m_transient_collections) {
+            coll->setSubsetCollection(is_subset);
+        }
+    }
+
+    bool IsSubsetCollection() const { return m_is_subset; }
+
 
     void LagrangianStore(JFactorySet& facset, JDatabundle::Status status) override {
         if (m_transient_collections.size() != GetDatabundles().size()) {
@@ -208,13 +230,14 @@ public:
 
         size_t i = 0;
         for (auto& collection : m_transient_collections) {
-            frame->put(std::move(collection), m_databundles[i]->GetUniqueName());
-            const auto* moved = &frame->template get<typename PodioT::collection_type>(m_databundles[i]->GetUniqueName());
-            const auto &databundle = dynamic_cast<JPodioDatabundle*>(m_databundles[i]);
+            frame->put(std::move(collection), GetDatabundles()[i]->GetUniqueName());
+            const auto* moved = &frame->template get<typename PodioT::collection_type>(GetDatabundles()[i]->GetUniqueName());
+            const auto &databundle = dynamic_cast<JPodioDatabundle*>(GetDatabundles()[i]);
             databundle->SetCollection(moved);
             databundle->SetStatus(status);
             i += 1;
             collection = std::make_unique<typename PodioT::collection_type>();
+            collection->setSubsetCollection(m_is_subset);
         }
     }
 
@@ -246,31 +269,40 @@ public:
 
         int i=0;
         for (auto& collection : m_transient_collections) {
-            frame->put(std::move(collection), m_databundles[i]->GetUniqueName());
-            const auto* moved = &frame->template get<typename PodioT::collection_type>(m_databundles[i]->GetUniqueName());
+            frame->put(std::move(collection), GetDatabundles()[i]->GetUniqueName());
+            const auto* moved = &frame->template get<typename PodioT::collection_type>(GetDatabundles()[i]->GetUniqueName());
 
             JPodioDatabundle* typed_collection_bundle = nullptr;
-            auto collection_bundle = facset.GetDatabundle(m_databundles[i]->GetTypeIndex(), m_databundles[i]->GetUniqueName());
+            auto collection_bundle = facset.GetDatabundle(GetDatabundles()[i]->GetTypeIndex(), GetDatabundles()[i]->GetUniqueName());
 
             if (collection_bundle == nullptr) {
                 // No databundle present. In this case we create it, using m_databundles[i] as a template
-                typed_collection_bundle = new JPodioDatabundle(*m_databundles[i]);
+                auto typed_prototype = static_cast<JPodioDatabundle*>(GetDatabundles()[i]);
+                typed_collection_bundle = new JPodioDatabundle(*typed_prototype);
                 facset.Add(typed_collection_bundle);
             }
             else {
                 typed_collection_bundle = dynamic_cast<JPodioDatabundle*>(collection_bundle);
                 if (typed_collection_bundle == nullptr) {
                     // Wrong databundle present
-                    throw JException("Databundle with unique_name '%s' is not a JPodioDatabundle", m_databundles[i]->GetUniqueName().c_str());
+                    throw JException("Databundle with unique_name '%s' is not a JPodioDatabundle", GetDatabundles()[i]->GetUniqueName().c_str());
                 }
             }
 
             // Then we store the collection itself
             typed_collection_bundle->SetCollection(moved);
             typed_collection_bundle->SetStatus(JDatabundle::Status::Inserted);
+
+            auto fac = typed_collection_bundle->GetFactory();
+            if (fac != nullptr) {
+                UpdateFactoryStatusOnEulerianStore(fac);
+            }
+
+            // Replace the transient collection
+            collection = std::make_unique<typename PodioT::collection_type>();
+            collection->setSubsetCollection(m_is_subset);
             i += 1;
         }
-        m_transient_collections.clear();
     }
 };
 

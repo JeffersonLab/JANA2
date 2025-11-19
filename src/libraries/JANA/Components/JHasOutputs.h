@@ -8,6 +8,7 @@ class JFactorySet;
 
 namespace jana::components {
 
+void UpdateFactoryStatusOnEulerianStore(JFactory* fac);
 
 class JHasOutputs {
 public:
@@ -39,7 +40,7 @@ public:
     class VariadicOutputBase {
     private:
         std::vector<JDatabundle*> m_databundles;
-        JEventLevel m_level = JEventLevel::PhysicsEvent;
+        JEventLevel m_level = JEventLevel::None;
 
     public:
         virtual ~VariadicOutputBase() {
@@ -167,27 +168,39 @@ public:
         }
         else {
             // Do the obvious, sensible thing instead
-            size_t i = 0;
-            for (auto* output : m_outputs) {
-                output->SetLevel(component_level);
-                if (use_short_names) {
-                    output->SetShortName(single_output_databundle_names.at(i));
+            if (!single_output_databundle_names.empty()) {
+                if (single_output_databundle_names.size() != m_outputs.size()) {
+                    throw JException("Wrong number of (nonvariadic) output databundle names! Expected %d, found %d", m_outputs.size(), single_output_databundle_names.size());
                 }
-                else {
-                    output->SetUniqueName(single_output_databundle_names.at(i));
+
+                size_t i = 0;
+                for (auto* output : m_outputs) {
+                    output->SetLevel(component_level);
+                    if (use_short_names) {
+                        output->SetShortName(single_output_databundle_names.at(i));
+                    }
+                    else {
+                        output->SetUniqueName(single_output_databundle_names.at(i));
+                    }
+                    i += 1;
                 }
-                i += 1;
             }
-            i = 0;
-            for (auto* variadic_output : m_variadic_outputs) {
-                variadic_output->SetLevel(component_level);
-                if (use_short_names) {
-                    variadic_output->SetShortNames(variadic_output_databundle_names.at(i));
+
+            if (!variadic_output_databundle_names.empty()) {
+                if (variadic_output_databundle_names.size() != m_variadic_outputs.size()) {
+                    throw JException("Wrong number of lists of variadic output databundle names! Expected %d, found %d", m_variadic_outputs.size(), variadic_output_databundle_names.size());
                 }
-                else {
-                    variadic_output->SetUniqueNames(variadic_output_databundle_names.at(i));
+                size_t i = 0;
+                for (auto* variadic_output : m_variadic_outputs) {
+                    variadic_output->SetLevel(component_level);
+                    if (use_short_names) {
+                        variadic_output->SetShortNames(variadic_output_databundle_names.at(i));
+                    }
+                    else {
+                        variadic_output->SetUniqueNames(variadic_output_databundle_names.at(i));
+                    }
+                    i += 1;
                 }
-                i += 1;
             }
         }
     }

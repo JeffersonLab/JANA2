@@ -1,11 +1,15 @@
 
+#include "JANA/JEventUnfolder.h"
+#include <JANA/JApplicationFwd.h>
 #include <catch.hpp>
 #include <JANA/JEventProcessor.h>
 #include <JANA/Topology/JUnfoldArrow.h>
 #include <JANA/Topology/JFoldArrow.h>
+#include <cstdint>
 
 #if JANA2_HAVE_PODIO
 #include <PodioDatamodel/ExampleHitCollection.h>
+#include <PodioDatamodel/EventInfoCollection.h>
 #endif
 
 namespace jana {
@@ -258,7 +262,257 @@ TEST_CASE("NoOpUnfolder_Tests") {
 }
 
 
-} // namespace arrowtests
+#if JANA2_HAVE_PODIO
+
+/*
+* This test case hopefully finds issues that the ePIC timeframe splitter will eventually encounter
+*/
+
+struct ePICSource : public JEventSource {
+    std::vector<std::vector<std::tuple<int, int, double>>> datastream;
+    size_t next_idx = 0;
+
+    PodioOutput<EventInfo> info_out {this, "info"};
+    VariadicPodioOutput<ExampleHit> hits_out {this, {"adet_hits", "bdet_hits"}};
+
+    ePICSource() {
+        SetTypeName("ePICSource");
+        SetLevel(JEventLevel::Timeslice);
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
+    Result Emit(JEvent&) override {
+        if (next_idx == datastream.size()) {
+            return Result::FailureFinished;
+        }
+
+        MutableEventInfo info;
+        info.TimesliceNumber(next_idx);
+        info_out()->push_back(info);
+
+        const auto& timeslice = datastream.at(next_idx);
+        for (auto& hit_data: timeslice) {
+            MutableExampleHit hit;
+            int det = std::get<0>(hit_data);
+            int time = std::get<1>(hit_data);
+            double energy = std::get<2>(hit_data);
+            hit.time(time);
+            hit.energy(energy);
+            hits_out().at(det)->push_back(hit);
+        }
+        LOG << "Emitting timeslice " << next_idx << " containing " << timeslice.size() << " hits";
+        next_idx += 1;
+
+        return Result::Success;
+    }
+};
+
+struct TimeAdjustment : public JFactory {
+    VariadicPodioInput<ExampleHit> hits_in {this, VariadicInputOptions{.names={"adet_hits", "bdet_hits"}}};
+    VariadicPodioOutput<ExampleHit> hits_out {this, {"adet_hits_adjusted", "bdet_hits_adjusted"}};
+
+    TimeAdjustment() {
+        SetLevel(JEventLevel::Timeslice);
+    }
+
+    void Process(const JEvent&) {
+        size_t i=0;
+        for (const auto& hit_coll : hits_in()) {
+            for (const auto& raw_hit : *hit_coll) {
+                auto adjusted_hit = raw_hit.clone();
+                adjusted_hit.time(adjusted_hit.time() + 1);
+                hits_out().at(i)->push_back(adjusted_hit);
+            }
+            i += 1;
+        }
+    }
+};
+
+
+struct Splitter : public JEventUnfolder {
+    PodioInput<EventInfo> info_in {this, {.name="info"}};
+    PodioOutput<EventInfo> info_out {this, "info"};
+    VariadicPodioInput<ExampleHit> hits_in {this, VariadicInputOptions{.names={"adet_hits_adjusted", "bdet_hits_adjusted"}}};
+    VariadicPodioOutput<ExampleHit> hits_out {this, {"adet_hits", "bdet_hits"}};
+
+    uint64_t current_t = 0;
+    uint64_t current_evt_nr = 0;
+
+    Splitter() {
+        info_out.SetSubsetCollection(true);
+        hits_out.SetSubsetCollection(true);
+        SetParentLevel(JEventLevel::Timeslice);
+        SetChildLevel(JEventLevel::PhysicsEvent);
+    }
+
+    JEventUnfolder::Result Unfold(const JEvent&, JEvent& child, int) {
+
+        REQUIRE(info_in()->size() == 1);
+
+        LOG << "Unfolding timeslice " << info_in()->at(0).TimesliceNumber() << " into physics event " << current_evt_nr;
+
+        for (; current_t < 10; current_t += 1) {
+
+            bool hits_found = false;
+            size_t current_coll_idx=0;
+            for (const auto& hit_coll : hits_in()) {
+                for (const auto& hit : *hit_coll) {
+                    if (hit.time() == current_t) {
+                        hits_found = true;
+                        hits_out().at(current_coll_idx)->push_back(hit);
+                    }
+                }
+                current_coll_idx += 1;
+            }
+
+            if (hits_found) {
+                if (current_t == 9) {
+                    // We've reached the last timestep in this timeslice
+                    current_t = 0;
+                    LOG << "Splitter: NextChildNextParent";
+                    info_out()->push_back(info_in()->at(0));
+                    child.SetEventNumber(current_evt_nr++);
+                    return Result::NextChildNextParent;
+                }
+                else {
+                    // Next call to Unfold() starts with the subsequent timestep
+                    current_t += 1;
+                    LOG << "Splitter: NextChildKeepParent";
+                    info_out()->push_back(info_in()->at(0));
+                    child.SetEventNumber(current_evt_nr++);
+                    return Result::NextChildKeepParent;
+                }
+            }
+        }
+        // No (remaining) hits found in this timeslice for any timestep
+        current_t = 0;
+        LOG << "Splitter: KeepChildNextParent";
+        return Result::KeepChildNextParent; 
+    }
+};
+
+
+struct Checker : public JEventProcessor {
+    PodioInput<EventInfo> info_in {this, {.name="info"}};
+    VariadicPodioInput<ExampleHit> hits_in {this, VariadicInputOptions{.names={"adet_hits", "bdet_hits"}}};
+
+    std::vector<int> expected_timeslice_nrs;
+    std::vector<std::vector<std::tuple<int, int, double>>> expected_hits;
+    size_t current_idx = 0;
+
+    Checker() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+        EnableOrdering();
+    }
+    void ProcessSequential(const JEvent& event) override {
+
+        int ts_nr = info_in->at(0).TimesliceNumber();
+        LOG << "Checking event " << event.GetEventNumber() << " from timeslice " << ts_nr;
+
+        std::vector<std::tuple<int, int, double>> hits_found;
+
+        size_t det_id = 0;
+        for (const auto& coll : hits_in()) {
+            for (const auto& hit : *coll) {
+                hits_found.push_back({ det_id, hit.time(), hit.energy()});
+            }
+            det_id += 1;
+        }
+
+        REQUIRE(expected_timeslice_nrs.at(current_idx) == ts_nr);
+        REQUIRE(expected_hits.at(current_idx).size() == hits_found.size());
+        for (size_t i=0; i<hits_found.size(); ++i) {
+            REQUIRE(std::get<0>(expected_hits.at(current_idx).at(i)) == std::get<0>(hits_found.at(i)));
+            REQUIRE(std::get<1>(expected_hits.at(current_idx).at(i)) == std::get<1>(hits_found.at(i)));
+            REQUIRE(std::get<2>(expected_hits.at(current_idx).at(i)) == std::get<2>(hits_found.at(i)));
+        }
+
+        current_idx += 1;
+    }
+};
+
+
+TEST_CASE("ePIC_Timeframe_Splitting") {
+    JApplication app;
+    auto src = new ePICSource;
+    auto checker = new Checker();
+
+    app.Add(src);
+    app.Add(new JFactoryGeneratorT<TimeAdjustment>);
+    app.Add(new Splitter);
+    app.Add(checker);
+
+    const int DetA = 0;
+    const int DetB = 1;
+
+    SECTION("JustOne") {
+        src->datastream = {
+            {{DetA, 0, 22.2}},
+            {{DetA, 0, 33.3}},
+            {{DetA, 0, 44.4}}
+        };
+        checker->expected_timeslice_nrs = {0, 1, 2};
+        checker->expected_hits = {
+            {{DetA, 1, 22.2}},
+            {{DetA, 1, 33.3}},
+            {{DetA, 1, 44.4}}
+        };
+        app.Run();
+    }
+    SECTION("OneOrZero") {
+        src->datastream = {
+            {{DetA, 0, 22.2}},
+            {},
+            {{DetA, 0, 33.3}},
+            {{DetA, 0, 44.4}}
+        };
+        checker->expected_timeslice_nrs = {0, 2, 3};
+        checker->expected_hits = {
+            {{DetA, 1, 22.2}},
+            {{DetA, 1, 33.3}},
+            {{DetA, 1, 44.4}}
+        };
+        app.Run();
+    }
+    SECTION("FlatMap") {
+        src->datastream = {
+            {{DetA, 0, 22.2}, {DetA, 1, 33.3}},
+            {{DetA, 0, 44.4}, {DetA, 1, 55.5}, {DetB, 2, 66.6}},
+            {{DetA, 0, 77.7}}
+        };
+        checker->expected_timeslice_nrs = {0,0,1,1,1,2};
+        checker->expected_hits = {
+            {{DetA, 1, 22.2}},
+            {{DetA, 2, 33.3}},
+            {{DetA, 1, 44.4}},
+            {{DetA, 2, 55.5}},
+            {{DetB, 3, 66.6}},
+            {{DetA, 1, 77.7}}
+        };
+        app.Run();
+    }
+    SECTION("UnFlatMap") {
+        src->datastream = {
+            {{DetA, 0, 22.2}, {DetA, 1, 33.3}, {DetA, 1, 19}, {DetB, 1, 22}},
+            {{DetA, 0, 44.4}, {DetA, 1, 55.5}, {DetB, 2, 66.6}},
+            {{DetA, 0, 77.7}, {DetA, 0, 88.8}, {DetA, 0, 99.9}}
+        };
+        checker->expected_timeslice_nrs = {0,0,1,1,1,2};
+        checker->expected_hits = {
+            {{DetA, 1, 22.2}},
+            {{DetA, 2, 33.3}, {DetA, 2, 19}, {DetB, 2, 22}},
+            {{DetA, 1, 44.4}},
+            {{DetA, 2, 55.5}},
+            {{DetB, 3, 66.6}},
+            {{DetA, 1, 77.7}, {DetA, 1, 88.8}, {DetA, 1, 99.9}}
+        };
+        app.Run();
+    }
+}
+
+#endif // JANA2_HAVE_PODIO
+
+} // namespace unfoldtests
 } // namespace jana
 
 
