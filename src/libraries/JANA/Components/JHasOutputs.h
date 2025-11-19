@@ -8,6 +8,7 @@ class JFactorySet;
 
 namespace jana::components {
 
+void UpdateFactoryStatusOnEulerianStore(JFactory* fac);
 
 class JHasOutputs {
 public:

@@ -32,6 +32,7 @@ set(JANA2_SOURCES
     Components/JComponentSummary.cc
     Components/JDatabundle.cc
     Components/JHasInputs.cc
+    Components/JHasOutputs.cc
 
     Utils/JCpuInfo.cc
     Utils/JProcessorMapping.cc

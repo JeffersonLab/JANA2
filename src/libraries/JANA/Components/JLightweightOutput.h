@@ -74,6 +74,10 @@ public:
             typed_bundle->GetData() = std::move(*m_external_data);
         }
         typed_bundle->SetStatus(JDatabundle::Status::Inserted);
+        auto fac = typed_bundle->GetFactory();
+        if (fac != nullptr) {
+            UpdateFactoryStatusOnEulerianStore(fac);
+        }
     }
 };
 
@@ -179,6 +183,11 @@ public:
             }
             typed_databundle->GetData() = std::move(m_transient_datas.at(i));
             typed_databundle->SetStatus(JDatabundle::Status::Inserted);
+
+            auto fac = typed_databundle->GetFactory();
+            if (fac != nullptr) {
+                UpdateFactoryStatusOnEulerianStore(fac);
+            }
             i += 1;
         }
     }

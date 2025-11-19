@@ -130,6 +130,12 @@ protected:
         }
         typed_collection_bundle->SetCollection(published);
         typed_collection_bundle->SetStatus(JDatabundle::Status::Inserted);
+
+        auto fac = typed_collection_bundle->GetFactory();
+        if (fac != nullptr) {
+            UpdateFactoryStatusOnEulerianStore(fac);
+        }
+
         m_transient_collection = std::make_unique<typename PodioT::collection_type>();
         m_transient_collection->setSubsetCollection(m_is_subset);
     }
@@ -286,6 +292,11 @@ public:
             // Then we store the collection itself
             typed_collection_bundle->SetCollection(moved);
             typed_collection_bundle->SetStatus(JDatabundle::Status::Inserted);
+
+            auto fac = typed_collection_bundle->GetFactory();
+            if (fac != nullptr) {
+                UpdateFactoryStatusOnEulerianStore(fac);
+            }
 
             // Replace the transient collection
             collection = std::make_unique<typename PodioT::collection_type>();
