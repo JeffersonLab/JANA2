@@ -1,4 +1,4 @@
-name: CUDA CI farm
+name: Platform tests - Farm+CUDA
 
 # disable this one by naming an invalid branch
 on:

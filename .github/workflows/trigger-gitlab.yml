@@ -1,4 +1,4 @@
-name: trigger-gitlab
+name: Trigger GitLab
 on:
   push:
     branches: [master]

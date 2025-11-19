@@ -1,4 +1,4 @@
-name: Documentation generation
+name: Build documentation
 
 on:
   push:
