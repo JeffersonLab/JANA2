@@ -28,7 +28,7 @@ jobs:
             --platform linux/amd64 \
             --privileged \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
-            raiqarasool/gluex_build:cvmfs /bin/bash -c "source /workspace/JANA2/.github/jana_build.sh"
+            codecr.jlab.org/nbrei/jana2-ci/jana2_devenv_alma9:latest /bin/bash -c "source /workspace/JANA2/.github/jana_build.sh"
             
       - name: Git Clone Halld_recon
         run: |
@@ -42,7 +42,7 @@ jobs:
             --platform linux/amd64 \
             --privileged \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
-            raiqarasool/gluex_build:cvmfs /bin/bash -c "source /workspace/JANA2/.github/halld_recon_build.sh"
+            codecr.jlab.org/nbrei/jana2-ci/jana2_devenv_alma9:latest /bin/bash -c "source /workspace/JANA2/.github/halld_recon_build.sh"
 
       - name: Cleaning up created folders
         if: always()
