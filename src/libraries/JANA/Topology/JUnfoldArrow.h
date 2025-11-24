@@ -35,6 +35,7 @@ public:
 
     void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final {
 
+        LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
         // Take whatever we were given
         if (this->m_next_input_port == PARENT_IN) {
             assert(m_parent_event == nullptr);
@@ -51,6 +52,7 @@ public:
 
         // Check if we should exit early because we don't have a parent event
         if (m_parent_event == nullptr) {
+            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
             m_next_input_port = PARENT_IN;
             output_count = 0;
             status = JArrow::FireResult::KeepGoing;
@@ -59,6 +61,7 @@ public:
 
         // Check if we should exit early because we don't have a child event
         if (m_child_event == nullptr) {
+            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
             m_next_input_port = CHILD_IN;
             output_count = 0;
             status = JArrow::FireResult::KeepGoing;
@@ -79,6 +82,7 @@ public:
 
         auto result = m_unfolder->DoUnfold(*m_parent_event, *m_child_event);
         LOG_DEBUG(m_logger) << "Unfold succeeded: Parent event = " << m_parent_event->GetEventNumber() << ", child event = " << m_child_event->GetEventNumber() << LOG_END;
+        LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
 
         if (result == JEventUnfolder::Result::KeepChildNextParent) {
             // KeepChildNextParent is a little more complicated because we have to handle the case of the parent having no children.
