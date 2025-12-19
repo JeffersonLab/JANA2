@@ -77,7 +77,7 @@ target_link_libraries(jana2 PRIVATE VendoredMD5) # To pull in the header file
 if (${USE_PODIO})
     target_link_libraries(jana2 PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
 elseif (${USE_ROOT})
-    target_link_libraries(jana2 PUBLIC ${ROOT_LIBRARIES})
+    target_link_libraries(jana2 PUBLIC ROOT::Core)
 endif()
 
 
@@ -92,7 +92,7 @@ target_link_libraries(jana2_static_lib PUBLIC VendoredTomlPlusPlus)
 if (${USE_PODIO})
     target_link_libraries(jana2_static_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
 elseif (${USE_ROOT})
-    target_link_libraries(jana2_static_lib PUBLIC ${ROOT_LIBRARIES})
+    target_link_libraries(jana2_static_lib PUBLIC ROOT::Core)
 endif()
 install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
 
@@ -108,7 +108,7 @@ target_link_libraries(jana2_shared_lib PUBLIC VendoredTomlPlusPlus)
 if (${USE_PODIO})
     target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
 elseif (${USE_ROOT})
-    target_link_libraries(jana2_shared_lib PUBLIC ${ROOT_LIBRARIES})
+    target_link_libraries(jana2_shared_lib PUBLIC ROOT::Core)
 endif()
 
 install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)

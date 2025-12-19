@@ -38,7 +38,7 @@ if(${USE_ROOT})
         PUBLIC_HEADER ${RootDatamodelExample_HEADERS})
 
     target_include_directories(RootDatamodelExample PUBLIC ${ROOT_INCLUDE_DIRS})
-    target_link_libraries(RootDatamodelExample PUBLIC ${ROOT_LIBRARIES})
+    target_link_libraries(RootDatamodelExample PUBLIC ROOT::Core)
 
     message(STATUS "Installing ROOT PCM files: ${my_pcms}")
     install(FILES ${my_pcms} DESTINATION lib/JANA/plugins)

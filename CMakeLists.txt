@@ -87,7 +87,7 @@ if (${USE_ROOT})
     find_package(ROOT REQUIRED)
     set(JANA2_HAVE_ROOT 1)
     include_directories(${ROOT_INCLUDE_DIRS})
-    link_libraries(${ROOT_LIBRARIES})
+    link_libraries(ROOT::Core)
     execute_process(
         COMMAND ${ROOT_BINDIR}/root-config --features
         OUTPUT_VARIABLE ROOT_FEATURES
