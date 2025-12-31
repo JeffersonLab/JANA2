@@ -11,6 +11,36 @@
 - [See online documentation](https://jeffersonlab.github.io/JANA2/)
 - [See online doxygen documentation](https://jeffersonlab.github.io/JANA2/refcpp/)
 
+### 2026.01.00
+
+This release brings a couple of exciting new features along with some important bugfixes. The big JFactory/JDatabundle refactoring is
+finally complete, and the bugs that it introduced in v2.4.3 are fixed. We are hoping that this release will be sufficient for merging 
+EICrecon's timeframe splitter. This release is also notable for being our first release that uses calendar versioning, which hopefully 
+matches our workflow better.
+
+#### Bugfixes
+
+- Fix problems with `Input` and `Output` tags introduced in v2.4.3 (PR #464)
+- Use of deprecated `operator->()` on podio collections (PR #477)
+- Template instantation error with podio LinkCollections (PR #462)
+- Stringify array and vector parameters consistently with primitives (PR #457)
+
+#### Features
+
+- Extend support for external wiring to include non-JFactory components (PR #476, #473)
+- Add support for preserving the original event ordering with multithreading enabled (PR #472)
+- Add support for multilevel event sources (PR #467)
+
+#### Refactoring
+
+- Podio-collection-producing factories no longer inherit from JFactoryT (PR #460, #479)
+- Removed obsolete `Streaming/` code (PR #468)
+
+#### Examples
+
+- Example: Hit reconstruction (PR #470)
+- Example: Protoclustering (PR #469)
+
 ### 2.4.3
 
 #### Behavior changes
