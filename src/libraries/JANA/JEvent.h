@@ -533,7 +533,7 @@ const typename T::collection_type* JEvent::GetCollection(std::string name, bool 
     auto collection = GetCollectionBase(name, throw_on_missing);
     auto* typed_collection = dynamic_cast<const typename T::collection_type*>(collection);
     if (throw_on_missing && typed_collection == nullptr) {
-        throw JException("Databundle with uniquename '%s' does not contain %s", JTypeInfo::demangle<typename T::collection_type>().c_str());
+        throw JException("Databundle with uniquename '%s' does not contain %s", name.c_str(), JTypeInfo::demangle<typename T::collection_type>().c_str());
     }
     return typed_collection;
 }
