@@ -1,12 +1,20 @@
-![C/C++ CI ubuntu](https://github.com/JeffersonLab/JANA2/actions/workflows/ccpp-linux.yml/badge.svg)<br>
-![C/C++ CI docker](https://github.com/JeffersonLab/JANA2/actions/workflows/ccpp-docker.yml/badge.svg)<br>
-![C/C++ CI macos](https://github.com/JeffersonLab/JANA2/actions/workflows/ccpp-macos.yml/badge.svg)<br>
-![C/C++ CI cuda-ifarm](https://github.com/JeffersonLab/JANA2/actions/workflows/cuda-farm.yml/badge.svg)<br>
+
+
+![Dependency matrix tests](https://github.com/JeffersonLab/JANA2/actions/workflows/test_dependency_matrix.yml/badge.svg)
+
+<br>
+
+![ePIC integration tests](https://github.com/JeffersonLab/JANA2/actions/workflows/test_integration_epic.yml/badge.svg)
+
+<br>
+
+![GlueX integration tests](https://github.com/JeffersonLab/JANA2/actions/workflows/test_integration_gluex.yml/badge.svg)
+<br>
 
 [![DOI](https://zenodo.org/badge/117695469.svg)](https://zenodo.org/badge/latestdoi/117695469)
 ## Welcome to JANA!
 
-JANA is a C++ framework for multi-threaded HENP (High Energy and Nuclear Physics)  event reconstruction.
+JANA is a C++ framework for multi-threaded HENP (High Energy and Nuclear Physics) event reconstruction.
 Please see the [JANA website](https://jeffersonlab.github.io/JANA2/) for full documentation.
 
 JANA2 is a complete rewrite retaining successful features from the original while modernizing the framework for a new generation of experiments. The code is under active development, but is ready for use as is. You are welcome to 

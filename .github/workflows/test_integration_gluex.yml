@@ -1,4 +1,4 @@
-name: halld_recon
+name: Integration tests - GlueX
 
 on:
   push:
