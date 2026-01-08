@@ -11,6 +11,10 @@
 - [See online documentation](https://jeffersonlab.github.io/JANA2/)
 - [See online doxygen documentation](https://jeffersonlab.github.io/JANA2/refcpp/)
 
+### 2026.01.01
+
+This patch release fixes a segfault in `JEvent::GetCollection` when responding to an exception.
+
 ### 2026.01.00
 
 This release brings a couple of exciting new features along with some important bugfixes. The big JFactory/JDatabundle refactoring is
