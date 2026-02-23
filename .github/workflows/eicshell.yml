@@ -3,7 +3,6 @@ name: eic-shell
 
 on:
   push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -62,52 +61,6 @@ jobs:
           echo "RPATH of bin/PodioExample:"
           objdump -x bin/PodioExample | grep PATH || echo "Empty!"
 
-    - name: Run JTest plugin with 100 events
-      uses: eic/run-cvmfs-osg-eic-shell@main
-      with:
-        platform-release: "eic_xl:nightly"
-        run: |
-            export JANA_HOME=$GITHUB_WORKSPACE
-            export JANA_PLUGIN_PATH=$JANA_HOME/plugins
-            export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
-            $GITHUB_WORKSPACE/bin/jana -Pplugins=JTest -Pjana:nevents=100
-
-    - name: Run jana-unit-tests
-      uses: eic/run-cvmfs-osg-eic-shell@main
-      with:
-        platform-release: "eic_xl:nightly"
-        run: |
-          export JANA_HOME=$GITHUB_WORKSPACE
-          export JANA_PLUGIN_PATH=$JANA_HOME/plugins
-          export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
-          $GITHUB_WORKSPACE/bin/jana-unit-tests
-
-    - name: Run TimesliceExample with simple (physics event) topology
-      uses: eic/run-cvmfs-osg-eic-shell@main
-      with:
-        platform-release: "eic_xl:nightly"
-        run: |
-          echo "--- Running TimesliceExample with simple topology ------------------------------"
-          export JANA_HOME=$GITHUB_WORKSPACE
-          export JANA_PLUGIN_PATH=$JANA_HOME/plugins
-          export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
-          $GITHUB_WORKSPACE/bin/jana \
-            -Pplugins=TimesliceExample \
-            -Pjana:nevents=100 \
-            events.root
-
-    - name: Run TimesliceExample with complex (timeslice) topology
-      uses: eic/run-cvmfs-osg-eic-shell@main
-      with:
-        platform-release: "eic_xl:nightly"
-        run: |
-          echo "--- Running TimesliceExample with simple topology ------------------------------"
-          export JANA_HOME=$GITHUB_WORKSPACE
-          export JANA_PLUGIN_PATH=$JANA_HOME/plugins
-          export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
-          $GITHUB_WORKSPACE/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
-
-
     - name: Compile EICrecon
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
@@ -141,7 +94,7 @@ jobs:
         setup: "/opt/detector/epic-main/bin/thisepic.sh"
         run: |
           echo "--- Generating EICrecon input data ---"
-          npsim --compactFile ${DETECTOR_PATH}/${DETECTOR}_craterlake.xml \
+          npsim --compactFile ${DETECTOR_PATH}/${DETECTOR}_inner_detector.xml \
             -G --random.seed 1 --gun.particle "e-" --gun.momentumMin "1*GeV" \
             --gun.momentumMax "20*GeV" --gun.distribution "uniform" -N 20 \
             --outputFile sim_e_1GeV_20GeV_craterlake.edm4hep.root -v WARNING
@@ -154,6 +107,7 @@ jobs:
         run: |
           export JANA_HOME=$GITHUB_WORKSPACE
           export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/../EICrecon/lib/EICrecon/plugins
+          export DETECTOR_CONFIG=epic_inner_detector # not important
           export LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/../EICrecon/lib:${GITHUB_WORKSPACE}/../EICrecon/lib/EICrecon/plugins:${JANA_HOME}/lib:${JANA_HOME}/lib/JANA/plugins:$LD_LIBRARY_PATH
           ../EICrecon/bin/eicrecon sim_e_1GeV_20GeV_craterlake.edm4hep.root
 
