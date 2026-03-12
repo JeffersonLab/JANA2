@@ -234,6 +234,9 @@ public:
                 m_data.clear();
                 return;
             };
+            if (databundle->GetFactory() != nullptr) {
+                FactoryCreate(event, databundle->GetFactory());
+            }
             auto* typed_databundle = dynamic_cast<JLightweightDatabundleT<T>*>(databundle);
             if (typed_databundle == nullptr) {
                 if (!m_is_optional) {
