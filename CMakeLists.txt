@@ -209,9 +209,7 @@ add_subdirectory(src/external)
 add_subdirectory(src/libraries/JANA)
 add_subdirectory(src/examples)
 add_subdirectory(src/plugins)
-add_subdirectory(src/programs/jana)
-add_subdirectory(src/programs/unit_tests)
-add_subdirectory(src/programs/perf_tests)
+add_subdirectory(src/programs)
 add_subdirectory(src/python)
 
 #---------------------------------------------------------------------------------------
