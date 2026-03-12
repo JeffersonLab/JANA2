@@ -5,6 +5,10 @@
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JFactoryGenerator.h>
+#include <JANA/Topology/JTopologyBuilder.h>
+#include <JANA/Topology/JEventSourceArrow.h>
+#include <JANA/Topology/JEventMapArrow.h>
+#include <JANA/Topology/JEventTapArrow.h>
 
 // This integration test covers the end-to-end testing of a GPU override
 // We set this up so that we have the following factory chain:
@@ -64,11 +68,45 @@ struct Proc : public JEventProcessor {
 
 };
 
-// We need:
-// 1. A GPUMapArrow
-// 2. A GPUTapArrow
-// 3. An overridden JTopologyBuilder (how do we do this again??!)
-// 4. A JEvent modified to include GetContinuation()
+
+struct JContinuation {
+  mutable int next_gpu_factory=0; // Who increments this?
+  mutable std::string factory_prefix; // Or do we want databundle unique_name?
+  mutable int originating_arrow_id; // Use this to figure out where to return the event to
+};
+
+void configure_topology(JTopologyBuilder& builder) {
+
+    auto pool = new JEventPool(builder.m_components, 1, 1, JEventLevel::PhysicsEvent);
+    builder.pools.push_back(pool);
+
+    auto* src_arrow = new JEventSourceArrow("PhysicsEventSource", builder.m_components->get_evt_srces());
+    src_arrow->attach(pool, src_arrow->EVENT_IN);
+    
+    JEventMapArrow* map_arrow = new JEventMapArrow("PhysicsEventMap");
+    for (auto proc : builder.m_components->get_evt_procs()) {
+        map_arrow->add_processor(proc);
+    }
+
+    builder.connect(src_arrow, src_arrow->EVENT_OUT, map_arrow, map_arrow->EVENT_IN);
+
+    JEventTapArrow* tap_arrow = new JEventTapArrow("PhysicsEventTap");
+    for (auto proc : builder.m_components->get_evt_procs()) {
+        tap_arrow->add_processor(proc);
+    }
+
+    builder.connect(map_arrow, map_arrow->EVENT_OUT, tap_arrow, tap_arrow->EVENT_IN);
+    tap_arrow->attach(pool, tap_arrow->EVENT_OUT);
+
+    builder.queues.at(0)->Scale(4);
+    builder.queues.at(1)->Scale(4);
+
+    builder.arrows.push_back(src_arrow);
+    builder.arrows.push_back(map_arrow);
+    builder.arrows.push_back(tap_arrow);
+}
+
+
 
 TEST_CASE("GPUOffloading") {
   JApplication app;
@@ -80,6 +118,9 @@ TEST_CASE("GPUOffloading") {
   app.SetParameterValue("jana:nevents", 3);
   app.SetParameterValue("nthreads", 2);
   //app.SetParameterValue("jana:loglevel", "TRACE");
+
+  auto builder = app.GetService<JTopologyBuilder>();
+  builder->set_configure_fn(configure_topology);
   app.Run();
 }
 
