@@ -43,7 +43,7 @@ struct BFac : public JFactory {
 struct CFac : public JFactory {
   Input<B> b_in {this};
   Output<C> c_out {this};
-  void Process(const JEvent& event) override {
+  void Process(const JEvent&) override {
     LOG_INFO(GetLogger()) << "Running CFac (hopefully on CPU)" << LOG_END;
     auto* b = b_in->at(0);
     C* c = new C;
@@ -65,15 +65,60 @@ struct Proc : public JEventProcessor {
     LOG_INFO(GetLogger()) << "Evt nr " << evtnr << ": " << "Expected " << expected << ", found " << c->c << std::endl;
     REQUIRE(expected == c->c);
   }
-
 };
 
 
-struct JContinuation {
-  mutable int next_gpu_factory=0; // Who increments this?
-  mutable std::string factory_prefix; // Or do we want databundle unique_name?
-  mutable int originating_arrow_id; // Use this to figure out where to return the event to
+struct TriggerFactoryInputsArrow : public JArrow {
+    std::string unique_name;
+
+    TriggerFactoryInputsArrow() {
+        set_name("TriggerFactoryInputsArrow");
+        set_is_parallel(true);
+        create_ports(1, 1);
+    }
+
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
+        auto* fac = event->GetFactorySet()->GetDatabundle(unique_name)->GetFactory();
+        for (auto* input : fac->GetInputs()) {
+            input->TriggerFactoryCreate(*event);
+        }
+        for (auto* input : fac->GetVariadicInputs()) {
+            input->TriggerFactoryCreate(*event);
+        }
+        LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
+        outputs[0] = {event, 1};
+        output_count = 1;
+        status = JArrow::FireResult::KeepGoing;
+    }
+
+    void initialize() final {}
+    void finalize() final {}
 };
+
+struct OffloadArrow : public JArrow {
+    std::string unique_name;
+    OffloadArrow() {
+        set_name("OffloadArrow");
+        set_is_parallel(false);
+        create_ports(1, 1);
+    }
+
+    ~OffloadArrow() override {}
+
+    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
+
+        event->GetFactorySet()->GetDatabundle(unique_name)->GetFactory()->Create(*event);
+
+        LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
+        outputs[0] = {event, 1};
+        output_count = 1;
+        status = JArrow::FireResult::KeepGoing;
+    }
+
+    void initialize() final {};
+    void finalize() final {};
+};
+
 
 void configure_topology(JTopologyBuilder& builder) {
 
@@ -81,34 +126,45 @@ void configure_topology(JTopologyBuilder& builder) {
     builder.pools.push_back(pool);
 
     auto* src_arrow = new JEventSourceArrow("PhysicsEventSource", builder.m_components->get_evt_srces());
-    src_arrow->attach(pool, src_arrow->EVENT_IN);
-    
+
+    TriggerFactoryInputsArrow* trigger_inputs_arrow = new TriggerFactoryInputsArrow;
+    trigger_inputs_arrow->unique_name = "B";
+
+    OffloadArrow* offload_arrow = new OffloadArrow;
+    offload_arrow->unique_name = "B";
+
     JEventMapArrow* map_arrow = new JEventMapArrow("PhysicsEventMap");
     for (auto proc : builder.m_components->get_evt_procs()) {
         map_arrow->add_processor(proc);
     }
-
-    builder.connect(src_arrow, src_arrow->EVENT_OUT, map_arrow, map_arrow->EVENT_IN);
 
     JEventTapArrow* tap_arrow = new JEventTapArrow("PhysicsEventTap");
     for (auto proc : builder.m_components->get_evt_procs()) {
         tap_arrow->add_processor(proc);
     }
 
-    builder.connect(map_arrow, map_arrow->EVENT_OUT, tap_arrow, tap_arrow->EVENT_IN);
+    src_arrow->attach(pool, src_arrow->EVENT_IN);
     tap_arrow->attach(pool, tap_arrow->EVENT_OUT);
+
+    builder.connect(src_arrow, src_arrow->EVENT_OUT, trigger_inputs_arrow, 0);
+    builder.connect(trigger_inputs_arrow, 1, offload_arrow, 0);
+    builder.connect(offload_arrow, 1, map_arrow, map_arrow->EVENT_IN);
+    builder.connect(map_arrow, map_arrow->EVENT_OUT, tap_arrow, tap_arrow->EVENT_IN);
 
     builder.queues.at(0)->Scale(4);
     builder.queues.at(1)->Scale(4);
+    builder.queues.at(2)->Scale(4);
+    builder.queues.at(3)->Scale(4);
 
     builder.arrows.push_back(src_arrow);
+    builder.arrows.push_back(trigger_inputs_arrow);
+    builder.arrows.push_back(offload_arrow);
     builder.arrows.push_back(map_arrow);
     builder.arrows.push_back(tap_arrow);
 }
 
 
-
-TEST_CASE("GPUOffloading") {
+TEST_CASE("SimpleOffloading") {
   JApplication app;
   app.Add(new JFactoryGeneratorT<AFac>());
   app.Add(new JFactoryGeneratorT<BFac>());
@@ -117,10 +173,13 @@ TEST_CASE("GPUOffloading") {
   app.Add(new Proc);
   app.SetParameterValue("jana:nevents", 3);
   app.SetParameterValue("nthreads", 2);
-  //app.SetParameterValue("jana:loglevel", "TRACE");
+  app.SetParameterValue("jana:log:show_threadstamp", 1);
+  app.SetParameterValue("jana:loglevel", "DEBUG");
 
   auto builder = app.GetService<JTopologyBuilder>();
   builder->set_configure_fn(configure_topology);
   app.Run();
 }
+
+
 
