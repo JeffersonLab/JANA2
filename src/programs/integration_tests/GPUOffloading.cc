@@ -69,12 +69,6 @@ struct Proc : public JEventProcessor {
 };
 
 
-struct JContinuation {
-  mutable int next_gpu_factory=0; // Who increments this?
-  mutable std::string factory_prefix; // Or do we want databundle unique_name?
-  mutable int originating_arrow_id; // Use this to figure out where to return the event to
-};
-
 void configure_topology(JTopologyBuilder& builder) {
 
     auto pool = new JEventPool(builder.m_components, 1, 1, JEventLevel::PhysicsEvent);
@@ -82,7 +76,7 @@ void configure_topology(JTopologyBuilder& builder) {
 
     auto* src_arrow = new JEventSourceArrow("PhysicsEventSource", builder.m_components->get_evt_srces());
     src_arrow->attach(pool, src_arrow->EVENT_IN);
-    
+
     JEventMapArrow* map_arrow = new JEventMapArrow("PhysicsEventMap");
     for (auto proc : builder.m_components->get_evt_procs()) {
         map_arrow->add_processor(proc);
