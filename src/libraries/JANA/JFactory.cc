@@ -42,7 +42,25 @@ void JFactory::Create(const JEvent& event) {
     }
 
     if (mStatus == Status::Uninitialized) {
-        DoInit();
+        try {
+            DoInit();
+        }
+        catch (...) {
+            std::cout << "DoInit() failed, catching and storing empty collections" << std::endl;
+            // If Create() fails due to an exception in Init(), we still save down empty (rather than null) databundles.
+            // Note that this will not happen if Init() is called eagerly instead of lazily, e.g. by JFactorySet.
+            // We leave status=Uninitialized, so that future calls to this factory trigger the same exception in Init()
+            //   instead of trying Process()
+            mStatus = Status::Uninitialized; // This factory has to stay uninitialized
+            for (auto* output : GetOutputs()) {
+                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+            }
+            for (auto* output : GetVariadicOutputs()) {
+                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+            }
+            std::cout << "Done with DoInit try/catch" << std::endl;
+            throw;
+        }
     }
 
     // How do we obtain our data? The priority is as follows:
