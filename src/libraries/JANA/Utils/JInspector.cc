@@ -179,12 +179,10 @@ void JInspector::ToText(const JFactory* fac, bool asJson, std::ostream& out) {
 
     std::string status;
     switch (fac->GetStatus()) {
-        case JFactory::Status::Uninitialized: status = "Uninitialized"; break;
-        case JFactory::Status::Unprocessed: status = "Unprocessed"; break;
+        case JFactory::Status::Empty: status = "Empty"; break;
         case JFactory::Status::Processed: status = "Processed"; break;
         case JFactory::Status::Inserted: status = "Inserted"; break;
         case JFactory::Status::Excepted: status = "Excepted"; break;
-        case JFactory::Status::Finished: status = "Finished"; break;
         default: status = "Unknown";
     }
 
@@ -223,17 +221,14 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, const std::set<
             if (tag.empty()) tag = "(no tag)";
             std::string status;
             switch (fac->GetStatus()) {
-                case JFactory::Status::Uninitialized: status = "Uninitialized"; break;
-                case JFactory::Status::Unprocessed: status = "Unprocessed"; break;
+                case JFactory::Status::Empty: status = "Empty"; break;
                 case JFactory::Status::Processed: status = "Processed"; break;
                 case JFactory::Status::Inserted: status = "Inserted"; break;
                 case JFactory::Status::Excepted: status = "Excepted"; break;
-                case JFactory::Status::Finished: status = "Finished"; break;
                 default: status = "Unknown";
             }
             idx += 1;
-            if (filterlevel > 0 && (fac->GetStatus() == JFactory::Status::Uninitialized ||
-                                    fac->GetStatus() == JFactory::Status::Unprocessed)) continue;
+            if (filterlevel > 0 && (fac->GetStatus() == JFactory::Status::Empty)) continue;
 
             if (filterlevel > 1 && (fac->GetNumObjects()== 0)) continue;
 
