@@ -88,14 +88,12 @@ public:
             // from JANA1 and I haven't found a cleaner solution that gives them what they want yet.
             mOutput.GetDatabundle().SetStatus(JDatabundle::Status::Inserted);
             mStatus = Status::Inserted;
-            mCreationStatus = CreationStatus::Inserted;
         }
         else {
             ClearData();
             mData = aData;
             mOutput.GetDatabundle().SetStatus(JDatabundle::Status::Inserted);
             mStatus = Status::Inserted;
-            mCreationStatus = CreationStatus::Inserted;
         }
     }
 
@@ -104,14 +102,12 @@ public:
         mData = std::move(aData);
         mOutput.GetDatabundle().SetStatus(JDatabundle::Status::Inserted);
         mStatus = Status::Inserted;
-        mCreationStatus = CreationStatus::Inserted;
     }
 
     virtual void Insert(T* aDatum) {
         mData.push_back(aDatum);
         mOutput.GetDatabundle().SetStatus(JDatabundle::Status::Inserted);
         mStatus = Status::Inserted;
-        mCreationStatus = CreationStatus::Inserted;
     }
 
     /// Set a flag (or flags)
