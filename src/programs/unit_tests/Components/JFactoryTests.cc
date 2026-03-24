@@ -168,7 +168,7 @@ TEST_CASE("JFactoryTests") {
     SECTION("Issue 135: Users modifying mData directly and calling Set() afterwards") {
         // Unfortunately, we are giving users the ability to access mData directly.
         // If they do this, they might think they should call Set() directly afterwards so that
-        // the Status and CreationStatus flags get correctly set.
+        // the Status flag gets correctly set.
         // Previously, this would clear mData before setting it, which would make their data
         // disappear, and they'd have to dig deep into the JANA internals to find out why.
         // Now, we account for this case. I still think we should clean up this abstraction, though.

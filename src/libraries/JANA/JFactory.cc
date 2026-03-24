@@ -106,7 +106,6 @@ void JFactory::Create(const JEvent& event) {
 
             if (found_data) {
                 mStatus = Status::Inserted;
-                mCreationStatus = CreationStatus::InsertedViaGetObjects;
                 return;
             }
         }
@@ -161,7 +160,6 @@ void JFactory::Create(const JEvent& event) {
 
             LOG << "Exception in JFactory::Create, prefix=" << GetPrefix();
             mStatus = Status::Excepted;
-            mCreationStatus = CreationStatus::Created;
             for (auto* output : GetOutputs()) {
                 output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
             }
@@ -171,7 +169,6 @@ void JFactory::Create(const JEvent& event) {
             throw;
         }
         mStatus = Status::Processed;
-        mCreationStatus = CreationStatus::Created;
         for (auto* output : GetOutputs()) {
             output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
         }

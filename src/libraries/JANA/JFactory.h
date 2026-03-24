@@ -35,7 +35,6 @@ class JFactory : public jana::components::JComponent,
 public:
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Excepted, Finished};
-    enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
 
     enum JFactory_Flags_t {
         JFACTORY_NULL = 0x00,    // Not used anywhere
@@ -70,14 +69,12 @@ public:
 
     std::string GetFactoryName() const { return m_type_name; }
     Status GetStatus() const { return mStatus; }
-    CreationStatus GetCreationStatus() const { return mCreationStatus; }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
     void SetFactoryName(std::string factoryName) { SetTypeName(factoryName); }
     void SetStatus(Status status){ mStatus = status; }
-    void SetCreationStatus(CreationStatus status){ mCreationStatus = status; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
 
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
@@ -99,7 +96,7 @@ public:
     /// Get data source value depending on how objects came to be here. (Used mainly by JEvent::Get() )
     inline JCallGraphRecorder::JDataSource GetDataSource() const {
         JCallGraphRecorder::JDataSource datasource = JCallGraphRecorder::DATA_FROM_FACTORY;
-         if( mCreationStatus == JFactory::CreationStatus::Inserted ){
+        if( mStatus == JFactory::Status::Inserted ){
             if( m_insert_origin == JCallGraphRecorder::ORIGIN_FROM_SOURCE ){
                 datasource = JCallGraphRecorder::DATA_FROM_SOURCE;
             }else{
@@ -133,7 +130,6 @@ public:
         }
 
         this->mStatus = JFactory::Status::Unprocessed;
-        this->mCreationStatus = JFactory::CreationStatus::NotCreatedYet;
 
         for (auto* output: GetOutputs()) {
             output->ClearData();
@@ -189,8 +185,6 @@ protected:
 
     mutable Status mStatus = Status::Uninitialized;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
-
-    CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
 };
 
 // We are moving away from JFactory::GetAs because it only considers the first databundle
