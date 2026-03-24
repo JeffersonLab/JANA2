@@ -515,7 +515,7 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string unique
         return nullptr;
     }
 
-    if (typed_bundle->GetStatus() == JDatabundle::Status::Empty) {
+    if (typed_bundle->GetStatus() == JDatabundle::Status::Empty || typed_bundle->GetStatus() == JDatabundle::Status::Excepted) {
         auto* fac = typed_bundle->GetFactory();
         if (fac != nullptr) {
             JCallGraphEntryMaker cg_entry(mCallGraph, fac); // times execution until this goes out of scope
