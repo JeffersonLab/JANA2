@@ -41,7 +41,7 @@ void JFactory::Create(const JEvent& event) {
         m_logger = m_app->GetJParameterManager()->GetLogger(GetLoggerName());
     }
 
-    if (mStatus == Status::Uninitialized) {
+    if (mInitStatus == InitStatus::NotRun) {
         try {
             DoInit();
         }
@@ -51,7 +51,7 @@ void JFactory::Create(const JEvent& event) {
             // Note that this will not happen if Init() is called eagerly instead of lazily, e.g. by JFactorySet.
             // We leave status=Uninitialized, so that future calls to this factory trigger the same exception in Init()
             //   instead of trying Process()
-            mStatus = Status::Uninitialized; // This factory has to stay uninitialized
+            mStatus = Status::Excepted; // This factory has to stay uninitialized
             for (auto* output : GetOutputs()) {
                 output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
             }
@@ -120,7 +120,7 @@ void JFactory::Create(const JEvent& event) {
     // Otherwise we call Process() to create the data in the first place.
     // If we already ran Process() but it excepted, we re-run Process() to trigger the same exception, so that every consumer
     // is forced to handle it. Otherwise one "fault-tolerant" consumer will swallow the exception for everybody else.
-    if (mStatus == Status::Unprocessed || mStatus == Status::Excepted) {
+    if (mStatus == Status::Empty || mStatus == Status::Excepted) {
         auto run_number = event.GetRunNumber();
         if (mPreviousRunNumber != run_number) {
             if (m_callback_style == CallbackStyle::LegacyMode) {
@@ -179,7 +179,7 @@ void JFactory::Create(const JEvent& event) {
 }
 
 void JFactory::DoInit() {
-    if (mStatus != Status::Uninitialized) {
+    if (mInitStatus != InitStatus::NotRun) {
         return;
     }
     for (auto* parameter : m_parameters) {
@@ -189,16 +189,15 @@ void JFactory::DoInit() {
         service->Fetch(m_app);
     }
     CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
-    mStatus = Status::Unprocessed;
+    mInitStatus = InitStatus::Run;
 }
 
 void JFactory::DoFinish() {
-    if (mStatus == Status::Unprocessed || mStatus == Status::Processed) {
+    if (mInitStatus == InitStatus::Run) {
         if (mPreviousRunNumber != -1) {
             CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
         }
         CallWithJExceptionWrapper("JFactory::Finish", [&](){ Finish(); });
-        mStatus = Status::Finished;
     }
 }
 

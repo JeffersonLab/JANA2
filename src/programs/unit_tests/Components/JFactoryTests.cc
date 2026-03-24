@@ -220,7 +220,7 @@ TEST_CASE("JFactoryTests") {
         LOG << "JFactoryTests: Exception in JFactory::Process" << LOG_END;
         auto event = std::make_shared<JEvent>();
         JFactoryTestExceptingFactory fac;
-        REQUIRE(fac.GetStatus() == JFactory::Status::Uninitialized);
+        REQUIRE(fac.GetStatus() == JFactory::Status::Empty);
         REQUIRE_THROWS(fac.CreateAndGetData(event));
 
         REQUIRE(fac.GetStatus() == JFactory::Status::Excepted);
@@ -231,10 +231,10 @@ TEST_CASE("JFactoryTests") {
         LOG << "JFactoryTests: Exception in JFactory::Init" << LOG_END;
         auto event = std::make_shared<JEvent>();
         JFactoryTestExceptingInInitFactory fac;
-        REQUIRE(fac.GetStatus() == JFactory::Status::Uninitialized);
+        REQUIRE(fac.GetStatus() == JFactory::Status::Empty);
         REQUIRE_THROWS(fac.CreateAndGetData(event));
 
-        REQUIRE(fac.GetStatus() == JFactory::Status::Uninitialized);
+        REQUIRE(fac.GetStatus() == JFactory::Status::Excepted);
         REQUIRE_THROWS(fac.CreateAndGetData(event));
     }
 }

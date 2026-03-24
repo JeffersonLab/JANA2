@@ -34,7 +34,8 @@ class JFactory : public jana::components::JComponent,
                  public jana::components::JHasOutputs {
 public:
 
-    enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Excepted, Finished};
+    enum class InitStatus {NotRun, Run, Excepted};
+    enum class Status {Empty, Processed, Inserted, Excepted};
 
     enum JFactory_Flags_t {
         JFACTORY_NULL = 0x00,    // Not used anywhere
@@ -115,7 +116,8 @@ public:
     }
 
     void ClearData() {
-        if (this->mStatus == JFactory::Status::Uninitialized) {
+
+        if (this->mStatus == JFactory::Status::Empty) {
             return;
         }
 
@@ -129,7 +131,7 @@ public:
             return;
         }
 
-        this->mStatus = JFactory::Status::Unprocessed;
+        this->mStatus = JFactory::Status::Empty;
 
         for (auto* output: GetOutputs()) {
             output->ClearData();
@@ -183,7 +185,8 @@ protected:
     bool mInsideCreate = false; // Use this to detect cycles in factory dependencies
     std::string mObjectName;
 
-    mutable Status mStatus = Status::Uninitialized;
+    mutable Status mStatus = Status::Empty;
+    mutable InitStatus mInitStatus = InitStatus::NotRun;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
 };
 

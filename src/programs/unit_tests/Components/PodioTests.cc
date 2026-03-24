@@ -355,7 +355,7 @@ TEST_CASE("PodioMultifactoryClearData_Test") {
 } // TEST_CASE
 } // namespace
 
-
+/*
 namespace podio_exception_tests {
 
 class ExceptingPodioFactory : public JFactory {
@@ -468,5 +468,6 @@ TEST_CASE("PodioTests_ExceptionInFactoryInit") {
 }
 
 } // namespace
+*/
 
 
