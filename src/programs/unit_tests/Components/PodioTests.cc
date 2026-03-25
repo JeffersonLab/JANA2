@@ -355,7 +355,6 @@ TEST_CASE("PodioMultifactoryClearData_Test") {
 } // TEST_CASE
 } // namespace
 
-/*
 namespace podio_exception_tests {
 
 class ExceptingPodioFactory : public JFactory {
@@ -388,6 +387,37 @@ public:
 
 
 TEST_CASE("PodioTests_ExceptionInFactoryInit") {
+    SECTION("ExceptionInInit") {
+        JApplication app;
+        app.Add(new JFactoryGeneratorT<ExceptingPodioFactory>);
+        app.SetParameterValue("myfac:except", 1);
+        app.Initialize();
+
+        JEvent event(&app);
+
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        auto frame = event.Get<podio::Frame>().at(0);
+        REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 0);
+
+        event.Clear(true);
+
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        frame = event.Get<podio::Frame>().at(0);
+        REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 0);
+    }
     SECTION("ExceptionAtStartOfProcess") {
         JApplication app;
         app.Add(new JFactoryGeneratorT<ExceptingPodioFactory>);
@@ -468,6 +498,5 @@ TEST_CASE("PodioTests_ExceptionInFactoryInit") {
 }
 
 } // namespace
-*/
 
 

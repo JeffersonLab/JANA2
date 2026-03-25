@@ -185,9 +185,10 @@ protected:
     bool mInsideCreate = false; // Use this to detect cycles in factory dependencies
     std::string mObjectName;
 
-    mutable Status mStatus = Status::Empty;
-    mutable InitStatus mInitStatus = InitStatus::NotRun;
-    mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
+    Status mStatus = Status::Empty;
+    InitStatus mInitStatus = InitStatus::NotRun;
+    JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
+    std::exception_ptr mException;
 };
 
 // We are moving away from JFactory::GetAs because it only considers the first databundle
