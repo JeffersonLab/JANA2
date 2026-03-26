@@ -69,6 +69,8 @@ option(USE_TSAN "Compile with thread sanitizer" OFF)
 option(USE_CUDA "Compile CUDA-involved examples (Needed for examples/SubeventCUDAExample)." OFF)
 option(USE_PODIO "Compile with PODIO support" OFF)
 option(BUILD_SHARED_LIBS "Build into both shared and static libs." ON)
+option(BUILD_EXAMPLES "Build and install examples" ON)
+option(BUILD_TESTS "Build and install tests" ON)
 
 if (${USE_PODIO})
     find_package(podio REQUIRED)
@@ -186,6 +188,16 @@ if (${BUILD_SHARED_LIBS})
 else()
     message(STATUS "BUILD_SHARED_LIBS    Off")
 endif()
+if (${BUILD_EXAMPLES})
+    message(STATUS "BUILD_EXAMPLES       On")
+else()
+    message(STATUS "BUILD_EXAMPLES       Off")
+endif()
+if (${BUILD_TESTS})
+    message(STATUS "BUILD_TESTS          On")
+else()
+    message(STATUS "BUILD_TESTS          Off")
+endif()
 message(STATUS "-----------------------")
 
 #---------
@@ -207,12 +219,19 @@ include(cmake/AddJanaTest.cmake)
 
 add_subdirectory(src/external)
 add_subdirectory(src/libraries/JANA)
-add_subdirectory(src/examples)
 add_subdirectory(src/plugins)
 add_subdirectory(src/programs/jana)
-add_subdirectory(src/programs/unit_tests)
-add_subdirectory(src/programs/perf_tests)
 add_subdirectory(src/python)
+
+if (${BUILD_EXAMPLES})
+    add_subdirectory(src/examples)
+endif()
+
+if (${BUILD_TESTS})
+    add_subdirectory(src/programs/unit_tests)
+    add_subdirectory(src/programs/perf_tests)
+endif()
+
 
 #---------------------------------------------------------------------------------------
 
