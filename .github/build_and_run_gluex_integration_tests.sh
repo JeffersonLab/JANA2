@@ -26,5 +26,5 @@ make install -j12
 
 echo "ROOTSYS=$ROOTSYS"
 cd /workspace/halld_recon/src
-scons install -j12 DEBUG=1 OPTIMIZATION=0 SHOWBUILD=1
+scons install -j6 DEBUG=1 OPTIMIZATION=0 SHOWBUILD=1
 
