@@ -177,22 +177,21 @@ void JInspector::ToText(const JFactory* fac, bool asJson, std::ostream& out) {
     auto tag = fac->GetTag();
     if (tag.empty()) tag = "(no tag)";
 
-    std::string creationStatus;
-    switch (fac->GetCreationStatus()) {
-        case JFactory::CreationStatus::NotCreatedYet: creationStatus = "NotCreatedYet"; break;
-        case JFactory::CreationStatus::Created: creationStatus = "Created"; break;
-        case JFactory::CreationStatus::Inserted: creationStatus = "Inserted"; break;
-        case JFactory::CreationStatus::InsertedViaGetObjects: creationStatus = "InsertedViaGetObjects"; break;
-        case JFactory::CreationStatus::NeverCreated: creationStatus = "NeverCreated"; break;
-        default: creationStatus = "Unknown";
+    std::string status;
+    switch (fac->GetStatus()) {
+        case JFactory::Status::Empty: status = "Empty"; break;
+        case JFactory::Status::Processed: status = "Processed"; break;
+        case JFactory::Status::Inserted: status = "Inserted"; break;
+        case JFactory::Status::Excepted: status = "Excepted"; break;
+        default: status = "Unknown";
     }
 
     if (!asJson) {
         out << "Plugin name          " << pluginName << std::endl;
-        // out << "Factory name         " << factoryName << std::endl;
+        out << "Type name            " << factoryName << std::endl;
         out << "Object name          " << fac->GetObjectName() << std::endl;
         out << "Tag                  " << tag << std::endl;
-        out << "Creation status      " << creationStatus << std::endl;
+        out << "Status               " << status << std::endl;
         out << "Object count         " << fac->GetNumObjects() << std::endl;
     }
     else {
@@ -201,7 +200,7 @@ void JInspector::ToText(const JFactory* fac, bool asJson, std::ostream& out) {
         out << "  \"factory_name\":  \"" << factoryName << "\"," << std::endl;
         out << "  \"object_name\":   \"" << fac->GetObjectName() << "\"," << std::endl;
         out << "  \"tag\":           \"" << tag << "\"," << std::endl;
-        out << "  \"creation\":      \"" << creationStatus << "\"," << std::endl;
+        out << "  \"status\":        \"" << status << "\"," << std::endl;
         out << "  \"object_count\":  " << fac->GetNumObjects() << "," << std::endl;
         out << "}" << std::endl;
     }
@@ -220,27 +219,26 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, const std::set<
         for (auto fac : factories) {
             auto tag = fac->GetTag();
             if (tag.empty()) tag = "(no tag)";
-            std::string creationStatus;
-            switch (fac->GetCreationStatus()) {
-                case JFactory::CreationStatus::NotCreatedYet: creationStatus = "NotCreatedYet"; break;
-                case JFactory::CreationStatus::Created: creationStatus = "Created"; break;
-                case JFactory::CreationStatus::Inserted: creationStatus = "Inserted"; break;
-                case JFactory::CreationStatus::InsertedViaGetObjects: creationStatus = "InsertedViaGetObjects"; break;
-                case JFactory::CreationStatus::NeverCreated: creationStatus = "NeverCreated"; break;
-                default: creationStatus = "Unknown";
+            std::string status;
+            switch (fac->GetStatus()) {
+                case JFactory::Status::Empty: status = "Empty"; break;
+                case JFactory::Status::Processed: status = "Processed"; break;
+                case JFactory::Status::Inserted: status = "Inserted"; break;
+                case JFactory::Status::Excepted: status = "Excepted"; break;
+                default: status = "Unknown";
             }
             idx += 1;
-            if (filterlevel > 0 && (fac->GetCreationStatus()==JFactory::CreationStatus::NeverCreated ||
-                           fac->GetCreationStatus()==JFactory::CreationStatus::NotCreatedYet)) continue;
+            if (filterlevel > 0 && (fac->GetStatus() == JFactory::Status::Empty)) continue;
+
             if (filterlevel > 1 && (fac->GetNumObjects()== 0)) continue;
-            if (filterlevel > 2 && (fac->GetCreationStatus()==JFactory::CreationStatus::Inserted ||
-                                    fac->GetCreationStatus()==JFactory::CreationStatus::InsertedViaGetObjects)) continue;
+
+            if (filterlevel > 2 && (fac->GetStatus() == JFactory::Status::Inserted)) continue;
 
             char discrepancy = ' ';
             auto key = MakeFactoryKey(fac->GetObjectName(), fac->GetTag());
             if (discrepancies.find(key) != discrepancies.end()) discrepancy = 'x';
 
-            t | idx | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects() | discrepancy;
+            t | idx | fac->GetObjectName() | tag | status | fac->GetNumObjects() | discrepancy;
         }
         t.Render(out);
     }

@@ -1,4 +1,6 @@
 
+#include "JANA/JApplicationFwd.h"
+#include "PodioDatamodel/ExampleHit.h"
 #include <catch.hpp>
 
 #include <memory>
@@ -351,6 +353,150 @@ TEST_CASE("PodioMultifactoryClearData_Test") {
     }
 
 } // TEST_CASE
+} // namespace
+
+namespace podio_exception_tests {
+
+class ExceptingPodioFactory : public JFactory {
+
+    PodioOutput<ExampleHit> hits_out {this};
+    Parameter<int> except {this, "except", 0, "0: None, 1: in Init(), 2: start of Process(), 3: end of Process()"};
+
+public:
+    ExceptingPodioFactory() {
+        SetPrefix("myfac");
+    }
+    void Init() override {
+        LOG_INFO(GetLogger()) << "except=" << *except;
+        if (*except == 1) {
+            throw JException("Exception in Init()");
+        }
+    }
+    void Process(const JEvent& event) override {
+        if (*except == 2) {
+            throw JException("Exception in Process() before some data is written");
+        }
+        MutableExampleHit hit;
+        hit.x(event.GetEventNumber());
+        hits_out->push_back(hit);
+        if (*except == 3) {
+            throw JException("Exception in Process() after some data is written");
+        }
+    }
+};
+
+
+TEST_CASE("PodioTests_ExceptionInFactoryInit") {
+    SECTION("ExceptionInInit") {
+        JApplication app;
+        app.Add(new JFactoryGeneratorT<ExceptingPodioFactory>);
+        app.SetParameterValue("myfac:except", 1);
+        app.Initialize();
+
+        JEvent event(&app);
+
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        auto frame = event.Get<podio::Frame>().at(0);
+        REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 0);
+
+        event.Clear(true);
+
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        frame = event.Get<podio::Frame>().at(0);
+        REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 0);
+    }
+    SECTION("ExceptionAtStartOfProcess") {
+        JApplication app;
+        app.Add(new JFactoryGeneratorT<ExceptingPodioFactory>);
+        app.SetParameterValue("myfac:except", 2);
+        app.Initialize();
+
+        JEvent event(&app);
+
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        auto frame = event.Get<podio::Frame>().at(0);
+        REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 0);
+
+        event.Clear(true);
+
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        frame = event.Get<podio::Frame>().at(0);
+        REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 0);
+    }
+
+    SECTION("ExceptionAtEndOfProcess") {
+        JApplication app;
+        app.Add(new JFactoryGeneratorT<ExceptingPodioFactory>);
+        app.SetParameterValue("myfac:except", 3);
+        app.Initialize();
+
+        JEvent event(&app);
+        event.SetEventNumber(22);
+
+        std::cout << "Calling failing factory" << std::endl;
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        std::cout << "Calling failing factory" << std::endl;
+
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        std::cout << "Retrieving collection from frame" << std::endl;
+        auto frame = event.Get<podio::Frame>().at(0);
+        REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 1);
+
+        std::cout << "Clearing event" << std::endl;
+        event.Clear(true);
+        event.SetEventNumber(23);
+
+        std::cout << "Calling failing factory" << std::endl;
+        try {
+            event.GetCollectionBase("ExampleHit");
+            REQUIRE(0 == 1);
+        } catch (...) { }
+
+        std::cout << "Retrieving collection from frame" << std::endl;
+
+        frame = event.Get<podio::Frame>().at(0);
+        for (const auto& hit : frame->get<ExampleHitCollection>("ExampleHit")) {
+            std::cout << "Hit x=" << hit.x() << std::endl;
+        }
+        REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 1);
+    }
+
+}
+
 } // namespace
 
 

@@ -41,10 +41,6 @@ void JFactory::Create(const JEvent& event) {
         m_logger = m_app->GetJParameterManager()->GetLogger(GetLoggerName());
     }
 
-    if (mStatus == Status::Uninitialized) {
-        DoInit();
-    }
-
     // How do we obtain our data? The priority is as follows:
     // 1. JFactory::Process() if REGENERATE flag is set
     // 2. JEvent::Insert()
@@ -88,7 +84,6 @@ void JFactory::Create(const JEvent& event) {
 
             if (found_data) {
                 mStatus = Status::Inserted;
-                mCreationStatus = CreationStatus::InsertedViaGetObjects;
                 return;
             }
         }
@@ -99,26 +94,57 @@ void JFactory::Create(const JEvent& event) {
     // 4. JFactory::Process()
     // ---------------------------------------------------------------------
 
-    // If the data was Processed (instead of Inserted), it will be in cache, and we can just exit.
-    // Otherwise we call Process() to create the data in the first place.
-    // If we already ran Process() but it excepted, we re-run Process() to trigger the same exception, so that every consumer
-    // is forced to handle it. Otherwise one "fault-tolerant" consumer will swallow the exception for everybody else.
-    if (mStatus == Status::Unprocessed || mStatus == Status::Excepted) {
-        auto run_number = event.GetRunNumber();
-        if (mPreviousRunNumber != run_number) {
-            if (m_callback_style == CallbackStyle::LegacyMode) {
-                if (mPreviousRunNumber != -1) {
-                    CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
-                }
-                CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.shared_from_this()); });
-                CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
-            }
-            else if (m_callback_style == CallbackStyle::ExpertMode) {
-                CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
-            }
-            mPreviousRunNumber = run_number;
+    // Check if init had _previously_ excepted but the cache was since cleared
+    if (mInitStatus == InitStatus::Excepted && mStatus == Status::Empty) {
+        for (auto* output : GetOutputs()) {
+            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
         }
+        for (auto* output : GetVariadicOutputs()) {
+            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+        }
+        mStatus = Status::Excepted;
+        std::rethrow_exception(mException);
+    }
+
+    // Make sure Init() ran, which might except...
+    try {
+        DoInit(); // This checks mInitStatus internally before calling Init()
+    }
+    catch(...) {
+        // If Init() excepts, we still need to store an empty collection
+        mStatus = Status::Excepted;
+        for (auto* output : GetOutputs()) {
+            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+        }
+        for (auto* output : GetVariadicOutputs()) {
+            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+        }
+        std::rethrow_exception(mException);
+    }
+
+    // At this point, Init() has run and has _not_ excepted
+
+    if (mStatus == Status::Excepted) {
+        // But Process() might have already excepted!
+        std::rethrow_exception(mException);
+    }
+    else if (mStatus == Status::Empty) {
+        // Now we know that we need to run Process() to create the data in the first place
         try {
+            auto run_number = event.GetRunNumber();
+            if (mPreviousRunNumber != run_number) {
+                if (m_callback_style == CallbackStyle::LegacyMode) {
+                    if (mPreviousRunNumber != -1) {
+                        CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
+                    }
+                    CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.shared_from_this()); });
+                    CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
+                }
+                else if (m_callback_style == CallbackStyle::ExpertMode) {
+                    CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
+                }
+                mPreviousRunNumber = run_number;
+            }
             for (auto* input : GetInputs()) {
                 input->Populate(event);
             }
@@ -143,7 +169,7 @@ void JFactory::Create(const JEvent& event) {
 
             LOG << "Exception in JFactory::Create, prefix=" << GetPrefix();
             mStatus = Status::Excepted;
-            mCreationStatus = CreationStatus::Created;
+            mException = std::current_exception();
             for (auto* output : GetOutputs()) {
                 output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
             }
@@ -152,8 +178,9 @@ void JFactory::Create(const JEvent& event) {
             }
             throw;
         }
+
+        // Save the (successfully processed) data
         mStatus = Status::Processed;
-        mCreationStatus = CreationStatus::Created;
         for (auto* output : GetOutputs()) {
             output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
         }
@@ -164,7 +191,7 @@ void JFactory::Create(const JEvent& event) {
 }
 
 void JFactory::DoInit() {
-    if (mStatus != Status::Uninitialized) {
+    if (mInitStatus != InitStatus::NotRun) {
         return;
     }
     for (auto* parameter : m_parameters) {
@@ -173,17 +200,23 @@ void JFactory::DoInit() {
     for (auto* service : m_services) {
         service->Fetch(m_app);
     }
-    CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
-    mStatus = Status::Unprocessed;
+    try {
+        CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
+        mInitStatus = InitStatus::Run;
+    }
+    catch (...) {
+        mInitStatus = InitStatus::Excepted;
+        mException = std::current_exception();
+        throw;
+    }
 }
 
 void JFactory::DoFinish() {
-    if (mStatus == Status::Unprocessed || mStatus == Status::Processed) {
+    if (mInitStatus == InitStatus::Run) {
         if (mPreviousRunNumber != -1) {
             CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
         }
         CallWithJExceptionWrapper("JFactory::Finish", [&](){ Finish(); });
-        mStatus = Status::Finished;
     }
 }
 
