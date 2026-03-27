@@ -1,0 +1,34 @@
+name: Integration tests - GlueX
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  jana2_halld_recon:
+    name: halld_recon
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          path: JANA2
+
+      - name: Clone halld_recon
+        run: |
+          mkdir halld_recon
+          cd halld_recon
+          git clone -b master https://github.com/JeffersonLab/halld_recon.git .
+
+      - name: Build halld_recon
+        run: |
+          docker run --rm \
+            --privileged \
+            --mount type=bind,source=${{ github.workspace }},target=/workspace \
+            codecr.jlab.org/nbrei/jana2-ci/jana2_devenv_alma9:latest /workspace/JANA2/.github/build_and_run_gluex_integration_tests.sh
+
+
+
+

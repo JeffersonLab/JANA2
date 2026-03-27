@@ -1,4 +1,4 @@
-name: C/C++ CI ubuntu
+name: Platform tests - Ubuntu
 
 on:
   push:

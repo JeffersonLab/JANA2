@@ -1,5 +1,5 @@
 
-name: eic-shell
+name: Integration tests - ePIC
 
 on:
   push:
