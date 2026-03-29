@@ -95,7 +95,7 @@ void JFactory::Create(const JEvent& event) {
     // ---------------------------------------------------------------------
 
     // Check if init had _previously_ excepted but the cache was since cleared
-    if (mInitStatus == InitStatus::Excepted && mStatus == Status::Empty) {
+    if (mInitStatus == InitStatus::InitExcepted && mStatus == Status::Empty) {
         for (auto* output : GetOutputs()) {
             output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
         }
@@ -191,7 +191,7 @@ void JFactory::Create(const JEvent& event) {
 }
 
 void JFactory::DoInit() {
-    if (mInitStatus != InitStatus::NotRun) {
+    if (mInitStatus != InitStatus::InitNotRun) {
         return;
     }
     for (auto* parameter : m_parameters) {
@@ -202,17 +202,17 @@ void JFactory::DoInit() {
     }
     try {
         CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
-        mInitStatus = InitStatus::Run;
+        mInitStatus = InitStatus::InitRun;
     }
     catch (...) {
-        mInitStatus = InitStatus::Excepted;
+        mInitStatus = InitStatus::InitExcepted;
         mException = std::current_exception();
         throw;
     }
 }
 
 void JFactory::DoFinish() {
-    if (mInitStatus == InitStatus::Run) {
+    if (mInitStatus == InitStatus::InitRun) {
         if (mPreviousRunNumber != -1) {
             CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
         }

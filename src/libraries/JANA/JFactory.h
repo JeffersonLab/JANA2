@@ -34,7 +34,7 @@ class JFactory : public jana::components::JComponent,
                  public jana::components::JHasOutputs {
 public:
 
-    enum class InitStatus {NotRun, Run, Excepted};
+    enum class InitStatus {InitNotRun, InitRun, InitExcepted};
     enum class Status {Empty, Processed, Inserted, Excepted};
 
     enum JFactory_Flags_t {
@@ -70,6 +70,7 @@ public:
 
     std::string GetFactoryName() const { return m_type_name; }
     Status GetStatus() const { return mStatus; }
+    InitStatus GetInitStatus() const { return mInitStatus; }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
@@ -186,7 +187,7 @@ protected:
     std::string mObjectName;
 
     Status mStatus = Status::Empty;
-    InitStatus mInitStatus = InitStatus::NotRun;
+    InitStatus mInitStatus = InitStatus::InitNotRun;
     JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
     std::exception_ptr mException;
 };

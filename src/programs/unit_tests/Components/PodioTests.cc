@@ -1,4 +1,5 @@
 
+#include "JANA/Components/JDatabundle.h"
 #include "JANA/JApplicationFwd.h"
 #include "PodioDatamodel/ExampleHit.h"
 #include <catch.hpp>
@@ -494,7 +495,36 @@ TEST_CASE("PodioTests_ExceptionInFactoryInit") {
         }
         REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 1);
     }
+}
 
+TEST_CASE("PodioTests_InterleavedInsertAndProcess") {
+    JApplication app;
+    app.Add(new JFactoryGeneratorT<ExceptingPodioFactory>);
+    app.SetParameterValue("myfac:except", 0); // Disable exceptions
+    app.Initialize();
+
+    JEvent event(&app);
+
+    auto databundle = event.GetFactorySet()->GetDatabundle("ExampleHit");
+    REQUIRE(databundle->GetStatus() == JDatabundle::Status::Empty);
+    REQUIRE(databundle->GetFactory() != nullptr);
+    REQUIRE(databundle->GetFactory()->GetStatus() == JFactory::Status::Empty);
+    REQUIRE(databundle->GetFactory()->GetInitStatus() == JFactory::InitStatus::InitNotRun);
+
+
+    // Insert hits. This will NOT trigger Init
+    ExampleHitCollection hits;
+    hits.push_back(MutableExampleHit());
+    event.InsertCollection<ExampleHit>(std::move(hits), "ExampleHit");
+
+    event.GetCollectionBase("ExampleHit");
+    REQUIRE(databundle->GetFactory()->GetInitStatus() == JFactory::InitStatus::InitNotRun);
+
+    event.Clear();
+
+    // Trigger Init and Process
+    event.GetCollectionBase("ExampleHit");
+    REQUIRE(databundle->GetFactory()->GetInitStatus() == JFactory::InitStatus::InitRun);
 }
 
 } // namespace
