@@ -35,6 +35,7 @@ class JFactory : public jana::components::JComponent,
 public:
 
     enum class InitStatus {InitNotRun, InitRun, InitExcepted};
+    enum class CreationStatus { NotCreatedYet, Created };
     enum class Status {Empty, Processed, Inserted, Excepted};
 
     enum JFactory_Flags_t {
@@ -71,6 +72,11 @@ public:
     std::string GetFactoryName() const { return m_type_name; }
     Status GetStatus() const { return mStatus; }
     InitStatus GetInitStatus() const { return mInitStatus; }
+    [[deprecated]]
+    CreationStatus GetCreationStatus() const { 
+        if (mStatus == Status::Empty) return CreationStatus::NotCreatedYet;
+        return CreationStatus::Created;
+    }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
