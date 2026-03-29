@@ -223,7 +223,7 @@ void JEventProcessor_janaview::GetAssociatedTo(JObject *jobj, vector<const JObje
 	for(uint32_t i=0; i<factories.size(); i++){
 		
 		// Do not activate factories that have not yet been activated
-	    	if(factories[i]->GetCreationStatus() == JFactory::CreationStatus::NotCreatedYet) continue;
+        if(factories[i]->GetStatus() == JFactory::Status::Empty) continue;
 
 		// Get objects for this factory and associated objects for each of those
 		vector<JObject*> vobjs = factories[i]->GetAs<JObject>();

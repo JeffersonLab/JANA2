@@ -134,7 +134,7 @@ jobs:
           echo "ldd bin/eicrecon"
           ldd bin/eicrecon
 
-    - name: Generate EICrecon input data
+    - name: Generate EICrecon input data for craterlake
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
         platform-release: "eic_xl:nightly"
@@ -146,7 +146,7 @@ jobs:
             --gun.momentumMax "20*GeV" --gun.distribution "uniform" -N 20 \
             --outputFile sim_e_1GeV_20GeV_craterlake.edm4hep.root -v WARNING
 
-    - name: Run EICrecon
+    - name: Run EICrecon for craterlake
       uses: eic/run-cvmfs-osg-eic-shell@main
       with:
         platform-release: "eic_xl:nightly"
@@ -156,4 +156,28 @@ jobs:
           export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/../EICrecon/lib/EICrecon/plugins
           export LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/../EICrecon/lib:${GITHUB_WORKSPACE}/../EICrecon/lib/EICrecon/plugins:${JANA_HOME}/lib:${JANA_HOME}/lib/JANA/plugins:$LD_LIBRARY_PATH
           ../EICrecon/bin/eicrecon sim_e_1GeV_20GeV_craterlake.edm4hep.root
+
+    - name: Generate EICrecon input data for inner detector
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "eic_xl:nightly"
+        setup: "/opt/detector/epic-main/bin/thisepic.sh"
+        run: |
+          echo "--- Generating EICrecon input data ---"
+          npsim --compactFile ${DETECTOR_PATH}/${DETECTOR}_inner_detector.xml \
+            -G --random.seed 1 --gun.particle "e-" --gun.momentumMin "1*GeV" \
+            --gun.momentumMax "20*GeV" --gun.distribution "uniform" -N 20 \
+            --outputFile sim_e_1GeV_20GeV_inner_detector.edm4hep.root -v WARNING
+
+    - name: Run EICrecon for inner detector
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "eic_xl:nightly"
+        setup: "/opt/detector/epic-main/bin/thisepic.sh"
+        run: |
+          export JANA_HOME=$GITHUB_WORKSPACE
+          export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/../EICrecon/lib/EICrecon/plugins
+          export LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/../EICrecon/lib:${GITHUB_WORKSPACE}/../EICrecon/lib/EICrecon/plugins:${JANA_HOME}/lib:${JANA_HOME}/lib/JANA/plugins:$LD_LIBRARY_PATH
+          export DETECTOR_CONFIG=epic_inner_detector # not important
+          ../EICrecon/bin/eicrecon sim_e_1GeV_20GeV_inner_detector.edm4hep.root
 

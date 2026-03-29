@@ -449,7 +449,6 @@ inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
     auto* factory = databundle->GetFactory();
     if (factory != nullptr) {
         factory->SetStatus(JFactory::Status::Inserted); // for when items is empty
-        factory->SetCreationStatus(JFactory::CreationStatus::Inserted); // for when items is empty
         factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
         return dynamic_cast<JFactoryT<T>*>(factory);
     }
@@ -476,7 +475,6 @@ inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::str
     auto* factory = databundle->GetFactory();
     if (factory != nullptr) {
         factory->SetStatus(JFactory::Status::Inserted); // for when items is empty
-        factory->SetCreationStatus(JFactory::CreationStatus::Inserted); // for when items is empty
         factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
         return dynamic_cast<JFactoryT<T>*>(factory);
     }
@@ -515,7 +513,7 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string unique
         return nullptr;
     }
 
-    if (typed_bundle->GetStatus() == JDatabundle::Status::Empty) {
+    if (typed_bundle->GetStatus() == JDatabundle::Status::Empty || typed_bundle->GetStatus() == JDatabundle::Status::Excepted) {
         auto* fac = typed_bundle->GetFactory();
         if (fac != nullptr) {
             JCallGraphEntryMaker cg_entry(mCallGraph, fac); // times execution until this goes out of scope
