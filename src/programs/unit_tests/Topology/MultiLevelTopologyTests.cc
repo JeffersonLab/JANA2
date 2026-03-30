@@ -89,6 +89,26 @@ TEST_CASE("TimeslicesTests") {
     }
 }
 
+TEST_CASE("TimeslicesTests_NoEvtProcs") {
+
+    JApplication app;
+    app.SetParameterValue("jana:nevents", "5");
+
+    app.Add(new MyTimesliceSource);
+    app.Add(new MyTimesliceUnfolder);
+    //app.Add(new MyEventProcessor);
+    app.Add(new JFactoryGeneratorT<MyProtoClusterFactory>);
+    app.Add(new JFactoryGeneratorT<MyClusterFactory>);
+    app.SetTicker(true);
+    try {
+        app.Run();
+    }
+    catch (JException& e) {
+        std::cout << e << std::endl;
+        throw e;
+    }
+}
+
 
 } // namespace timeslice_tests
 

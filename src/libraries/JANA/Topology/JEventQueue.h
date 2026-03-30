@@ -115,6 +115,12 @@ public:
 
         if (m_enforces_ordering) {
             // Repurpose m_local_queues[0] as an associative array instead of a queue
+
+            if (m_establishes_ordering) {
+                event->SetEventIndex(m_next_event_index);
+                m_next_event_index += 1;
+            }
+
             auto index = event->GetEventIndex();
             if (m_max_index < index) {
                 throw JException("Event index=%lu is above max=%lu", index, m_max_index);
@@ -137,6 +143,10 @@ public:
                 throw JException("Attempted to push to a full JEventQueue. This probably means there is an error in your topology wiring");
             }
 
+            if (m_establishes_ordering) {
+                event->SetEventIndex(m_next_event_index);
+                m_next_event_index += 1;
+            }
             local_queue.ringbuffer[local_queue.front] = event;
             local_queue.front = (local_queue.front + 1) % local_queue.capacity;
             local_queue.size += 1;
@@ -166,11 +176,6 @@ public:
             local_queue.ringbuffer[local_queue.back] = nullptr;
             local_queue.back = (local_queue.back + 1) % local_queue.capacity;
             local_queue.size -= 1;
-
-            if (m_establishes_ordering) {
-                result->SetEventIndex(m_next_event_index);
-                m_next_event_index += 1;
-            }
             return result;
         }
     };
