@@ -12,14 +12,17 @@ JWiringService::JWiringService() {
 }
 
 void JWiringService::Init() {
-    LOG_INFO(GetLogger()) << "Initializing JWiringService" << LOG_END;
     // User is _only_ allowed to specify wiring file via parameter
     // This way, we can restrict calling JWiringService::Init until inside JApplication::Init
     // Then we can load the wiring file exactly once. All WiredFactoryGenerators 
     // (recursively) load files
 
     if (!m_wirings_input_file().empty()) {
+        LOG_INFO(GetLogger()) << "JWiringService: Using wiring file: " << *m_wirings_input_file << LOG_END;
         ApplyWiringSet(ParseWiringSetFromFilename(*m_wirings_input_file));
+    }
+    else {
+        LOG_INFO(GetLogger()) << "JWiringService: No wiring file used" << LOG_END;
     }
 }
 
@@ -169,7 +172,7 @@ JWiringService::WiringSet JWiringService::ParseWiringSet(const toml::table& tabl
     auto plugins = table["plugins"].as_array();
     if (plugins != nullptr) {
         for (const auto& plugin_name : *plugins) {
-            wiring_set.include_file_names.push_back(plugin_name.as<std::string>()->get());
+            wiring_set.plugin_names.push_back(plugin_name.as<std::string>()->get());
         }
     }
 

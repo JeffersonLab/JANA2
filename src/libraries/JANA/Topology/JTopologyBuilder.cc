@@ -117,6 +117,10 @@ void JTopologyBuilder::create_topology() {
             queue->SetEstablishesOrdering(false);
         }
     }
+    size_t i = 0;
+    for (auto* queue: queues) {
+        LOG_DEBUG(GetLogger()) << "Queue " << i++ << ": establishes_ordering: " << queue->GetEstablishesOrdering() << ", enforces_ordering: " << queue->GetEnforcesOrdering();
+    }
 }
 
 

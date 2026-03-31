@@ -37,7 +37,9 @@ macro(add_jana_library library_name)
 
     if (${PROJECT_NAME} STREQUAL "jana2")
         # This is an internal plugin
-        set(INSTALL_NAMESPACE "JANA")
+        if (NOT DEFINED INSTALL_NAMESPACE)
+            set(INSTALL_NAMESPACE "JANA")
+        endif()
         set(JANA_NAMESPACE "")
         if (NOT LIBRARY_EXPORT)
             set(LIBRARY_EXPORT "jana2_targets")
@@ -66,20 +68,24 @@ macro(add_jana_library library_name)
 
     # Handle public headers
     if (LIBRARY_PUBLIC_HEADER)
+        # Include files get installed to $CMAKE_PREFIX_PATH/$INSTALL_NAMESPACE/$CWD_NAME
+        # First we extract $CWD_NAME
+        get_filename_component(CWD_NAME "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
+
         set_target_properties(${library_name} PROPERTIES 
             PUBLIC_HEADER "${LIBRARY_PUBLIC_HEADER}"
         )
         target_include_directories(${library_name}
             PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                $<INSTALL_INTERFACE:include/${INSTALL_NAMESPACE}/${library_name}>
+                $<INSTALL_INTERFACE:include/${INSTALL_NAMESPACE}/${CWD_NAME}>
         )
     endif()
 
     # Install target
     install(TARGETS ${library_name}
         EXPORT ${LIBRARY_EXPORT}
-        PUBLIC_HEADER DESTINATION include/${INSTALL_NAMESPACE}/${library_name}
+        PUBLIC_HEADER DESTINATION include/${INSTALL_NAMESPACE}/${CWD_NAME}
         LIBRARY DESTINATION lib
     )
 

@@ -588,3 +588,22 @@ TEST_CASE("WiringTests_Partial_OutputNamesOnly") {
     REQUIRE(results.at(0)->E == 23.2);
 
 }
+
+static constexpr std::string_view plugins_yaml = R"(
+    plugins = ["JTest"]
+)";
+
+TEST_CASE("WiringTests_PluginLoading") {
+
+    JApplication app;
+    app.SetParameterValue("jana:nevents", 3);
+    auto wiring_svc = app.GetService<jana::services::JWiringService>();
+    toml::table table = toml::parse(plugins_yaml);
+    wiring_svc->ApplyWiringSet(wiring_svc->ParseWiringSet(table));
+
+    app.Run();
+    REQUIRE(app.GetNEventsProcessed() == 3);
+}
+
+
+

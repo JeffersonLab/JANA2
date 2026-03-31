@@ -11,6 +11,23 @@
 - [See online documentation](https://jeffersonlab.github.io/JANA2/)
 - [See online doxygen documentation](https://jeffersonlab.github.io/JANA2/refcpp/)
 
+### 2026.02.00
+
+This release redesigns the `JFactory` state machine, changing `JFactory`'s behavior so that it now handles certain
+edge cases correctly. The new design enforces the guarantees for the `Init()` callback, making sure that it is run
+exactly once before `Process()` gets called, and doesn't get run if data is always `Insert()`ed instead. If `Init()` excepts, `Process()` is never run, and an empty collection is written instead. If `Process()` excepts, a partial collection may be written. This release also changes behavior such that if an exception is encountered in `Init()` or `Process()`, JANA2 will store the exception and re-throw it, rather than re-running the excepting callback.
+
+The `JFactory::Status` enum now precisely describes the contents of the factory cache, i.e. `{Empty, Processed, Inserted, Excepted}`. Whether or not the factory has been initialized has been factored out into the `JFactory::InitStatus` enum, i.e. `{InitNotRun, InitRun, InitExcepted}`. The `JFactory::CreationStatus` has been deprecated but is still around because GlueX
+uses it. It has been shrunk so that it only describes whether or not the factory has been activated, i.e. `{NotCreatedYet, Created}`, which is how it was used in practice.
+
+This release primarily addresses issue #490. There are several additional bugfixes included:
+
+- Adds CMake flags for disabling examples and tests, addressing issue #489
+- JWiringService wasn't loading plugins listed in the wiring file
+- JComponent::Input<T> wasn't calling JFactory::Create
+- Adding a JEventUnfolder but no JEventProcessors triggered an error in the JEventQueue ordering logic
+
+
 ### 2026.01.00
 
 This release brings a couple of exciting new features along with some important bugfixes. The big JFactory/JDatabundle refactoring is
