@@ -19,7 +19,7 @@ void JMultilevelSourceArrow::SetEventSource(JEventSource* source) {
         m_port_lookup[{level, Direction::Out}] = input_port_count + output_port_count++;
     }
 
-    create_ports(input_port_count, output_port_count);
+    CreatePorts(input_port_count, output_port_count);
 }
 
 const std::vector<JEventLevel>& JMultilevelSourceArrow::GetLevels() const {
@@ -30,12 +30,12 @@ size_t JMultilevelSourceArrow::GetPortIndex(JEventLevel level, Direction directi
     return m_port_lookup.at({level, direction});
 };
 
-void JMultilevelSourceArrow::initialize() {
+void JMultilevelSourceArrow::Initialize() {
     // We initialize everything immediately, but don't open any resources until we absolutely have to; see process(): source->DoNext()
     m_source->DoInit();
 }
 
-void JMultilevelSourceArrow::finalize() {
+void JMultilevelSourceArrow::Finalize() {
     // Generally JEventSources finalize themselves as soon as they detect that they have run out of events.
     // However, we can't rely on the JEventSources turning themselves off since execution can be externally paused.
     // Instead we leave everything open until we finalize the whole topology, and finalize remaining event sources then.
@@ -59,7 +59,7 @@ void JMultilevelSourceArrow::EvictNextParent(OutputData& outputs, size_t& output
     }
 }
 
-void JMultilevelSourceArrow::fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
+void JMultilevelSourceArrow::Fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     if (!m_finish_in_progress) {
 

@@ -121,7 +121,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
         REQUIRE(sut->GetPerf().event_count == 0);
 
-        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
@@ -131,7 +131,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
         REQUIRE(sut->GetPerf().event_count == 0);
 
-        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
         REQUIRE(task.outputs[0].second == 0); // Failure => return to pool
         REQUIRE(task.status == JArrow::FireResult::Finished);
@@ -142,7 +142,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
         REQUIRE(sut->GetPerf().event_count == 0);
 
-        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
@@ -152,7 +152,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
         REQUIRE(sut->GetPerf().event_count == 0);
 
-        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 

@@ -9,7 +9,7 @@ struct TestData { int x; };
 struct BasicParallelArrow : public JArrow {
 
     BasicParallelArrow() {
-        create_ports(1, 1);
+        CreatePorts(1, 1);
         set_is_parallel(true);
     }
 
@@ -56,10 +56,10 @@ TEST_CASE("BasicParallelArrow_ExecuteSucceeds") {
     JEventPool input_pool(app.GetService<JComponentManager>(), 10, 1);
     JEventQueue output_queue(10, 1);
 
-    sut.attach(&input_pool, 0);
-    sut.attach(&output_queue, 1);
+    sut.Attach(&input_pool, 0);
+    sut.Attach(&output_queue, 1);
 
-    auto result = sut.execute( 0);
+    auto result = sut.Execute( 0);
 
     REQUIRE(result == JArrow::FireResult::KeepGoing);
     REQUIRE(output_queue.GetSize(0) == 1);
@@ -77,10 +77,10 @@ TEST_CASE("BasicParallelArrow_ExecuteFails") {
     JEventQueue input_queue(10, 1);
     JEventQueue output_queue(10, 1);
 
-    sut.attach(&input_queue, 0);
-    sut.attach(&output_queue, 1);
+    sut.Attach(&input_queue, 0);
+    sut.Attach(&output_queue, 1);
 
-    auto result = sut.execute(0);
+    auto result = sut.Execute(0);
 
     REQUIRE(result == JArrow::FireResult::NotRunYet);
     REQUIRE(output_queue.GetSize(0) == 0);

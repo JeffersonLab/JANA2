@@ -10,7 +10,7 @@
 
 JEventTapArrow::JEventTapArrow(std::string name) {
     set_name(name);
-    create_ports(1,1);
+    CreatePorts(1,1);
 }
 
 void JEventTapArrow::add_processor(JEventProcessor* proc) {
@@ -20,7 +20,7 @@ void JEventTapArrow::add_processor(JEventProcessor* proc) {
     m_procs.push_back(proc);
 }
 
-void JEventTapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
+void JEventTapArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventProcessor* proc : m_procs) {
@@ -35,7 +35,7 @@ void JEventTapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_cou
     LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
 }
 
-void JEventTapArrow::initialize() {
+void JEventTapArrow::Initialize() {
     LOG_DEBUG(m_logger) << "Initializing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_procs) {
         LOG_DEBUG(m_logger) << "Initializing JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
@@ -45,7 +45,7 @@ void JEventTapArrow::initialize() {
     LOG_DEBUG(m_logger) << "Initialized arrow '" << get_name() << "'" << LOG_END;
 }
 
-void JEventTapArrow::finalize() {
+void JEventTapArrow::Finalize() {
     LOG_DEBUG(m_logger) << "Finalizing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_procs) {
         LOG_DEBUG(m_logger) << "Finalizing JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;

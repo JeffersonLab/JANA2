@@ -18,22 +18,22 @@ private:
 public:
     JUnfoldArrow(std::string name, JEventUnfolder* unfolder) : m_unfolder(unfolder) {
         set_name(name);
-        create_ports(2, 2);
+        CreatePorts(2, 2);
         m_next_input_port = PARENT_IN;
         m_ports[CHILD_OUT].establishes_ordering=true; // Just in case there's a folder that needs this
     }
 
-    void initialize() final {
+    void Initialize() final {
         m_unfolder->DoInit();
         LOG_INFO(m_logger) << "Initialized JEventUnfolder '" << m_unfolder->GetTypeName() << "'" << LOG_END;
     }
 
-    void finalize() final {
+    void Finalize() final {
         m_unfolder->DoFinish();
         LOG_INFO(m_logger) << "Finalized JEventUnfolder '" << m_unfolder->GetTypeName() << "'" << LOG_END;
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final {
+    void Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final {
 
         // Take whatever we were given
         if (this->m_next_input_port == PARENT_IN) {

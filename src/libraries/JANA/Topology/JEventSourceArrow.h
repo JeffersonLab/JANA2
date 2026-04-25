@@ -19,8 +19,8 @@ private:
 public:
     JEventSourceArrow(std::string name, std::vector<JEventSource*> sources);
 
-    void initialize() final;
-    void finalize() final;
-    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status);
+    void Initialize() final;
+    void Finalize() final;
+    void Fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status);
 };
 

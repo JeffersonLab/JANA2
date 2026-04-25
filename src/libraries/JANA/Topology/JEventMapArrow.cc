@@ -13,7 +13,7 @@
 JEventMapArrow::JEventMapArrow(std::string name) {
     set_name(name);
     set_is_parallel(true);
-    create_ports(1, 1);
+    CreatePorts(1, 1);
 
 }
 
@@ -29,7 +29,7 @@ void JEventMapArrow::add_processor(JEventProcessor* processor) {
     m_procs.push_back(processor);
 }
 
-void JEventMapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
+void JEventMapArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventSource* source : m_sources) {
@@ -55,7 +55,7 @@ void JEventMapArrow::fire(JEvent* event, OutputData& outputs, size_t& output_cou
     status = JArrow::FireResult::KeepGoing;
 }
 
-void JEventMapArrow::initialize() {
+void JEventMapArrow::Initialize() {
     LOG_DEBUG(m_logger) << "Initializing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_procs) {
         if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {
@@ -67,7 +67,7 @@ void JEventMapArrow::initialize() {
     LOG_DEBUG(m_logger) << "Initialized arrow '" << get_name() << "'" << LOG_END;
 }
 
-void JEventMapArrow::finalize() {
+void JEventMapArrow::Finalize() {
     LOG_DEBUG(m_logger) << "Finalizing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_procs) {
         if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {

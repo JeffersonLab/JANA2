@@ -1,7 +1,7 @@
 
 #include <JANA/Topology/JArrow.h>
 
-void JArrow::create_ports(size_t inputs, size_t outputs) {
+void JArrow::CreatePorts(size_t inputs, size_t outputs) {
     m_ports.clear();
     for (size_t i=0; i<inputs; ++i) {
         m_ports.push_back({nullptr, nullptr, true});
@@ -12,7 +12,7 @@ void JArrow::create_ports(size_t inputs, size_t outputs) {
 }
 
 
-void JArrow::attach(JEventQueue* queue, size_t port) {
+void JArrow::Attach(JEventQueue* queue, size_t port) {
     // Place index is relative to whether it is an input or not
     // Port index, however, is agnostic to whether it is an input or not
     if (port >= m_ports.size()) {
@@ -22,7 +22,7 @@ void JArrow::attach(JEventQueue* queue, size_t port) {
 }
 
 
-void JArrow::attach(JEventPool* pool, size_t port) {
+void JArrow::Attach(JEventPool* pool, size_t port) {
     // Place index is relative to whether it is an input or not
     // Port index, however, is agnostic to whether it is an input or not
     if (port >= m_ports.size()) {
@@ -32,7 +32,7 @@ void JArrow::attach(JEventPool* pool, size_t port) {
 }
 
 
-JEvent* JArrow::pull(size_t port_index, size_t location_id) {
+JEvent* JArrow::Pull(size_t port_index, size_t location_id) {
     JEvent* event = nullptr;
     auto& port = m_ports.at(port_index);
     if (port.queue != nullptr) {
@@ -49,7 +49,7 @@ JEvent* JArrow::pull(size_t port_index, size_t location_id) {
 }
 
 
-void JArrow::push(OutputData& outputs, size_t output_count, size_t location_id) {
+void JArrow::Push(OutputData& outputs, size_t output_count, size_t location_id) {
     for (size_t output = 0; output < output_count; ++output) {
         JEvent* event = outputs[output].first;
         int port_index = outputs[output].second;
@@ -67,7 +67,7 @@ void JArrow::push(OutputData& outputs, size_t output_count, size_t location_id) 
     }
 }
 
-JArrow::FireResult JArrow::execute(size_t location_id) {
+JArrow::FireResult JArrow::Execute(size_t location_id) {
 
     auto start_total_time = std::chrono::steady_clock::now();
     if (m_next_visit_time > start_total_time) {
@@ -77,7 +77,7 @@ JArrow::FireResult JArrow::execute(size_t location_id) {
 
     JEvent* input = nullptr;
     if (m_next_input_port != -1) {
-        input = pull(m_next_input_port, location_id);
+        input = Pull(m_next_input_port, location_id);
     }
 
     if (input == nullptr && m_next_input_port != -1) {
@@ -92,15 +92,15 @@ JArrow::FireResult JArrow::execute(size_t location_id) {
     size_t output_count;
     JArrow::FireResult result = JArrow::FireResult::KeepGoing;
 
-    fire(input, outputs, output_count, result);
+    Fire(input, outputs, output_count, result);
 
-    push(outputs, output_count, location_id);
+    Push(outputs, output_count, location_id);
 
     return result;
 }
 
 
-std::string to_string(JArrow::FireResult r) {
+std::string ToString(JArrow::FireResult r) {
     switch (r) {
         case JArrow::FireResult::NotRunYet:     return "NotRunYet";
         case JArrow::FireResult::KeepGoing:     return "KeepGoing";
