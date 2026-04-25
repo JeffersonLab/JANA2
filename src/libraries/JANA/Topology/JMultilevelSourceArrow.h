@@ -26,9 +26,9 @@ public:
 
     void SetEventSource(JEventSource* source);
 
-    void initialize() override;
-    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override;
-    void finalize() override;
+    void Initialize() override;
+    void Fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override;
+    void Finalize() override;
 
 };
 

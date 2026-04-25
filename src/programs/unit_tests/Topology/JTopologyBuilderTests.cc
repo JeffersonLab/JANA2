@@ -52,12 +52,12 @@ void configure_multisource_topology(JTopologyBuilder& builder) {
     auto* src_arrow = new JMultilevelSourceArrow;
     src_arrow->set_name("MultilevelSource");
     src_arrow->SetEventSource(builder.m_components->get_evt_srces().at(0));
-    src_arrow->attach(run_pool, src_arrow->GetPortIndex(JEventLevel::Run, JMultilevelSourceArrow::Direction::In));
-    src_arrow->attach(controls_pool, src_arrow->GetPortIndex(JEventLevel::SlowControls, JMultilevelSourceArrow::Direction::In));
-    src_arrow->attach(physics_pool, src_arrow->GetPortIndex(JEventLevel::PhysicsEvent, JMultilevelSourceArrow::Direction::In));
+    src_arrow->Attach(run_pool, src_arrow->GetPortIndex(JEventLevel::Run, JMultilevelSourceArrow::Direction::In));
+    src_arrow->Attach(controls_pool, src_arrow->GetPortIndex(JEventLevel::SlowControls, JMultilevelSourceArrow::Direction::In));
+    src_arrow->Attach(physics_pool, src_arrow->GetPortIndex(JEventLevel::PhysicsEvent, JMultilevelSourceArrow::Direction::In));
 
-    src_arrow->attach(run_pool, src_arrow->GetPortIndex(JEventLevel::Run, JMultilevelSourceArrow::Direction::Out));
-    src_arrow->attach(controls_pool, src_arrow->GetPortIndex(JEventLevel::SlowControls, JMultilevelSourceArrow::Direction::Out));
+    src_arrow->Attach(run_pool, src_arrow->GetPortIndex(JEventLevel::Run, JMultilevelSourceArrow::Direction::Out));
+    src_arrow->Attach(controls_pool, src_arrow->GetPortIndex(JEventLevel::SlowControls, JMultilevelSourceArrow::Direction::Out));
 
     JEventTapArrow* tap_arrow = new JEventTapArrow("DeinterleavedTap");
     for (auto proc : builder.m_components->get_evt_procs()) {
@@ -69,7 +69,7 @@ void configure_multisource_topology(JTopologyBuilder& builder) {
 
     builder.queues.at(0)->Scale(4); // Queue capacity = N(PhysicsEvent)
 
-    tap_arrow->attach(physics_pool, tap_arrow->EVENT_OUT);
+    tap_arrow->Attach(physics_pool, tap_arrow->EVENT_OUT);
 
     builder.arrows.push_back(src_arrow);
     builder.arrows.push_back(tap_arrow);

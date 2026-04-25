@@ -69,22 +69,22 @@ public:
 
     virtual ~JArrow() = default;
 
-    virtual void initialize() { };
+    virtual void Initialize() { };
 
-    virtual FireResult execute(size_t location_id);
+    virtual FireResult Execute(size_t location_id);
 
-    virtual void fire(JEvent*, OutputData&, size_t&, FireResult&) {};
+    virtual void Fire(JEvent*, OutputData&, size_t&, FireResult&) {};
 
-    virtual void finalize() {};
+    virtual void Finalize() {};
 
-    void create_ports(size_t inputs, size_t outputs);
+    void CreatePorts(size_t inputs, size_t outputs);
 
-    void attach(JEventQueue* queue, size_t port);
-    void attach(JEventPool* pool, size_t port);
+    void Attach(JEventQueue* queue, size_t port);
+    void Attach(JEventPool* pool, size_t port);
 
-    JEvent* pull(size_t input_port, size_t location_id);
-    void push(OutputData& outputs, size_t output_count, size_t location_id);
+    JEvent* Pull(size_t input_port, size_t location_id);
+    void Push(OutputData& outputs, size_t output_count, size_t location_id);
 };
 
 
-std::string to_string(JArrow::FireResult r);
+std::string ToString(JArrow::FireResult r);

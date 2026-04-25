@@ -13,7 +13,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name, std::vector<JEventSource*
     : m_sources(sources) {
     set_name(name);
     set_is_source(true);
-    create_ports(1, 1);
+    CreatePorts(1, 1);
     m_ports[EVENT_OUT].establishes_ordering = true;
     // All event sources establish their own ordering by default,
     // which is sufficient for the kinds of topologies we can create
@@ -24,7 +24,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name, std::vector<JEventSource*
 }
 
 
-void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
+void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << LOG_END;
 
@@ -135,7 +135,7 @@ void JEventSourceArrow::fire(JEvent* event, OutputData& outputs, size_t& output_
     status = JArrow::FireResult::Finished;
 }
 
-void JEventSourceArrow::initialize() {
+void JEventSourceArrow::Initialize() {
     // We initialize everything immediately, but don't open any resources until we absolutely have to; see process(): source->DoNext()
     for (JEventSource* source : m_sources) {
         source->DoInit();
@@ -143,7 +143,7 @@ void JEventSourceArrow::initialize() {
     }
 }
 
-void JEventSourceArrow::finalize() {
+void JEventSourceArrow::Finalize() {
     // Generally JEventSources finalize themselves as soon as they detect that they have run out of events.
     // However, we can't rely on the JEventSources turning themselves off since execution can be externally paused.
     // Instead we leave everything open until we finalize the whole topology, and finalize remaining event sources then.

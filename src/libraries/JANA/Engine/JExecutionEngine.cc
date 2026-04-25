@@ -57,7 +57,7 @@ void JExecutionEngine::Init() {
     // JApplication::ProvideService<JExecutionEngine>().
     for (JArrow* arrow : m_topology->arrows) {
 
-        arrow->initialize();
+        arrow->Initialize();
 
         m_arrow_states.emplace_back();
         auto& arrow_state = m_arrow_states.back();
@@ -350,7 +350,7 @@ void JExecutionEngine::FinishTopology() {
 
     LOG_DEBUG(GetLogger()) << "Finishing processing..." << LOG_END;
     for (auto* arrow : m_topology->arrows) {
-        arrow->finalize();
+        arrow->Finalize();
     }
     for (auto* pool: m_topology->pools) {
         pool->Finalize();
@@ -419,7 +419,7 @@ void JExecutionEngine::RunWorker(Worker worker) {
         while (true) {
             ExchangeTask(task, worker.worker_id);
             if (task.arrow == nullptr) break; // Exit as soon as ExchangeTask() stops blocking
-            task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+            task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
         }
         LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker.worker_id << LOG_END;
     }
@@ -499,7 +499,7 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, WorkerState& work
     }
 
     // Put each output in its correct queue or pool
-    task.arrow->push(task.outputs, task.output_count, worker.location_id);
+    task.arrow->Push(task.outputs, task.output_count, worker.location_id);
 
     if (task.status == JArrow::FireResult::Finished) {
         // If this is an eventsource self-terminating (the only thing that returns Status::Finished right now) it will
@@ -559,9 +559,9 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
 
             // See if we can obtain an input event (this is silly)
             JArrow* arrow = m_topology->arrows[arrow_id];
-            // TODO: consider setting state.next_input, retrieving via fire()
+            // TODO: consider setting state.next_input, retrieving via Fire()
             auto port = arrow->get_next_port_index();
-            JEvent* event = (port == -1) ? nullptr : arrow->pull(port, worker.location_id);
+            JEvent* event = (port == -1) ? nullptr : arrow->Pull(port, worker.location_id);
             if (event != nullptr || port == -1) {
                 LOG_TRACE(GetLogger()) << "Scheduler: Found next ready arrow with id " << arrow_id << LOG_END;
                 // We've found a task that is ready!
@@ -730,7 +730,7 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     auto port = arrow->get_next_port_index();
     JEvent* event = nullptr;
     if (port != -1) {
-        event = arrow->pull(port, location_id);
+        event = arrow->Pull(port, location_id);
         if (event == nullptr) {
             LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow needs an input event from port " << port << ", but the queue or pool is empty." << LOG_END;
             arrow_state.active_tasks -= 1;
@@ -750,8 +750,8 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     JArrow::FireResult result = JArrow::FireResult::NotRunYet;
 
     LOG_WARN(GetLogger()) << "Firing arrow" << LOG_END;
-    arrow->fire(event, outputs, output_count, result);
-    LOG_WARN(GetLogger()) << "Fired arrow with result " << to_string(result) << LOG_END;
+    arrow->Fire(event, outputs, output_count, result);
+    LOG_WARN(GetLogger()) << "Fired arrow with result " << ToString(result) << LOG_END;
     if (output_count == 0) {
         LOG_WARN(GetLogger()) << "No output events" << LOG_END;
     }
@@ -762,7 +762,7 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     }
 
     lock.lock();
-    arrow->push(outputs, output_count, location_id);
+    arrow->Push(outputs, output_count, location_id);
     arrow_state.active_tasks -= 1;
     lock.unlock();
     return result;

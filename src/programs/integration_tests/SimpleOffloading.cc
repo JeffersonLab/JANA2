@@ -74,10 +74,10 @@ struct TriggerFactoryInputsArrow : public JArrow {
     TriggerFactoryInputsArrow() {
         set_name("TriggerFactoryInputsArrow");
         set_is_parallel(true);
-        create_ports(1, 1);
+        CreatePorts(1, 1);
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
+    void Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
         auto* fac = event->GetFactorySet()->GetDatabundle(unique_name)->GetFactory();
         for (auto* input : fac->GetInputs()) {
             input->TriggerFactoryCreate(*event);
@@ -90,9 +90,6 @@ struct TriggerFactoryInputsArrow : public JArrow {
         output_count = 1;
         status = JArrow::FireResult::KeepGoing;
     }
-
-    void initialize() final {}
-    void finalize() final {}
 };
 
 struct OffloadArrow : public JArrow {
@@ -100,12 +97,12 @@ struct OffloadArrow : public JArrow {
     OffloadArrow() {
         set_name("OffloadArrow");
         set_is_parallel(false);
-        create_ports(1, 1);
+        CreatePorts(1, 1);
     }
 
     ~OffloadArrow() override {}
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
+    void Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
 
         event->GetFactorySet()->GetDatabundle(unique_name)->GetFactory()->Create(*event);
 
@@ -114,9 +111,6 @@ struct OffloadArrow : public JArrow {
         output_count = 1;
         status = JArrow::FireResult::KeepGoing;
     }
-
-    void initialize() final {};
-    void finalize() final {};
 };
 
 
@@ -143,8 +137,8 @@ void configure_topology(JTopologyBuilder& builder) {
         tap_arrow->add_processor(proc);
     }
 
-    src_arrow->attach(pool, src_arrow->EVENT_IN);
-    tap_arrow->attach(pool, tap_arrow->EVENT_OUT);
+    src_arrow->Attach(pool, src_arrow->EVENT_IN);
+    tap_arrow->Attach(pool, tap_arrow->EVENT_OUT);
 
     builder.connect(src_arrow, src_arrow->EVENT_OUT, trigger_inputs_arrow, 0);
     builder.connect(trigger_inputs_arrow, 1, offload_arrow, 0);

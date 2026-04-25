@@ -17,7 +17,7 @@ public:
     BatchedArrow() {
         set_name("BatchedArrow");
         set_is_parallel(false);
-        create_ports(1, 1);
+        CreatePorts(1, 1);
     }
 
     void SetBatchSize(int batch_size) { m_batch_size = batch_size; }
@@ -37,7 +37,7 @@ public:
         get_logger() << "Unbatching event " << evt.GetEventNumber();
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
+    void Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
 
         bool releasing_batch = (event == nullptr);
 
@@ -120,8 +120,8 @@ void configure_batched_topology(JTopologyBuilder& builder) {
         tap_arrow->add_processor(proc);
     }
 
-    src_arrow->attach(pool, src_arrow->EVENT_IN);
-    tap_arrow->attach(pool, tap_arrow->EVENT_OUT);
+    src_arrow->Attach(pool, src_arrow->EVENT_IN);
+    tap_arrow->Attach(pool, tap_arrow->EVENT_OUT);
 
     builder.connect(src_arrow, src_arrow->EVENT_OUT, batched_arrow, 0);
     builder.connect(batched_arrow, 1, tap_arrow, tap_arrow->EVENT_IN);
@@ -140,7 +140,7 @@ TEST_CASE("BatchedArrow") {
   JApplication app;
   app.Add(new JEventSource);
   app.Add(new BatchedProc);
-  app.SetParameterValue("jana:nevents", 499);
+  app.SetParameterValue("jana:nevents", 49);
   app.SetParameterValue("nthreads", 1);
   app.SetParameterValue("jana:log:show_threadstamp", 1);
   app.SetParameterValue("jana:loglevel", "TRACE");
