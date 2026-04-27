@@ -7,7 +7,7 @@
 #include "JANA/Utils/JEventLevel.h"
 
 #include <iostream>
-#include <map>
+
 
 namespace jana {
 namespace timeslice_tests {
@@ -36,7 +36,7 @@ TEST_CASE("TimeslicesTests_FineGrained") {
     result = ee->Fire(TS_SRC, 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
 
-    REQUIRE(top->arrows[TS_SRC]->get_port(1).queue == top->queues[0]);
+    REQUIRE(top->arrows[TS_SRC]->GetPort(1).GetQueue() == top->queues[0]);
     REQUIRE(top->pools[0]->GetCapacity() == 4);
     REQUIRE(top->pools[0]->GetSize(0) == 3);
     REQUIRE(top->queues[0]->GetSize(0) == 1);

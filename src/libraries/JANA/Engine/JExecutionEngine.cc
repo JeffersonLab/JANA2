@@ -493,7 +493,7 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, WorkerState& work
     arrow_state.total_processing_duration += processing_duration;
 
     for (size_t output=0; output<task.output_count; ++output) {
-        if (!task.arrow->get_port(task.outputs[output].second).is_input) {
+        if (!task.arrow->GetPort(task.outputs[output].second).GetSkipFinishEvent()) {
             arrow_state.events_processed++;
         }
     }

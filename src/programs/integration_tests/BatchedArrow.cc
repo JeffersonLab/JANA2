@@ -17,7 +17,8 @@ public:
     BatchedArrow() {
         set_name("BatchedArrow");
         set_is_parallel(false);
-        CreatePorts(1, 1);
+        AddPort("in");
+        AddPort("out");
     }
 
     void SetBatchSize(int batch_size) { m_batch_size = batch_size; }

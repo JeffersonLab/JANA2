@@ -9,11 +9,12 @@ struct TestData { int x; };
 struct BasicParallelArrow : public JArrow {
 
     BasicParallelArrow() {
-        CreatePorts(1, 1);
+        AddPort("in");
+        AddPort("out");
         set_is_parallel(true);
     }
 
-    void fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& process_status) {
+    void Fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& process_status) override {
 
         input->Insert(new TestData {.x=22});
 
@@ -36,7 +37,7 @@ TEST_CASE("BasicParallelArrow_Fire") {
     size_t output_count;
     JArrow::FireResult status;
 
-    sut.fire(event.get(), outputs, output_count, status);
+    sut.Fire(event.get(), outputs, output_count, status);
 
     REQUIRE(event->GetSingle<TestData>()->x == 22);
     REQUIRE(output_count == 1);

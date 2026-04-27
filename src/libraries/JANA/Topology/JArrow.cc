@@ -1,16 +1,17 @@
 
 #include <JANA/Topology/JArrow.h>
 
-void JArrow::CreatePorts(size_t inputs, size_t outputs) {
-    m_ports.clear();
-    for (size_t i=0; i<inputs; ++i) {
-        m_ports.push_back({nullptr, nullptr, true});
-    }
-    for (size_t i=0; i<outputs; ++i) {
-        m_ports.push_back({nullptr, nullptr, false});
-    }
-}
 
+JArrow::Port& JArrow::AddPort(std::string name) {
+    if (m_port_lookup.find(name) != m_port_lookup.end()) {
+        throw JException("Port with name '%s' already exists", name.c_str());
+    }
+    auto port = std::make_unique<Port>();
+    auto port_raw_ptr = port.get();
+    m_ports.push_back(std::move(port));
+    m_port_lookup[name] = m_ports.size()-1;
+    return *port_raw_ptr;
+}
 
 void JArrow::Attach(JEventQueue* queue, size_t port) {
     // Place index is relative to whether it is an input or not
@@ -18,7 +19,7 @@ void JArrow::Attach(JEventQueue* queue, size_t port) {
     if (port >= m_ports.size()) {
         throw JException("Attempting to attach to a non-existent port! arrow=%s, port=%d", m_name.c_str(), port);
     }
-    m_ports[port].queue = queue;
+    m_ports[port]->Attach(queue);
 }
 
 
@@ -28,18 +29,18 @@ void JArrow::Attach(JEventPool* pool, size_t port) {
     if (port >= m_ports.size()) {
         throw JException("Attempting to attach to a non-existent place! arrow=%s, port=%d", m_name.c_str(), port);
     }
-    m_ports[port].pool = pool;
+    m_ports[port]->Attach(pool);
 }
 
 
 JEvent* JArrow::Pull(size_t port_index, size_t location_id) {
     JEvent* event = nullptr;
     auto& port = m_ports.at(port_index);
-    if (port.queue != nullptr) {
-        event = port.queue->Pop(location_id);
+    if (port->GetQueue() != nullptr) {
+        event = port->GetQueue()->Pop(location_id);
     }
-    else if (port.pool != nullptr){
-        event = port.pool->Pop( location_id);
+    else if (port->GetPool() != nullptr){
+        event = port->GetPool()->Pop( location_id);
     }
     else {
         throw JException("Arrow %s: Port %d not wired!", m_name.c_str(), port_index);
@@ -53,13 +54,13 @@ void JArrow::Push(OutputData& outputs, size_t output_count, size_t location_id) 
     for (size_t output = 0; output < output_count; ++output) {
         JEvent* event = outputs[output].first;
         int port_index = outputs[output].second;
-        Port& port = m_ports.at(port_index);
-        if (port.queue != nullptr) {
-            port.queue->Push(event, location_id);
+        Port& port = GetPort(port_index);
+        if (port.GetQueue() != nullptr) {
+            port.GetQueue()->Push(event, location_id);
         }
-        else if (port.pool != nullptr) {
-            event->Clear(!port.is_input);
-            port.pool->Ingest(event, location_id);
+        else if (port.GetPool() != nullptr) {
+            event->Clear(!port.GetSkipFinishEvent());
+            port.GetPool()->Ingest(event, location_id);
         }
         else {
             throw JException("Arrow %s: Port %d not wired!", m_name.c_str(), port_index);
@@ -89,7 +90,7 @@ JArrow::FireResult JArrow::Execute(size_t location_id) {
     // Remember that `input` might be nullptr, in case arrow doesn't need any input event
 
     OutputData outputs;
-    size_t output_count;
+    size_t output_count = 0;
     JArrow::FireResult result = JArrow::FireResult::KeepGoing;
 
     Fire(input, outputs, output_count, result);

@@ -59,7 +59,7 @@ std::string JTopologyBuilder::print_topology() {
     for (JArrow* arrow : arrows) {
 
         show_row = true;
-        for (JArrow::Port& port : arrow->m_ports) {
+        for (auto& port : arrow->m_ports) {
             if (show_row) {
                 t | arrow->get_name();
                 t | arrow->is_parallel();
@@ -68,10 +68,10 @@ std::string JTopologyBuilder::print_topology() {
             else {
                 t | "" | "" ;
             }
-            auto place_index = lookup[(port.queue!=nullptr) ? (void*) port.queue : (void*) port.pool];
+            auto place_index = lookup[(port->GetQueue()!=nullptr) ? (void*) port->GetQueue() : (void*) port->GetPool()];
 
-            t | ((port.is_input) ? "Input ": "Output");
-            t | ((port.queue != nullptr) ? "Queue ": "Pool");
+            t | ((port->GetSkipFinishEvent()) ? "Input ": "Output");
+            t | ((port->GetQueue() != nullptr) ? "Queue ": "Pool");
             t | place_index;
         }
     }
@@ -160,28 +160,25 @@ void JTopologyBuilder::connect(JArrow* upstream, size_t upstream_port_id, JArrow
 
     JEventQueue* queue = nullptr;
 
-    JArrow::Port& downstream_port = downstream->m_ports.at(downstream_port_id);
-    if (downstream_port.queue != nullptr) {
+    JArrow::Port& downstream_port = downstream->GetPort(downstream_port_id);
+    if (downstream_port.GetQueue() != nullptr) {
         // If the queue already exists, use that!
-        queue = downstream_port.queue;
+        queue = downstream_port.GetQueue();
     }
     else {
         // Create a new queue
         queue = new JEventQueue(m_max_inflight_events, mapping.get_loc_count());
-        downstream_port.queue = queue;
+        downstream_port.Attach(queue);
         queues.push_back(queue);
     }
-    downstream_port.pool = nullptr;
-    if (downstream_port.enforces_ordering) {
+    if (downstream_port.GetEnforcesOrdering()) {
         queue->SetEnforcesOrdering();
     }
-
-    JArrow::Port& upstream_port = upstream->m_ports.at(upstream_port_id);
-    upstream_port.queue = queue;
-    if (upstream_port.establishes_ordering) {
+    JArrow::Port& upstream_port = upstream->GetPort(upstream_port_id);
+    upstream_port.Attach(queue);
+    if (upstream_port.GetEstablishesOrdering()) {
         queue->SetEstablishesOrdering(true);
     }
-    upstream_port.pool = nullptr;
 }
 
 

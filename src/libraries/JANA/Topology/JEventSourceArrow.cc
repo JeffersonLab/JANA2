@@ -13,8 +13,9 @@ JEventSourceArrow::JEventSourceArrow(std::string name, std::vector<JEventSource*
     : m_sources(sources) {
     set_name(name);
     set_is_source(true);
-    CreatePorts(1, 1);
-    m_ports[EVENT_OUT].establishes_ordering = true;
+    AddPort("in").SetSkipFinishEvent(true);
+    AddPort("out").SetEstablishesOrdering(true);
+
     // All event sources establish their own ordering by default,
     // which is sufficient for the kinds of topologies we can create
     // using JTopologyBuilder. In the future we may need something

@@ -18,9 +18,14 @@ private:
 public:
     JUnfoldArrow(std::string name, JEventUnfolder* unfolder) : m_unfolder(unfolder) {
         set_name(name);
-        CreatePorts(2, 2);
-        m_next_input_port = PARENT_IN;
-        m_ports[CHILD_OUT].establishes_ordering=true; // Just in case there's a folder that needs this
+        AddPort("parent_in");
+        AddPort("child_in");
+        AddPort("child_out").SetEstablishesOrdering(true);
+        // Just in case there's a folder that needs this.
+        // establishes_ordering is cheap; enforces_ordering is the expensive one
+
+        AddPort("rejected_parent_out");
+        m_next_input_port = GetPortIndex("parent_in");
     }
 
     void Initialize() final {

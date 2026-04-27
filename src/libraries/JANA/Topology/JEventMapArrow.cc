@@ -13,8 +13,8 @@
 JEventMapArrow::JEventMapArrow(std::string name) {
     set_name(name);
     set_is_parallel(true);
-    CreatePorts(1, 1);
-
+    AddPort("in");
+    AddPort("out");
 }
 
 void JEventMapArrow::add_source(JEventSource* source) {

@@ -26,9 +26,10 @@ public:
         m_child_level(child_level)
     {
         set_name(name);
-        CreatePorts(1, 2);
+        AddPort("child_in").SetEnforcesOrdering(true);
+        AddPort("child_out");
+        AddPort("parent_out");
         m_next_input_port = CHILD_IN;
-        m_ports[CHILD_IN].enforces_ordering = true;
     }
 
     void set_folder(JEventFolder* folder) {

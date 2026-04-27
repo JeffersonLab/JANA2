@@ -10,12 +10,13 @@
 
 JEventTapArrow::JEventTapArrow(std::string name) {
     set_name(name);
-    CreatePorts(1,1);
+    AddPort("in");
+    AddPort("out");
 }
 
 void JEventTapArrow::add_processor(JEventProcessor* proc) {
     if (proc->IsOrderingEnabled()) {
-        m_ports[EVENT_IN].enforces_ordering = true;
+        m_ports[EVENT_IN]->SetEnforcesOrdering(true);
     }
     m_procs.push_back(proc);
 }
