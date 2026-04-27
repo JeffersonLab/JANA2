@@ -1,5 +1,6 @@
 
 #include "JANA/JApplicationFwd.h"
+#include "JANA/Services/JComponentManager.h"
 #include "JANA/Topology/JEventPool.h"
 #include "JANA/Topology/JEventTapArrow.h"
 #include "JANA/Utils/JEventLevel.h"
@@ -36,7 +37,7 @@ public:
     }
 };
 
-void configure_multisource_topology(JTopologyBuilder& builder) {
+void configure_multisource_topology(JTopologyBuilder& builder, JComponentManager&) {
 
     auto run_pool = new JEventPool(builder.m_components, 1, 1, JEventLevel::Run);
     auto controls_pool = new JEventPool(builder.m_components, 2, 1, JEventLevel::SlowControls);
@@ -83,7 +84,7 @@ TEST_CASE("MultilevelSourceCustomTopology") {
     app.Add(new MyMultiSource);
     app.Add(new DeinterleavedProc);
     auto builder = app.GetService<JTopologyBuilder>();
-    builder->set_configure_fn(configure_multisource_topology);
+    builder->SetConfigureFn(configure_multisource_topology);
     app.Run();
 }
 

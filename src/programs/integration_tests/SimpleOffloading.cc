@@ -116,9 +116,9 @@ struct OffloadArrow : public JArrow {
 };
 
 
-void configure_topology(JTopologyBuilder& builder) {
+void configure_topology(JTopologyBuilder& builder, JComponentManager& components) {
 
-    auto* src_arrow = new JEventSourceArrow("src", builder.m_components->get_evt_srces());
+    auto* src_arrow = new JEventSourceArrow("src", components.get_evt_srces());
 
     TriggerFactoryInputsArrow* trigger_inputs_arrow = new TriggerFactoryInputsArrow;
     trigger_inputs_arrow->unique_name = "B";
@@ -127,12 +127,12 @@ void configure_topology(JTopologyBuilder& builder) {
     offload_arrow->unique_name = "B";
 
     JEventMapArrow* map_arrow = new JEventMapArrow("map");
-    for (auto proc : builder.m_components->get_evt_procs()) {
+    for (auto proc : components.get_evt_procs()) {
         map_arrow->add_processor(proc);
     }
 
     JEventTapArrow* tap_arrow = new JEventTapArrow("tap");
-    for (auto proc : builder.m_components->get_evt_procs()) {
+    for (auto proc : components.get_evt_procs()) {
         tap_arrow->add_processor(proc);
     }
 
@@ -165,7 +165,7 @@ TEST_CASE("SimpleOffloading") {
   app.SetParameterValue("jana:loglevel", "DEBUG");
 
   auto builder = app.GetService<JTopologyBuilder>();
-  builder->set_configure_fn(configure_topology);
+  builder->SetConfigureFn(configure_topology);
   app.Run();
 }
 

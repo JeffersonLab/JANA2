@@ -101,14 +101,14 @@ struct BatchedProc : public JEventProcessor {
 };
 
 
-void configure_batched_topology(JTopologyBuilder& builder) {
+void configure_batched_topology(JTopologyBuilder& builder, JComponentManager& component_manager) {
 
-    auto* src_arrow = new JEventSourceArrow("PhysicsEventSource", builder.m_components->get_evt_srces());
+    auto* src_arrow = new JEventSourceArrow("PhysicsEventSource", component_manager.get_evt_srces());
 
     BatchedArrow* batched_arrow = new BatchedArrow;
 
     JEventTapArrow* tap_arrow = new JEventTapArrow("PhysicsEventTap");
-    for (auto proc : builder.m_components->get_evt_procs()) {
+    for (auto proc : component_manager.get_evt_procs()) {
         tap_arrow->add_processor(proc);
     }
 
@@ -133,8 +133,7 @@ TEST_CASE("BatchedArrow") {
   app.SetParameterValue("jana:log:show_threadstamp", 1);
   app.SetParameterValue("jana:loglevel", "TRACE");
 
-  auto builder = app.GetService<JTopologyBuilder>();
-  builder->set_configure_fn(configure_batched_topology);
+  app.GetService<JTopologyBuilder>()->SetConfigureFn(configure_batched_topology);
   app.Run();
 }
 

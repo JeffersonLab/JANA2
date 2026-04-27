@@ -2,8 +2,10 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
 #include "JTopologyBuilder.h"
+
+#include <string>
+#include <vector>
 
 #include "JEventSourceArrow.h"
 #include "JEventMapArrow.h"
@@ -11,9 +13,8 @@
 #include "JUnfoldArrow.h"
 #include "JFoldArrow.h"
 #include <JANA/JEventProcessor.h>
+#include <JANA/Services/JComponentManager.h>
 #include <JANA/Utils/JTablePrinter.h>
-#include <string>
-#include <vector>
 
 
 JTopologyBuilder::JTopologyBuilder() {
@@ -77,7 +78,7 @@ void JTopologyBuilder::ConnectQueue(std::string upstream_arrow_name,
     queues.back()->Scale(m_max_inflight_events);
 }
 
-std::string JTopologyBuilder::print_topology() {
+std::string JTopologyBuilder::PrintTopology() {
     JTablePrinter t;
     t.AddColumn("Arrow", JTablePrinter::Justify::Left, 0);
     t.AddColumn("Parallel", JTablePrinter::Justify::Center, 0);
@@ -128,21 +129,21 @@ std::string JTopologyBuilder::print_topology() {
 /// It provides an 'empty' JArrowTopology which has been furnished with a pointer to the JComponentManager, the JEventPool,
 /// and the JProcessorMapping (in case you care about NUMA details). However, it does not contain any queues or arrows.
 /// You have to furnish those yourself.
-void JTopologyBuilder::set_configure_fn(std::function<void(JTopologyBuilder&)> configure_fn) {
+void JTopologyBuilder::SetConfigureFn(std::function<void(JTopologyBuilder&, JComponentManager&)> configure_fn) {
     m_configure_topology = std::move(configure_fn);
 }
 
-void JTopologyBuilder::create_topology() {
+void JTopologyBuilder::CreateTopology() {
     mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(m_affinity),
                        static_cast<JProcessorMapping::LocalityStrategy>(m_locality));
 
     if (m_configure_topology) {
-        m_configure_topology(*this);
-        LOG_WARN(GetLogger()) << "Found custom topology configurator! Modified arrow topology is: \n" << print_topology() << LOG_END;
+        m_configure_topology(*this, *m_components);
+        LOG_WARN(GetLogger()) << "Found custom topology configurator! Modified arrow topology is: \n" << PrintTopology() << LOG_END;
     }
     else {
         attach_level(JEventLevel::Run, nullptr, nullptr);
-        LOG_INFO(GetLogger()) << "Arrow topology is:\n" << print_topology() << LOG_END;
+        LOG_INFO(GetLogger()) << "Arrow topology is:\n" << PrintTopology() << LOG_END;
     }
     for (auto* arrow : arrows) {
         arrow->SetLogger(GetLogger());
