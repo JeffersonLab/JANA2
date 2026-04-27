@@ -25,7 +25,7 @@ public:
       : m_parent_level(parent_level),
         m_child_level(child_level)
     {
-        set_name(name);
+        SetName(name);
         AddPort("child_in").SetEnforcesOrdering(true);
         AddPort("child_out");
         AddPort("parent_out");

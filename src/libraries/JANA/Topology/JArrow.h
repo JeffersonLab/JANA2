@@ -78,18 +78,18 @@ protected:
     JLogger m_logger;
 
 public:
-    const std::string& get_name() { return m_name; }
-    JLogger& get_logger() { return m_logger; }
-    bool is_parallel() { return m_is_parallel; }
-    bool is_source() { return m_is_source; }
-    bool is_sink() { return m_is_sink; }
-    int get_next_port_index() { return m_next_input_port; }
+    const std::string& GetName() { return m_name; }
+    JLogger& GetLogger() { return m_logger; }
+    bool IsParallel() { return m_is_parallel; }
+    bool IsSource() { return m_is_source; }
+    bool IsSink() { return m_is_sink; }
+    int GetNextPortIndex() { return m_next_input_port; }
 
-    void set_name(std::string name) { m_name = name; }
-    void set_logger(JLogger logger) { m_logger = logger; }
-    void set_is_parallel(bool is_parallel) { m_is_parallel = is_parallel; }
-    void set_is_source(bool is_source) { m_is_source = is_source; }
-    void set_is_sink(bool is_sink) { m_is_sink = is_sink; }
+    void SetName(std::string name) { m_name = name; }
+    void SetLogger(JLogger logger) { m_logger = logger; }
+    void SetIsParallel(bool is_parallel) { m_is_parallel = is_parallel; }
+    void SetIsSource(bool is_source) { m_is_source = is_source; }
+    void SetIsSink(bool is_sink) { m_is_sink = is_sink; }
 
     Port& AddPort(std::string port_name);
     Port& GetPort(size_t port_index) { return *m_ports.at(port_index); }

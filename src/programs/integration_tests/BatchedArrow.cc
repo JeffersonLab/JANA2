@@ -15,8 +15,8 @@ class BatchedArrow : public JArrow {
 
 public:
     BatchedArrow() {
-        set_name("BatchedArrow");
-        set_is_parallel(false);
+        SetName("BatchedArrow");
+        SetIsParallel(false);
         AddPort("in");
         AddPort("out");
     }
@@ -24,18 +24,18 @@ public:
     void SetBatchSize(int batch_size) { m_batch_size = batch_size; }
 
     virtual void Batch(const JEvent& evt) {
-        get_logger() << "Batching event " << evt.GetEventNumber();
+        GetLogger() << "Batching event " << evt.GetEventNumber();
     }
 
     virtual void Process() {
-        get_logger() << "Processing batch containing:";
+        GetLogger() << "Processing batch containing:";
         for (auto* evt : m_batched_events) {
-            get_logger() << "    " << evt->GetEventNumber();
+            GetLogger() << "    " << evt->GetEventNumber();
         }
     }
 
     virtual void Unbatch(const JEvent& evt) {
-        get_logger() << "Unbatching event " << evt.GetEventNumber();
+        GetLogger() << "Unbatching event " << evt.GetEventNumber();
     }
 
     void Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
@@ -59,7 +59,7 @@ public:
             }
         }
         if (!releasing_batch) {
-            get_logger() << "NOT releasing batch yet";
+            GetLogger() << "NOT releasing batch yet";
             m_next_input_port = 0;
             output_count = 0;
             status = JArrow::FireResult::KeepGoing;
@@ -68,7 +68,7 @@ public:
             for (int i=0; i<2 && !m_batched_events.empty(); ++i) {
                 JEvent* event = m_batched_events.front();
                 m_batched_events.pop_front();
-                get_logger() << "Releasing event " << event->GetEventNumber();
+                GetLogger() << "Releasing event " << event->GetEventNumber();
                 outputs[i] = {event, 1};
                 output_count = i+1;
                 status = JArrow::FireResult::KeepGoing;

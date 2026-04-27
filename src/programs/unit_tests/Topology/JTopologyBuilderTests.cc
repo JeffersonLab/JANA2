@@ -50,7 +50,7 @@ void configure_multisource_topology(JTopologyBuilder& builder) {
     physics_pool->AttachForwardingPool(run_pool);
 
     auto* src_arrow = new JMultilevelSourceArrow;
-    src_arrow->set_name("MultilevelSource");
+    src_arrow->SetName("MultilevelSource");
     src_arrow->SetEventSource(builder.m_components->get_evt_srces().at(0));
     src_arrow->Attach(run_pool, src_arrow->GetPortIndex(JEventLevel::Run, JMultilevelSourceArrow::Direction::In));
     src_arrow->Attach(controls_pool, src_arrow->GetPortIndex(JEventLevel::SlowControls, JMultilevelSourceArrow::Direction::In));

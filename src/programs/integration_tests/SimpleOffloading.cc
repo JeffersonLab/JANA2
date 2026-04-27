@@ -72,8 +72,8 @@ struct TriggerFactoryInputsArrow : public JArrow {
     std::string unique_name;
 
     TriggerFactoryInputsArrow() {
-        set_name("TriggerFactoryInputsArrow");
-        set_is_parallel(true);
+        SetName("TriggerFactoryInputsArrow");
+        SetIsParallel(true);
         AddPort("in");
         AddPort("out");
     }
@@ -86,7 +86,7 @@ struct TriggerFactoryInputsArrow : public JArrow {
         for (auto* input : fac->GetVariadicInputs()) {
             input->TriggerFactoryCreate(*event);
         }
-        LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
+        LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " for event# " << event->GetEventNumber() << LOG_END;
         outputs[0] = {event, 1};
         output_count = 1;
         status = JArrow::FireResult::KeepGoing;
@@ -96,8 +96,8 @@ struct TriggerFactoryInputsArrow : public JArrow {
 struct OffloadArrow : public JArrow {
     std::string unique_name;
     OffloadArrow() {
-        set_name("OffloadArrow");
-        set_is_parallel(false);
+        SetName("OffloadArrow");
+        SetIsParallel(false);
         AddPort("in");
         AddPort("out");
     }
@@ -108,7 +108,7 @@ struct OffloadArrow : public JArrow {
 
         event->GetFactorySet()->GetDatabundle(unique_name)->GetFactory()->Create(*event);
 
-        LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << event->GetEventNumber() << LOG_END;
+        LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " for event# " << event->GetEventNumber() << LOG_END;
         outputs[0] = {event, 1};
         output_count = 1;
         status = JArrow::FireResult::KeepGoing;

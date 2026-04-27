@@ -17,7 +17,7 @@ private:
 
 public:
     JUnfoldArrow(std::string name, JEventUnfolder* unfolder) : m_unfolder(unfolder) {
-        set_name(name);
+        SetName(name);
         AddPort("parent_in");
         AddPort("child_in");
         AddPort("child_out").SetEstablishesOrdering(true);

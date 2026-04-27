@@ -61,8 +61,8 @@ std::string JTopologyBuilder::print_topology() {
         show_row = true;
         for (auto& port : arrow->m_ports) {
             if (show_row) {
-                t | arrow->get_name();
-                t | arrow->is_parallel();
+                t | arrow->GetName();
+                t | arrow->IsParallel();
                 show_row = false;
             }
             else {
@@ -100,7 +100,7 @@ void JTopologyBuilder::create_topology() {
         LOG_INFO(GetLogger()) << "Arrow topology is:\n" << print_topology() << LOG_END;
     }
     for (auto* arrow : arrows) {
-        arrow->set_logger(GetLogger());
+        arrow->SetLogger(GetLogger());
     }
 
     // _Don't_ establish ordering if nobody needs it!
@@ -431,16 +431,16 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         // This is the lowest level
         // TODO: Improve logic for determining event counts for multilevel topologies
         if (last_tap_arrow != nullptr) {
-            last_tap_arrow->set_is_sink(true);
+            last_tap_arrow->SetIsSink(true);
         }
         else if (map2_arrow != nullptr) {
-            map2_arrow->set_is_sink(true);
+            map2_arrow->SetIsSink(true);
         }
         else if (map1_arrow != nullptr) {
-            map1_arrow->set_is_sink(true);
+            map1_arrow->SetIsSink(true);
         }
         else if (src_arrow != nullptr) {
-            src_arrow->set_is_sink(true);
+            src_arrow->SetIsSink(true);
         }
     }
 }

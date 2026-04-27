@@ -117,7 +117,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
         sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
-        REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // Only task available at this point!
+        REQUIRE(task.arrow->GetName() == "PhysicsEventSource"); // Only task available at this point!
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
         REQUIRE(sut->GetPerf().event_count == 0);
 
@@ -127,7 +127,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
         sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
-        REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // This will fail due to jana:nevents
+        REQUIRE(task.arrow->GetName() == "PhysicsEventSource"); // This will fail due to jana:nevents
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
         REQUIRE(sut->GetPerf().event_count == 0);
 
@@ -138,7 +138,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
         sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
-        REQUIRE(task.arrow->get_name() == "PhysicsEventMap2");
+        REQUIRE(task.arrow->GetName() == "PhysicsEventMap2");
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
         REQUIRE(sut->GetPerf().event_count == 0);
 
@@ -148,7 +148,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
         sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
-        REQUIRE(task.arrow->get_name() == "PhysicsEventTap");
+        REQUIRE(task.arrow->GetName() == "PhysicsEventTap");
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
         REQUIRE(sut->GetPerf().event_count == 0);
 

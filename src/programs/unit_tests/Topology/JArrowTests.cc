@@ -11,7 +11,7 @@ struct BasicParallelArrow : public JArrow {
     BasicParallelArrow() {
         AddPort("in");
         AddPort("out");
-        set_is_parallel(true);
+        SetIsParallel(true);
     }
 
     void Fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& process_status) override {

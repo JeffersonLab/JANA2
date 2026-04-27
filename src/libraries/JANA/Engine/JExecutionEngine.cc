@@ -61,10 +61,10 @@ void JExecutionEngine::Init() {
 
         m_arrow_states.emplace_back();
         auto& arrow_state = m_arrow_states.back();
-        arrow_state.is_source = arrow->is_source();
-        arrow_state.is_sink = arrow->is_sink();
-        arrow_state.is_parallel = arrow->is_parallel();
-        arrow_state.next_input = arrow->get_next_port_index();
+        arrow_state.is_source = arrow->IsSource();
+        arrow_state.is_sink = arrow->IsSink();
+        arrow_state.is_parallel = arrow->IsParallel();
+        arrow_state.next_input = arrow->GetNextPortIndex();
     }
 }
 
@@ -316,14 +316,14 @@ void JExecutionEngine::HandleFailures() {
     // First, we log all of the failures we've found
     for (auto& worker: m_worker_states) {
         if (worker->is_timed_out) {
-            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->arrows[worker->last_arrow_id]->get_name();
+            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->arrows[worker->last_arrow_id]->GetName();
             LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
             pthread_kill(worker->thread->native_handle(), SIGUSR2);
             LOG_INFO(GetLogger()) << "Worker thread signalled; waiting for backtrace capture." << LOG_END;
             worker->backtrace.WaitForCapture();
         }
         if (worker->stored_exception != nullptr) {
-            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->arrows[worker->last_arrow_id]->get_name();
+            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->arrows[worker->last_arrow_id]->GetName();
             LOG_FATAL(GetLogger()) << "Exception in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
         }
     }
@@ -560,7 +560,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
             // See if we can obtain an input event (this is silly)
             JArrow* arrow = m_topology->arrows[arrow_id];
             // TODO: consider setting state.next_input, retrieving via Fire()
-            auto port = arrow->get_next_port_index();
+            auto port = arrow->GetNextPortIndex();
             JEvent* event = (port == -1) ? nullptr : arrow->Pull(port, worker.location_id);
             if (event != nullptr || port == -1) {
                 LOG_TRACE(GetLogger()) << "Scheduler: Found next ready arrow with id " << arrow_id << LOG_END;
@@ -663,12 +663,12 @@ void JExecutionEngine::PrintFinalReport() {
         total_useful_ms += useful_ms;
         auto avg_latency = useful_ms*1.0/arrow_state.events_processed;
         auto throughput_bottleneck = 1000.0 / avg_latency;
-        if (arrow->is_parallel()) {
+        if (arrow->IsParallel()) {
             throughput_bottleneck *= thread_count;
         }
 
-        LOG_INFO(GetLogger()) << "  - Arrow name:                 " << arrow->get_name() << LOG_END;
-        LOG_INFO(GetLogger()) << "    Parallel:                   " << arrow->is_parallel() << LOG_END;
+        LOG_INFO(GetLogger()) << "  - Arrow name:                 " << arrow->GetName() << LOG_END;
+        LOG_INFO(GetLogger()) << "    Parallel:                   " << arrow->IsParallel() << LOG_END;
         LOG_INFO(GetLogger()) << "    Events completed:           " << arrow_state.events_processed << LOG_END;
         LOG_INFO(GetLogger()) << "    Avg latency [ms/event]:     " << avg_latency << LOG_END;
         LOG_INFO(GetLogger()) << "    Throughput bottleneck [Hz]: " << throughput_bottleneck << LOG_END;
@@ -713,7 +713,7 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
         return JArrow::FireResult::NotRunYet;
     }
     JArrow* arrow = m_topology->arrows[arrow_id];
-    LOG_WARN(GetLogger()) << "Attempting to fire arrow with name=" << arrow->get_name() 
+    LOG_WARN(GetLogger()) << "Attempting to fire arrow with name=" << arrow->GetName() 
                           << ", index=" << arrow_id << ", location=" << location_id << LOG_END;
 
     ArrowState& arrow_state = m_arrow_states[arrow_id];
@@ -727,7 +727,7 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     }
     arrow_state.active_tasks += 1;
 
-    auto port = arrow->get_next_port_index();
+    auto port = arrow->GetNextPortIndex();
     JEvent* event = nullptr;
     if (port != -1) {
         event = arrow->Pull(port, location_id);

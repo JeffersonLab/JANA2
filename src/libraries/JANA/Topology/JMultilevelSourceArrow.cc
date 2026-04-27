@@ -52,7 +52,7 @@ void JMultilevelSourceArrow::EvictNextParent(OutputData& outputs, size_t& output
         if (it->second.first != nullptr) {
             // There IS an old parent
             size_t parent_output_port = GetPortIndex(m_next_input_level, Direction::Out);
-            LOG_DEBUG(get_logger()) << "JMultilevelSourceArrow: Evicting parent " << it->second.first->GetEventStamp() << " to port " << parent_output_port;
+            LOG_DEBUG(GetLogger()) << "JMultilevelSourceArrow: Evicting parent " << it->second.first->GetEventStamp() << " to port " << parent_output_port;
             outputs.at(output_count++) = {it->second.first, parent_output_port};
             it->second.first = nullptr;
         }
@@ -63,12 +63,12 @@ void JMultilevelSourceArrow::Fire(JEvent* input, OutputData& outputs, size_t& ou
 
     if (!m_finish_in_progress) {
 
-        LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << LOG_END;
+        LOG_DEBUG(m_logger) << "Executing arrow " << GetName() << LOG_END;
         auto result = m_source->DoNext(input->shared_from_this());
         m_next_input_level = m_source->GetNextInputLevel();
         m_next_input_port = GetPortIndex(m_next_input_level, Direction::In);
 
-        LOG_DEBUG(get_logger()) << "JMultilevelSourceArrow: Returned from DoNext(" << toString(input->GetLevel()) << "). Next input level is " << toString(m_next_input_level);
+        LOG_DEBUG(GetLogger()) << "JMultilevelSourceArrow: Returned from DoNext(" << toString(input->GetLevel()) << "). Next input level is " << toString(m_next_input_level);
 
         if (result == JEventSource::Result::Success) {
             // We have a newly filled event we have to do something with
@@ -80,7 +80,7 @@ void JMultilevelSourceArrow::Fire(JEvent* input, OutputData& outputs, size_t& ou
                     // Note that this only attaches parents that we already, so if the parents arrive in the wrong order they
                     // will just be missing. If this is expected behavior, you'll need to set your downstream parent inputs to be optional.
                     if (parent_pair.first != nullptr) {
-                        LOG_DEBUG(get_logger()) << "JMultilevelSourceArrow: Attaching parent: " << parent_pair.first->GetEventStamp() << " to event " << input->GetEventStamp();
+                        LOG_DEBUG(GetLogger()) << "JMultilevelSourceArrow: Attaching parent: " << parent_pair.first->GetEventStamp() << " to event " << input->GetEventStamp();
                         input->SetParent(parent_pair.first);
                     }
                 }

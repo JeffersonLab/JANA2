@@ -11,8 +11,8 @@
 
 JEventSourceArrow::JEventSourceArrow(std::string name, std::vector<JEventSource*> sources)
     : m_sources(sources) {
-    set_name(name);
-    set_is_source(true);
+    SetName(name);
+    SetIsSource(true);
     AddPort("in").SetSkipFinishEvent(true);
     AddPort("out").SetEstablishesOrdering(true);
 
@@ -27,7 +27,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name, std::vector<JEventSource*
 
 void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
-    LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << LOG_END;
+    LOG_DEBUG(m_logger) << "Executing arrow " << GetName() << LOG_END;
 
     // First check to see if we need to handle a barrier event before attempting to emit another event
     if (m_barrier_active) {
@@ -57,7 +57,7 @@ void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_
             else {
                 // Topology has _not_ finished draining, all we can do is wait
                 LOG_DEBUG(m_logger) << "JEventSourceArrow: Waiting on pending barrier event. Emitted = " << emitted_event_count << ", Finished = " << finished_event_count << LOG_END;
-                LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result ComeBackLater"<< LOG_END;
+                LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " with result ComeBackLater"<< LOG_END;
 
                 assert(event == nullptr);
                 output_count = 0;
@@ -82,7 +82,7 @@ void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_
             else {
                 // Barrier event has NOT finished
                 LOG_DEBUG(m_logger) << "JEventSourceArrow: Waiting on in-flight barrier event" << LOG_END;
-                LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result ComeBackLater"<< LOG_END;
+                LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " with result ComeBackLater"<< LOG_END;
                 assert(event == nullptr);
                 output_count = 0;
                 status = JArrow::FireResult::ComeBackLater;
@@ -96,13 +96,13 @@ void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_
         auto source_status = m_sources[m_current_source]->DoNext(event->shared_from_this());
 
         if (source_status == JEventSource::Result::FailureFinished) {
-            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result FailureFinished"<< LOG_END;
+            LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " with result FailureFinished"<< LOG_END;
             m_current_source++;
             // TODO: Adjust nskip and nevents for the new source
         }
         else if (source_status == JEventSource::Result::FailureTryAgain){
             // This JEventSource isn't finished yet, so we obtained either Success or TryAgainLater
-            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result ComeBackLater"<< LOG_END;
+            LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " with result ComeBackLater"<< LOG_END;
             outputs[0] = {event, 0}; // Reject
             output_count = 1;
             status = JArrow::FireResult::ComeBackLater;
@@ -110,7 +110,7 @@ void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_
         }
         else if (event->GetSequential()){
             // Source succeeded, but returned a barrier event
-            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result Success, holding back barrier event# " << event->GetEventNumber() << LOG_END;
+            LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " with result Success, holding back barrier event# " << event->GetEventNumber() << LOG_END;
             m_pending_barrier_event = event;
             m_barrier_active = true;
             m_next_input_port = -1; // Stop popping events from the input queue until barrier event has finished
@@ -122,7 +122,7 @@ void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_
         }
         else {
             // Source succeeded, did NOT return a barrier event
-            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result Success, emitting event# " << event->GetEventNumber() << LOG_END;
+            LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " with result Success, emitting event# " << event->GetEventNumber() << LOG_END;
             outputs[0] = {event, 1}; // SUCCESS!
             output_count = 1;
             status = JArrow::FireResult::KeepGoing;
