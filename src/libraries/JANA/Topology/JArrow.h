@@ -20,45 +20,45 @@ public:
     enum class FireResult {NotRunYet, KeepGoing, ComeBackLater, Finished};
 
     class Port {
-        JEventQueue* queue = nullptr;
-        JEventPool* pool = nullptr;
-        bool is_input = false;
-        bool establishes_ordering = false;
-        bool enforces_ordering = false;
+        JEventQueue* m_queue = nullptr;
+        JEventPool* m_pool = nullptr;
+        bool m_skip_finish_event = false;
+        bool m_establishes_ordering = false;
+        bool m_enforces_ordering = false;
 
     public:
         Port(){};
 
-        bool GetEstablishesOrdering() { return establishes_ordering; }
-        bool GetEnforcesOrdering() { return enforces_ordering; }
-        bool GetSkipFinishEvent() { return is_input; }
+        bool GetEstablishesOrdering() { return m_establishes_ordering; }
+        bool GetEnforcesOrdering() { return m_enforces_ordering; }
+        bool GetSkipFinishEvent() { return m_skip_finish_event; }
 
         Port& SetEstablishesOrdering(bool establishes) { 
-            establishes_ordering = establishes; 
+            m_establishes_ordering = establishes; 
             return *this;
         }
 
         Port& SetEnforcesOrdering(bool enforces) { 
-            enforces_ordering = enforces;
+            m_enforces_ordering = enforces;
             return *this;
         }
 
         Port& SetSkipFinishEvent(bool skip_finish_event) {
-            is_input = skip_finish_event;
+            this->m_skip_finish_event = skip_finish_event;
             return *this;
         }
 
-        inline JEventPool* GetPool() { return pool; }
-        inline JEventQueue* GetQueue() { return queue; }
+        inline JEventPool* GetPool() { return m_pool; }
+        inline JEventQueue* GetQueue() { return m_queue; }
 
         void Attach(JEventQueue* queue) {
-            this->pool = nullptr;
-            this->queue = queue;
+            this->m_pool = nullptr;
+            this->m_queue = queue;
         }
 
         void Attach(JEventPool* pool) {
-            this->pool = pool;
-            this->queue = nullptr;
+            this->m_pool = pool;
+            this->m_queue = nullptr;
         }
     };
 
@@ -78,6 +78,24 @@ protected:
     JLogger m_logger;
 
 public:
+    JArrow() = default;
+
+    virtual ~JArrow() = default;
+
+    virtual void Initialize() {};
+
+    virtual void Fire(JEvent*, OutputData&, size_t&, FireResult&) {};
+
+    virtual void Finalize() {};
+
+
+    FireResult Execute(size_t location_id);
+
+    JEvent* Pull(size_t input_port, size_t location_id);
+
+    void Push(OutputData& outputs, size_t output_count, size_t location_id);
+
+
     const std::string& GetName() { return m_name; }
     JLogger& GetLogger() { return m_logger; }
     bool IsParallel() { return m_is_parallel; }
@@ -96,19 +114,6 @@ public:
     int GetPortIndex(const std::string& port_name) { return m_port_lookup.at(port_name); }
     void SetNextPortIndex(int input_port) { m_next_input_port = input_port; }
 
-    JArrow() = default;
-    virtual ~JArrow() = default;
-
-    virtual void Initialize() { };
-
-    virtual FireResult Execute(size_t location_id);
-
-    virtual void Fire(JEvent*, OutputData&, size_t&, FireResult&) {};
-
-    virtual void Finalize() {};
-
-    JEvent* Pull(size_t input_port, size_t location_id);
-    void Push(OutputData& outputs, size_t output_count, size_t location_id);
 };
 
 
