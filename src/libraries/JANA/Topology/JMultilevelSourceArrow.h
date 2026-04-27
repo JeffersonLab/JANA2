@@ -21,6 +21,10 @@ private:
     void EvictNextParent(OutputData& outputs, size_t& output_count);
 
 public:
+    JMultilevelSourceArrow() {
+        SetIsSource(true);
+    }
+
     const std::vector<JEventLevel>& GetLevels() const;
     size_t GetPortIndex(JEventLevel level, Direction direction) const;
 

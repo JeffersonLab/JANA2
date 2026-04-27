@@ -69,9 +69,9 @@ TEST_CASE("UnfoldTests_Basic") {
 
     TestUnfolder unfolder;
     JUnfoldArrow arrow("sut", &unfolder);
-    arrow.Attach(&parent_queue, JUnfoldArrow::PARENT_IN);
-    arrow.Attach(&child_pool, JUnfoldArrow::CHILD_IN);
-    arrow.Attach(&child_queue, JUnfoldArrow::CHILD_OUT);
+    arrow.GetPort(JUnfoldArrow::PARENT_IN).Attach(&parent_queue);
+    arrow.GetPort(JUnfoldArrow::CHILD_IN).Attach(&child_pool);
+    arrow.GetPort(JUnfoldArrow::CHILD_OUT).Attach(&child_queue);
 
     arrow.Initialize();
     arrow.Execute( 0); // First call to execute() picks up the parent and exits early
@@ -104,9 +104,9 @@ TEST_CASE("FoldArrowTests") {
     JEventQueue parent_out(5, 1);
 
     JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::PhysicsEvent);
-    arrow.Attach(&child_in, JFoldArrow::CHILD_IN);
-    arrow.Attach(&child_out, JFoldArrow::CHILD_OUT);
-    arrow.Attach(&parent_out, JFoldArrow::PARENT_OUT);
+    arrow.GetPort(JFoldArrow::CHILD_IN).Attach(&child_in);
+    arrow.GetPort(JFoldArrow::CHILD_OUT).Attach(&child_out);
+    arrow.GetPort(JFoldArrow::PARENT_OUT).Attach(&parent_out);
     arrow.Initialize();
 
     SECTION("One-to-one relationship between timeslices and events") {

@@ -13,26 +13,6 @@ JArrow::Port& JArrow::AddPort(std::string name) {
     return *port_raw_ptr;
 }
 
-void JArrow::Attach(JEventQueue* queue, size_t port) {
-    // Place index is relative to whether it is an input or not
-    // Port index, however, is agnostic to whether it is an input or not
-    if (port >= m_ports.size()) {
-        throw JException("Attempting to attach to a non-existent port! arrow=%s, port=%d", m_name.c_str(), port);
-    }
-    m_ports[port]->Attach(queue);
-}
-
-
-void JArrow::Attach(JEventPool* pool, size_t port) {
-    // Place index is relative to whether it is an input or not
-    // Port index, however, is agnostic to whether it is an input or not
-    if (port >= m_ports.size()) {
-        throw JException("Attempting to attach to a non-existent place! arrow=%s, port=%d", m_name.c_str(), port);
-    }
-    m_ports[port]->Attach(pool);
-}
-
-
 JEvent* JArrow::Pull(size_t port_index, size_t location_id) {
     JEvent* event = nullptr;
     auto& port = m_ports.at(port_index);

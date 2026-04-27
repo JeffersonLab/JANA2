@@ -304,8 +304,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     bool need_source = !sources_at_level.empty();
     if (need_source) {
         src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level);
-        src_arrow->Attach(pool_at_level, JEventSourceArrow::EVENT_IN);
-        src_arrow->Attach(pool_at_level, JEventSourceArrow::EVENT_OUT);
+        src_arrow->GetPort(JEventSourceArrow::EVENT_IN).Attach(pool_at_level);
+        src_arrow->GetPort(JEventSourceArrow::EVENT_OUT).Attach(pool_at_level);
         arrows.push_back(src_arrow);
     }
 
@@ -330,8 +330,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         for (JEventUnfolder* unf: unfolders_at_level) {
             map1_arrow->add_unfolder(unf);
         }
-        map1_arrow->Attach(pool_at_level, JEventMapArrow::EVENT_IN);
-        map1_arrow->Attach(pool_at_level, JEventMapArrow::EVENT_OUT);
+        map1_arrow->GetPort(JEventMapArrow::EVENT_IN).Attach(pool_at_level);
+        map1_arrow->GetPort(JEventMapArrow::EVENT_OUT).Attach(pool_at_level);
         arrows.push_back(map1_arrow);
     }
 
@@ -342,7 +342,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     bool need_unfold = have_unfolder;
     if (need_unfold) {
         unfold_arrow = new JUnfoldArrow(level_str+"Unfold", unfolders_at_level[0]);
-        unfold_arrow->Attach(pool_at_level, JUnfoldArrow::REJECTED_PARENT_OUT); 
+        unfold_arrow->GetPort(JUnfoldArrow::REJECTED_PARENT_OUT).Attach(pool_at_level);
         arrows.push_back(unfold_arrow);
     }
 
@@ -354,7 +354,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     if(need_fold) {
         fold_arrow = new JFoldArrow(level_str+"Fold", current_level, unfolders_at_level[0]->GetChildLevel());
         arrows.push_back(fold_arrow);
-        fold_arrow->Attach(pool_at_level, JFoldArrow::PARENT_OUT); 
+        fold_arrow->GetPort(JFoldArrow::PARENT_OUT).Attach(pool_at_level);
     }
 
     // --------------------------
@@ -366,8 +366,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         map2_arrow = new JEventMapArrow(level_str+"Map2");
         for (JEventProcessor* proc : mappable_procs_at_level) {
             map2_arrow->add_processor(proc);
-            map2_arrow->Attach(pool_at_level, JEventMapArrow::EVENT_IN);
-            map2_arrow->Attach(pool_at_level, JEventMapArrow::EVENT_OUT);
+            map2_arrow->GetPort(JEventMapArrow::EVENT_IN).Attach(pool_at_level);
+            map2_arrow->GetPort(JEventMapArrow::EVENT_OUT).Attach(pool_at_level);
         }
         arrows.push_back(map2_arrow);
     }
@@ -380,8 +380,8 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     bool need_tap = !tappable_procs_at_level.empty();
     if (need_tap) {
         std::tie(first_tap_arrow, last_tap_arrow) = create_tap_chain(tappable_procs_at_level, level_str);
-        first_tap_arrow->Attach(pool_at_level, JEventTapArrow::EVENT_IN);
-        last_tap_arrow->Attach(pool_at_level, JEventTapArrow::EVENT_OUT);
+        first_tap_arrow->GetPort(JEventTapArrow::EVENT_IN).Attach(pool_at_level);
+        last_tap_arrow->GetPort(JEventTapArrow::EVENT_OUT).Attach(pool_at_level);
     }
 
 
@@ -390,7 +390,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // 1. Source
     // --------------------------
     if (parent_unfolder != nullptr) {
-        parent_unfolder->Attach(pool_at_level, JUnfoldArrow::CHILD_IN);
+        parent_unfolder->GetPort(JUnfoldArrow::CHILD_IN).Attach(pool_at_level);
         connect_to_first_available(parent_unfolder, JUnfoldArrow::CHILD_OUT,
                                    {{map1_arrow, JEventMapArrow::EVENT_IN}, {unfold_arrow, JUnfoldArrow::PARENT_IN}, {map2_arrow, JEventMapArrow::EVENT_IN}, {first_tap_arrow, JEventTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
@@ -419,7 +419,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
                                    {{parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (parent_folder != nullptr) {
-        parent_folder->Attach(pool_at_level, JFoldArrow::CHILD_OUT);
+        parent_folder->GetPort(JFoldArrow::CHILD_OUT).Attach(pool_at_level);
     }
 
     // Finally, we recur over lower levels!

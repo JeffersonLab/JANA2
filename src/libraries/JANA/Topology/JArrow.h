@@ -107,9 +107,6 @@ public:
 
     virtual void Finalize() {};
 
-    void Attach(JEventQueue* queue, size_t port);
-    void Attach(JEventPool* pool, size_t port);
-
     JEvent* Pull(size_t input_port, size_t location_id);
     void Push(OutputData& outputs, size_t output_count, size_t location_id);
 };

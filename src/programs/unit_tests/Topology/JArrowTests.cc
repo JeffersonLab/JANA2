@@ -57,8 +57,8 @@ TEST_CASE("BasicParallelArrow_ExecuteSucceeds") {
     JEventPool input_pool(app.GetService<JComponentManager>(), 10, 1);
     JEventQueue output_queue(10, 1);
 
-    sut.Attach(&input_pool, 0);
-    sut.Attach(&output_queue, 1);
+    sut.GetPort(0).Attach(&input_pool);
+    sut.GetPort(1).Attach(&output_queue);
 
     auto result = sut.Execute( 0);
 
@@ -78,8 +78,8 @@ TEST_CASE("BasicParallelArrow_ExecuteFails") {
     JEventQueue input_queue(10, 1);
     JEventQueue output_queue(10, 1);
 
-    sut.Attach(&input_queue, 0);
-    sut.Attach(&output_queue, 1);
+    sut.GetPort(0).Attach(&input_queue);
+    sut.GetPort(1).Attach(&output_queue);
 
     auto result = sut.Execute(0);
 

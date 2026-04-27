@@ -121,8 +121,8 @@ void configure_batched_topology(JTopologyBuilder& builder) {
         tap_arrow->add_processor(proc);
     }
 
-    src_arrow->Attach(pool, src_arrow->EVENT_IN);
-    tap_arrow->Attach(pool, tap_arrow->EVENT_OUT);
+    src_arrow->GetPort(src_arrow->EVENT_IN).Attach(pool);
+    tap_arrow->GetPort(tap_arrow->EVENT_OUT).Attach(pool);
 
     builder.connect(src_arrow, src_arrow->EVENT_OUT, batched_arrow, 0);
     builder.connect(batched_arrow, 1, tap_arrow, tap_arrow->EVENT_IN);
