@@ -20,6 +20,7 @@ public:
     enum class FireResult {NotRunYet, KeepGoing, ComeBackLater, Finished};
 
     class Port {
+        std::string m_name;
         JEventQueue* m_queue = nullptr;
         JEventPool* m_pool = nullptr;
         bool m_skip_finish_event = false;
@@ -27,8 +28,9 @@ public:
         bool m_enforces_ordering = false;
 
     public:
-        Port(){};
+        Port(std::string name):m_name(name) {};
 
+        const std::string& GetName() { return m_name; }
         bool GetEstablishesOrdering() { return m_establishes_ordering; }
         bool GetEnforcesOrdering() { return m_enforces_ordering; }
         bool GetSkipFinishEvent() { return m_skip_finish_event; }

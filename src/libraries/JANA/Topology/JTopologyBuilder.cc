@@ -36,7 +36,7 @@ std::string JTopologyBuilder::print_topology() {
     JTablePrinter t;
     t.AddColumn("Arrow", JTablePrinter::Justify::Left, 0);
     t.AddColumn("Parallel", JTablePrinter::Justify::Center, 0);
-    t.AddColumn("Direction", JTablePrinter::Justify::Left, 0);
+    t.AddColumn("Port", JTablePrinter::Justify::Left, 0);
     t.AddColumn("Place", JTablePrinter::Justify::Left, 0);
     t.AddColumn("ID", JTablePrinter::Justify::Left, 0);
 
@@ -70,7 +70,7 @@ std::string JTopologyBuilder::print_topology() {
             }
             auto place_index = lookup[(port->GetQueue()!=nullptr) ? (void*) port->GetQueue() : (void*) port->GetPool()];
 
-            t | ((port->GetSkipFinishEvent()) ? "Input ": "Output");
+            t | port->GetName();
             t | ((port->GetQueue() != nullptr) ? "Queue ": "Pool");
             t | place_index;
         }
