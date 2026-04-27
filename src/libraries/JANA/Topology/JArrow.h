@@ -21,6 +21,7 @@ public:
 
     class Port {
         std::string m_name;
+        std::vector<JEventLevel> m_levels;
         JEventQueue* m_queue = nullptr;
         JEventPool* m_pool = nullptr;
         bool m_skip_finish_event = false;
@@ -28,9 +29,14 @@ public:
         bool m_enforces_ordering = false;
 
     public:
-        Port(std::string name):m_name(name) {};
+        Port(std::string name, std::vector<JEventLevel> levels): m_name(name), m_levels(levels) {};
+
+        Port(std::string name, JEventLevel level): m_name(name) {
+            m_levels.push_back(level);
+        };
 
         const std::string& GetName() { return m_name; }
+        const std::vector<JEventLevel>& GetLevels() { return m_levels; }
         bool GetEstablishesOrdering() { return m_establishes_ordering; }
         bool GetEnforcesOrdering() { return m_enforces_ordering; }
         bool GetSkipFinishEvent() { return m_skip_finish_event; }
@@ -111,7 +117,8 @@ public:
     void SetIsSource(bool is_source) { m_is_source = is_source; }
     void SetIsSink(bool is_sink) { m_is_sink = is_sink; }
 
-    Port& AddPort(std::string port_name);
+    Port& AddPort(std::string port_name, JEventLevel level);
+    Port& AddPort(std::string port_name, std::vector<JEventLevel> levels);
     Port& GetPort(size_t port_index) { return *m_ports.at(port_index); }
     int GetPortIndex(const std::string& port_name) { 
         auto it = m_port_lookup.find(port_name);

@@ -71,11 +71,11 @@ struct Proc : public JEventProcessor {
 struct TriggerFactoryInputsArrow : public JArrow {
     std::string unique_name;
 
-    TriggerFactoryInputsArrow() {
+    TriggerFactoryInputsArrow(JEventLevel level) {
         SetName("trigger");
         SetIsParallel(true);
-        AddPort("in");
-        AddPort("out");
+        AddPort("in", level);
+        AddPort("out", level);
     }
 
     void Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
@@ -95,11 +95,11 @@ struct TriggerFactoryInputsArrow : public JArrow {
 
 struct OffloadArrow : public JArrow {
     std::string unique_name;
-    OffloadArrow() {
+    OffloadArrow(JEventLevel level) {
         SetName("offload");
         SetIsParallel(false);
-        AddPort("in");
-        AddPort("out");
+        AddPort("in", level);
+        AddPort("out", level);
     }
 
     ~OffloadArrow() override {}
@@ -118,20 +118,20 @@ struct OffloadArrow : public JArrow {
 
 void configure_topology(JTopologyBuilder& builder, JComponentManager& components) {
 
-    auto* src_arrow = new JEventSourceArrow("src", components.get_evt_srces());
+    auto* src_arrow = new JEventSourceArrow("src", JEventLevel::PhysicsEvent, components.get_evt_srces());
 
-    TriggerFactoryInputsArrow* trigger_inputs_arrow = new TriggerFactoryInputsArrow;
+    TriggerFactoryInputsArrow* trigger_inputs_arrow = new TriggerFactoryInputsArrow(JEventLevel::PhysicsEvent);
     trigger_inputs_arrow->unique_name = "B";
 
-    OffloadArrow* offload_arrow = new OffloadArrow;
+    OffloadArrow* offload_arrow = new OffloadArrow(JEventLevel::PhysicsEvent);
     offload_arrow->unique_name = "B";
 
-    JEventMapArrow* map_arrow = new JEventMapArrow("map");
+    JEventMapArrow* map_arrow = new JEventMapArrow("map", JEventLevel::PhysicsEvent);
     for (auto proc : components.get_evt_procs()) {
         map_arrow->add_processor(proc);
     }
 
-    JEventTapArrow* tap_arrow = new JEventTapArrow("tap");
+    JEventTapArrow* tap_arrow = new JEventTapArrow("tap", JEventLevel::PhysicsEvent);
     for (auto proc : components.get_evt_procs()) {
         tap_arrow->add_processor(proc);
     }

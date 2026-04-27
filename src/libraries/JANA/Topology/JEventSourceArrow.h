@@ -17,7 +17,7 @@ private:
     JEvent* m_pending_barrier_event = nullptr;
 
 public:
-    JEventSourceArrow(std::string name, std::vector<JEventSource*> sources);
+    JEventSourceArrow(std::string name, JEventLevel level, std::vector<JEventSource*> sources);
 
     void Initialize() final;
     void Finalize() final;

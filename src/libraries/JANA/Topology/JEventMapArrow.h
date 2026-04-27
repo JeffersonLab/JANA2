@@ -23,7 +23,7 @@ private:
     std::vector<JEventProcessor*> m_procs;
 
 public:
-    JEventMapArrow(std::string name);
+    JEventMapArrow(std::string name, JEventLevel level);
 
     void add_source(JEventSource* source);
     void add_unfolder(JEventUnfolder* unfolder);

@@ -13,11 +13,11 @@ class BatchedArrow : public JArrow {
     std::deque<JEvent*> m_batched_events;
 
 public:
-    BatchedArrow() {
+    BatchedArrow(JEventLevel level) {
         SetName("BatchedArrow");
         SetIsParallel(false);
-        AddPort("in");
-        AddPort("out");
+        AddPort("in", level);
+        AddPort("out", level);
     }
 
     void SetBatchSize(int batch_size) { m_batch_size = batch_size; }
@@ -103,11 +103,11 @@ struct BatchedProc : public JEventProcessor {
 
 void configure_batched_topology(JTopologyBuilder& builder, JComponentManager& component_manager) {
 
-    auto* src_arrow = new JEventSourceArrow("PhysicsEventSource", component_manager.get_evt_srces());
+    auto* src_arrow = new JEventSourceArrow("PhysicsEventSource", JEventLevel::PhysicsEvent, component_manager.get_evt_srces());
 
-    BatchedArrow* batched_arrow = new BatchedArrow;
+    BatchedArrow* batched_arrow = new BatchedArrow(JEventLevel::PhysicsEvent);
 
-    JEventTapArrow* tap_arrow = new JEventTapArrow("PhysicsEventTap");
+    JEventTapArrow* tap_arrow = new JEventTapArrow("PhysicsEventTap", JEventLevel::PhysicsEvent);
     for (auto proc : component_manager.get_evt_procs()) {
         tap_arrow->add_processor(proc);
     }

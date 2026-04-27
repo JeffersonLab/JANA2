@@ -13,11 +13,11 @@ void JMultilevelSourceArrow::SetEventSource(JEventSource* source) {
     size_t input_port_count = 0;
     size_t output_port_count = 0;
     for (auto level : m_levels) {
-        AddPort(toString(level) + "In").SetSkipFinishEvent(true);
+        AddPort(toString(level) + "In", level).SetSkipFinishEvent(true);
         m_port_lookup[{level, Direction::In}] = input_port_count++;
     }
     for (auto level : m_levels) {
-        AddPort(toString(level) + "Out");
+        AddPort(toString(level) + "Out", level);
         m_port_lookup[{level, Direction::Out}] = input_port_count + output_port_count++;
     }
 }

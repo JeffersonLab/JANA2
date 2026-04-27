@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "JANA/Utils/JEventLevel.h"
 #include "JEventSourceArrow.h"
 #include "JEventMapArrow.h"
 #include "JEventTapArrow.h"
@@ -42,25 +43,31 @@ void JTopologyBuilder::AddArrow(JArrow* arrow) {
     arrow_lookup[arrow->GetName()] = arrow;
 }
 
+
+JEventPool* JTopologyBuilder::GetOrCreatePool(JEventLevel level) {
+    auto pool_it = pool_lookup.find(level);
+    if (pool_it != pool_lookup.end()) {
+        return pool_it->second;
+    }
+    else {
+        auto* pool = new JEventPool(m_components, m_max_inflight_events[level], m_location_count, level);
+        pools.push_back(pool);
+        pool_lookup[level] = pool;
+        return pool;
+    }
+}
+
 void JTopologyBuilder::ConnectPool(std::string arrow_name, std::string port_name, JEventLevel level) {
     auto& arrow = *arrow_lookup.at(arrow_name);
     auto port_index = arrow.GetPortIndex(port_name);
     auto& port = arrow.GetPort(port_index);
-    auto pool_it = pool_lookup.find(level);
-    if (pool_it != pool_lookup.end()) {
-        port.Attach(pool_it->second);
-    }
-    else {
-        auto* pool = new JEventPool(m_components, m_max_inflight_events, m_location_count, level);
-        pools.push_back(pool);
-        pool_lookup[level] = pool;
-        port.Attach(pool);
-    }
+    auto* pool = GetOrCreatePool(level);
+    port.Attach(pool);
 }
 
 void JTopologyBuilder::ConnectPool(JEventLevel upstream_level, JEventLevel downstream_level) {
-    auto* upstream_pool = pool_lookup.at(upstream_level);
-    auto* downstream_pool = pool_lookup.at(downstream_level);
+    auto* upstream_pool = GetOrCreatePool(upstream_level);
+    auto* downstream_pool = GetOrCreatePool(downstream_level);
     upstream_pool->AttachForwardingPool(downstream_pool);
 }
 
@@ -76,8 +83,6 @@ void JTopologyBuilder::ConnectQueue(std::string upstream_arrow_name,
 
     connect(&upstream_arrow, upstream_port_id,
             &downstream_arrow, downstream_port_id);
-
-    queues.back()->Scale(m_max_inflight_events);
 }
 
 std::string JTopologyBuilder::PrintTopology() {
@@ -178,17 +183,38 @@ void JTopologyBuilder::Init() {
 
     // We default event pool size to be equal to nthreads
     // We parse the 'nthreads' parameter two different ways for backwards compatibility.
+    size_t nthreads = 1;
     if (m_params->Exists("nthreads")) {
         if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
-            m_max_inflight_events = JCpuInfo::GetNumCpus();
+            nthreads = JCpuInfo::GetNumCpus();
         } else {
-            m_max_inflight_events = m_params->GetParameterValue<int>("nthreads");
+            nthreads = m_params->GetParameterValue<int>("nthreads");
         }
     }
 
-    m_params->SetDefaultParameter("jana:max_inflight_events", m_max_inflight_events,
-                                    "The number of events which may be in-flight at once. Should be at least `nthreads` to prevent starvation; more gives better load balancing.")
-            ->SetIsAdvanced(true);
+    m_max_inflight_events[JEventLevel::Run] = m_params->RegisterParameter("jana:max_inflight_runs", nthreads,
+                                "The number of runs which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::Subrun] = m_params->RegisterParameter("jana:max_inflight_subruns", nthreads,
+                                "The number of subruns which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::Timeslice] = m_params->RegisterParameter("jana:max_inflight_timeslices", nthreads,
+                                "The number of timeslices which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::Block] = m_params->RegisterParameter("jana:max_inflight_blocks", nthreads,
+                                "The number of blocks which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::SlowControls] = m_params->RegisterParameter("jana:max_inflight_slowcontrols", nthreads,
+                                "The number of slow control events which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::PhysicsEvent] = m_params->RegisterParameter("jana:max_inflight_events", nthreads,
+                                "The number of physics events which may be in-flight at once. Should be at least `nthreads` to prevent starvation; more gives better load balancing.");
+
+    m_max_inflight_events[JEventLevel::Subevent] = m_params->RegisterParameter("jana:max_inflight_subevents", 4*nthreads,
+                                "The number of subevents which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::Task] = m_params->RegisterParameter("jana:max_inflight_tasks", 8*nthreads,
+                                "The number of tasks which may be in-flight at once.");
 
     /*
     m_params->SetDefaultParameter("jana:enable_stealing", m_enable_stealing,
@@ -206,24 +232,54 @@ void JTopologyBuilder::Init() {
 
 void JTopologyBuilder::connect(JArrow* upstream, size_t upstream_port_id, JArrow* downstream, size_t downstream_port_id) {
 
-    JEventQueue* queue = nullptr;
-
+    JArrow::Port& upstream_port = upstream->GetPort(upstream_port_id);
     JArrow::Port& downstream_port = downstream->GetPort(downstream_port_id);
+
+    LOG_DEBUG(GetLogger()) << "Connecting arrows: " << upstream->GetName() << ":" << upstream_port.GetName() << " --> " << downstream->GetName() << ":" << downstream_port.GetName();
+
+    // Enforce that multiple upstreams can share a downstream, but not vice versa
+    if (upstream_port.GetQueue() != nullptr) {
+        throw JException("Upstream port '%s' on arrow '%s' already has a queue", upstream_port.GetName().c_str(), upstream->GetName().c_str());
+    }
+
+    // Enforce that any event levels that are produced upstream must be accepted downstream
+    for (auto level: upstream_port.GetLevels()) {
+        bool level_found = false;
+        for (auto downstream_level : downstream_port.GetLevels()) {
+            if (downstream_level == level) {
+                level_found = true;
+                break;
+            }
+        }
+        if (!level_found) {
+            LOG_FATAL(GetLogger()) << "Level " << toString(level) << " produced upstream but not accepted downstream: "
+                << upstream->GetName() << ":" << upstream_port.GetName() << " --> " << downstream->GetName() << ":" << downstream_port.GetName();
+            throw JException("Level produced upstream but not accepted downstream");
+        }
+    }
+
+    JEventQueue* queue = nullptr;
     if (downstream_port.GetQueue() != nullptr) {
-        // If the queue already exists, use that!
         queue = downstream_port.GetQueue();
     }
     else {
-        // Create a new queue
-        queue = new JEventQueue(m_max_inflight_events, mapping.get_loc_count());
-        downstream_port.Attach(queue);
+        // Create new queue
+        size_t queue_capacity = 0;
+        for (auto level : downstream_port.GetLevels()) {
+            queue_capacity += m_max_inflight_events[level];
+        }
+        queue = new JEventQueue(queue_capacity, mapping.get_loc_count());
         queues.push_back(queue);
+        downstream_port.Attach(queue);
     }
+
+    
+
+    upstream_port.Attach(queue);
+
     if (downstream_port.GetEnforcesOrdering()) {
         queue->SetEnforcesOrdering();
     }
-    JArrow::Port& upstream_port = upstream->GetPort(upstream_port_id);
-    upstream_port.Attach(queue);
     if (upstream_port.GetEstablishesOrdering()) {
         queue->SetEstablishesOrdering(true);
     }
@@ -250,7 +306,7 @@ std::pair<JEventTapArrow*, JEventTapArrow*> JTopologyBuilder::create_tap_chain(s
         if (procs.size() > 1) {
             arrow_name += std::to_string(i++);
         }
-        JEventTapArrow* current = new JEventTapArrow(arrow_name);
+        JEventTapArrow* current = new JEventTapArrow(arrow_name, proc->GetLevel());
         current->add_processor(proc);
         arrows.push_back(current);
         if (first == nullptr) {
@@ -340,10 +396,10 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // --------------------------
     // 0. Pool
     // --------------------------
-    LOG_INFO(GetLogger()) << "Creating event pool with level=" << current_level << " and size=" << m_max_inflight_events;
-    JEventPool* pool_at_level = new JEventPool(m_components, m_max_inflight_events, m_location_count, current_level);
+    LOG_INFO(GetLogger()) << "Creating event pool with level=" << current_level << " and size=" << m_max_inflight_events[current_level];
+    JEventPool* pool_at_level = new JEventPool(m_components, m_max_inflight_events[current_level], m_location_count, current_level);
     pools.push_back(pool_at_level); // Hand over ownership of the pool to the topology
-    LOG_INFO(GetLogger()) << "Created event pool with level=" << current_level << " and size=" << m_max_inflight_events;
+    LOG_INFO(GetLogger()) << "Finished creating event pool";
 
     // --------------------------
     // 1. Source
@@ -351,7 +407,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     JEventSourceArrow* src_arrow = nullptr;
     bool need_source = !sources_at_level.empty();
     if (need_source) {
-        src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level);
+        src_arrow = new JEventSourceArrow(level_str+"Source", current_level, sources_at_level);
         src_arrow->GetPort(JEventSourceArrow::EVENT_IN).Attach(pool_at_level);
         src_arrow->GetPort(JEventSourceArrow::EVENT_OUT).Attach(pool_at_level);
         arrows.push_back(src_arrow);
@@ -369,7 +425,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     bool need_map1 = (have_parallel_sources || have_unfolder);
 
     if (need_map1) {
-        map1_arrow = new JEventMapArrow(level_str+"Map1");
+        map1_arrow = new JEventMapArrow(level_str+"Map1", current_level);
         for (JEventSource* source: sources_at_level) {
             if (source->IsProcessParallelEnabled()) {
                 map1_arrow->add_source(source);
@@ -411,7 +467,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     JEventMapArrow* map2_arrow = nullptr;
     bool need_map2 = !mappable_procs_at_level.empty();
     if (need_map2) {
-        map2_arrow = new JEventMapArrow(level_str+"Map2");
+        map2_arrow = new JEventMapArrow(level_str+"Map2", current_level);
         for (JEventProcessor* proc : mappable_procs_at_level) {
             map2_arrow->add_processor(proc);
             map2_arrow->GetPort(JEventMapArrow::EVENT_IN).Attach(pool_at_level);
@@ -455,7 +511,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
                                    {{map2_arrow, JEventMapArrow::EVENT_IN}, {first_tap_arrow, JEventTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (fold_arrow != nullptr) {
-        connect_to_first_available(fold_arrow, JFoldArrow::CHILD_OUT,
+        connect_to_first_available(fold_arrow, JFoldArrow::PARENT_OUT,
                                    {{map2_arrow, JEventMapArrow::EVENT_IN}, {first_tap_arrow, JEventTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (map2_arrow != nullptr) {

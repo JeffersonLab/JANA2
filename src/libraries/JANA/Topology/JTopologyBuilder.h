@@ -36,7 +36,7 @@ class JTopologyBuilder : public JService {
     std::map<JEventLevel, JEventPool*> pool_lookup;
 
     // Topology configuration
-    size_t m_max_inflight_events = 1;
+    std::map<JEventLevel, size_t> m_max_inflight_events;
     size_t m_location_count = 1;
     //bool m_enable_stealing = false;
     int m_affinity = 0;
@@ -80,6 +80,7 @@ private:
     void connect_to_first_available(JArrow* upstream, size_t upstream_port_id, std::vector<std::pair<JArrow*, size_t>> downstreams);
     void connect(JArrow* upstream, size_t upstream_port_id, JArrow* downstream, size_t downstream_port_id);
     std::pair<JEventTapArrow*, JEventTapArrow*> create_tap_chain(std::vector<JEventProcessor*>& procs, std::string name);
+    JEventPool* GetOrCreatePool(JEventLevel level);
 };
 
 

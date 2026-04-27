@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "JANA/Utils/JEventLevel.h"
 #include <JANA/Topology/JArrow.h>
 
 class JEventProcessor;
@@ -17,7 +18,7 @@ private:
     std::vector<JEventProcessor*> m_procs;
 
 public:
-    JEventTapArrow(std::string name);
+    JEventTapArrow(std::string name, JEventLevel level=JEventLevel::PhysicsEvent);
 
     void add_processor(JEventProcessor* proc);
 

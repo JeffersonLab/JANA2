@@ -10,11 +10,11 @@
 #include <JANA/JEvent.h>
 
 
-JEventMapArrow::JEventMapArrow(std::string name) {
+JEventMapArrow::JEventMapArrow(std::string name, JEventLevel level) {
     SetName(name);
     SetIsParallel(true);
-    AddPort("in");
-    AddPort("out");
+    AddPort("in", level);
+    AddPort("out", level);
 }
 
 void JEventMapArrow::add_source(JEventSource* source) {

@@ -9,8 +9,8 @@ struct TestData { int x; };
 struct BasicParallelArrow : public JArrow {
 
     BasicParallelArrow() {
-        AddPort("in");
-        AddPort("out");
+        AddPort("in", JEventLevel::PhysicsEvent);
+        AddPort("out", JEventLevel::PhysicsEvent);
         SetIsParallel(true);
     }
 

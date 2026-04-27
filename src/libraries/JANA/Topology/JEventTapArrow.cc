@@ -8,10 +8,10 @@
 #include <JANA/JEvent.h>
 
 
-JEventTapArrow::JEventTapArrow(std::string name) {
+JEventTapArrow::JEventTapArrow(std::string name, JEventLevel level) {
     SetName(name);
-    AddPort("in");
-    AddPort("out");
+    AddPort("in", level);
+    AddPort("out", level);
 }
 
 void JEventTapArrow::add_processor(JEventProcessor* proc) {

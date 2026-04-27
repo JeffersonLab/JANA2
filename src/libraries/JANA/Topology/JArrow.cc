@@ -2,11 +2,11 @@
 #include <JANA/Topology/JArrow.h>
 
 
-JArrow::Port& JArrow::AddPort(std::string name) {
+JArrow::Port& JArrow::AddPort(std::string name, JEventLevel level) {
     if (m_port_lookup.find(name) != m_port_lookup.end()) {
         throw JException("Port with name '%s' already exists", name.c_str());
     }
-    auto port = std::make_unique<Port>(name);
+    auto port = std::make_unique<Port>(name, level);
     auto port_raw_ptr = port.get();
     m_ports.push_back(std::move(port));
     m_port_lookup[name] = m_ports.size()-1;

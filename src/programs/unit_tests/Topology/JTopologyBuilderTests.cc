@@ -1,7 +1,6 @@
 
 #include "JANA/JApplicationFwd.h"
 #include "JANA/Services/JComponentManager.h"
-#include "JANA/Topology/JEventPool.h"
 #include "JANA/Topology/JEventTapArrow.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <catch.hpp>
