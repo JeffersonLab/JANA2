@@ -72,7 +72,7 @@ struct TriggerFactoryInputsArrow : public JArrow {
     std::string unique_name;
 
     TriggerFactoryInputsArrow() {
-        SetName("TriggerFactoryInputsArrow");
+        SetName("trigger");
         SetIsParallel(true);
         AddPort("in");
         AddPort("out");
@@ -96,7 +96,7 @@ struct TriggerFactoryInputsArrow : public JArrow {
 struct OffloadArrow : public JArrow {
     std::string unique_name;
     OffloadArrow() {
-        SetName("OffloadArrow");
+        SetName("offload");
         SetIsParallel(false);
         AddPort("in");
         AddPort("out");
@@ -118,10 +118,7 @@ struct OffloadArrow : public JArrow {
 
 void configure_topology(JTopologyBuilder& builder) {
 
-    auto pool = new JEventPool(builder.m_components, 1, 1, JEventLevel::PhysicsEvent);
-    builder.pools.push_back(pool);
-
-    auto* src_arrow = new JEventSourceArrow("PhysicsEventSource", builder.m_components->get_evt_srces());
+    auto* src_arrow = new JEventSourceArrow("src", builder.m_components->get_evt_srces());
 
     TriggerFactoryInputsArrow* trigger_inputs_arrow = new TriggerFactoryInputsArrow;
     trigger_inputs_arrow->unique_name = "B";
@@ -129,34 +126,29 @@ void configure_topology(JTopologyBuilder& builder) {
     OffloadArrow* offload_arrow = new OffloadArrow;
     offload_arrow->unique_name = "B";
 
-    JEventMapArrow* map_arrow = new JEventMapArrow("PhysicsEventMap");
+    JEventMapArrow* map_arrow = new JEventMapArrow("map");
     for (auto proc : builder.m_components->get_evt_procs()) {
         map_arrow->add_processor(proc);
     }
 
-    JEventTapArrow* tap_arrow = new JEventTapArrow("PhysicsEventTap");
+    JEventTapArrow* tap_arrow = new JEventTapArrow("tap");
     for (auto proc : builder.m_components->get_evt_procs()) {
         tap_arrow->add_processor(proc);
     }
 
-    src_arrow->GetPort(src_arrow->EVENT_IN).Attach(pool);
-    tap_arrow->GetPort(tap_arrow->EVENT_OUT).Attach(pool);
+    builder.AddArrow(src_arrow);
+    builder.AddArrow(trigger_inputs_arrow);
+    builder.AddArrow(offload_arrow);
+    builder.AddArrow(map_arrow);
+    builder.AddArrow(tap_arrow);
 
-    builder.connect(src_arrow, src_arrow->EVENT_OUT, trigger_inputs_arrow, 0);
-    builder.connect(trigger_inputs_arrow, 1, offload_arrow, 0);
-    builder.connect(offload_arrow, 1, map_arrow, map_arrow->EVENT_IN);
-    builder.connect(map_arrow, map_arrow->EVENT_OUT, tap_arrow, tap_arrow->EVENT_IN);
+    builder.ConnectPool("src", "in", JEventLevel::PhysicsEvent);
+    builder.ConnectPool("tap", "out", JEventLevel::PhysicsEvent);
 
-    builder.queues.at(0)->Scale(4);
-    builder.queues.at(1)->Scale(4);
-    builder.queues.at(2)->Scale(4);
-    builder.queues.at(3)->Scale(4);
-
-    builder.arrows.push_back(src_arrow);
-    builder.arrows.push_back(trigger_inputs_arrow);
-    builder.arrows.push_back(offload_arrow);
-    builder.arrows.push_back(map_arrow);
-    builder.arrows.push_back(tap_arrow);
+    builder.ConnectQueue("src", "out", "trigger", "in");
+    builder.ConnectQueue("trigger", "out", "offload", "in");
+    builder.ConnectQueue("offload", "out", "map", "in");
+    builder.ConnectQueue("map", "out", "tap", "in");
 }
 
 

@@ -31,7 +31,10 @@ public:
     std::vector<JArrow*> arrows;
     std::vector<JEventQueue*> queues;            // Queues shared between arrows
     std::vector<JEventPool*> pools;          // Pools shared between arrows
-    
+
+    std::map<std::string, JArrow*> arrow_lookup;
+    std::map<JEventLevel, JEventPool*> pool_lookup;
+
     // Topology configuration
     size_t m_max_inflight_events = 1;
     size_t m_location_count = 1;
@@ -49,6 +52,17 @@ public:
     ~JTopologyBuilder() override;
 
     void Init() override;
+
+    void AddArrow(JArrow* arrow);
+
+    void ConnectPool(std::string arrow_name, std::string port_name, JEventLevel level);
+
+    void ConnectQueue(std::string upstream_arrow_name, std::string upstream_port_name,
+                      std::string downstream_arrow_name, std::string downstream_port_name);
+
+    JArrow& GetArrow(const std::string& arrow_name);
+
+
 
     /// set_cofigure_fn lets the user provide a lambda that sets up a topology after all components have been loaded.
     /// It provides an 'empty' JArrowTopology which has been furnished with a pointer to the JComponentManager, the JEventPool,

@@ -32,6 +32,51 @@ JTopologyBuilder::~JTopologyBuilder() {
     }
 }
 
+void JTopologyBuilder::AddArrow(JArrow* arrow) {
+    arrows.push_back(arrow);
+    auto it = arrow_lookup.find(arrow->GetName());
+    if (it != arrow_lookup.end()) {
+        throw JException("AddArrow(): Arrow with name '%s' has already been added", arrow->GetName().c_str());
+    }
+    arrow_lookup[arrow->GetName()] = arrow;
+}
+
+JArrow& JTopologyBuilder::GetArrow(const std::string& arrow_name) {
+    return *arrow_lookup.at(arrow_name);
+}
+
+void JTopologyBuilder::ConnectPool(std::string arrow_name, std::string port_name, JEventLevel level) {
+    auto& arrow = GetArrow(arrow_name);
+    auto port_index = arrow.GetPortIndex(port_name);
+    auto& port = arrow.GetPort(port_index);
+    auto pool_it = pool_lookup.find(level);
+    if (pool_it != pool_lookup.end()) {
+        port.Attach(pool_it->second);
+    }
+    else {
+        auto* pool = new JEventPool(m_components, m_max_inflight_events, m_location_count, level);
+        pools.push_back(pool);
+        pool_lookup[level] = pool;
+        port.Attach(pool);
+    }
+}
+
+void JTopologyBuilder::ConnectQueue(std::string upstream_arrow_name, 
+                                    std::string upstream_port_name,
+                                    std::string downstream_arrow_name, 
+                                    std::string downstream_port_name) {
+
+    auto& upstream_arrow = GetArrow(upstream_arrow_name);
+    auto upstream_port_id = upstream_arrow.GetPortIndex(upstream_port_name);
+    auto& downstream_arrow = GetArrow(downstream_arrow_name);
+    auto downstream_port_id = upstream_arrow.GetPortIndex(downstream_port_name);
+
+    connect(&upstream_arrow, upstream_port_id,
+            &downstream_arrow, downstream_port_id);
+
+    queues.back()->Scale(m_max_inflight_events);
+}
+
 std::string JTopologyBuilder::print_topology() {
     JTablePrinter t;
     t.AddColumn("Arrow", JTablePrinter::Justify::Left, 0);

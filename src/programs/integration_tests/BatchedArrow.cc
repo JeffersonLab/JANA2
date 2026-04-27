@@ -4,7 +4,6 @@
 #include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Topology/JArrow.h>
 #include <JANA/Topology/JEventSourceArrow.h>
-#include <JANA/Topology/JEventMapArrow.h>
 #include <JANA/Topology/JEventTapArrow.h>
 #include <deque>
 
@@ -104,35 +103,22 @@ struct BatchedProc : public JEventProcessor {
 
 void configure_batched_topology(JTopologyBuilder& builder) {
 
-    auto pool = new JEventPool(builder.m_components, 20, 1, JEventLevel::PhysicsEvent);
-    builder.pools.push_back(pool);
-
     auto* src_arrow = new JEventSourceArrow("PhysicsEventSource", builder.m_components->get_evt_srces());
 
     BatchedArrow* batched_arrow = new BatchedArrow;
-
-    JEventMapArrow* map_arrow = new JEventMapArrow("PhysicsEventMap");
-    for (auto proc : builder.m_components->get_evt_procs()) {
-        map_arrow->add_processor(proc);
-    }
 
     JEventTapArrow* tap_arrow = new JEventTapArrow("PhysicsEventTap");
     for (auto proc : builder.m_components->get_evt_procs()) {
         tap_arrow->add_processor(proc);
     }
 
-    src_arrow->GetPort(src_arrow->EVENT_IN).Attach(pool);
-    tap_arrow->GetPort(tap_arrow->EVENT_OUT).Attach(pool);
-
-    builder.connect(src_arrow, src_arrow->EVENT_OUT, batched_arrow, 0);
-    builder.connect(batched_arrow, 1, tap_arrow, tap_arrow->EVENT_IN);
-
-    builder.queues.at(0)->Scale(20);
-    builder.queues.at(1)->Scale(20);
-
-    builder.arrows.push_back(src_arrow);
-    builder.arrows.push_back(batched_arrow);
-    builder.arrows.push_back(tap_arrow);
+    builder.AddArrow(src_arrow);
+    builder.AddArrow(batched_arrow);
+    builder.AddArrow(tap_arrow);
+    builder.ConnectPool("PhysicsEventSource", "in", JEventLevel::PhysicsEvent);
+    builder.ConnectQueue("PhysicsEventSource", "out", "BatchedArrow", "in");
+    builder.ConnectQueue("BatchedArrow", "out", "PhysicsEventTap", "in");
+    builder.ConnectPool("PhysicsEventTap", "out", JEventLevel::PhysicsEvent);
 }
 
 
@@ -143,6 +129,7 @@ TEST_CASE("BatchedArrow") {
   app.Add(new BatchedProc);
   app.SetParameterValue("jana:nevents", 49);
   app.SetParameterValue("nthreads", 1);
+  app.SetParameterValue("jana:max_inflight_events", 20);
   app.SetParameterValue("jana:log:show_threadstamp", 1);
   app.SetParameterValue("jana:loglevel", "TRACE");
 
