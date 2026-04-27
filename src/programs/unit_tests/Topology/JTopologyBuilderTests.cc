@@ -37,42 +37,29 @@ public:
     }
 };
 
-void configure_multisource_topology(JTopologyBuilder& builder, JComponentManager&) {
-
-    auto run_pool = new JEventPool(builder.m_components, 1, 1, JEventLevel::Run);
-    auto controls_pool = new JEventPool(builder.m_components, 2, 1, JEventLevel::SlowControls);
-    auto physics_pool = new JEventPool(builder.m_components, 4, 1, JEventLevel::PhysicsEvent);
-
-    builder.pools.push_back(run_pool);
-    builder.pools.push_back(controls_pool);
-    builder.pools.push_back(physics_pool);
-
-    physics_pool->AttachForwardingPool(controls_pool);
-    physics_pool->AttachForwardingPool(run_pool);
+void configure_multisource_topology(JTopologyBuilder& builder, JComponentManager& components) {
 
     auto* src_arrow = new JMultilevelSourceArrow;
-    src_arrow->SetName("MultilevelSource");
-    src_arrow->SetEventSource(builder.m_components->get_evt_srces().at(0));
-    src_arrow->GetPort(src_arrow->GetPortIndex(JEventLevel::Run, JMultilevelSourceArrow::Direction::In)).Attach(run_pool);
-    src_arrow->GetPort(src_arrow->GetPortIndex(JEventLevel::SlowControls, JMultilevelSourceArrow::Direction::In)).Attach(controls_pool);
-    src_arrow->GetPort(src_arrow->GetPortIndex(JEventLevel::PhysicsEvent, JMultilevelSourceArrow::Direction::In)).Attach(physics_pool);
-    src_arrow->GetPort(src_arrow->GetPortIndex(JEventLevel::Run, JMultilevelSourceArrow::Direction::Out)).Attach(run_pool);
-    src_arrow->GetPort(src_arrow->GetPortIndex(JEventLevel::SlowControls, JMultilevelSourceArrow::Direction::Out)).Attach(controls_pool);
+    src_arrow->SetName("src");
+    src_arrow->SetEventSource(components.get_evt_srces().at(0));
 
-    JEventTapArrow* tap_arrow = new JEventTapArrow("DeinterleavedTap");
-    for (auto proc : builder.m_components->get_evt_procs()) {
+    JEventTapArrow* tap_arrow = new JEventTapArrow("tap");
+    for (auto proc : components.get_evt_procs()) {
         tap_arrow->add_processor(proc);
     }
 
-    builder.connect(src_arrow, src_arrow->GetPortIndex(JEventLevel::PhysicsEvent, JMultilevelSourceArrow::Direction::Out),
-                    tap_arrow, tap_arrow->EVENT_IN);
+    builder.AddArrow(src_arrow);
+    builder.AddArrow(tap_arrow);
 
-    builder.queues.at(0)->Scale(4); // Queue capacity = N(PhysicsEvent)
-
-    tap_arrow->GetPort(tap_arrow->EVENT_OUT).Attach(physics_pool);
-
-    builder.arrows.push_back(src_arrow);
-    builder.arrows.push_back(tap_arrow);
+    builder.ConnectPool("src", "RunIn", JEventLevel::Run);
+    builder.ConnectPool("src", "SlowControlsIn", JEventLevel::SlowControls);
+    builder.ConnectPool("src", "PhysicsEventIn", JEventLevel::PhysicsEvent);
+    builder.ConnectPool("src", "RunOut", JEventLevel::Run);
+    builder.ConnectPool("src", "SlowControlsOut", JEventLevel::SlowControls);
+    builder.ConnectQueue("src", "PhysicsEventOut", "tap", "in");
+    builder.ConnectPool("tap", "out", JEventLevel::PhysicsEvent);
+    builder.ConnectPool(JEventLevel::PhysicsEvent, JEventLevel::Run);
+    builder.ConnectPool(JEventLevel::PhysicsEvent, JEventLevel::SlowControls);
 }
 
 

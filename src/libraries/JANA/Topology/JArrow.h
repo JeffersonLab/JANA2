@@ -113,7 +113,17 @@ public:
 
     Port& AddPort(std::string port_name);
     Port& GetPort(size_t port_index) { return *m_ports.at(port_index); }
-    int GetPortIndex(const std::string& port_name) { return m_port_lookup.at(port_name); }
+    int GetPortIndex(const std::string& port_name) { 
+        auto it = m_port_lookup.find(port_name);
+        if (it == m_port_lookup.end()) {
+            LOG_FATAL(GetLogger()) << "Unable to find port_name '" << port_name << "' on arrow '" << GetName() << "'. Valid port names are:";
+            for (auto& port : m_ports) {
+                LOG_FATAL(GetLogger()) << "    " << port->GetName();
+            }
+            throw JException("Unable to find port_name '%s' on arrow '%s'", port_name.c_str(), GetName().c_str());
+        }
+        return it->second;
+    }
     void SetNextPortIndex(int input_port) { m_next_input_port = input_port; }
 
 };

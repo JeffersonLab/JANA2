@@ -42,12 +42,8 @@ void JTopologyBuilder::AddArrow(JArrow* arrow) {
     arrow_lookup[arrow->GetName()] = arrow;
 }
 
-JArrow& JTopologyBuilder::GetArrow(const std::string& arrow_name) {
-    return *arrow_lookup.at(arrow_name);
-}
-
 void JTopologyBuilder::ConnectPool(std::string arrow_name, std::string port_name, JEventLevel level) {
-    auto& arrow = GetArrow(arrow_name);
+    auto& arrow = *arrow_lookup.at(arrow_name);
     auto port_index = arrow.GetPortIndex(port_name);
     auto& port = arrow.GetPort(port_index);
     auto pool_it = pool_lookup.find(level);
@@ -62,15 +58,21 @@ void JTopologyBuilder::ConnectPool(std::string arrow_name, std::string port_name
     }
 }
 
+void JTopologyBuilder::ConnectPool(JEventLevel upstream_level, JEventLevel downstream_level) {
+    auto* upstream_pool = pool_lookup.at(upstream_level);
+    auto* downstream_pool = pool_lookup.at(downstream_level);
+    upstream_pool->AttachForwardingPool(downstream_pool);
+}
+
 void JTopologyBuilder::ConnectQueue(std::string upstream_arrow_name, 
                                     std::string upstream_port_name,
                                     std::string downstream_arrow_name, 
                                     std::string downstream_port_name) {
 
-    auto& upstream_arrow = GetArrow(upstream_arrow_name);
+    auto& upstream_arrow = *arrow_lookup.at(upstream_arrow_name);
     auto upstream_port_id = upstream_arrow.GetPortIndex(upstream_port_name);
-    auto& downstream_arrow = GetArrow(downstream_arrow_name);
-    auto downstream_port_id = upstream_arrow.GetPortIndex(downstream_port_name);
+    auto& downstream_arrow = *arrow_lookup.at(downstream_arrow_name);
+    auto downstream_port_id = downstream_arrow.GetPortIndex(downstream_port_name);
 
     connect(&upstream_arrow, upstream_port_id,
             &downstream_arrow, downstream_port_id);

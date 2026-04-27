@@ -5,13 +5,14 @@
 #pragma once
 
 #include <memory>
-#include <JANA/JService.h>
-#include <JANA/Utils/JProcessorMapping.h>
-#include <JANA/Topology/JEventQueue.h>
-#include <JANA/Topology/JEventPool.h>
 
+#include <JANA/JService.h>
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Services/JComponentManager.h>
+#include <JANA/Topology/JEventQueue.h>
+#include <JANA/Topology/JEventPool.h>
+#include <JANA/Utils/JEventLevel.h>
+#include <JANA/Utils/JProcessorMapping.h>
 
 
 class JParameterManager;
@@ -22,7 +23,6 @@ class JUnfoldArrow;
 class JEventTapArrow;
 
 class JTopologyBuilder : public JService {
-public:
     // Services
     Service<JParameterManager> m_params {this};
     std::shared_ptr<JComponentManager> m_components;
@@ -54,12 +54,12 @@ public:
 
     void AddArrow(JArrow* arrow);
 
-    void ConnectPool(std::string arrow_name, std::string port_name, JEventLevel level);
-
     void ConnectQueue(std::string upstream_arrow_name, std::string upstream_port_name,
                       std::string downstream_arrow_name, std::string downstream_port_name);
 
-    JArrow& GetArrow(const std::string& arrow_name);
+    void ConnectPool(std::string arrow_name, std::string port_name, JEventLevel level);
+
+    void ConnectPool(JEventLevel upstream_level, JEventLevel downstream_level);
 
 
     /// SetConfigureFn() lets the user manually set up a topology after all components have been loaded.
@@ -72,13 +72,14 @@ public:
 
     const std::vector<JArrow*>& GetArrows() { return arrows; };
     const std::vector<JEventPool*>& GetPools() { return pools; };
+    const std::vector<JEventQueue*>& GetQueues() { return queues; };
     const JProcessorMapping& GetProcessorMapping() { return mapping; };
 
+private:
     void attach_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder);
     void connect_to_first_available(JArrow* upstream, size_t upstream_port_id, std::vector<std::pair<JArrow*, size_t>> downstreams);
     void connect(JArrow* upstream, size_t upstream_port_id, JArrow* downstream, size_t downstream_port_id);
     std::pair<JEventTapArrow*, JEventTapArrow*> create_tap_chain(std::vector<JEventProcessor*>& procs, std::string name);
-
 };
 
 
