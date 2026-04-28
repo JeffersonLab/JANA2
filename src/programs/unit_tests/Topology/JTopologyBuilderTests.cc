@@ -1,7 +1,7 @@
 
 #include "JANA/JApplicationFwd.h"
 #include "JANA/Services/JComponentManager.h"
-#include "JANA/Topology/JEventTapArrow.h"
+#include "JANA/Topology/JTapArrow.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <catch.hpp>
 
@@ -42,9 +42,9 @@ void configure_multisource_topology(JTopologyBuilder& builder, JComponentManager
     src_arrow->SetName("src");
     src_arrow->SetEventSource(components.get_evt_srces().at(0));
 
-    JEventTapArrow* tap_arrow = new JEventTapArrow("tap");
+    JTapArrow* tap_arrow = new JTapArrow("tap");
     for (auto proc : components.get_evt_procs()) {
-        tap_arrow->add_processor(proc);
+        tap_arrow->AddProcessor(proc);
     }
 
     builder.AddArrow(src_arrow);

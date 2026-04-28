@@ -6,7 +6,7 @@
 #include <JANA/Topology/JArrow.h>
 
 
-class JEventSourceArrow : public JArrow {
+class JSourceArrow : public JArrow {
 public:
     enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
 
@@ -17,7 +17,7 @@ private:
     JEvent* m_pending_barrier_event = nullptr;
 
 public:
-    JEventSourceArrow(std::string name, JEventLevel level, std::vector<JEventSource*> sources);
+    JSourceArrow(std::string name, JEventLevel level, std::vector<JEventSource*> sources);
 
     void Initialize() final;
     void Finalize() final;

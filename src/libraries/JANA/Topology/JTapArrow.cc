@@ -2,26 +2,26 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#include <JANA/Topology/JEventTapArrow.h>
+#include <JANA/Topology/JTapArrow.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventUnfolder.h>
 #include <JANA/JEvent.h>
 
 
-JEventTapArrow::JEventTapArrow(std::string name, JEventLevel level) {
+JTapArrow::JTapArrow(std::string name, JEventLevel level) {
     SetName(name);
     AddPort("in", level);
     AddPort("out", level);
 }
 
-void JEventTapArrow::add_processor(JEventProcessor* proc) {
+void JTapArrow::AddProcessor(JEventProcessor* proc) {
     if (proc->IsOrderingEnabled()) {
         m_ports[EVENT_IN]->SetEnforcesOrdering(true);
     }
     m_procs.push_back(proc);
 }
 
-void JEventTapArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
+void JTapArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << GetName() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventProcessor* proc : m_procs) {
@@ -36,7 +36,7 @@ void JEventTapArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_cou
     LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " for event# " << event->GetEventNumber() << LOG_END;
 }
 
-void JEventTapArrow::Initialize() {
+void JTapArrow::Initialize() {
     LOG_DEBUG(m_logger) << "Initializing arrow '" << GetName() << "'" << LOG_END;
     for (auto processor : m_procs) {
         LOG_DEBUG(m_logger) << "Initializing JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
@@ -46,7 +46,7 @@ void JEventTapArrow::Initialize() {
     LOG_DEBUG(m_logger) << "Initialized arrow '" << GetName() << "'" << LOG_END;
 }
 
-void JEventTapArrow::Finalize() {
+void JTapArrow::Finalize() {
     LOG_DEBUG(m_logger) << "Finalizing arrow '" << GetName() << "'" << LOG_END;
     for (auto processor : m_procs) {
         LOG_DEBUG(m_logger) << "Finalizing JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;

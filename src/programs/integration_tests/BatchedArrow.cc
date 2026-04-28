@@ -3,8 +3,8 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Topology/JArrow.h>
-#include <JANA/Topology/JEventSourceArrow.h>
-#include <JANA/Topology/JEventTapArrow.h>
+#include <JANA/Topology/JSourceArrow.h>
+#include <JANA/Topology/JTapArrow.h>
 #include <deque>
 
 class BatchedArrow : public JArrow {
@@ -103,13 +103,13 @@ struct BatchedProc : public JEventProcessor {
 
 void configure_batched_topology(JTopologyBuilder& builder, JComponentManager& component_manager) {
 
-    auto* src_arrow = new JEventSourceArrow("PhysicsEventSource", JEventLevel::PhysicsEvent, component_manager.get_evt_srces());
+    auto* src_arrow = new JSourceArrow("PhysicsEventSource", JEventLevel::PhysicsEvent, component_manager.get_evt_srces());
 
     BatchedArrow* batched_arrow = new BatchedArrow(JEventLevel::PhysicsEvent);
 
-    JEventTapArrow* tap_arrow = new JEventTapArrow("PhysicsEventTap", JEventLevel::PhysicsEvent);
+    JTapArrow* tap_arrow = new JTapArrow("PhysicsEventTap", JEventLevel::PhysicsEvent);
     for (auto proc : component_manager.get_evt_procs()) {
-        tap_arrow->add_processor(proc);
+        tap_arrow->AddProcessor(proc);
     }
 
     builder.AddArrow(src_arrow);

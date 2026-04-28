@@ -20,7 +20,7 @@ class JComponentManager;
 class JArrow;
 class JFoldArrow;
 class JUnfoldArrow;
-class JEventTapArrow;
+class JTapArrow;
 
 class JTopologyBuilder : public JService {
     // Services
@@ -76,10 +76,10 @@ public:
     const JProcessorMapping& GetProcessorMapping() { return mapping; };
 
 private:
-    void attach_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder);
-    void connect_to_first_available(JArrow* upstream, size_t upstream_port_id, std::vector<std::pair<JArrow*, size_t>> downstreams);
-    void connect(JArrow* upstream, size_t upstream_port_id, JArrow* downstream, size_t downstream_port_id);
-    std::pair<JEventTapArrow*, JEventTapArrow*> create_tap_chain(std::vector<JEventProcessor*>& procs, std::string name);
+    void AttachLevel(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder);
+    void ConnectToFirstAvailable(JArrow* upstream, size_t upstream_port_id, std::vector<std::pair<JArrow*, size_t>> downstreams);
+    void Connect(JArrow* upstream, size_t upstream_port_id, JArrow* downstream, size_t downstream_port_id);
+    std::pair<JTapArrow*, JTapArrow*> CreateTapChain(std::vector<JEventProcessor*>& procs, std::string name);
     JEventPool* GetOrCreatePool(JEventLevel level);
 };
 

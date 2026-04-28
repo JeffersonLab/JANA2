@@ -5,11 +5,11 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventSource.h>
-#include <JANA/Topology/JEventSourceArrow.h>
+#include <JANA/Topology/JSourceArrow.h>
 
 
 
-JEventSourceArrow::JEventSourceArrow(std::string name, JEventLevel level, std::vector<JEventSource*> sources)
+JSourceArrow::JSourceArrow(std::string name, JEventLevel level, std::vector<JEventSource*> sources)
     : m_sources(sources) {
     SetName(name);
     SetIsSource(true);
@@ -25,7 +25,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name, JEventLevel level, std::v
 }
 
 
-void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
+void JSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << GetName() << LOG_END;
 
@@ -40,7 +40,7 @@ void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_
 
             // This barrier event is pending until the topology drains
             if ((emitted_event_count - finished_event_count) == 1) {
-                LOG_DEBUG(m_logger) << "JEventSourceArrow: Barrier event is in-flight" << LOG_END;
+                LOG_DEBUG(m_logger) << "JSourceArrow: Barrier event is in-flight" << LOG_END;
 
                 // Topology has drained; only remaining in-flight event is the barrier event itself,
                 // which we have held on to until now
@@ -51,12 +51,12 @@ void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_
                 m_pending_barrier_event = nullptr;
                 // There's not much for the thread team to do while the barrier event makes its way through the topology.
                 // Eventually we might be able to use this to communicate to the scheduler to not wake threads whose only
-                // available action is to hammer the JEventSourceArrow
+                // available action is to hammer the JSourceArrow
                 return;
             }
             else {
                 // Topology has _not_ finished draining, all we can do is wait
-                LOG_DEBUG(m_logger) << "JEventSourceArrow: Waiting on pending barrier event. Emitted = " << emitted_event_count << ", Finished = " << finished_event_count << LOG_END;
+                LOG_DEBUG(m_logger) << "JSourceArrow: Waiting on pending barrier event. Emitted = " << emitted_event_count << ", Finished = " << finished_event_count << LOG_END;
                 LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " with result ComeBackLater"<< LOG_END;
 
                 assert(event == nullptr);
@@ -71,7 +71,7 @@ void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_
             if (finished_event_count == emitted_event_count) {
 
                 // Barrier event has finished.
-                LOG_DEBUG(m_logger) << "JEventSourceArrow: Barrier event finished, returning to normal operation" << LOG_END;
+                LOG_DEBUG(m_logger) << "JSourceArrow: Barrier event finished, returning to normal operation" << LOG_END;
                 m_barrier_active = false;
                 m_next_input_port = 0;
 
@@ -81,7 +81,7 @@ void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_
             }
             else {
                 // Barrier event has NOT finished
-                LOG_DEBUG(m_logger) << "JEventSourceArrow: Waiting on in-flight barrier event" << LOG_END;
+                LOG_DEBUG(m_logger) << "JSourceArrow: Waiting on in-flight barrier event" << LOG_END;
                 LOG_DEBUG(m_logger) << "Executed arrow " << GetName() << " with result ComeBackLater"<< LOG_END;
                 assert(event == nullptr);
                 output_count = 0;
@@ -136,7 +136,7 @@ void JEventSourceArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_
     status = JArrow::FireResult::Finished;
 }
 
-void JEventSourceArrow::Initialize() {
+void JSourceArrow::Initialize() {
     // We initialize everything immediately, but don't open any resources until we absolutely have to; see process(): source->DoNext()
     for (JEventSource* source : m_sources) {
         source->DoInit();
@@ -144,7 +144,7 @@ void JEventSourceArrow::Initialize() {
     }
 }
 
-void JEventSourceArrow::Finalize() {
+void JSourceArrow::Finalize() {
     // Generally JEventSources finalize themselves as soon as they detect that they have run out of events.
     // However, we can't rely on the JEventSources turning themselves off since execution can be externally paused.
     // Instead we leave everything open until we finalize the whole topology, and finalize remaining event sources then.

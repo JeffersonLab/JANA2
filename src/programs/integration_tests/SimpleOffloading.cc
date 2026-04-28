@@ -6,9 +6,9 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/Topology/JTopologyBuilder.h>
-#include <JANA/Topology/JEventSourceArrow.h>
-#include <JANA/Topology/JEventMapArrow.h>
-#include <JANA/Topology/JEventTapArrow.h>
+#include <JANA/Topology/JSourceArrow.h>
+#include <JANA/Topology/JMapArrow.h>
+#include <JANA/Topology/JTapArrow.h>
 
 // This integration test covers the end-to-end testing of a GPU override
 // We set this up so that we have the following factory chain:
@@ -118,7 +118,7 @@ struct OffloadArrow : public JArrow {
 
 void configure_topology(JTopologyBuilder& builder, JComponentManager& components) {
 
-    auto* src_arrow = new JEventSourceArrow("src", JEventLevel::PhysicsEvent, components.get_evt_srces());
+    auto* src_arrow = new JSourceArrow("src", JEventLevel::PhysicsEvent, components.get_evt_srces());
 
     TriggerFactoryInputsArrow* trigger_inputs_arrow = new TriggerFactoryInputsArrow(JEventLevel::PhysicsEvent);
     trigger_inputs_arrow->unique_name = "B";
@@ -126,14 +126,14 @@ void configure_topology(JTopologyBuilder& builder, JComponentManager& components
     OffloadArrow* offload_arrow = new OffloadArrow(JEventLevel::PhysicsEvent);
     offload_arrow->unique_name = "B";
 
-    JEventMapArrow* map_arrow = new JEventMapArrow("map", JEventLevel::PhysicsEvent);
+    JMapArrow* map_arrow = new JMapArrow("map", JEventLevel::PhysicsEvent);
     for (auto proc : components.get_evt_procs()) {
-        map_arrow->add_processor(proc);
+        map_arrow->AddProcessor(proc);
     }
 
-    JEventTapArrow* tap_arrow = new JEventTapArrow("tap", JEventLevel::PhysicsEvent);
+    JTapArrow* tap_arrow = new JTapArrow("tap", JEventLevel::PhysicsEvent);
     for (auto proc : components.get_evt_procs()) {
-        tap_arrow->add_processor(proc);
+        tap_arrow->AddProcessor(proc);
     }
 
     builder.AddArrow(src_arrow);

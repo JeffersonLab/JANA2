@@ -10,7 +10,7 @@ class JEventProcessor;
 class JEvent;
 
 
-class JEventTapArrow : public JArrow {
+class JTapArrow : public JArrow {
 public:
     enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
 
@@ -18,9 +18,9 @@ private:
     std::vector<JEventProcessor*> m_procs;
 
 public:
-    JEventTapArrow(std::string name, JEventLevel level=JEventLevel::PhysicsEvent);
+    JTapArrow(std::string name, JEventLevel level=JEventLevel::PhysicsEvent);
 
-    void add_processor(JEventProcessor* proc);
+    void AddProcessor(JEventProcessor* proc);
 
     void Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final;
     void Initialize() final;

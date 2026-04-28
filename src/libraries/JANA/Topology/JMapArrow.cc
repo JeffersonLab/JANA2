@@ -3,33 +3,33 @@
 
 
 #include "JANA/JEventProcessor.h"
-#include <JANA/Topology/JEventMapArrow.h>
+#include <JANA/Topology/JMapArrow.h>
 
 #include <JANA/JEventSource.h>
 #include <JANA/JEventUnfolder.h>
 #include <JANA/JEvent.h>
 
 
-JEventMapArrow::JEventMapArrow(std::string name, JEventLevel level) {
+JMapArrow::JMapArrow(std::string name, JEventLevel level) {
     SetName(name);
     SetIsParallel(true);
     AddPort("in", level);
     AddPort("out", level);
 }
 
-void JEventMapArrow::add_source(JEventSource* source) {
+void JMapArrow::AddSource(JEventSource* source) {
     m_sources.push_back(source);
 }
 
-void JEventMapArrow::add_unfolder(JEventUnfolder* unfolder) {
+void JMapArrow::AddUnfolder(JEventUnfolder* unfolder) {
     m_unfolders.push_back(unfolder);
 }
 
-void JEventMapArrow::add_processor(JEventProcessor* processor) {
+void JMapArrow::AddProcessor(JEventProcessor* processor) {
     m_procs.push_back(processor);
 }
 
-void JEventMapArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
+void JMapArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << GetName() << " for event# " << event->GetEventNumber() << LOG_END;
     for (JEventSource* source : m_sources) {
@@ -55,7 +55,7 @@ void JEventMapArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_cou
     status = JArrow::FireResult::KeepGoing;
 }
 
-void JEventMapArrow::Initialize() {
+void JMapArrow::Initialize() {
     LOG_DEBUG(m_logger) << "Initializing arrow '" << GetName() << "'" << LOG_END;
     for (auto processor : m_procs) {
         if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {
@@ -67,7 +67,7 @@ void JEventMapArrow::Initialize() {
     LOG_DEBUG(m_logger) << "Initialized arrow '" << GetName() << "'" << LOG_END;
 }
 
-void JEventMapArrow::Finalize() {
+void JMapArrow::Finalize() {
     LOG_DEBUG(m_logger) << "Finalizing arrow '" << GetName() << "'" << LOG_END;
     for (auto processor : m_procs) {
         if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {

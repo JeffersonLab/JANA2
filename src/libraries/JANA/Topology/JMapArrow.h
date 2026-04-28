@@ -12,7 +12,7 @@ class JEventProcessor;
 class JEvent;
 
 
-class JEventMapArrow : public JArrow {
+class JMapArrow : public JArrow {
 
 public:
     enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
@@ -23,11 +23,11 @@ private:
     std::vector<JEventProcessor*> m_procs;
 
 public:
-    JEventMapArrow(std::string name, JEventLevel level);
+    JMapArrow(std::string name, JEventLevel level);
 
-    void add_source(JEventSource* source);
-    void add_unfolder(JEventUnfolder* unfolder);
-    void add_processor(JEventProcessor* proc);
+    void AddSource(JEventSource* source);
+    void AddUnfolder(JEventUnfolder* unfolder);
+    void AddProcessor(JEventProcessor* proc);
 
     void Fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status);
 

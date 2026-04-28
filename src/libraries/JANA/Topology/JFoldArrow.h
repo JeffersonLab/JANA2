@@ -32,7 +32,7 @@ public:
         m_next_input_port = CHILD_IN;
     }
 
-    void set_folder(JEventFolder* folder) {
+    void SetFolder(JEventFolder* folder) {
         m_folder = folder;
     }
 
