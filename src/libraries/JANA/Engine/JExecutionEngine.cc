@@ -55,16 +55,16 @@ void JExecutionEngine::Init() {
     // Not sure how I feel about putting this here yet, but I think it will at least work in both cases it needs to.
     // The reason this works is because JTopologyBuilder::create_topology() has already been called before 
     // JApplication::ProvideService<JExecutionEngine>().
-    for (JArrow* arrow : m_topology->arrows) {
+    for (JArrow* arrow : m_topology->GetArrows()) {
 
-        arrow->initialize();
+        arrow->Initialize();
 
         m_arrow_states.emplace_back();
         auto& arrow_state = m_arrow_states.back();
-        arrow_state.is_source = arrow->is_source();
-        arrow_state.is_sink = arrow->is_sink();
-        arrow_state.is_parallel = arrow->is_parallel();
-        arrow_state.next_input = arrow->get_next_port_index();
+        arrow_state.is_source = arrow->IsSource();
+        arrow_state.is_sink = arrow->IsSink();
+        arrow_state.is_parallel = arrow->IsParallel();
+        arrow_state.next_input = arrow->GetNextPortIndex();
     }
 }
 
@@ -125,17 +125,18 @@ void JExecutionEngine::ScaleWorkers(size_t nthreads) {
     if (prev_nthreads < nthreads) {
         // We are launching additional worker threads
         LOG_DEBUG(GetLogger()) << "Scaling up to " << nthreads << " worker threads" << LOG_END;
+        auto mapping = m_topology->GetProcessorMapping();
         for (size_t worker_id=prev_nthreads; worker_id < nthreads; ++worker_id) {
             auto worker = std::make_unique<WorkerState>();
             worker->worker_id = worker_id;
             worker->is_stop_requested = false;
-            worker->cpu_id = m_topology->mapping.get_cpu_id(worker_id);
-            worker->location_id = m_topology->mapping.get_loc_id(worker_id);
+            worker->cpu_id = mapping.get_cpu_id(worker_id);
+            worker->location_id = mapping.get_loc_id(worker_id);
             worker->thread = new std::thread(&JExecutionEngine::RunWorker, this, Worker{worker_id, &worker->backtrace});
             LOG_DEBUG(GetLogger()) << "Launching worker thread " << worker_id << " on cpu=" << worker->cpu_id << ", location=" << worker->location_id << LOG_END;
             m_worker_states.push_back(std::move(worker));
 
-            bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
+            bool pin_to_cpu = (mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
             if (pin_to_cpu) {
                 JCpuInfo::PinThreadToCpu(worker->thread, worker->cpu_id);
             }
@@ -316,14 +317,14 @@ void JExecutionEngine::HandleFailures() {
     // First, we log all of the failures we've found
     for (auto& worker: m_worker_states) {
         if (worker->is_timed_out) {
-            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->arrows[worker->last_arrow_id]->get_name();
+            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->GetArrows()[worker->last_arrow_id]->GetName();
             LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
             pthread_kill(worker->thread->native_handle(), SIGUSR2);
             LOG_INFO(GetLogger()) << "Worker thread signalled; waiting for backtrace capture." << LOG_END;
             worker->backtrace.WaitForCapture();
         }
         if (worker->stored_exception != nullptr) {
-            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->arrows[worker->last_arrow_id]->get_name();
+            std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->GetArrows()[worker->last_arrow_id]->GetName();
             LOG_FATAL(GetLogger()) << "Exception in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
         }
     }
@@ -349,10 +350,10 @@ void JExecutionEngine::FinishTopology() {
     assert(m_runstatus == RunStatus::Paused);
 
     LOG_DEBUG(GetLogger()) << "Finishing processing..." << LOG_END;
-    for (auto* arrow : m_topology->arrows) {
-        arrow->finalize();
+    for (auto* arrow : m_topology->GetArrows()) {
+        arrow->Finalize();
     }
-    for (auto* pool: m_topology->pools) {
+    for (auto* pool: m_topology->GetPools()) {
         pool->Finalize();
     }
     m_runstatus = RunStatus::Finished;
@@ -391,16 +392,17 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
 
 JExecutionEngine::Worker JExecutionEngine::RegisterWorker() {
     std::unique_lock<std::mutex> lock(m_mutex);
+    auto mapping = m_topology->GetProcessorMapping();
     auto worker_id = m_worker_states.size();
     auto worker = std::make_unique<WorkerState>();
     worker->worker_id = worker_id;
     worker->is_stop_requested = false;
-    worker->cpu_id = m_topology->mapping.get_cpu_id(worker_id);
-    worker->location_id = m_topology->mapping.get_loc_id(worker_id);
+    worker->cpu_id = mapping.get_cpu_id(worker_id);
+    worker->location_id = mapping.get_loc_id(worker_id);
     worker->thread = nullptr;
     m_worker_states.push_back(std::move(worker));
 
-    bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
+    bool pin_to_cpu = (mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
     if (pin_to_cpu) {
         JCpuInfo::PinThreadToCpu(worker->thread, worker->cpu_id);
     }
@@ -419,7 +421,7 @@ void JExecutionEngine::RunWorker(Worker worker) {
         while (true) {
             ExchangeTask(task, worker.worker_id);
             if (task.arrow == nullptr) break; // Exit as soon as ExchangeTask() stops blocking
-            task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+            task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
         }
         LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker.worker_id << LOG_END;
     }
@@ -493,13 +495,13 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, WorkerState& work
     arrow_state.total_processing_duration += processing_duration;
 
     for (size_t output=0; output<task.output_count; ++output) {
-        if (!task.arrow->get_port(task.outputs[output].second).is_input) {
+        if (!task.arrow->GetPort(task.outputs[output].second).GetSkipFinishEvent()) {
             arrow_state.events_processed++;
         }
     }
 
     // Put each output in its correct queue or pool
-    task.arrow->push(task.outputs, task.output_count, worker.location_id);
+    task.arrow->Push(task.outputs, task.output_count, worker.location_id);
 
     if (task.status == JArrow::FireResult::Finished) {
         // If this is an eventsource self-terminating (the only thing that returns Status::Finished right now) it will
@@ -558,10 +560,10 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
             // TODO: Support next_visit_time so that we don't hammer blocked event sources
 
             // See if we can obtain an input event (this is silly)
-            JArrow* arrow = m_topology->arrows[arrow_id];
-            // TODO: consider setting state.next_input, retrieving via fire()
-            auto port = arrow->get_next_port_index();
-            JEvent* event = (port == -1) ? nullptr : arrow->pull(port, worker.location_id);
+            JArrow* arrow = m_topology->GetArrows()[arrow_id];
+            // TODO: consider setting state.next_input, retrieving via Fire()
+            auto port = arrow->GetNextPortIndex();
+            JEvent* event = (port == -1) ? nullptr : arrow->Pull(port, worker.location_id);
             if (event != nullptr || port == -1) {
                 LOG_TRACE(GetLogger()) << "Scheduler: Found next ready arrow with id " << arrow_id << LOG_END;
                 // We've found a task that is ready!
@@ -657,18 +659,18 @@ void JExecutionEngine::PrintFinalReport() {
     size_t total_useful_ms = 0;
 
     for (size_t arrow_id=0; arrow_id < m_arrow_states.size(); ++arrow_id) {
-        auto* arrow = m_topology->arrows[arrow_id];
+        auto* arrow = m_topology->GetArrows()[arrow_id];
         auto& arrow_state = m_arrow_states[arrow_id];
         auto useful_ms = std::chrono::duration_cast<std::chrono::milliseconds>(arrow_state.total_processing_duration).count();
         total_useful_ms += useful_ms;
         auto avg_latency = useful_ms*1.0/arrow_state.events_processed;
         auto throughput_bottleneck = 1000.0 / avg_latency;
-        if (arrow->is_parallel()) {
+        if (arrow->IsParallel()) {
             throughput_bottleneck *= thread_count;
         }
 
-        LOG_INFO(GetLogger()) << "  - Arrow name:                 " << arrow->get_name() << LOG_END;
-        LOG_INFO(GetLogger()) << "    Parallel:                   " << arrow->is_parallel() << LOG_END;
+        LOG_INFO(GetLogger()) << "  - Arrow name:                 " << arrow->GetName() << LOG_END;
+        LOG_INFO(GetLogger()) << "    Parallel:                   " << arrow->IsParallel() << LOG_END;
         LOG_INFO(GetLogger()) << "    Events completed:           " << arrow_state.events_processed << LOG_END;
         LOG_INFO(GetLogger()) << "    Avg latency [ms/event]:     " << avg_latency << LOG_END;
         LOG_INFO(GetLogger()) << "    Throughput bottleneck [Hz]: " << throughput_bottleneck << LOG_END;
@@ -708,12 +710,12 @@ bool JExecutionEngine::IsTimeoutEnabled() const {
 JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 
     std::unique_lock<std::mutex> lock(m_mutex);
-    if (arrow_id >= m_topology->arrows.size()) {
+    if (arrow_id >= m_topology->GetArrows().size()) {
         LOG_WARN(GetLogger()) << "Firing unsuccessful: No arrow exists with id=" << arrow_id << LOG_END;
         return JArrow::FireResult::NotRunYet;
     }
-    JArrow* arrow = m_topology->arrows[arrow_id];
-    LOG_WARN(GetLogger()) << "Attempting to fire arrow with name=" << arrow->get_name() 
+    JArrow* arrow = m_topology->GetArrows()[arrow_id];
+    LOG_WARN(GetLogger()) << "Attempting to fire arrow with name=" << arrow->GetName() 
                           << ", index=" << arrow_id << ", location=" << location_id << LOG_END;
 
     ArrowState& arrow_state = m_arrow_states[arrow_id];
@@ -727,10 +729,10 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     }
     arrow_state.active_tasks += 1;
 
-    auto port = arrow->get_next_port_index();
+    auto port = arrow->GetNextPortIndex();
     JEvent* event = nullptr;
     if (port != -1) {
-        event = arrow->pull(port, location_id);
+        event = arrow->Pull(port, location_id);
         if (event == nullptr) {
             LOG_WARN(GetLogger()) << "Firing unsuccessful: Arrow needs an input event from port " << port << ", but the queue or pool is empty." << LOG_END;
             arrow_state.active_tasks -= 1;
@@ -750,8 +752,8 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     JArrow::FireResult result = JArrow::FireResult::NotRunYet;
 
     LOG_WARN(GetLogger()) << "Firing arrow" << LOG_END;
-    arrow->fire(event, outputs, output_count, result);
-    LOG_WARN(GetLogger()) << "Fired arrow with result " << to_string(result) << LOG_END;
+    arrow->Fire(event, outputs, output_count, result);
+    LOG_WARN(GetLogger()) << "Fired arrow with result " << ToString(result) << LOG_END;
     if (output_count == 0) {
         LOG_WARN(GetLogger()) << "No output events" << LOG_END;
     }
@@ -762,7 +764,7 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
     }
 
     lock.lock();
-    arrow->push(outputs, output_count, location_id);
+    arrow->Push(outputs, output_count, location_id);
     arrow_state.active_tasks -= 1;
     lock.unlock();
     return result;

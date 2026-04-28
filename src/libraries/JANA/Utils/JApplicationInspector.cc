@@ -27,7 +27,7 @@ void PrintMenu() {
 
 void InspectTopology(JApplication* app) {
     auto topology = app->GetService<JTopologyBuilder>();
-    std::cout << topology->print_topology() << std::endl;
+    std::cout << topology->PrintTopology() << std::endl;
 }
 
 void Fire(JApplication* app, int arrow_id) {

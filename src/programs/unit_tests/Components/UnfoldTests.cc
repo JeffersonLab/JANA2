@@ -69,13 +69,13 @@ TEST_CASE("UnfoldTests_Basic") {
 
     TestUnfolder unfolder;
     JUnfoldArrow arrow("sut", &unfolder);
-    arrow.attach(&parent_queue, JUnfoldArrow::PARENT_IN);
-    arrow.attach(&child_pool, JUnfoldArrow::CHILD_IN);
-    arrow.attach(&child_queue, JUnfoldArrow::CHILD_OUT);
+    arrow.GetPort(JUnfoldArrow::PARENT_IN).Attach(&parent_queue);
+    arrow.GetPort(JUnfoldArrow::CHILD_IN).Attach(&child_pool);
+    arrow.GetPort(JUnfoldArrow::CHILD_OUT).Attach(&child_queue);
 
-    arrow.initialize();
-    arrow.execute( 0); // First call to execute() picks up the parent and exits early
-    auto result = arrow.execute( 0); // Second call to execute() picks up the child, calls Unfold(), and emits the newly parented child
+    arrow.Initialize();
+    arrow.Execute( 0); // First call to execute() picks up the parent and exits early
+    auto result = arrow.Execute( 0); // Second call to execute() picks up the child, calls Unfold(), and emits the newly parented child
     REQUIRE(result == JArrow::FireResult::KeepGoing);
     REQUIRE(child_queue.GetSize(0) == 1);
     REQUIRE(unfolder.preprocessed_event_nrs.size() == 0);
@@ -104,10 +104,10 @@ TEST_CASE("FoldArrowTests") {
     JEventQueue parent_out(5, 1);
 
     JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::PhysicsEvent);
-    arrow.attach(&child_in, JFoldArrow::CHILD_IN);
-    arrow.attach(&child_out, JFoldArrow::CHILD_OUT);
-    arrow.attach(&parent_out, JFoldArrow::PARENT_OUT);
-    arrow.initialize();
+    arrow.GetPort(JFoldArrow::CHILD_IN).Attach(&child_in);
+    arrow.GetPort(JFoldArrow::CHILD_OUT).Attach(&child_out);
+    arrow.GetPort(JFoldArrow::PARENT_OUT).Attach(&parent_out);
+    arrow.Initialize();
 
     SECTION("One-to-one relationship between timeslices and events") {
 
@@ -131,7 +131,7 @@ TEST_CASE("FoldArrowTests") {
         evt2->SetParent(ts2);
         child_in.Push(evt2, 0);
     
-        arrow.execute(0);
+        arrow.Execute(0);
 
         REQUIRE(child_in.GetSize(0) == 1);
         REQUIRE(child_out.GetSize(0) == 1);
@@ -173,25 +173,25 @@ TEST_CASE("FoldArrowTests") {
         child_in.Push(evt3, 0);
         child_in.Push(evt4, 0);
 
-        arrow.execute(0);
+        arrow.Execute(0);
 
         REQUIRE(child_in.GetSize(0) == 3);
         REQUIRE(child_out.GetSize(0) == 1);
         REQUIRE(parent_out.GetSize(0) == 0);
 
-        arrow.execute(0);
+        arrow.Execute(0);
 
         REQUIRE(child_in.GetSize(0) == 2);
         REQUIRE(child_out.GetSize(0) == 2);
         REQUIRE(parent_out.GetSize(0) == 1);
 
-        arrow.execute(0);
+        arrow.Execute(0);
 
         REQUIRE(child_in.GetSize(0) == 1);
         REQUIRE(child_out.GetSize(0) == 3);
         REQUIRE(parent_out.GetSize(0) == 1);
 
-        arrow.execute(0);
+        arrow.Execute(0);
 
         REQUIRE(child_in.GetSize(0) == 0);
         REQUIRE(child_out.GetSize(0) == 4);

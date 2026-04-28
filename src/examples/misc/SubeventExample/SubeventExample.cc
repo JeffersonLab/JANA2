@@ -7,8 +7,8 @@
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
 
-#include <JANA/Topology/JEventSourceArrow.h>
-#include <JANA/Topology/JEventMapArrow.h>
+#include <JANA/Topology/JSourceArrow.h>
+#include <JANA/Topology/JMapArrow.h>
 #include <JANA/Topology/JSubeventArrow.h>
 #include <JANA/Topology/JTopologyBuilder.h>
 
@@ -111,7 +111,7 @@ int main() {
         source_arrow->attach(topology->event_pool, 0);
         source_arrow->attach(&events_in, 1);
 
-        auto proc_arrow = new JEventMapArrow("simpleProcessor");
+        auto proc_arrow = new JMapArrow("simpleProcessor");
         proc_arrow->attach(&events_out, 0);
         proc_arrow->attach(topology->event_pool, 1);
         proc_arrow->add_processor(new SimpleProcessor);

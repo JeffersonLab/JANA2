@@ -117,42 +117,42 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
         sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
-        REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // Only task available at this point!
+        REQUIRE(task.arrow->GetName() == "PhysicsEventSource"); // Only task available at this point!
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
         REQUIRE(sut->GetPerf().event_count == 0);
 
-        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
         sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
-        REQUIRE(task.arrow->get_name() == "PhysicsEventSource"); // This will fail due to jana:nevents
+        REQUIRE(task.arrow->GetName() == "PhysicsEventSource"); // This will fail due to jana:nevents
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
         REQUIRE(sut->GetPerf().event_count == 0);
 
-        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
         REQUIRE(task.outputs[0].second == 0); // Failure => return to pool
         REQUIRE(task.status == JArrow::FireResult::Finished);
 
         sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
-        REQUIRE(task.arrow->get_name() == "PhysicsEventMap2");
+        REQUIRE(task.arrow->GetName() == "PhysicsEventMap2");
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
         REQUIRE(sut->GetPerf().event_count == 0);
 
-        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 
         sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
-        REQUIRE(task.arrow->get_name() == "PhysicsEventTap");
+        REQUIRE(task.arrow->GetName() == "PhysicsEventTap");
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
         REQUIRE(sut->GetPerf().event_count == 0);
 
-        task.arrow->fire(task.input_event, task.outputs, task.output_count, task.status);
+        task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
         REQUIRE(task.output_count == 1);
         REQUIRE(task.status == JArrow::FireResult::KeepGoing);
 

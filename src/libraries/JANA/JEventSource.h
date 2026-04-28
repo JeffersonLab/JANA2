@@ -78,7 +78,7 @@ public:
 
 
     /// For work that should be done in parallel on a JEvent, but is tightly coupled to the JEventSource for some reason.
-    /// Called after Emit() by JEventMapArrow, but only if EnableProcessParallel(true) is set. Note that the JEvent& is not
+    /// Called after Emit() by JMapArrow, but only if EnableProcessParallel(true) is set. Note that the JEvent& is not
     /// const here, because we need to be able to call event.Insert() from here. Also note that `this` IS const, because
     /// it is not safe to access any state in parallel from here. Note that this includes things like calibration constants.
     /// If you need to safely access state, put use a JFactory instead.

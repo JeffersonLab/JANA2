@@ -156,7 +156,7 @@ void JApplication::Initialize() {
         m_desired_nthreads = JCpuInfo::GetNumCpus();
     }
 
-    topology_builder->create_topology();
+    topology_builder->CreateTopology();
 
     m_params->SetDefaultParameter("jana:inspect", m_inspect, "Controls whether to drop immediately into the Inspector upon Run()");
 

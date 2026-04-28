@@ -25,17 +25,18 @@ public:
       : m_parent_level(parent_level),
         m_child_level(child_level)
     {
-        set_name(name);
-        create_ports(1, 2);
+        SetName(name);
+        AddPort("child_in", child_level).SetEnforcesOrdering(true);
+        AddPort("child_out", child_level);
+        AddPort("parent_out", parent_level);
         m_next_input_port = CHILD_IN;
-        m_ports[CHILD_IN].enforces_ordering = true;
     }
 
-    void set_folder(JEventFolder* folder) {
+    void SetFolder(JEventFolder* folder) {
         m_folder = folder;
     }
 
-    void initialize() final {
+    void Initialize() final {
         if (m_folder != nullptr) {
             m_folder->DoInit();
             LOG_INFO(m_logger) << "Initialized JEventFolder '" << m_folder->GetTypeName() << "'" << LOG_END;
@@ -45,7 +46,7 @@ public:
         }
     }
 
-    void finalize() final {
+    void Finalize() final {
         if (m_folder != nullptr) {
             m_folder->DoFinish();
             LOG_INFO(m_logger) << "Finalized JEventFolder '" << m_folder->GetTypeName() << "'" << LOG_END;
@@ -55,7 +56,7 @@ public:
         }
     }
 
-    void fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final {
+    void Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) final {
 
         assert(m_next_input_port == CHILD_IN);
 

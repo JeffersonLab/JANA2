@@ -7,7 +7,7 @@
 #include "JANA/Utils/JEventLevel.h"
 
 #include <iostream>
-#include <map>
+
 
 namespace jana {
 namespace timeslice_tests {
@@ -18,6 +18,7 @@ TEST_CASE("TimeslicesTests_FineGrained") {
     JApplication app;
     app.SetParameterValue("jana:loglevel", "trace");
     app.SetParameterValue("jana:nevents", "5");
+    app.SetParameterValue("jana:max_inflight_timeslices", "2");
     app.SetParameterValue("jana:max_inflight_events", "4");
 
     app.Add(new MyTimesliceSource);
@@ -36,15 +37,15 @@ TEST_CASE("TimeslicesTests_FineGrained") {
     result = ee->Fire(TS_SRC, 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
 
-    REQUIRE(top->arrows[TS_SRC]->get_port(1).queue == top->queues[0]);
-    REQUIRE(top->pools[0]->GetCapacity() == 4);
-    REQUIRE(top->pools[0]->GetSize(0) == 3);
-    REQUIRE(top->queues[0]->GetSize(0) == 1);
+    REQUIRE(top->GetArrows()[TS_SRC]->GetPort(1).GetQueue() == top->GetQueues()[0]);
+    REQUIRE(top->GetPools()[0]->GetCapacity() == 2);
+    REQUIRE(top->GetPools()[0]->GetSize(0) == 1);
+    REQUIRE(top->GetQueues()[0]->GetSize(0) == 1);
 
     result = ee->Fire(TS_MAP, 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
-    REQUIRE(top->queues[0]->GetSize(0) == 0);
-    REQUIRE(top->queues[1]->GetSize(0) == 1);
+    REQUIRE(top->GetQueues()[0]->GetSize(0) == 0);
+    REQUIRE(top->GetQueues()[1]->GetSize(0) == 1);
     
     // Parent
     result = ee->Fire(TS_UNF, 0);
@@ -63,8 +64,8 @@ TEST_CASE("TimeslicesTests_FineGrained") {
     result = ee->Fire(TS_FLD, 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
 
-    REQUIRE(top->pools[0]->GetSize(0) == 3); // Unfolder still has parent
-    REQUIRE(top->pools[1]->GetSize(0) == 4); // Child returned to pool
+    REQUIRE(top->GetPools()[0]->GetSize(0) == 1); // Unfolder still has parent
+    REQUIRE(top->GetPools()[1]->GetSize(0) == 4); // Child returned to pool
     
 }
 

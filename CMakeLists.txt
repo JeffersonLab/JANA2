@@ -220,16 +220,11 @@ include(cmake/AddJanaTest.cmake)
 add_subdirectory(src/external)
 add_subdirectory(src/libraries/JANA)
 add_subdirectory(src/plugins)
-add_subdirectory(src/programs/jana)
+add_subdirectory(src/programs)
 add_subdirectory(src/python)
 
 if (${BUILD_EXAMPLES})
     add_subdirectory(src/examples)
-endif()
-
-if (${BUILD_TESTS})
-    add_subdirectory(src/programs/unit_tests)
-    add_subdirectory(src/programs/perf_tests)
 endif()
 
 

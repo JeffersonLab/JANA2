@@ -144,7 +144,7 @@ int main() {
     source_arrow->set_input(topology->event_pool);
     source_arrow->set_output(&events_in);
 
-    auto proc_arrow = new JEventMapArrow("simpleProcessor");
+    auto proc_arrow = new JMapArrow("simpleProcessor");
     proc_arrow->set_input(&events_out);
     proc_arrow->set_output(topology->event_pool);
     proc_arrow->add_processor(new SimpleProcessor);
