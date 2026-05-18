@@ -76,7 +76,7 @@ public:
     const JProcessorMapping& GetProcessorMapping() { return mapping; };
 
 private:
-    void AttachLevel(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder);
+    void AttachLevel(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder, JEventPool* parent_pool);
     void ConnectToFirstAvailable(JArrow* upstream, size_t upstream_port_id, std::vector<std::pair<JArrow*, size_t>> downstreams);
     void Connect(JArrow* upstream, size_t upstream_port_id, JArrow* downstream, size_t downstream_port_id);
     std::pair<JTapArrow*, JTapArrow*> CreateTapChain(std::vector<JEventProcessor*>& procs, std::string name);

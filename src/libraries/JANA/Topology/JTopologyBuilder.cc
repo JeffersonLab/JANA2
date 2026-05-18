@@ -149,7 +149,7 @@ void JTopologyBuilder::CreateTopology() {
         LOG_WARN(GetLogger()) << "Found custom topology configurator! Modified arrow topology is: \n" << PrintTopology() << LOG_END;
     }
     else {
-        AttachLevel(JEventLevel::Run, nullptr, nullptr);
+        AttachLevel(JEventLevel::Run, nullptr, nullptr, nullptr);
         LOG_INFO(GetLogger()) << "Arrow topology is:\n" << PrintTopology() << LOG_END;
     }
     for (auto* arrow : arrows) {
@@ -321,7 +321,7 @@ std::pair<JTapArrow*, JTapArrow*> JTopologyBuilder::CreateTapChain(std::vector<J
 }
 
 
-void JTopologyBuilder::AttachLevel(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder) {
+void JTopologyBuilder::AttachLevel(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder, JEventPool* parent_pool) {
     std::stringstream ss;
     ss << current_level;
     auto level_str = ss.str();
@@ -375,15 +375,12 @@ void JTopologyBuilder::AttachLevel(JEventLevel current_level, JUnfoldArrow* pare
             LOG_WARN(GetLogger()) << "No sources found: Processing topology will be empty." << LOG_END;
             return;
         }
-        return AttachLevel(next, nullptr, nullptr);
+        return AttachLevel(next, nullptr, nullptr, nullptr);
     }
 
     // Enforce constraints on what our builder will accept (at least for now)
     if (!is_top_level && !sources_at_level.empty()) {
         throw JException("Topology forbids event sources at lower event levels in the topology");
-    }
-    if ((parent_unfolder == nullptr && parent_folder != nullptr) || (parent_unfolder != nullptr && parent_folder == nullptr)) {
-        throw JException("Topology requires matching unfolder/folder arrow pairs");
     }
     if (unfolders_at_level.size() > 1) {
         throw JException("Multiple JEventUnfolders provided for level %s", level_str.c_str());
@@ -399,6 +396,10 @@ void JTopologyBuilder::AttachLevel(JEventLevel current_level, JUnfoldArrow* pare
     LOG_INFO(GetLogger()) << "Creating event pool with level=" << current_level << " and size=" << m_max_inflight_events[current_level];
     JEventPool* pool_at_level = new JEventPool(m_components, m_max_inflight_events[current_level], m_location_count, current_level);
     pools.push_back(pool_at_level); // Hand over ownership of the pool to the topology
+    if (parent_pool != nullptr) {
+        LOG_DEBUG(GetLogger()) << "Attaching " << current_level << " pool to parent pool";
+        pool_at_level->AttachForwardingPool(parent_pool);
+    }
     LOG_INFO(GetLogger()) << "Finished creating event pool";
 
     // --------------------------
@@ -446,7 +447,8 @@ void JTopologyBuilder::AttachLevel(JEventLevel current_level, JUnfoldArrow* pare
     bool need_unfold = have_unfolder;
     if (need_unfold) {
         unfold_arrow = new JUnfoldArrow(level_str+"Unfold", unfolders_at_level[0]);
-        unfold_arrow->GetPort(JUnfoldArrow::REJECTED_PARENT_OUT).Attach(pool_at_level);
+        unfold_arrow->GetPort(JUnfoldArrow::PARENT_IN).Attach(pool_at_level);
+        unfold_arrow->GetPort(JUnfoldArrow::PARENT_OUT).Attach(pool_at_level);
         arrows.push_back(unfold_arrow);
     }
 
@@ -454,7 +456,7 @@ void JTopologyBuilder::AttachLevel(JEventLevel current_level, JUnfoldArrow* pare
     // 4. Fold
     // --------------------------
     JFoldArrow* fold_arrow = nullptr;
-    bool need_fold = have_unfolder;
+    bool need_fold = false; // No folders_at_level for now
     if(need_fold) {
         fold_arrow = new JFoldArrow(level_str+"Fold", current_level, unfolders_at_level[0]->GetChildLevel());
         arrows.push_back(fold_arrow);
@@ -495,6 +497,7 @@ void JTopologyBuilder::AttachLevel(JEventLevel current_level, JUnfoldArrow* pare
     // --------------------------
     if (parent_unfolder != nullptr) {
         parent_unfolder->GetPort(JUnfoldArrow::CHILD_IN).Attach(pool_at_level);
+        parent_unfolder->GetPort(JUnfoldArrow::CHILD_OUT).Attach(pool_at_level);
         ConnectToFirstAvailable(parent_unfolder, JUnfoldArrow::CHILD_OUT,
                                    {{map1_arrow, JMapArrow::EVENT_IN}, {unfold_arrow, JUnfoldArrow::PARENT_IN}, {map2_arrow, JMapArrow::EVENT_IN}, {first_tap_arrow, JTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
@@ -507,7 +510,7 @@ void JTopologyBuilder::AttachLevel(JEventLevel current_level, JUnfoldArrow* pare
                                    {{unfold_arrow, JUnfoldArrow::PARENT_IN}, {map2_arrow, JMapArrow::EVENT_IN}, {first_tap_arrow, JTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (unfold_arrow != nullptr) {
-        ConnectToFirstAvailable(unfold_arrow, JUnfoldArrow::REJECTED_PARENT_OUT,
+        ConnectToFirstAvailable(unfold_arrow, JUnfoldArrow::PARENT_OUT,
                                    {{map2_arrow, JMapArrow::EVENT_IN}, {first_tap_arrow, JTapArrow::EVENT_IN}, {parent_folder, JFoldArrow::CHILD_IN}});
     }
     if (fold_arrow != nullptr) {
@@ -529,7 +532,7 @@ void JTopologyBuilder::AttachLevel(JEventLevel current_level, JUnfoldArrow* pare
     // Finally, we recur over lower levels!
     if (need_unfold) {
         auto next_level = unfolders_at_level[0]->GetChildLevel();
-        AttachLevel(next_level, unfold_arrow, fold_arrow);
+        AttachLevel(next_level, unfold_arrow, fold_arrow, pool_at_level);
     }
     else {
         // This is the lowest level

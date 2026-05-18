@@ -43,7 +43,7 @@ void JArrow::Push(OutputData& outputs, size_t output_count, size_t location_id) 
             port.GetPool()->Ingest(event, location_id);
         }
         else {
-            throw JException("Arrow %s: Port %d not wired!", m_name.c_str(), port_index);
+            throw JException("Arrow %s: Port %s not wired!", m_name.c_str(), port.GetName().c_str());
         }
     }
 }

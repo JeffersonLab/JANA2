@@ -31,7 +31,7 @@ TEST_CASE("TimeslicesTests_FineGrained") {
     app.Initialize();
     auto ee = app.GetService<JExecutionEngine>();
     auto top = app.GetService<JTopologyBuilder>();
-    enum ArrowId {TS_SRC=0, TS_MAP=1, TS_UNF=2, TS_FLD=3, PH_MAP=4, PH_TAP=5};
+    enum ArrowId {TS_SRC=0, TS_MAP=1, TS_UNF=2, PH_MAP=3, PH_TAP=4};
     JArrow::FireResult result = JArrow::FireResult::NotRunYet;
 
     result = ee->Fire(TS_SRC, 0);
@@ -61,9 +61,6 @@ TEST_CASE("TimeslicesTests_FineGrained") {
     result = ee->Fire(PH_TAP, 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
     
-    result = ee->Fire(TS_FLD, 0);
-    REQUIRE(result == JArrow::FireResult::KeepGoing);
-
     REQUIRE(top->GetPools()[0]->GetSize(0) == 1); // Unfolder still has parent
     REQUIRE(top->GetPools()[1]->GetSize(0) == 4); // Child returned to pool
     
@@ -94,6 +91,7 @@ TEST_CASE("TimeslicesTests_NoEvtProcs") {
 
     JApplication app;
     app.SetParameterValue("jana:nevents", "5");
+    app.SetParameterValue("jana:loglevel", "debug");
 
     app.Add(new MyTimesliceSource);
     app.Add(new MyTimesliceUnfolder);
@@ -131,7 +129,6 @@ TEST_CASE("MultilevelSource_Trivial") {
     app.Add(proc);
     app.Run();
 }
-
 
 
 } // namespace multilevel_source_tests
