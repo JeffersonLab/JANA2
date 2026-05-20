@@ -68,6 +68,7 @@ option(USE_ASAN "Compile with address sanitizer" OFF)
 option(USE_TSAN "Compile with thread sanitizer" OFF)
 option(USE_CUDA "Compile CUDA-involved examples (Needed for examples/SubeventCUDAExample)." OFF)
 option(USE_PODIO "Compile with PODIO support" OFF)
+option(USE_PERFETTO "Include Perfetto tracing SDK for performance profiling." OFF)
 option(BUILD_SHARED_LIBS "Build into both shared and static libs." ON)
 option(BUILD_EXAMPLES "Build and install examples" ON)
 option(BUILD_TESTS "Build and install tests" ON)
@@ -134,6 +135,39 @@ if (${USE_CUDA})
     find_package(CUDA REQUIRED)
 endif()
 
+if (USE_PERFETTO)
+    set(PERFETTO_VERSION "55.3" CACHE STRING "Perfetto SDK version to download")
+    set(PERFETTO_SDK_URL "https://github.com/google/perfetto/releases/download/v${PERFETTO_VERSION}/perfetto-cpp-sdk-src.zip")
+    set(PERFETTO_SDK_ZIP "${CMAKE_BINARY_DIR}/perfetto-cpp-sdk-src-${PERFETTO_VERSION}.zip")
+    set(PERFETTO_SDK_DIR "${CMAKE_BINARY_DIR}/perfetto_sdk_${PERFETTO_VERSION}")
+
+    if(NOT EXISTS "${PERFETTO_SDK_DIR}/perfetto.cc")
+        message(STATUS "Downloading Perfetto SDK v${PERFETTO_VERSION}...")
+        file(DOWNLOAD "${PERFETTO_SDK_URL}" "${PERFETTO_SDK_ZIP}"
+            STATUS DOWNLOAD_STATUS
+            TLS_VERIFY ON
+        )
+        list(GET DOWNLOAD_STATUS 0 DOWNLOAD_ERROR_CODE)
+        if(DOWNLOAD_ERROR_CODE)
+            list(GET DOWNLOAD_STATUS 1 DOWNLOAD_ERROR_MSG)
+            message(FATAL_ERROR "Failed to download Perfetto SDK from ${PERFETTO_SDK_URL}: ${DOWNLOAD_ERROR_MSG}")
+        endif()
+        file(ARCHIVE_EXTRACT INPUT "${PERFETTO_SDK_ZIP}" DESTINATION "${PERFETTO_SDK_DIR}")
+    endif()
+
+    add_library(perfetto_sdk STATIC ${PERFETTO_SDK_DIR}/perfetto.cc)
+    target_include_directories(perfetto_sdk PUBLIC
+        $<BUILD_INTERFACE:${PERFETTO_SDK_DIR}>
+        $<INSTALL_INTERFACE:include/perfetto>
+    )
+    target_compile_options(perfetto_sdk PRIVATE -Wno-sign-compare -Wno-unused-parameter -Wno-missing-field-initializers)
+    install(TARGETS perfetto_sdk EXPORT jana2_targets DESTINATION lib)
+    install(FILES ${PERFETTO_SDK_DIR}/perfetto.h DESTINATION include/perfetto)
+    set(JANA2_HAVE_PERFETTO 1)
+else()
+    set(JANA2_HAVE_PERFETTO 0)
+endif()
+
 
 #---------
 # Report back to the user what we've discovered
@@ -177,6 +211,11 @@ if (${USE_CUDA})
     message(STATUS "USE_CUDA    On")
 else()
     message(STATUS "USE_CUDA    Off")
+endif()
+if (USE_PERFETTO)
+    message(STATUS "USE_PERFETTO On")
+else()
+    message(STATUS "USE_PERFETTO Off")
 endif()
 if (${USE_PODIO})
     message(STATUS "USE_PODIO   On  --> " ${podio_DIR})

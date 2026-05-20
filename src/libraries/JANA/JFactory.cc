@@ -6,6 +6,11 @@
 #include <JANA/JEvent.h>
 #include <JANA/JEventSource.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <JANA/JVersion.h>
+
+#if JANA2_HAVE_PERFETTO
+#include <JANA/Services/JPerfettoService.h>
+#endif
 
 
 class FlagGuard {
@@ -152,10 +157,24 @@ void JFactory::Create(const JEvent& event) {
                 input->Populate(event);
             }
             if (m_callback_style == CallbackStyle::LegacyMode) {
+#if JANA2_HAVE_PERFETTO
+                TRACE_EVENT_BEGIN("factory", perfetto::DynamicString{GetFactoryName()},
+                    "tag", GetTag(), "event_nr", event.GetEventNumber());
+#endif
                 CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
+#if JANA2_HAVE_PERFETTO
+                TRACE_EVENT_END("factory");
+#endif
             }
             else if (m_callback_style == CallbackStyle::ExpertMode) {
+#if JANA2_HAVE_PERFETTO
+                TRACE_EVENT_BEGIN("factory", perfetto::DynamicString{GetFactoryName()},
+                    "tag", GetTag(), "event_nr", event.GetEventNumber());
+#endif
                 CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event); });
+#if JANA2_HAVE_PERFETTO
+                TRACE_EVENT_END("factory");
+#endif
             }
             else {
                 throw JException("Invalid callback style");

@@ -66,6 +66,10 @@ if (NOT ${USE_XERCES})
     message(STATUS "Skipping support for libJANA's JGeometryXML because USE_XERCES=Off")
 endif()
 
+if (USE_PERFETTO)
+    list(APPEND JANA2_SOURCES Services/JPerfettoService.cc)
+endif()
+
 add_library(jana2 OBJECT ${JANA2_SOURCES})
 
 find_package(Threads REQUIRED)
@@ -73,6 +77,10 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_link_libraries(jana2 PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 target_link_libraries(jana2 PRIVATE VendoredTomlPlusPlus)
 target_link_libraries(jana2 PRIVATE VendoredMD5) # To pull in the header file
+
+if (USE_PERFETTO)
+    target_link_libraries(jana2 PUBLIC perfetto_sdk)
+endif()
 
 if (${USE_PODIO})
     target_link_libraries(jana2 PUBLIC podio::podio podio::podioRootIO)
@@ -89,6 +97,10 @@ target_include_directories(jana2_static_lib PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(jana2_static_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 target_link_libraries(jana2_static_lib PUBLIC VendoredTomlPlusPlus)
 
+if (USE_PERFETTO)
+    target_link_libraries(jana2_static_lib PUBLIC perfetto_sdk)
+endif()
+
 if (${USE_PODIO})
     target_link_libraries(jana2_static_lib PUBLIC podio::podio podio::podioRootIO)
 elseif (${USE_ROOT})
@@ -104,6 +116,10 @@ set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA
 target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(jana2_shared_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 target_link_libraries(jana2_shared_lib PUBLIC VendoredTomlPlusPlus)
+
+if (USE_PERFETTO)
+    target_link_libraries(jana2_shared_lib PUBLIC perfetto_sdk)
+endif()
 
 if (${USE_PODIO})
     target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO)
