@@ -140,13 +140,39 @@ void JFactory::Create(const JEvent& event) {
             if (mPreviousRunNumber != run_number) {
                 if (m_callback_style == CallbackStyle::LegacyMode) {
                     if (mPreviousRunNumber != -1) {
+#if JANA2_HAVE_PERFETTO
+                        TRACE_EVENT_BEGIN("factory_init", perfetto::DynamicString{GetFactoryName()},
+                            "tag", GetTag(), "run_nr", run_number, "phase", "EndRun");
+#endif
                         CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
+#if JANA2_HAVE_PERFETTO
+                        TRACE_EVENT_END("factory_init");
+#endif
                     }
+#if JANA2_HAVE_PERFETTO
+                    TRACE_EVENT_BEGIN("factory_init", perfetto::DynamicString{GetFactoryName()},
+                        "tag", GetTag(), "run_nr", run_number, "phase", "ChangeRun");
+#endif
                     CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.shared_from_this()); });
+#if JANA2_HAVE_PERFETTO
+                    TRACE_EVENT_END("factory_init");
+                    TRACE_EVENT_BEGIN("factory_init", perfetto::DynamicString{GetFactoryName()},
+                        "tag", GetTag(), "run_nr", run_number, "phase", "BeginRun");
+#endif
                     CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
+#if JANA2_HAVE_PERFETTO
+                    TRACE_EVENT_END("factory_init");
+#endif
                 }
                 else if (m_callback_style == CallbackStyle::ExpertMode) {
+#if JANA2_HAVE_PERFETTO
+                    TRACE_EVENT_BEGIN("factory_init", perfetto::DynamicString{GetFactoryName()},
+                        "tag", GetTag(), "run_nr", run_number, "phase", "ChangeRun");
+#endif
                     CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
+#if JANA2_HAVE_PERFETTO
+                    TRACE_EVENT_END("factory_init");
+#endif
                 }
                 mPreviousRunNumber = run_number;
             }
@@ -220,10 +246,20 @@ void JFactory::DoInit() {
         service->Fetch(m_app);
     }
     try {
+#if JANA2_HAVE_PERFETTO
+        TRACE_EVENT_BEGIN("factory_init", perfetto::DynamicString{GetFactoryName()},
+            "tag", GetTag(), "phase", "Init");
+#endif
         CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
+#if JANA2_HAVE_PERFETTO
+        TRACE_EVENT_END("factory_init");
+#endif
         mInitStatus = InitStatus::InitRun;
     }
     catch (...) {
+#if JANA2_HAVE_PERFETTO
+        TRACE_EVENT_END("factory_init");
+#endif
         mInitStatus = InitStatus::InitExcepted;
         mException = std::current_exception();
         throw;

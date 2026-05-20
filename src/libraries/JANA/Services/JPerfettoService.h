@@ -12,7 +12,8 @@
 // Declare categories in a header so all TUs that use TRACE_EVENT share the same registry.
 PERFETTO_DEFINE_CATEGORIES(
     perfetto::Category("jana").SetDescription("JANA2 framework events (arrow dispatch)"),
-    perfetto::Category("factory").SetDescription("JANA2 factory execution per event")
+    perfetto::Category("factory").SetDescription("JANA2 factory Process() execution per event"),
+    perfetto::Category("factory_init").SetDescription("JANA2 factory Init/ChangeRun/BeginRun/EndRun callbacks")
 );
 #endif // JANA2_HAVE_PERFETTO
 
