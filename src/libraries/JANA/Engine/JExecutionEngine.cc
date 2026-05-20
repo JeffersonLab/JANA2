@@ -429,14 +429,13 @@ void JExecutionEngine::RunWorker(Worker worker) {
         while (true) {
             ExchangeTask(task, worker.worker_id);
             if (task.arrow == nullptr) break; // Exit as soon as ExchangeTask() stops blocking
+            {
 #if JANA2_HAVE_PERFETTO
-            TRACE_EVENT_BEGIN("jana", perfetto::DynamicString{task.arrow->GetName()},
-                "worker_id", (uint64_t)worker.worker_id);
+                TRACE_EVENT("jana", perfetto::DynamicString{task.arrow->GetName()},
+                    "worker_id", (uint64_t)worker.worker_id);
 #endif
-            task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
-#if JANA2_HAVE_PERFETTO
-            TRACE_EVENT_END("jana");
-#endif
+                task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
+            }
         }
         LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker.worker_id << LOG_END;
     }
