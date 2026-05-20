@@ -25,12 +25,16 @@ class MyMultiSource : public JEventSource {
 public:
     MyMultiSource() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
-        SetEventLevels({JEventLevel::Run, JEventLevel::SlowControls, JEventLevel::PhysicsEvent});
+        SetParentLevels({JEventLevel::Run, JEventLevel::SlowControls});
+        SetLevel(JEventLevel::PhysicsEvent);
     }
     Result Emit(JEvent& event) override {
         auto count = GetEmittedEventCount();
-        const auto& levels = GetEventLevels();
-        SetNextEventLevel(levels.at((count+1) % levels.size()));
+        switch (count % 3) {
+            case 0: SetNextEventLevel(JEventLevel::SlowControls); break;
+            case 1: SetNextEventLevel(JEventLevel::PhysicsEvent); break;
+            case 2: SetNextEventLevel(JEventLevel::Run); break;
+        }
         LOG_INFO(GetLogger()) << "Emitting " << event.GetEventStamp();
         return Result::Success; // Assume that source can peek ahead to request a different level
     }

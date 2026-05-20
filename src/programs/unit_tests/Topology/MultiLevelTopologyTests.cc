@@ -121,7 +121,7 @@ TEST_CASE("MultilevelSource_Trivial") {
     auto* source = new MyMultilevelSource;
     auto* proc = new MyMultilevelProcessor;
 
-    source->SetEventLevels({JEventLevel::PhysicsEvent});
+    source->SetLevel(JEventLevel::PhysicsEvent);
     source->data_stream = {{JEventLevel::PhysicsEvent, 4}, {JEventLevel::PhysicsEvent, 5}, {JEventLevel::PhysicsEvent, 6}};
     proc->expected_data_stream = {{-1,-1,4}, {-1,-1,5}, {-1,-1,6}};
 

@@ -6,8 +6,10 @@
 
 void JMultilevelSourceArrow::SetEventSource(JEventSource* source) {
     m_source = source;
-    m_levels = source->GetEventLevels();
-    m_child_event_level = m_levels.back();
+    m_levels = source->GetParentLevels();
+    m_child_event_level = source->GetLevel();
+    m_levels.push_back(m_child_event_level);
+
     m_next_input_port = 0;
 
     size_t input_port_count = 0;

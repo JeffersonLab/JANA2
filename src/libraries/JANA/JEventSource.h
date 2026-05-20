@@ -41,7 +41,7 @@ private:
     bool m_enable_process_parallel = false;
     Status m_status = Status::Unopened;
 
-    std::vector<JEventLevel> m_event_levels;
+    std::vector<JEventLevel> m_parent_levels;
     JEventLevel m_next_level = JEventLevel::None;
 
 
@@ -148,7 +148,7 @@ public:
     uint64_t GetSkippedEventCount() const { return m_events_skipped; };
     uint64_t GetProcessedEventCount() const { return m_events_processed; };
 
-    const std::vector<JEventLevel> GetEventLevels() { return m_event_levels; }
+    const std::vector<JEventLevel> GetParentLevels() { return m_parent_levels; }
 
     bool IsGetObjectsEnabled() const { return m_enable_get_objects; }
     bool IsFinishEventEnabled() const { return m_enable_finish_event; }
@@ -181,7 +181,7 @@ public:
     void SetNSkip(uint64_t nskip) { m_nskip = nskip; };
 
     void SetNextEventLevel(JEventLevel level) { m_next_level = level; }
-    void SetEventLevels(std::vector<JEventLevel> levels) { m_event_levels = levels; }
+    void SetParentLevels(std::vector<JEventLevel> levels) { m_parent_levels = levels; }
     JEventLevel GetNextInputLevel() const { return m_next_level; }
 
 
