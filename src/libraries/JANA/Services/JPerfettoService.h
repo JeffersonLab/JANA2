@@ -13,7 +13,10 @@
 PERFETTO_DEFINE_CATEGORIES(
     perfetto::Category("jana").SetDescription("JANA2 framework events (arrow dispatch)"),
     perfetto::Category("factory").SetDescription("JANA2 factory Process() execution per event"),
-    perfetto::Category("factory_init").SetDescription("JANA2 factory Init/ChangeRun/BeginRun/EndRun callbacks")
+    perfetto::Category("factory_init").SetDescription("JANA2 factory Init() callback (first activation only)"),
+    perfetto::Category("factory_begin_run").SetDescription("JANA2 factory BeginRun() callback"),
+    perfetto::Category("factory_change_run").SetDescription("JANA2 factory ChangeRun() callback"),
+    perfetto::Category("factory_end_run").SetDescription("JANA2 factory EndRun() callback")
 );
 #endif // JANA2_HAVE_PERFETTO
 
