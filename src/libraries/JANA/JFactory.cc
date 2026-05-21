@@ -10,6 +10,12 @@
 
 #if JANA2_HAVE_PERFETTO
 #include <JANA/Services/JPerfettoService.h>
+
+// Thread-local pointer to the factory whose span is currently open on this thread.
+// Used to build inter-factory dependency flow arrows: when factory B is triggered from
+// within factory A's Process(), g_current_executing_factory == A, so we can draw
+// an arrow A → B in the Perfetto timeline.
+static thread_local JFactory* g_current_executing_factory = nullptr;
 #endif
 
 
@@ -114,10 +120,41 @@ void JFactory::Create(const JEvent& event) {
     // The factory span wraps the entire activation: Init + run callbacks + input population + Process.
     // factory_init spans (Init, BeginRun, ChangeRun, EndRun) appear as children of this factory span,
     // making the phase structure visible when inspecting any factory span in the trace.
+    // Flow events connect each factory span to the parent factory that triggered it,
+    // drawn as arrows showing the data-dependency chain in the Perfetto UI.
     {
 #if JANA2_HAVE_PERFETTO
-        TRACE_EVENT("factory", perfetto::DynamicString{GetFactoryName()},
-            "tag", GetTag(), "event_nr", event.GetEventNumber());
+        // If a parent factory is currently executing on this thread it triggered us.
+        // Emit a flow-start instant inside the parent's still-open span, then open
+        // our span with a TerminatingFlow — Perfetto draws an arrow parent → us.
+        JFactory* const caller = g_current_executing_factory;
+        if (caller != nullptr) {
+            // FNV-1a-inspired hash: unique 64-bit flow ID per (caller, callee, event).
+            uint64_t flow_id = 14695981039346656037ULL;
+            flow_id = (flow_id ^ reinterpret_cast<uint64_t>(caller)) * 1099511628211ULL;
+            flow_id = (flow_id ^ reinterpret_cast<uint64_t>(this))   * 1099511628211ULL;
+            flow_id = (flow_id ^ static_cast<uint64_t>(event.GetEventNumber())) * 1099511628211ULL;
+            // Flow starts here — we are still executing inside the parent's open span.
+            TRACE_EVENT_INSTANT("factory", perfetto::DynamicString{GetFactoryName()},
+                perfetto::ThreadTrack::Current(), perfetto::Flow::Global(flow_id));
+            // Our span starts, consuming the arrow from the parent's instant above.
+            TRACE_EVENT_BEGIN("factory", perfetto::DynamicString{GetFactoryName()},
+                perfetto::TerminatingFlow::Global(flow_id),
+                "tag", GetTag(), "event_nr", event.GetEventNumber());
+        } else {
+            TRACE_EVENT_BEGIN("factory", perfetto::DynamicString{GetFactoryName()},
+                "tag", GetTag(), "event_nr", event.GetEventNumber());
+        }
+        // RAII: close the Perfetto span on scope exit (exception-safe).
+        struct SpanGuard { ~SpanGuard() { TRACE_EVENT_END("factory"); } } span_guard;
+        // RAII: track the currently-executing factory so sub-factories can link back to us.
+        // Declared after span_guard — its destructor runs first, restoring the caller
+        // before the span closes.
+        struct CallerGuard {
+            JFactory** slot; JFactory* saved;
+            ~CallerGuard() { *slot = saved; }
+        } caller_guard{&g_current_executing_factory, caller};
+        g_current_executing_factory = this;
 #endif
 
         // Make sure Init() ran, which might except...
