@@ -134,8 +134,8 @@ void JFactory::Create(const JEvent& event) {
         if (TRACE_EVENT_CATEGORY_ENABLED("factory") && caller != nullptr) {
             // FNV-1a-inspired hash: unique 64-bit flow ID per (caller, callee, event).
             uint64_t flow_id = 14695981039346656037ULL;
-            flow_id = (flow_id ^ reinterpret_cast<uint64_t>(caller)) * 1099511628211ULL;
-            flow_id = (flow_id ^ reinterpret_cast<uint64_t>(this))   * 1099511628211ULL;
+            flow_id = (flow_id ^ static_cast<uint64_t>(reinterpret_cast<uintptr_t>(caller))) * 1099511628211ULL;
+            flow_id = (flow_id ^ static_cast<uint64_t>(reinterpret_cast<uintptr_t>(this)))   * 1099511628211ULL;
             flow_id = (flow_id ^ static_cast<uint64_t>(event.GetEventNumber())) * 1099511628211ULL;
             // Flow starts here — we are still executing inside the parent's open span.
             TRACE_EVENT_INSTANT("factory", perfetto::DynamicString{GetFactoryName()},
@@ -192,7 +192,7 @@ void JFactory::Create(const JEvent& event) {
                             {
 #if JANA2_HAVE_PERFETTO
                                 TRACE_EVENT("factory_end_run", perfetto::DynamicString{GetFactoryName()},
-                                    "tag", GetTag(), "run_nr", run_number);
+                                    "tag", GetTag(), "run_nr", mPreviousRunNumber);
 #endif
                                 CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
                             }

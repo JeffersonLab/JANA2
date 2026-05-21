@@ -66,9 +66,9 @@ if (NOT ${USE_XERCES})
     message(STATUS "Skipping support for libJANA's JGeometryXML because USE_XERCES=Off")
 endif()
 
-if (USE_PERFETTO)
-    list(APPEND JANA2_SOURCES Services/JPerfettoService.cc)
-endif()
+# Always compiled — JPerfettoService.cc contains a JANA2_HAVE_PERFETTO==0 stub
+# so it links correctly even when Perfetto support is not built in.
+list(APPEND JANA2_SOURCES Services/JPerfettoService.cc)
 
 add_library(jana2 OBJECT ${JANA2_SOURCES})
 

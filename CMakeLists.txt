@@ -146,6 +146,7 @@ if (USE_PERFETTO)
         file(DOWNLOAD "${PERFETTO_SDK_URL}" "${PERFETTO_SDK_ZIP}"
             STATUS DOWNLOAD_STATUS
             TLS_VERIFY ON
+            EXPECTED_HASH SHA256=443b148764c4259c9bf3e724bb508b66f3ff77d30e2ccfafbc0f1791cc08141c
         )
         list(GET DOWNLOAD_STATUS 0 DOWNLOAD_ERROR_CODE)
         if(DOWNLOAD_ERROR_CODE)
@@ -160,7 +161,10 @@ if (USE_PERFETTO)
         $<BUILD_INTERFACE:${PERFETTO_SDK_DIR}>
         $<INSTALL_INTERFACE:include/perfetto>
     )
-    target_compile_options(perfetto_sdk PRIVATE -Wno-sign-compare -Wno-unused-parameter -Wno-missing-field-initializers)
+    target_compile_options(perfetto_sdk PRIVATE
+        $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:
+            -Wno-sign-compare -Wno-unused-parameter -Wno-missing-field-initializers>
+    )
     install(TARGETS perfetto_sdk EXPORT jana2_targets DESTINATION lib)
     install(FILES ${PERFETTO_SDK_DIR}/perfetto.h DESTINATION include/perfetto)
     set(JANA2_HAVE_PERFETTO 1)
