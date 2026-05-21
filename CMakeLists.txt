@@ -137,6 +137,7 @@ endif()
 
 if (USE_PERFETTO)
     set(PERFETTO_VERSION "55.3" CACHE STRING "Perfetto SDK version to download")
+    set(PERFETTO_HASH "443b148764c4259c9bf3e724bb508b66f3ff77d30e2ccfafbc0f1791cc08141c" CACHE STRING "Perfetto zip sha256 hash")
     set(PERFETTO_SDK_URL "https://github.com/google/perfetto/releases/download/v${PERFETTO_VERSION}/perfetto-cpp-sdk-src.zip")
     set(PERFETTO_SDK_ZIP "${CMAKE_BINARY_DIR}/perfetto-cpp-sdk-src-${PERFETTO_VERSION}.zip")
     set(PERFETTO_SDK_DIR "${CMAKE_BINARY_DIR}/perfetto_sdk_${PERFETTO_VERSION}")
@@ -146,7 +147,7 @@ if (USE_PERFETTO)
         file(DOWNLOAD "${PERFETTO_SDK_URL}" "${PERFETTO_SDK_ZIP}"
             STATUS DOWNLOAD_STATUS
             TLS_VERIFY ON
-            EXPECTED_HASH SHA256=443b148764c4259c9bf3e724bb508b66f3ff77d30e2ccfafbc0f1791cc08141c
+            EXPECTED_HASH SHA256=${PERFETTO_HASH}
         )
         list(GET DOWNLOAD_STATUS 0 DOWNLOAD_ERROR_CODE)
         if(DOWNLOAD_ERROR_CODE)
