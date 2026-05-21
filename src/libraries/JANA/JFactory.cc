@@ -128,7 +128,10 @@ void JFactory::Create(const JEvent& event) {
         // Emit a flow-start instant inside the parent's still-open span, then open
         // our span with a TerminatingFlow — Perfetto draws an arrow parent → us.
         JFactory* const caller = g_current_executing_factory;
-        if (caller != nullptr) {
+        // Guard flow_id computation behind the category check: the FNV hash and
+        // GetEventNumber() are non-trivial work that should not run when tracing
+        // is disabled, even though the TRACE_EVENT_* args are already lazy.
+        if (TRACE_EVENT_CATEGORY_ENABLED("factory") && caller != nullptr) {
             // FNV-1a-inspired hash: unique 64-bit flow ID per (caller, callee, event).
             uint64_t flow_id = 14695981039346656037ULL;
             flow_id = (flow_id ^ reinterpret_cast<uint64_t>(caller)) * 1099511628211ULL;
