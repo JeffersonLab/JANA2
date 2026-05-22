@@ -3,7 +3,7 @@
 if(USE_ROOT)
 
     find_package(ROOT REQUIRED COMPONENTS Gui Core RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread MultiProc)
-    ROOT_GENERATE_DICTIONARY(G__jv_mainframe jv_mainframe.h)
+    ROOT_GENERATE_DICTIONARY(G__jv_mainframe jv_mainframe.h LINKDEF jv_mainframe_LinkDef.h)
 
     file(GLOB JANAVIEW_HEADERS "*.h*")
 

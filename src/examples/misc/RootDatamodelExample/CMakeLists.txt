@@ -14,7 +14,7 @@ if(${USE_ROOT})
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
     set(my_pcms)
     foreach( CLASS Hit Cluster )
-        ROOT_GENERATE_DICTIONARY(G__${CLASS} ${CLASS}.h)
+        ROOT_GENERATE_DICTIONARY(G__${CLASS} ${CLASS}.h LINKDEF ${CLASS}_LinkDef.h)
         list(APPEND my_pcms ${CMAKE_CURRENT_BINARY_DIR}/lib${CLASS}_rdict.pcm )
     endforeach()
 
