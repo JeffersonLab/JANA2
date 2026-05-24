@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "JANA/Topology/JArrow.h"
 #include "JANA/Utils/JEventLevel.h"
 #include "JSourceArrow.h"
 #include "JMapArrow.h"
@@ -174,6 +175,102 @@ void JTopologyBuilder::CreateTopology() {
     for (auto* queue: queues) {
         LOG_DEBUG(GetLogger()) << "Queue " << i++ << ": establishes_ordering: " << queue->GetEstablishesOrdering() << ", enforces_ordering: " << queue->GetEnforcesOrdering();
     }
+}
+
+void JTopologyBuilder::CreateTopologyFromScratch() {
+
+    enum class Column { Source=0, UnfoldAbove=1, BatchBefore=2, UnfoldBelow=3, FoldBelow=4, BatchAfter=5, Tap=6, FoldAbove=7};
+    struct Cell {
+        JArrow* start = nullptr;
+        JArrow* end = nullptr;
+    };
+
+    std::map<std::pair<JEventLevel, Column>, Cell> grid;
+
+    // -----------------------------
+    // Phase 1: Iterate over all components, adding the corresponding arrows to the grid
+    // -----------------------------
+
+    int map_counter = 0;
+
+    // Place all sources on grid
+    // -----------------------------
+    std::map<JEventLevel, std::vector<JEventSource*>> sources;
+    for (JEventSource* source : m_components->get_evt_srces()) {
+        if (source->IsEnabled()) {
+            sources[source->GetLevel()].push_back(source);
+        }
+    }
+    for (auto& it : sources) {
+        auto level = it.first;
+        auto level_str = toString(level);
+        auto* src_arrow = new JSourceArrow(level_str+"Source", level, it.second);
+        arrows.push_back(src_arrow);
+        grid[{level, Column::Source}] = {src_arrow, src_arrow};
+    }
+
+    // Place all unfolders on grid
+    // -----------------------------
+    for (auto* unfolder: m_components->get_unfolders()) {
+
+        if (!unfolder->IsEnabled()) continue;
+
+        // Create unfold arrow
+        // Publish at _each_ grid location
+        auto parent_level = unfolder->GetLevel();
+        auto child_level = unfolder->GetChildLevel();
+
+        auto* map_arrow = new JMapArrow(toString(parent_level)+"Map"+std::to_string(map_counter++), parent_level);
+        auto* unfold_arrow = new JUnfoldArrow(toString(child_level)+"Unfold", unfolder);
+        map_arrow->AddUnfolder(unfolder);
+        arrows.push_back(map_arrow);
+        arrows.push_back(unfold_arrow);
+        Connect(map_arrow, map_arrow->EVENT_OUT, unfold_arrow, unfold_arrow->PARENT_IN);
+
+        grid[{parent_level, Column::UnfoldBelow}] = {map_arrow, unfold_arrow};
+        grid[{child_level, Column::UnfoldAbove}] = {unfold_arrow, unfold_arrow};
+    }
+
+    // Place all processors on grid
+    // -----------------------------
+    std::map<JEventLevel, std::vector<JEventProcessor*>> mappable_processors;
+    std::map<JEventLevel, std::vector<JEventProcessor*>> tappable_processors;
+    for (auto* proc : m_components->get_evt_procs()) {
+        if (proc->IsEnabled()) {
+
+            if (proc->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode && proc->IsOrderingEnabled()) {
+                throw JException("%s: Ordering can only be used with non-legacy JEventProcessors", proc->GetTypeName().c_str());
+            }
+            mappable_processors[proc->GetLevel()].push_back(proc);
+            if (proc->GetCallbackStyle() != JEventProcessor::CallbackStyle::LegacyMode) {
+                tappable_processors[proc->GetLevel()].push_back(proc);
+            }
+        }
+    }
+    for (auto it : mappable_processors) {
+        auto level = it.first;
+        auto level_str = toString(level);
+        auto* map_arrow = new JMapArrow(level_str+"Map"+std::to_string(map_counter++), level);
+        for (JEventProcessor* proc : it.second) {
+            map_arrow->AddProcessor(proc);
+        }
+        arrows.push_back(map_arrow);
+
+        auto tappable_procs_it = tappable_processors.find(level);
+        if (tappable_procs_it != tappable_processors.end()) {
+            JArrow* first_tap_arrow = nullptr;
+            JArrow* last_tap_arrow = nullptr;
+            std::tie(first_tap_arrow, last_tap_arrow) = CreateTapChain(it.second, level_str);
+            Connect(map_arrow, map_arrow->EVENT_OUT, first_tap_arrow, JTapArrow::EVENT_IN);
+            grid[{level, Column::Tap}] = {map_arrow, last_tap_arrow};
+        }
+        else {
+            // ONLY legacy processors, no tap chain
+            grid[{level, Column::Tap}] = {map_arrow, map_arrow};
+        }
+    }
+
+    // Phase 2: Iterate over all rows and all adjacent occupied column pairs, wiring horizontally
 }
 
 

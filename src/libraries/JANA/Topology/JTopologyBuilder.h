@@ -67,6 +67,7 @@ public:
     void SetConfigureFn(std::function<void(JTopologyBuilder&, JComponentManager&)> configure_fn);
 
     void CreateTopology();
+    void CreateTopologyFromScratch();
 
     std::string PrintTopology();
 
