@@ -18,14 +18,14 @@ public:
     enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
 
 private:
-    std::vector<JEventSource*> m_sources;
+    bool m_parallel_source = false;
     std::vector<JEventUnfolder*> m_unfolders;
     std::vector<JEventProcessor*> m_procs;
 
 public:
     JMapArrow(std::string name, JEventLevel level);
 
-    void AddSource(JEventSource* source);
+    void SetParallelSource(bool is_parallel);
     void AddUnfolder(JEventUnfolder* unfolder);
     void AddProcessor(JEventProcessor* proc);
 
