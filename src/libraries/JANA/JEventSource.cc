@@ -175,13 +175,8 @@ JEventSource::Result JEventSource::DoNext(std::shared_ptr<JEvent> event) {
             DoClose(false);
             return Result::FailureFinished;
         }
-        else if (result == Result::FailureTryAgain) {
-            // We end up here if we tried to read an entry in a file but it is on a tape drive and isn't ready yet
-            // or if we polled the socket, found no new messages, but still expect messages later
-            return Result::FailureTryAgain;
-        }
         else {
-            throw JException("Invalid JEventSource::Result value!");
+            return result;
         }
     }
     else { // status == Closed

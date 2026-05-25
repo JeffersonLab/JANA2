@@ -42,9 +42,7 @@ public:
 
 void configure_multisource_topology(JTopologyBuilder& builder, JComponentManager& components) {
 
-    auto* src_arrow = new JMultilevelSourceArrow;
-    src_arrow->SetName("src");
-    src_arrow->SetEventSource(components.get_evt_srces().at(0));
+    auto* src_arrow = new JMultilevelSourceArrow("src", components.get_evt_srces().at(0));
 
     JTapArrow* tap_arrow = new JTapArrow("tap");
     for (auto proc : components.get_evt_procs()) {

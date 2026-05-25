@@ -10,10 +10,10 @@
 #include "JANA/Topology/JArrow.h"
 #include "JANA/Utils/JEventLevel.h"
 #include "JSourceArrow.h"
+#include "JMultilevelSourceArrow.h"
 #include "JMapArrow.h"
 #include "JTapArrow.h"
 #include "JUnfoldArrow.h"
-#include "JFoldArrow.h"
 #include <JANA/JEventProcessor.h>
 #include <JANA/Services/JComponentManager.h>
 #include <JANA/Utils/JTablePrinter.h>
@@ -106,13 +106,13 @@ std::string JTopologyBuilder::PrintTopology() {
     // Build index lookup for queues
     int i = 0;
     std::map<void*, int> lookup;
-    for (JEventQueue* queue : queues) {
-        lookup[queue] = i;
-        i += 1;
-    }
     // Build index lookup for pools
     for (JEventPool* pool : pools) {
         lookup[pool] = i;
+        i += 1;
+    }
+    for (JEventQueue* queue : queues) {
+        lookup[queue] = i;
         i += 1;
     }
     // Build table
@@ -225,12 +225,28 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
         auto level = it.first;
         auto level_str = toString(level);
         bool need_map = false;
+        bool need_multi_arrow = false;
         for (auto* source : it.second) {
-            if (source->IsProcessParallelEnabled()) {
-                need_map = true;
+            need_map |= source->IsProcessParallelEnabled();
+            need_multi_arrow |= (source->GetParentLevels().size() > 0);
+        }
+
+        if (need_multi_arrow && sources.size() > 1) {
+            throw JException("Multiple multilevel JEventSources not supported yet");
+        }
+
+        JArrow* src_arrow;
+        if (need_multi_arrow) {
+            src_arrow = new JMultilevelSourceArrow(level_str+"MultiSource", it.second.at(0));
+            // Add parent levels now. Child level is added further below.
+            for (auto parent_level: it.second.at(0)->GetParentLevels()) {
+                levels_present.insert(parent_level);
+                grid[{parent_level, Column::Source}] = {src_arrow, src_arrow};
             }
         }
-        auto* src_arrow = new JSourceArrow(level_str+"Source", level, it.second);
+        else {
+            src_arrow = new JSourceArrow(level_str+"Source", level, it.second);
+        }
         AddArrow(src_arrow);
 
         if (need_map) {
@@ -459,8 +475,6 @@ void JTopologyBuilder::Connect(JArrow* upstream, size_t upstream_port_id, JArrow
         queues.push_back(queue);
         downstream_port.Attach(queue);
     }
-
-    
 
     upstream_port.Attach(queue);
 
