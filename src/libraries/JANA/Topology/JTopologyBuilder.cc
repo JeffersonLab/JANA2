@@ -37,6 +37,7 @@ JTopologyBuilder::~JTopologyBuilder() {
 
 void JTopologyBuilder::AddArrow(JArrow* arrow) {
     arrows.push_back(arrow);
+    arrow->SetId(arrows.size()-1);
     auto it = arrow_lookup.find(arrow->GetName());
     if (it != arrow_lookup.end()) {
         throw JException("AddArrow(): Arrow with name '%s' has already been added", arrow->GetName().c_str());
@@ -44,6 +45,13 @@ void JTopologyBuilder::AddArrow(JArrow* arrow) {
     arrow_lookup[arrow->GetName()] = arrow;
 }
 
+JArrow* JTopologyBuilder::GetArrow(const std::string& arrow_name) {
+    auto it = arrow_lookup.find(arrow_name);
+    if (it == arrow_lookup.end()) {
+        return nullptr;
+    }
+    return it->second;
+}
 
 JEventPool* JTopologyBuilder::GetOrCreatePool(JEventLevel level) {
     auto pool_it = pool_lookup.find(level);
@@ -193,7 +201,7 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
     // Phase 1: Iterate over all components, adding the corresponding arrows to the grid
     // -----------------------------
 
-    int map_counter = 0;
+    int map_counter = 1;
     std::set<JEventLevel> levels_present;
 
     // Place all sources on grid
@@ -208,9 +216,25 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
     for (auto& it : sources) {
         auto level = it.first;
         auto level_str = toString(level);
+        bool need_map = false;
+        for (auto* source : it.second) {
+            if (source->IsProcessParallelEnabled()) {
+                need_map = true;
+            }
+        }
         auto* src_arrow = new JSourceArrow(level_str+"Source", level, it.second);
         AddArrow(src_arrow);
-        grid[{level, Column::Source}] = {src_arrow, src_arrow};
+
+        if (need_map) {
+            auto* map_arrow = new JMapArrow(toString(level)+"Map"+std::to_string(map_counter++), level);
+            map_arrow->SetParallelSource(true);
+            AddArrow(map_arrow);
+            Connect(src_arrow, 1, map_arrow, 0);
+            grid[{level, Column::Source}] = {src_arrow, map_arrow};
+        }
+        else {
+            grid[{level, Column::Source}] = {src_arrow, src_arrow};
+        }
     }
 
     // Place all unfolders on grid
@@ -233,6 +257,12 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
         AddArrow(unfold_arrow);
         Connect(map_arrow, map_arrow->EVENT_OUT, unfold_arrow, unfold_arrow->PARENT_IN);
 
+        if (grid.find({parent_level, Column::UnfoldBelow}) != grid.end()) {
+            throw JException("Only one unfolder allowed for parent level=%s", toString(parent_level));
+        }
+        if (grid.find({child_level, Column::UnfoldAbove}) != grid.end()) {
+            throw JException("Only one unfolder allowed for child level=%s", toString(child_level));
+        }
         grid[{parent_level, Column::UnfoldBelow}] = {map_arrow, unfold_arrow};
         grid[{child_level, Column::UnfoldAbove}] = {unfold_arrow, unfold_arrow};
     }
@@ -305,6 +335,9 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
         }
         // Connect last_arrow to pool
         auto port_index = last_arrow->GetPortIndex(level, JArrow::PortDirection::Out);
+        if (level == JEventLevel::PhysicsEvent) {
+            last_arrow->SetIsSink(true);
+        }
         last_arrow->GetPort(port_index).Attach(pool);
     }
 
@@ -454,7 +487,7 @@ std::pair<JTapArrow*, JTapArrow*> JTopologyBuilder::CreateTapChain(std::vector<J
         }
         JTapArrow* current = new JTapArrow(arrow_name, proc->GetLevel());
         current->AddProcessor(proc);
-        arrows.push_back(current);
+        AddArrow(current);
         if (first == nullptr) {
             first = current;
         }

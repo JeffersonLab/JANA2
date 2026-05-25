@@ -73,6 +73,7 @@ public:
 
 private:
     std::string m_name;            // Used for human understanding
+    int m_id;                      // Used internally
     bool m_is_parallel = false;    // Whether or not it is safe to parallelize
     bool m_is_source = false;      // Whether or not this arrow should activate/drain the topology
     bool m_is_sink = false;        // Whether or not tnis arrow contributes to the final event count
@@ -107,6 +108,7 @@ public:
 
 
     const std::string& GetName() { return m_name; }
+    int GetId() { return m_id; }
     JLogger& GetLogger() { return m_logger; }
     bool IsParallel() { return m_is_parallel; }
     bool IsSource() { return m_is_source; }
@@ -114,6 +116,7 @@ public:
     int GetNextPortIndex() { return m_next_input_port; }
 
     void SetName(std::string name) { m_name = name; }
+    void SetId(int id) { m_id = id; }
     void SetLogger(JLogger logger) { m_logger = logger; }
     void SetIsParallel(bool is_parallel) { m_is_parallel = is_parallel; }
     void SetIsSource(bool is_source) { m_is_source = is_source; }
@@ -121,6 +124,7 @@ public:
 
     Port& AddPort(std::string port_name, JEventLevel level, PortDirection direction);
     Port& GetPort(size_t port_index) { return *m_ports.at(port_index); }
+    Port& GetPort(JEventLevel level, PortDirection direction) { return *m_ports.at(m_auto_port_lookup.at({level, direction})); }
 
     int GetPortIndex(JEventLevel level, PortDirection direction);
     int GetPortIndex(const std::string& port_name);

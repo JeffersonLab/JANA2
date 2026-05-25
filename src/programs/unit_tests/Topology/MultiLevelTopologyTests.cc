@@ -1,6 +1,7 @@
 #include "MultiLevelTopologyTests.h"
 #include "JANA/Engine/JExecutionEngine.h"
 #include "JANA/JApplicationFwd.h"
+#include "JANA/JEvent.h"
 #include "JANA/JException.h"
 #include "JANA/Topology/JArrow.h"
 #include "JANA/Topology/JTopologyBuilder.h"
@@ -31,38 +32,62 @@ TEST_CASE("TimeslicesTests_FineGrained") {
     app.Initialize();
     auto ee = app.GetService<JExecutionEngine>();
     auto top = app.GetService<JTopologyBuilder>();
-    enum ArrowId {TS_SRC=0, TS_MAP=1, TS_UNF=2, PH_MAP=3, PH_TAP=4};
+
+    auto src_arrow = top->GetArrow("TimesliceSource");
+    auto ts_map_arrow = top->GetArrow("TimesliceMap1");
+    auto unfold_arrow = top->GetArrow("PhysicsEventUnfold");
+    auto pe_map_arrow = top->GetArrow("PhysicsEventMap2");
+    auto pe_tap_arrow = top->GetArrow("PhysicsEventTap");
+
+    auto ts_pool = top->GetOrCreatePool(JEventLevel::Timeslice);
+    auto pe_pool = top->GetOrCreatePool(JEventLevel::PhysicsEvent);
+
+    auto ts_map_queue = ts_map_arrow->GetPort(0).GetQueue();
+    auto unfold_queue = unfold_arrow->GetPort(0).GetQueue();
+    auto pe_map_queue = pe_map_arrow->GetPort(0).GetQueue();
+    auto pe_tap_queue = pe_tap_arrow->GetPort(0).GetQueue();
+
+    // Test connectivity
+    REQUIRE(src_arrow->GetPort(0).GetPool() == ts_pool);
+    REQUIRE(src_arrow->GetPort(1).GetQueue() == ts_map_queue);
+    REQUIRE(ts_map_arrow->GetPort(1).GetQueue() == unfold_queue);
+    REQUIRE(unfold_queue == unfold_arrow->GetPort(JEventLevel::Timeslice, JArrow::PortDirection::In).GetQueue());
+    REQUIRE(pe_pool == unfold_arrow->GetPort(JEventLevel::PhysicsEvent, JArrow::PortDirection::In).GetPool());
+    REQUIRE(unfold_arrow->GetPort(JEventLevel::Timeslice, JArrow::PortDirection::Out).GetPool() == ts_pool);
+    REQUIRE(unfold_arrow->GetPort(JEventLevel::PhysicsEvent, JArrow::PortDirection::Out).GetQueue() == pe_map_queue);
+    REQUIRE(pe_map_arrow->GetPort(1).GetQueue() == pe_tap_queue);
+    REQUIRE(pe_tap_arrow->GetPort(1).GetPool() == pe_pool);
+
     JArrow::FireResult result = JArrow::FireResult::NotRunYet;
 
-    result = ee->Fire(TS_SRC, 0);
+    result = ee->Fire(src_arrow->GetId(), 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
 
-    REQUIRE(top->GetArrows()[TS_SRC]->GetPort(1).GetQueue() == top->GetQueues()[0]);
-    REQUIRE(top->GetPools()[0]->GetCapacity() == 2);
-    REQUIRE(top->GetPools()[0]->GetSize(0) == 1);
-    REQUIRE(top->GetQueues()[0]->GetSize(0) == 1);
+    REQUIRE(ts_pool->GetCapacity() == 2);
+    REQUIRE(ts_pool->GetSize(0) == 1);
+    REQUIRE(ts_map_queue->GetSize(0) == 1);
 
-    result = ee->Fire(TS_MAP, 0);
+    result = ee->Fire(ts_map_arrow->GetId(), 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
-    REQUIRE(top->GetQueues()[0]->GetSize(0) == 0);
-    REQUIRE(top->GetQueues()[1]->GetSize(0) == 1);
-    
+    REQUIRE(ts_map_queue->GetSize(0) == 0);
+    REQUIRE(unfold_queue->GetSize(0) == 1);
+
     // Parent
-    result = ee->Fire(TS_UNF, 0);
+    result = ee->Fire(unfold_arrow->GetId(), 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
     
     // Child
-    result = ee->Fire(TS_UNF, 0);
+    result = ee->Fire(unfold_arrow->GetId(), 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
    
-    result = ee->Fire(PH_MAP, 0);
+    result = ee->Fire(pe_map_arrow->GetId(), 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
    
-    result = ee->Fire(PH_TAP, 0);
+    result = ee->Fire(pe_tap_arrow->GetId(), 0);
     REQUIRE(result == JArrow::FireResult::KeepGoing);
     
-    REQUIRE(top->GetPools()[0]->GetSize(0) == 1); // Unfolder still has parent
-    REQUIRE(top->GetPools()[1]->GetSize(0) == 4); // Child returned to pool
+    REQUIRE(ts_pool->GetSize(0) == 1); // Unfolder still has parent
+    REQUIRE(pe_pool->GetSize(0) == 4); // Child returned to pool
     
 }
 
