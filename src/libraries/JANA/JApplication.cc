@@ -115,10 +115,6 @@ void JApplication::Initialize() {
 
     // We trigger initialization 
     m_service_locator->get<JParameterManager>();
-    auto component_manager = m_service_locator->get<JComponentManager>();
-    auto plugin_loader = m_service_locator->get<JPluginLoader>();
-    auto topology_builder = m_service_locator->get<JTopologyBuilder>();
-    auto wiring_service = m_service_locator->get<jana::services::JWiringService>();
 
     // Set logger on JApplication itself
     m_logger = m_params->GetLogger("jana");
@@ -136,6 +132,10 @@ void JApplication::Initialize() {
         JVersion::PrintVersionDescription(oss);
         LOG_INFO(m_logger) << oss.str() << LOG_END;
     }
+    auto component_manager = m_service_locator->get<JComponentManager>();
+    auto plugin_loader = m_service_locator->get<JPluginLoader>();
+    auto topology_builder = m_service_locator->get<JTopologyBuilder>();
+    auto wiring_service = m_service_locator->get<jana::services::JWiringService>();
 
     // Attach all plugins
     for (const auto& plugin_name : wiring_service->GetPluginNames()) {
