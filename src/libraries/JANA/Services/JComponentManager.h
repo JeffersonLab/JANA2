@@ -38,23 +38,23 @@ public:
     void ConfigureComponents();
 
     // Helpers
-    void preinitialize_components();
-    void resolve_event_sources();
-    void initialize_components();
-    JEventSourceGenerator* resolve_user_event_source_generator() const;
-    JEventSourceGenerator* resolve_event_source(std::string source_name) const;
+    void PreinitializeComponents();
+    void ResolveEventSources();
+    void InitializeComponents();
+    JEventSourceGenerator* ResolveUserEventSourceGenerator() const;
+    JEventSourceGenerator* ResolveEventSource(std::string source_name) const;
 
     // Called after JApplication::Initialize() finishes
-    const JComponentSummary& get_component_summary();
+    const JComponentSummary& GetComponentSummary();
 
-    std::vector<JEventSourceGenerator*>& get_evt_src_gens();
-    std::vector<JEventSource*>& get_evt_srces();
-    std::vector<JEventProcessor*>& get_evt_procs();
-    std::vector<JFactoryGenerator*>& get_fac_gens();
-    std::vector<JEventUnfolder*>& get_unfolders();
-    std::vector<JEventFolder*>& get_folders();
+    std::vector<JEventSourceGenerator*>& GetSourceGenerators();
+    std::vector<JEventSource*>& GetSources();
+    std::vector<JEventProcessor*>& GetProcessors();
+    std::vector<JFactoryGenerator*>& GetFactoryGenerators();
+    std::vector<JEventUnfolder*>& GetUnfolders();
+    std::vector<JEventFolder*>& GetFolders();
 
-    void configure_event(JEvent& event);
+    void ConfigureEvent(JEvent& event);
 
 private:
 

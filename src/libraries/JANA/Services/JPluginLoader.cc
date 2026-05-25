@@ -156,7 +156,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
         // see an extremely difficult-to-debug error (usually a segfault) stemming from the binary incompatibility 
         // between the host application and the plugin.
 
-        jcm->next_plugin(name);
+        jcm->NextPlugin(name);
         attach_plugin(name, path); // Throws JException on failure
     }
 }

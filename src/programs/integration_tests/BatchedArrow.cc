@@ -103,12 +103,12 @@ struct BatchedProc : public JEventProcessor {
 
 void configure_batched_topology(JTopologyBuilder& builder, JComponentManager& component_manager) {
 
-    auto* src_arrow = new JSourceArrow("PhysicsEventSource", JEventLevel::PhysicsEvent, component_manager.get_evt_srces());
+    auto* src_arrow = new JSourceArrow("PhysicsEventSource", JEventLevel::PhysicsEvent, component_manager.GetSources());
 
     BatchedArrow* batched_arrow = new BatchedArrow(JEventLevel::PhysicsEvent);
 
     JTapArrow* tap_arrow = new JTapArrow("PhysicsEventTap", JEventLevel::PhysicsEvent);
-    for (auto proc : component_manager.get_evt_procs()) {
+    for (auto proc : component_manager.GetProcessors()) {
         tap_arrow->AddProcessor(proc);
     }
 

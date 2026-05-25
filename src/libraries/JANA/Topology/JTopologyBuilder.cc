@@ -216,7 +216,7 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
     // Place all sources on grid
     // -----------------------------
     std::map<JEventLevel, std::vector<JEventSource*>> sources;
-    for (JEventSource* source : m_components->get_evt_srces()) {
+    for (JEventSource* source : m_components->GetSources()) {
         if (source->IsEnabled()) {
             sources[source->GetLevel()].push_back(source);
             levels_present.insert(source->GetLevel());
@@ -264,7 +264,7 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
 
     // Place all unfolders on grid
     // -----------------------------
-    for (auto* unfolder: m_components->get_unfolders()) {
+    for (auto* unfolder: m_components->GetUnfolders()) {
 
         if (!unfolder->IsEnabled()) continue;
 
@@ -294,7 +294,7 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
 
     // Place all folders on grid
     // -----------------------------
-    for (auto* folder: m_components->get_folders()) {
+    for (auto* folder: m_components->GetFolders()) {
 
         if (!folder->IsEnabled()) continue;
 
@@ -327,7 +327,7 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
     // -----------------------------
     std::map<JEventLevel, std::vector<JEventProcessor*>> mappable_processors;
     std::map<JEventLevel, std::vector<JEventProcessor*>> tappable_processors;
-    for (auto* proc : m_components->get_evt_procs()) {
+    for (auto* proc : m_components->GetProcessors()) {
         if (proc->IsEnabled()) {
             levels_present.insert(proc->GetLevel());
             if (proc->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode && proc->IsOrderingEnabled()) {

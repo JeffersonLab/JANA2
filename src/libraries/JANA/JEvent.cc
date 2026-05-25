@@ -12,7 +12,7 @@ JEvent::JEvent() : mInspector(this){
 JEvent::JEvent(JApplication* app) : mInspector(this) {
     // Furnish the JEvent with the parameter values and factory generators provided to the JApplication
     app->Initialize();
-    app->GetService<JComponentManager>()->configure_event(*this);
+    app->GetService<JComponentManager>()->ConfigureEvent(*this);
 }
 
 JEvent::~JEvent() {

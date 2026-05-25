@@ -22,7 +22,7 @@ JEventPool::JEventPool(std::shared_ptr<JComponentManager> component_manager,
         m_owned_events.push_back(std::make_shared<JEvent>());
         auto evt = &m_owned_events.back(); 
         (*evt)->SetLevel(m_level); // Level needs to be set before factories get added in configure_event
-        m_component_manager->configure_event(**evt);
+        m_component_manager->ConfigureEvent(**evt);
         Push(evt->get(), evt_idx % location_count);
     }
 }
@@ -59,7 +59,7 @@ void JEventPool::Scale(size_t capacity) {
         m_owned_events.push_back(std::make_shared<JEvent>());
         auto evt = &m_owned_events.back(); 
         (*evt)->SetLevel(m_level); // Level needs to be set before factories get added in configure_event
-        m_component_manager->configure_event(**evt);
+        m_component_manager->ConfigureEvent(**evt);
         Push(evt->get(), evt_idx % GetLocationCount());
     }
 }

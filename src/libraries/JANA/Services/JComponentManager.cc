@@ -57,7 +57,7 @@ void JComponentManager::Init() {
     // We handle parameters in configure_components() instead.
 }
 
-void JComponentManager::configure_components() {
+void JComponentManager::ConfigureComponents() {
 
     m_params->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "Manually specifies which JEventSource should open the input file");
     m_params->SetDefaultParameter("record_call_stack", 
@@ -81,17 +81,17 @@ void JComponentManager::configure_components() {
     }
 
     // Give all components a JApplication pointer and a logger
-    preinitialize_components();
+    PreinitializeComponents();
 
     // Resolve all event sources now that all plugins have been loaded
     // (Note that we need to wire the event source generators beforehand)
-    resolve_event_sources();
+    ResolveEventSources();
 
     // Call Summarize() and Init() in order to populate JComponentSummary and JParameterManager, respectively
-    initialize_components();
+    InitializeComponents();
 }
 
-void JComponentManager::preinitialize_components() {
+void JComponentManager::PreinitializeComponents() {
     for (auto* src : m_evt_srces) {
         src->Wire(GetApplication());
     }
@@ -114,7 +114,7 @@ void JComponentManager::preinitialize_components() {
     }
 }
 
-void JComponentManager::initialize_components() {
+void JComponentManager::InitializeComponents() {
     // For now, this only computes the summary for all components except factories.
     // However, we are likely to eventually want summaries to access information only
     // available after component initialization, specifically parameters. In this case, 
@@ -165,46 +165,46 @@ void JComponentManager::initialize_components() {
     }
 }
 
-void JComponentManager::next_plugin(std::string plugin_name) {
+void JComponentManager::NextPlugin(std::string plugin_name) {
     // We defer resolving event sources until we have finished loading all plugins
     m_current_plugin_name = plugin_name;
 }
 
-void JComponentManager::add(std::string event_source_name) {
+void JComponentManager::Add(std::string event_source_name) {
     m_src_names.push_back(event_source_name);
 }
 
-void JComponentManager::add(JEventSourceGenerator *source_generator) {
+void JComponentManager::Add(JEventSourceGenerator *source_generator) {
     source_generator->SetPluginName(m_current_plugin_name);
     m_src_gens.push_back(source_generator);
 }
 
-void JComponentManager::add(JFactoryGenerator *factory_generator) {
+void JComponentManager::Add(JFactoryGenerator *factory_generator) {
     factory_generator->SetPluginName(m_current_plugin_name);
     m_fac_gens.push_back(factory_generator);
 }
 
-void JComponentManager::add(JEventSource *event_source) {
+void JComponentManager::Add(JEventSource *event_source) {
     event_source->SetPluginName(m_current_plugin_name);
     m_evt_srces.push_back(event_source);
 }
 
-void JComponentManager::add(JEventProcessor *processor) {
+void JComponentManager::Add(JEventProcessor *processor) {
     processor->SetPluginName(m_current_plugin_name);
     m_evt_procs.push_back(processor);
 }
 
-void JComponentManager::add(JEventUnfolder* unfolder) {
+void JComponentManager::Add(JEventUnfolder* unfolder) {
     unfolder->SetPluginName(m_current_plugin_name);
     m_unfolders.push_back(unfolder);
 }
 
-void JComponentManager::add(JEventFolder* folder) {
+void JComponentManager::Add(JEventFolder* folder) {
     folder->SetPluginName(m_current_plugin_name);
     m_folders.push_back(folder);
 }
 
-void JComponentManager::configure_event(JEvent& event) {
+void JComponentManager::ConfigureEvent(JEvent& event) {
     auto* factory_set = event.GetFactorySet();
     for (auto gen : m_fac_gens) {
         gen->GenerateFactories(factory_set);
@@ -216,11 +216,11 @@ void JComponentManager::configure_event(JEvent& event) {
 
 
 
-void JComponentManager::resolve_event_sources() {
+void JComponentManager::ResolveEventSources() {
 
-    m_user_evt_src_gen = resolve_user_event_source_generator();
+    m_user_evt_src_gen = ResolveUserEventSourceGenerator();
     for (auto& source_name : m_src_names) {
-        auto* generator = resolve_event_source(source_name);
+        auto* generator = ResolveEventSource(source_name);
         auto source = generator->MakeJEventSource(source_name);
         source->SetPluginName(generator->GetPluginName());
         source->Wire(GetApplication());
@@ -236,7 +236,7 @@ void JComponentManager::resolve_event_sources() {
     }
 }
 
-JEventSourceGenerator *JComponentManager::resolve_event_source(std::string source_name) const {
+JEventSourceGenerator *JComponentManager::ResolveEventSource(std::string source_name) const {
 
     // Always use the user override if they provided one
     if (m_user_evt_src_gen != nullptr) {
@@ -264,7 +264,7 @@ JEventSourceGenerator *JComponentManager::resolve_event_source(std::string sourc
 }
 
 
-JEventSourceGenerator* JComponentManager::resolve_user_event_source_generator() const {
+JEventSourceGenerator* JComponentManager::ResolveUserEventSourceGenerator() const {
 
     // If the user didn't specify an EVENT_SOURCE_TYPE, do nothing
     if (m_user_evt_src_typename == "") return nullptr;
@@ -290,27 +290,31 @@ JEventSourceGenerator* JComponentManager::resolve_user_event_source_generator() 
 
 }
 
-std::vector<JEventSourceGenerator*>& JComponentManager::get_evt_src_gens() {
+std::vector<JEventSourceGenerator*>& JComponentManager::GetSourceGenerators() {
     return m_src_gens;
 }
 
-std::vector<JEventSource*>& JComponentManager::get_evt_srces() {
+std::vector<JEventSource*>& JComponentManager::GetSources() {
     return m_evt_srces;
 }
 
-std::vector<JEventProcessor*>& JComponentManager::get_evt_procs() {
+std::vector<JEventProcessor*>& JComponentManager::GetProcessors() {
     return m_evt_procs;
 }
 
-std::vector<JFactoryGenerator*>& JComponentManager::get_fac_gens() {
+std::vector<JFactoryGenerator*>& JComponentManager::GetFactoryGenerators() {
     return m_fac_gens;
 }
 
-std::vector<JEventUnfolder*>& JComponentManager::get_unfolders() {
+std::vector<JEventUnfolder*>& JComponentManager::GetUnfolders() {
     return m_unfolders;
 }
 
-const JComponentSummary& JComponentManager::get_component_summary() {
+std::vector<JEventFolder*>& JComponentManager::GetFolders() {
+    return m_folders;
+}
+
+const JComponentSummary& JComponentManager::GetComponentSummary() {
     return m_summary;
 }
 

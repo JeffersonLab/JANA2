@@ -118,7 +118,7 @@ struct OffloadArrow : public JArrow {
 
 void configure_topology(JTopologyBuilder& builder, JComponentManager& components) {
 
-    auto* src_arrow = new JSourceArrow("src", JEventLevel::PhysicsEvent, components.get_evt_srces());
+    auto* src_arrow = new JSourceArrow("src", JEventLevel::PhysicsEvent, components.GetSources());
 
     TriggerFactoryInputsArrow* trigger_inputs_arrow = new TriggerFactoryInputsArrow(JEventLevel::PhysicsEvent);
     trigger_inputs_arrow->unique_name = "B";
@@ -127,12 +127,12 @@ void configure_topology(JTopologyBuilder& builder, JComponentManager& components
     offload_arrow->unique_name = "B";
 
     JMapArrow* map_arrow = new JMapArrow("map", JEventLevel::PhysicsEvent);
-    for (auto proc : components.get_evt_procs()) {
+    for (auto proc : components.GetProcessors()) {
         map_arrow->AddProcessor(proc);
     }
 
     JTapArrow* tap_arrow = new JTapArrow("tap", JEventLevel::PhysicsEvent);
-    for (auto proc : components.get_evt_procs()) {
+    for (auto proc : components.GetProcessors()) {
         tap_arrow->AddProcessor(proc);
     }
 
