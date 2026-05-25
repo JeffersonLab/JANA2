@@ -101,6 +101,7 @@ std::string JTopologyBuilder::PrintTopology() {
     t.AddColumn("Port", JTablePrinter::Justify::Left, 0);
     t.AddColumn("Place", JTablePrinter::Justify::Left, 0);
     t.AddColumn("ID", JTablePrinter::Justify::Left, 0);
+    t.AddColumn("Order", JTablePrinter::Justify::Left, 0);
 
     // Build index lookup for queues
     int i = 0;
@@ -135,6 +136,18 @@ std::string JTopologyBuilder::PrintTopology() {
             t | port->GetName();
             t | ((port->GetQueue() != nullptr) ? "Queue ": "Pool");
             t | place_index;
+            if (port->GetEnforcesOrdering() && port->GetEstablishesOrdering()) {
+                t | "Both";
+            }
+            else if (port->GetEnforcesOrdering()) {
+                t | "Enf";
+            }
+            else if (port->GetEstablishesOrdering()) {
+                t | "Est";
+            }
+            else {
+                t | "";
+            }
         }
     }
     return t.Render();
@@ -155,11 +168,10 @@ void JTopologyBuilder::CreateTopology() {
 
     if (m_configure_topology) {
         m_configure_topology(*this, *m_components);
-        LOG_WARN(GetLogger()) << "Found custom topology configurator! Modified arrow topology is: \n" << PrintTopology() << LOG_END;
+        LOG_INFO(GetLogger()) << "Using custom topology configuration function" << LOG_END;
     }
     else {
         CreateTopologyFromScratch();
-        LOG_INFO(GetLogger()) << "Arrow topology is:\n" << PrintTopology() << LOG_END;
     }
     for (auto* arrow : arrows) {
         arrow->SetLogger(GetLogger());
@@ -179,10 +191,7 @@ void JTopologyBuilder::CreateTopology() {
             queue->SetEstablishesOrdering(false);
         }
     }
-    size_t i = 0;
-    for (auto* queue: queues) {
-        LOG_DEBUG(GetLogger()) << "Queue " << i++ << ": establishes_ordering: " << queue->GetEstablishesOrdering() << ", enforces_ordering: " << queue->GetEnforcesOrdering();
-    }
+    LOG_INFO(GetLogger()) << "Arrow topology is:\n" << PrintTopology() << LOG_END;
 }
 
 void JTopologyBuilder::CreateTopologyFromScratch() {
@@ -470,8 +479,8 @@ std::pair<JTapArrow*, JTapArrow*> JTopologyBuilder::CreateTapChain(std::vector<J
     JTapArrow* last = nullptr;
 
     int i=1;
-    std::string arrow_name = level + "Tap";
     for (JEventProcessor* proc : procs) {
+        std::string arrow_name = level + "Tap";
         if (procs.size() > 1) {
             arrow_name += std::to_string(i++);
         }
