@@ -8,6 +8,7 @@
 #include <JANA/JMultifactory.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JEventUnfolder.h>
+#include <JANA/JEventFolder.h>
 #include <JANA/Utils/JAutoActivator.h>
 
 JComponentManager::JComponentManager() {
@@ -30,6 +31,10 @@ JComponentManager::~JComponentManager() {
     for (auto* unfolder : m_unfolders) {
         LOG_TRACE(GetLogger()) << "Destroying unfolder with type=" << unfolder->GetTypeName();
         delete unfolder;
+    }
+    for (auto* folder : m_folders) {
+        LOG_TRACE(GetLogger()) << "Destroying folder with type=" << folder->GetTypeName();
+        delete folder;
     }
 
     // The order of deletion here sadly matters, because GlueX likes to fill
@@ -104,6 +109,9 @@ void JComponentManager::preinitialize_components() {
     for (auto* unfolder : m_unfolders) {
         unfolder->Wire(GetApplication());
     }
+    for (auto* folder : m_folders) {
+        folder->Wire(GetApplication());
+    }
 }
 
 void JComponentManager::initialize_components() {
@@ -126,6 +134,11 @@ void JComponentManager::initialize_components() {
     // Unfolders
     for (auto * unfolder : m_unfolders) {
         unfolder->Summarize(m_summary);
+    }
+
+    // Unfolders
+    for (auto * folder : m_folders) {
+        folder->Summarize(m_summary);
     }
 
     JFactorySet dummy_fac_set;
@@ -184,6 +197,11 @@ void JComponentManager::add(JEventProcessor *processor) {
 void JComponentManager::add(JEventUnfolder* unfolder) {
     unfolder->SetPluginName(m_current_plugin_name);
     m_unfolders.push_back(unfolder);
+}
+
+void JComponentManager::add(JEventFolder* folder) {
+    folder->SetPluginName(m_current_plugin_name);
+    m_folders.push_back(folder);
 }
 
 void JComponentManager::configure_event(JEvent& event) {

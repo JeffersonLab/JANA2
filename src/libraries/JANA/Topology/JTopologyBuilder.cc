@@ -14,6 +14,7 @@
 #include "JMapArrow.h"
 #include "JTapArrow.h"
 #include "JUnfoldArrow.h"
+#include "JFoldArrow.h"
 #include <JANA/JEventProcessor.h>
 #include <JANA/Services/JComponentManager.h>
 #include <JANA/Utils/JTablePrinter.h>
@@ -289,6 +290,37 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
         }
         grid[{parent_level, Column::UnfoldBelow}] = {map_arrow, unfold_arrow};
         grid[{child_level, Column::UnfoldAbove}] = {unfold_arrow, unfold_arrow};
+    }
+
+    // Place all folders on grid
+    // -----------------------------
+    for (auto* folder: m_components->get_folders()) {
+
+        if (!folder->IsEnabled()) continue;
+
+        // Create unfold arrow
+        // Publish at _each_ grid location
+        auto parent_level = folder->GetLevel();
+        auto child_level = folder->GetChildLevel();
+        levels_present.insert(parent_level);
+        levels_present.insert(child_level);
+
+        auto* map_arrow = new JMapArrow(toString(child_level)+"Map"+std::to_string(map_counter++), parent_level);
+        auto* fold_arrow = new JFoldArrow(toString(parent_level)+"Fold", parent_level, child_level);
+        fold_arrow->SetFolder(folder);
+        map_arrow->AddFolder(folder);
+        AddArrow(map_arrow);
+        AddArrow(fold_arrow);
+        Connect(map_arrow, map_arrow->EVENT_OUT, fold_arrow, fold_arrow->CHILD_IN);
+
+        if (grid.find({parent_level, Column::FoldBelow}) != grid.end()) {
+            throw JException("Only one folder allowed for parent level=%s", toString(parent_level));
+        }
+        if (grid.find({child_level, Column::FoldAbove}) != grid.end()) {
+            throw JException("Only one folder allowed for child level=%s", toString(child_level));
+        }
+        grid[{parent_level, Column::FoldBelow}] = {fold_arrow, fold_arrow};
+        grid[{child_level, Column::FoldAbove}] = {map_arrow, fold_arrow};
     }
 
     // Place all processors on grid

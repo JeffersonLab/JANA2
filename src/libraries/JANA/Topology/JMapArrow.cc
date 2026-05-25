@@ -25,6 +25,10 @@ void JMapArrow::AddUnfolder(JEventUnfolder* unfolder) {
     m_unfolders.push_back(unfolder);
 }
 
+void JMapArrow::AddFolder(JEventFolder* folder) {
+    m_folders.push_back(folder);
+}
+
 void JMapArrow::AddProcessor(JEventProcessor* processor) {
     m_procs.push_back(processor);
 }

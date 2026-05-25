@@ -100,6 +100,11 @@ void JApplication::Add(JEventUnfolder* unfolder) {
     m_component_manager->add(unfolder);
 }
 
+void JApplication::Add(JEventFolder* folder) {
+    /// Adds the given JEventFolder to the JANA context. Ownership is passed to JComponentManager.
+    m_component_manager->add(folder);
+}
+
 
 void JApplication::Initialize() {
 
