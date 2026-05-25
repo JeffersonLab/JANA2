@@ -150,7 +150,8 @@ void JTopologyBuilder::CreateTopology() {
         LOG_WARN(GetLogger()) << "Found custom topology configurator! Modified arrow topology is: \n" << PrintTopology() << LOG_END;
     }
     else {
-        AttachLevel(JEventLevel::Run, nullptr, nullptr, nullptr);
+        CreateTopologyFromScratch();
+        //AttachLevel(JEventLevel::Run, nullptr, nullptr, nullptr);
         LOG_INFO(GetLogger()) << "Arrow topology is:\n" << PrintTopology() << LOG_END;
     }
     for (auto* arrow : arrows) {
@@ -179,7 +180,8 @@ void JTopologyBuilder::CreateTopology() {
 
 void JTopologyBuilder::CreateTopologyFromScratch() {
 
-    enum class Column { Source=0, UnfoldAbove=1, BatchBefore=2, UnfoldBelow=3, FoldBelow=4, BatchAfter=5, Tap=6, FoldAbove=7};
+    enum class Column { Source, UnfoldAbove, BatchBefore, UnfoldBelow, FoldBelow, BatchAfter, Tap, FoldAbove};
+    std::vector<Column> columns = { Column::Source, Column::UnfoldAbove, Column::BatchBefore, Column::UnfoldBelow, Column::FoldBelow, Column::BatchAfter, Column::Tap, Column::FoldAbove};
     struct Cell {
         JArrow* start = nullptr;
         JArrow* end = nullptr;
@@ -192,6 +194,7 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
     // -----------------------------
 
     int map_counter = 0;
+    std::set<JEventLevel> levels_present;
 
     // Place all sources on grid
     // -----------------------------
@@ -199,13 +202,14 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
     for (JEventSource* source : m_components->get_evt_srces()) {
         if (source->IsEnabled()) {
             sources[source->GetLevel()].push_back(source);
+            levels_present.insert(source->GetLevel());
         }
     }
     for (auto& it : sources) {
         auto level = it.first;
         auto level_str = toString(level);
         auto* src_arrow = new JSourceArrow(level_str+"Source", level, it.second);
-        arrows.push_back(src_arrow);
+        AddArrow(src_arrow);
         grid[{level, Column::Source}] = {src_arrow, src_arrow};
     }
 
@@ -219,12 +223,14 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
         // Publish at _each_ grid location
         auto parent_level = unfolder->GetLevel();
         auto child_level = unfolder->GetChildLevel();
+        levels_present.insert(parent_level);
+        levels_present.insert(child_level);
 
         auto* map_arrow = new JMapArrow(toString(parent_level)+"Map"+std::to_string(map_counter++), parent_level);
         auto* unfold_arrow = new JUnfoldArrow(toString(child_level)+"Unfold", unfolder);
         map_arrow->AddUnfolder(unfolder);
-        arrows.push_back(map_arrow);
-        arrows.push_back(unfold_arrow);
+        AddArrow(map_arrow);
+        AddArrow(unfold_arrow);
         Connect(map_arrow, map_arrow->EVENT_OUT, unfold_arrow, unfold_arrow->PARENT_IN);
 
         grid[{parent_level, Column::UnfoldBelow}] = {map_arrow, unfold_arrow};
@@ -237,7 +243,7 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
     std::map<JEventLevel, std::vector<JEventProcessor*>> tappable_processors;
     for (auto* proc : m_components->get_evt_procs()) {
         if (proc->IsEnabled()) {
-
+            levels_present.insert(proc->GetLevel());
             if (proc->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode && proc->IsOrderingEnabled()) {
                 throw JException("%s: Ordering can only be used with non-legacy JEventProcessors", proc->GetTypeName().c_str());
             }
@@ -254,7 +260,7 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
         for (JEventProcessor* proc : it.second) {
             map_arrow->AddProcessor(proc);
         }
-        arrows.push_back(map_arrow);
+        AddArrow(map_arrow);
 
         auto tappable_procs_it = tappable_processors.find(level);
         if (tappable_procs_it != tappable_processors.end()) {
@@ -270,7 +276,50 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
         }
     }
 
+    // -----------------------------
     // Phase 2: Iterate over all rows and all adjacent occupied column pairs, wiring horizontally
+    // -----------------------------
+
+    for (JEventLevel level : levels_present) {
+
+        auto* pool = GetOrCreatePool(level);
+        JArrow* last_arrow = nullptr;
+        for (auto column : columns) {
+            auto it = grid.find({level, column});
+            if (it == grid.end()) { continue; }
+
+            JArrow* current_arrow = it->second.start;
+            if (last_arrow == nullptr) {
+                // This is the first arrow we've found, so connect the pool here
+                auto port_index = current_arrow->GetPortIndex(level, JArrow::PortDirection::In);
+                current_arrow->GetPort(port_index).Attach(pool);
+            }
+            else {
+                Connect(last_arrow,
+                        last_arrow->GetPortIndex(level, JArrow::PortDirection::Out),
+                        current_arrow, 
+                        current_arrow->GetPortIndex(level, JArrow::PortDirection::In));
+            }
+            last_arrow = it->second.end;
+
+        }
+        // Connect last_arrow to pool
+        auto port_index = last_arrow->GetPortIndex(level, JArrow::PortDirection::Out);
+        last_arrow->GetPort(port_index).Attach(pool);
+    }
+
+    // -----------------------------
+    // Phase 3: Traverse event hierarchy and attach levels accordingly
+    // -----------------------------
+    // Because we haven't fully implemented the event hierarchy yet, let's just go with the fully connected graph
+
+    for (auto outer_level : levels_present) {
+        for (auto inner_level : levels_present) {
+            if (outer_level != inner_level) {
+                ConnectPool(outer_level, inner_level);
+            }
+        }
+    }
 }
 
 
