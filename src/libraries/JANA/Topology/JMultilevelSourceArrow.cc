@@ -4,33 +4,23 @@
 #include <JANA/Topology/JMultilevelSourceArrow.h>
 
 
-void JMultilevelSourceArrow::SetEventSource(JEventSource* source) {
+JMultilevelSourceArrow::JMultilevelSourceArrow(const std::string& name, JEventSource* source) {
+    SetIsSource(true);
+    SetName(name);
     m_source = source;
     m_levels = source->GetParentLevels();
     m_child_event_level = source->GetLevel();
     m_levels.push_back(m_child_event_level);
-
     m_next_input_port = 0;
-
-    size_t input_port_count = 0;
-    size_t output_port_count = 0;
     for (auto level : m_levels) {
         AddPort(toString(level) + "In", level, PortDirection::In).SetSkipFinishEvent(true);
-        m_port_lookup[{level, Direction::In}] = input_port_count++;
-    }
-    for (auto level : m_levels) {
         AddPort(toString(level) + "Out", level, PortDirection::Out);
-        m_port_lookup[{level, Direction::Out}] = input_port_count + output_port_count++;
     }
 }
 
 const std::vector<JEventLevel>& JMultilevelSourceArrow::GetLevels() const {
     return m_levels;
 }
-
-size_t JMultilevelSourceArrow::GetPortIndex(JEventLevel level, Direction direction) const {
-    return m_port_lookup.at({level, direction});
-};
 
 void JMultilevelSourceArrow::Initialize() {
     // We initialize everything immediately, but don't open any resources until we absolutely have to; see process(): source->DoNext()
@@ -53,7 +43,7 @@ void JMultilevelSourceArrow::EvictNextParent(OutputData& outputs, size_t& output
     if (it != m_pending_parents.end()) {
         if (it->second.first != nullptr) {
             // There IS an old parent
-            size_t parent_output_port = GetPortIndex(m_next_input_level, Direction::Out);
+            size_t parent_output_port = GetPortIndex(m_next_input_level, PortDirection::Out);
             LOG_DEBUG(GetLogger()) << "JMultilevelSourceArrow: Evicting parent " << it->second.first->GetEventStamp() << " to port " << parent_output_port;
             outputs.at(output_count++) = {it->second.first, parent_output_port};
             it->second.first = nullptr;
@@ -68,7 +58,7 @@ void JMultilevelSourceArrow::Fire(JEvent* input, OutputData& outputs, size_t& ou
         LOG_DEBUG(m_logger) << "Executing arrow " << GetName() << LOG_END;
         auto result = m_source->DoNext(input->shared_from_this());
         m_next_input_level = m_source->GetNextInputLevel();
-        m_next_input_port = GetPortIndex(m_next_input_level, Direction::In);
+        m_next_input_port = GetPortIndex(m_next_input_level, PortDirection::In);
 
         LOG_DEBUG(GetLogger()) << "JMultilevelSourceArrow: Returned from DoNext(" << toString(input->GetLevel()) << "). Next input level is " << toString(m_next_input_level);
 
@@ -86,7 +76,7 @@ void JMultilevelSourceArrow::Fire(JEvent* input, OutputData& outputs, size_t& ou
                         input->SetParent(parent_pair.first);
                     }
                 }
-                outputs.at(output_count++) = {input, GetPortIndex(m_child_event_level, Direction::Out)};
+                outputs.at(output_count++) = {input, GetPortIndex(m_child_event_level, PortDirection::Out)};
 
                 if (m_next_input_level != m_child_event_level) {
                     // We have to evict the parent AFTER the successful child because the child still needs the references to that parent
@@ -126,7 +116,7 @@ void JMultilevelSourceArrow::Fire(JEvent* input, OutputData& outputs, size_t& ou
                 EvictNextParent(outputs, output_count);
             }
             // Return this event to the pool with no further action
-            outputs.at(output_count++) = {input, GetPortIndex(input->GetLevel(), Direction::In)};
+            outputs.at(output_count++) = {input, GetPortIndex(input->GetLevel(), PortDirection::In)};
             status = JArrow::FireResult::ComeBackLater;
             return;
         }
@@ -135,14 +125,14 @@ void JMultilevelSourceArrow::Fire(JEvent* input, OutputData& outputs, size_t& ou
                 EvictNextParent(outputs, output_count);
             }
             // Return this input event to the pool
-            outputs.at(output_count++) = {input, GetPortIndex(input->GetLevel(), Direction::In)};
+            outputs.at(output_count++) = {input, GetPortIndex(input->GetLevel(), PortDirection::In)};
 
             status = JArrow::FireResult::KeepGoing;
             return;
         }
         else if (result == JEventSource::Result::FailureFinished) {
             // Return this input event to the pool
-            outputs.at(output_count++) = {input, GetPortIndex(input->GetLevel(), Direction::In)};
+            outputs.at(output_count++) = {input, GetPortIndex(input->GetLevel(), PortDirection::In)};
             m_finish_in_progress = true;
             // Fall-through to if (finish_in_progress) below
         }
@@ -157,7 +147,7 @@ void JMultilevelSourceArrow::Fire(JEvent* input, OutputData& outputs, size_t& ou
             // Found a parent
             auto parent = it->second.first;
             if (parent != nullptr) {
-                outputs.at(output_count++) = {parent, GetPortIndex(parent->GetLevel(), Direction::Out)};
+                outputs.at(output_count++) = {parent, GetPortIndex(parent->GetLevel(), PortDirection::Out)};
             }
             m_pending_parents.erase(it);
         }
