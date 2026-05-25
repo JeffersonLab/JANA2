@@ -20,13 +20,13 @@ public:
         SetName(name);
         auto parent_level = unfolder->GetLevel();
         auto child_level = unfolder->GetChildLevel();
-        AddPort("parent_in", parent_level);
-        AddPort("child_in", child_level);
-        AddPort("child_out", child_level).SetEstablishesOrdering(true);
+        AddPort("parent_in", parent_level, PortDirection::In);
+        AddPort("child_in", child_level, PortDirection::In);
+        AddPort("child_out", child_level, PortDirection::Out).SetEstablishesOrdering(true);
         // Just in case there's a folder that needs this.
         // establishes_ordering is cheap; enforces_ordering is the expensive one
 
-        AddPort("parent_out", parent_level);
+        AddPort("parent_out", parent_level, PortDirection::Out);
         m_next_input_port = GetPortIndex("parent_in");
     }
 

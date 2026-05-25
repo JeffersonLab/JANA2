@@ -16,8 +16,8 @@ public:
     BatchedArrow(JEventLevel level) {
         SetName("BatchedArrow");
         SetIsParallel(false);
-        AddPort("in", level);
-        AddPort("out", level);
+        AddPort("in", level, PortDirection::In);
+        AddPort("out", level, PortDirection::Out);
     }
 
     void SetBatchSize(int batch_size) { m_batch_size = batch_size; }

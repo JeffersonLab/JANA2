@@ -10,8 +10,8 @@
 
 JTapArrow::JTapArrow(std::string name, JEventLevel level) {
     SetName(name);
-    AddPort("in", level);
-    AddPort("out", level);
+    AddPort("in", level, PortDirection::In);
+    AddPort("out", level, PortDirection::Out);
 }
 
 void JTapArrow::AddProcessor(JEventProcessor* proc) {

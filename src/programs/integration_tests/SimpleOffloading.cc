@@ -74,8 +74,8 @@ struct TriggerFactoryInputsArrow : public JArrow {
     TriggerFactoryInputsArrow(JEventLevel level) {
         SetName("trigger");
         SetIsParallel(true);
-        AddPort("in", level);
-        AddPort("out", level);
+        AddPort("in", level, PortDirection::In);
+        AddPort("out", level, PortDirection::Out);
     }
 
     void Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) override {
@@ -98,8 +98,8 @@ struct OffloadArrow : public JArrow {
     OffloadArrow(JEventLevel level) {
         SetName("offload");
         SetIsParallel(false);
-        AddPort("in", level);
-        AddPort("out", level);
+        AddPort("in", level, PortDirection::In);
+        AddPort("out", level, PortDirection::Out);
     }
 
     ~OffloadArrow() override {}
