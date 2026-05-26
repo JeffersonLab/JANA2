@@ -294,6 +294,10 @@ std::vector<JEventSourceGenerator*>& JComponentManager::get_evt_src_gens() {
     return m_src_gens;
 }
 
+std::vector<JEventSource*>& JComponentManager::get_evt_srces() {
+    return m_evt_srces;
+}
+
 std::vector<JEventSourceGenerator*>& JComponentManager::GetSourceGenerators() {
     return m_src_gens;
 }
