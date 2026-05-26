@@ -47,6 +47,9 @@ public:
     // Called after JApplication::Initialize() finishes
     const JComponentSummary& GetComponentSummary();
 
+    // TODO: Deprecate
+    std::vector<JEventSourceGenerator*>& get_evt_src_gens();
+
     std::vector<JEventSourceGenerator*>& GetSourceGenerators();
     std::vector<JEventSource*>& GetSources();
     std::vector<JEventProcessor*>& GetProcessors();

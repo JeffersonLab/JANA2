@@ -290,6 +290,10 @@ JEventSourceGenerator* JComponentManager::ResolveUserEventSourceGenerator() cons
 
 }
 
+std::vector<JEventSourceGenerator*>& JComponentManager::get_evt_src_gens() {
+    return m_src_gens;
+}
+
 std::vector<JEventSourceGenerator*>& JComponentManager::GetSourceGenerators() {
     return m_src_gens;
 }
