@@ -12,7 +12,7 @@ JEvent::JEvent() : mInspector(this){
 JEvent::JEvent(JApplication* app) : mInspector(this) {
     // Furnish the JEvent with the parameter values and factory generators provided to the JApplication
     app->Initialize();
-    app->GetService<JComponentManager>()->configure_event(*this);
+    app->GetService<JComponentManager>()->ConfigureEvent(*this);
 }
 
 JEvent::~JEvent() {
@@ -142,19 +142,6 @@ std::vector<JEvent*> JEvent::ReleaseAllParents() {
     }
     mParents.clear();
     return released_parents;
-}
-
-void JEvent::TakeRefToSelf() {
-    mReferenceCount++;
-}
-
-int JEvent::ReleaseRefToSelf() {
-    int remaining_refs = mReferenceCount.fetch_sub(1);
-    remaining_refs -= 1; // fetch_sub post increments
-    if (remaining_refs < 0) {
-        throw JException("JEvent's own refcount has gone negative!");
-    }
-    return remaining_refs;
 }
 
 int JEvent::GetChildCount() {

@@ -19,6 +19,7 @@ class JComponentManager;
 class JPluginLoader;
 class JExecutionEngine;
 class JEventUnfolder;
+class JEventFolder;
 class JServiceLocator;
 class JParameter;
 class JParameterManager;
@@ -66,6 +67,7 @@ public:
     void Add(JEventSource* event_source);
     void Add(JEventProcessor* processor);
     void Add(JEventUnfolder* unfolder);
+    void Add(JEventFolder* folder);
 
 
     // Controlling processing

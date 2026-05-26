@@ -71,33 +71,38 @@ void JApplication::AddPluginPath(std::string path) {
 
 void JApplication::Add(JEventSource* event_source) {
     /// Adds the given JEventSource to the JANA context. Ownership is passed to JComponentManager.
-    m_component_manager->add(event_source);
+    m_component_manager->Add(event_source);
 }
 
 void JApplication::Add(JEventSourceGenerator *source_generator) {
     /// Adds the given JEventSourceGenerator to the JANA context. Ownership is passed to JComponentManager.
-    m_component_manager->add(source_generator);
+    m_component_manager->Add(source_generator);
 }
 
 void JApplication::Add(JFactoryGenerator *factory_generator) {
     /// Adds the given JFactoryGenerator to the JANA context. Ownership is passed to JComponentManager.
-    m_component_manager->add(factory_generator);
+    m_component_manager->Add(factory_generator);
 }
 
 void JApplication::Add(JEventProcessor* processor) {
     /// Adds the given JEventProcessor to the JANA context. Ownership is passed to JComponentManager.
-    m_component_manager->add(processor);
+    m_component_manager->Add(processor);
 }
 
 void JApplication::Add(std::string event_source_name) {
     /// Adds the event source name (e.g. a file or socket name) to the JANA context. JANA will instantiate
     /// the corresponding JEventSource using a user-provided JEventSourceGenerator.
-    m_component_manager->add(event_source_name);
+    m_component_manager->Add(event_source_name);
 }
 
 void JApplication::Add(JEventUnfolder* unfolder) {
     /// Adds the given JEventUnfolder to the JANA context. Ownership is passed to JComponentManager.
-    m_component_manager->add(unfolder);
+    m_component_manager->Add(unfolder);
+}
+
+void JApplication::Add(JEventFolder* folder) {
+    /// Adds the given JEventFolder to the JANA context. Ownership is passed to JComponentManager.
+    m_component_manager->Add(folder);
 }
 
 
@@ -115,10 +120,6 @@ void JApplication::Initialize() {
 
     // We trigger initialization 
     m_service_locator->get<JParameterManager>();
-    auto component_manager = m_service_locator->get<JComponentManager>();
-    auto plugin_loader = m_service_locator->get<JPluginLoader>();
-    auto topology_builder = m_service_locator->get<JTopologyBuilder>();
-    auto wiring_service = m_service_locator->get<jana::services::JWiringService>();
 
     // Set logger on JApplication itself
     m_logger = m_params->GetLogger("jana");
@@ -136,6 +137,10 @@ void JApplication::Initialize() {
         JVersion::PrintVersionDescription(oss);
         LOG_INFO(m_logger) << oss.str() << LOG_END;
     }
+    auto component_manager = m_service_locator->get<JComponentManager>();
+    auto plugin_loader = m_service_locator->get<JPluginLoader>();
+    auto topology_builder = m_service_locator->get<JTopologyBuilder>();
+    auto wiring_service = m_service_locator->get<jana::services::JWiringService>();
 
     // Attach all plugins
     for (const auto& plugin_name : wiring_service->GetPluginNames()) {
@@ -144,7 +149,7 @@ void JApplication::Initialize() {
     plugin_loader->attach_plugins(component_manager.get());
 
     // Resolve and initialize all components
-    component_manager->configure_components();
+    component_manager->ConfigureComponents();
 
     // Once all components have been wired in jcm::configure_components(), there shouldn't be any unused wirings
     wiring_service->CheckAllWiringsAreUsed();
@@ -297,7 +302,7 @@ int JApplication::GetExitCode() {
 
 const JComponentSummary& JApplication::GetComponentSummary() {
     /// Returns a data object describing all components currently running
-    return m_component_manager->get_component_summary();
+    return m_component_manager->GetComponentSummary();
 }
 
 // Performance/status monitoring

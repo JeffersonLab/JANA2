@@ -18,6 +18,7 @@ class JArrow {
 public:
     using OutputData = std::array<std::pair<JEvent*, int>, 2>;
     enum class FireResult {NotRunYet, KeepGoing, ComeBackLater, Finished};
+    enum class PortDirection { In, Out };
 
     class Port {
         std::string m_name;
@@ -72,6 +73,7 @@ public:
 
 private:
     std::string m_name;            // Used for human understanding
+    int m_id;                      // Used internally
     bool m_is_parallel = false;    // Whether or not it is safe to parallelize
     bool m_is_source = false;      // Whether or not this arrow should activate/drain the topology
     bool m_is_sink = false;        // Whether or not tnis arrow contributes to the final event count
@@ -83,6 +85,7 @@ protected:
     clock_t::time_point m_next_visit_time=clock_t::now();
     std::vector<std::unique_ptr<Port>> m_ports;
     std::map<std::string, int> m_port_lookup;
+    std::map<std::pair<JEventLevel, PortDirection>, int> m_auto_port_lookup;
     JLogger m_logger;
 
 public:
@@ -105,6 +108,7 @@ public:
 
 
     const std::string& GetName() { return m_name; }
+    int GetId() { return m_id; }
     JLogger& GetLogger() { return m_logger; }
     bool IsParallel() { return m_is_parallel; }
     bool IsSource() { return m_is_source; }
@@ -112,28 +116,22 @@ public:
     int GetNextPortIndex() { return m_next_input_port; }
 
     void SetName(std::string name) { m_name = name; }
+    void SetId(int id) { m_id = id; }
     void SetLogger(JLogger logger) { m_logger = logger; }
     void SetIsParallel(bool is_parallel) { m_is_parallel = is_parallel; }
     void SetIsSource(bool is_source) { m_is_source = is_source; }
     void SetIsSink(bool is_sink) { m_is_sink = is_sink; }
 
-    Port& AddPort(std::string port_name, JEventLevel level);
-    Port& AddPort(std::string port_name, std::vector<JEventLevel> levels);
+    Port& AddPort(std::string port_name, JEventLevel level, PortDirection direction);
     Port& GetPort(size_t port_index) { return *m_ports.at(port_index); }
-    int GetPortIndex(const std::string& port_name) { 
-        auto it = m_port_lookup.find(port_name);
-        if (it == m_port_lookup.end()) {
-            LOG_FATAL(GetLogger()) << "Unable to find port_name '" << port_name << "' on arrow '" << GetName() << "'. Valid port names are:";
-            for (auto& port : m_ports) {
-                LOG_FATAL(GetLogger()) << "    " << port->GetName();
-            }
-            throw JException("Unable to find port_name '%s' on arrow '%s'", port_name.c_str(), GetName().c_str());
-        }
-        return it->second;
-    }
+    Port& GetPort(JEventLevel level, PortDirection direction) { return *m_ports.at(m_auto_port_lookup.at({level, direction})); }
+
+    int GetPortIndex(JEventLevel level, PortDirection direction);
+    int GetPortIndex(const std::string& port_name);
     void SetNextPortIndex(int input_port) { m_next_input_port = input_port; }
 
 };
 
 
 std::string ToString(JArrow::FireResult r);
+std::string ToString(JArrow::PortDirection d);

@@ -13,8 +13,8 @@ JSourceArrow::JSourceArrow(std::string name, JEventLevel level, std::vector<JEve
     : m_sources(sources) {
     SetName(name);
     SetIsSource(true);
-    AddPort("in", level).SetSkipFinishEvent(true);
-    AddPort("out", level).SetEstablishesOrdering(true);
+    AddPort("in", level, PortDirection::In).SetSkipFinishEvent(true);
+    AddPort("out", level, PortDirection::Out).SetEstablishesOrdering(true);
 
     // All event sources establish their own ordering by default,
     // which is sufficient for the kinds of topologies we can create

@@ -13,16 +13,20 @@
 JMapArrow::JMapArrow(std::string name, JEventLevel level) {
     SetName(name);
     SetIsParallel(true);
-    AddPort("in", level);
-    AddPort("out", level);
+    AddPort("in", level, PortDirection::In);
+    AddPort("out", level, PortDirection::Out);
 }
 
-void JMapArrow::AddSource(JEventSource* source) {
-    m_sources.push_back(source);
+void JMapArrow::SetParallelSource(bool is_parallel) {
+    m_parallel_source = is_parallel;
 }
 
 void JMapArrow::AddUnfolder(JEventUnfolder* unfolder) {
     m_unfolders.push_back(unfolder);
+}
+
+void JMapArrow::AddFolder(JEventFolder* folder) {
+    m_folders.push_back(folder);
 }
 
 void JMapArrow::AddProcessor(JEventProcessor* processor) {
@@ -32,9 +36,12 @@ void JMapArrow::AddProcessor(JEventProcessor* processor) {
 void JMapArrow::Fire(JEvent* event, OutputData& outputs, size_t& output_count, JArrow::FireResult& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << GetName() << " for event# " << event->GetEventNumber() << LOG_END;
-    for (JEventSource* source : m_sources) {
-        JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), source->GetTypeName()); // times execution until this goes out of scope
-        source->ProcessParallel(*event);
+    if (m_parallel_source) {
+        auto* source = event->GetJEventSource();
+        if (source != nullptr) {
+            JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), source->GetTypeName()); // times execution until this goes out of scope
+            event->GetJEventSource()->ProcessParallel(*event);
+        }
     }
     for (JEventUnfolder* unfolder : m_unfolders) {
         JCallGraphEntryMaker cg_entry(*event->GetJCallGraphRecorder(), unfolder->GetTypeName()); // times execution until this goes out of scope

@@ -8,6 +8,7 @@
 class JEventPool;
 class JEventSource;
 class JEventUnfolder;
+class JEventFolder;
 class JEventProcessor;
 class JEvent;
 
@@ -18,15 +19,17 @@ public:
     enum PortIndex {EVENT_IN=0, EVENT_OUT=1};
 
 private:
-    std::vector<JEventSource*> m_sources;
+    bool m_parallel_source = false;
     std::vector<JEventUnfolder*> m_unfolders;
+    std::vector<JEventFolder*> m_folders;
     std::vector<JEventProcessor*> m_procs;
 
 public:
     JMapArrow(std::string name, JEventLevel level);
 
-    void AddSource(JEventSource* source);
+    void SetParallelSource(bool is_parallel);
     void AddUnfolder(JEventUnfolder* unfolder);
+    void AddFolder(JEventFolder* folder);
     void AddProcessor(JEventProcessor* proc);
 
     void Fire(JEvent* input, OutputData& outputs, size_t& output_count, JArrow::FireResult& status);

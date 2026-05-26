@@ -94,6 +94,7 @@ jobs:
           $GITHUB_WORKSPACE/bin/jana \
             -Pplugins=TimesliceExample \
             -Pjana:nevents=100 \
+            -Puse_timeslices=0 \
             events.root
 
     - name: Run TimesliceExample with complex (timeslice) topology

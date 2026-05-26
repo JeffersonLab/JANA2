@@ -8,7 +8,7 @@
 
 class JUnfoldArrow : public JArrow {
 public:
-    enum PortIndex {PARENT_IN=0, CHILD_IN=1, CHILD_OUT=2, REJECTED_PARENT_OUT=3};
+    enum PortIndex {PARENT_IN=0, CHILD_IN=1, CHILD_OUT=2, PARENT_OUT=3};
 
 private:
     JEventUnfolder* m_unfolder = nullptr;
@@ -20,13 +20,13 @@ public:
         SetName(name);
         auto parent_level = unfolder->GetLevel();
         auto child_level = unfolder->GetChildLevel();
-        AddPort("parent_in", parent_level);
-        AddPort("child_in", child_level);
-        AddPort("child_out", child_level).SetEstablishesOrdering(true);
+        AddPort("parent_in", parent_level, PortDirection::In);
+        AddPort("child_in", child_level, PortDirection::In);
+        AddPort("child_out", child_level, PortDirection::Out).SetEstablishesOrdering(true);
         // Just in case there's a folder that needs this.
         // establishes_ordering is cheap; enforces_ordering is the expensive one
 
-        AddPort("rejected_parent_out", parent_level);
+        AddPort("parent_out", parent_level, PortDirection::Out);
         m_next_input_port = GetPortIndex("parent_in");
     }
 
@@ -46,7 +46,6 @@ public:
         if (this->m_next_input_port == PARENT_IN) {
             assert(m_parent_event == nullptr);
             m_parent_event = event;
-            m_parent_event->TakeRefToSelf();
         }
         else if (this->m_next_input_port == CHILD_IN) {
             assert(m_child_event == nullptr);
@@ -89,8 +88,8 @@ public:
 
         if (result == JEventUnfolder::Result::KeepChildNextParent) {
             // KeepChildNextParent is a little more complicated because we have to handle the case of the parent having no children.
-            // In this case the parent obviously doesn't get shared among any children, and instead it is sent to the REJECTED_PARENT_OUT port.
-            int child_count = m_parent_event->ReleaseRefToSelf(); // Decrement the reference count so that this can be recycled
+            // In this case the parent obviously doesn't get shared among any children, and instead it is sent to the PARENT_OUT port.
+            int child_count = m_parent_event->GetChildCount();
             LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << " (" << child_count << " children emitted)";
 
             if (child_count > 0) {
@@ -104,7 +103,7 @@ public:
             else {
                 // Parent has NO children
                 output_count = 1;
-                outputs[0] = {m_parent_event, REJECTED_PARENT_OUT};
+                outputs[0] = {m_parent_event, PARENT_OUT};
                 m_parent_event = nullptr;
                 m_next_input_port = PARENT_IN;
                 status = JArrow::FireResult::KeepGoing;
@@ -122,9 +121,9 @@ public:
         }
         else if (result == JEventUnfolder::Result::NextChildNextParent) {
             m_child_event->SetParent(m_parent_event);
-            m_parent_event->ReleaseRefToSelf(); // Decrement the reference count so that this can be recycled
             outputs[0] = {m_child_event, CHILD_OUT};
-            output_count = 1;
+            outputs[1] = {m_parent_event, PARENT_OUT};
+            output_count = 2;
             LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->GetEventNumber() << LOG_END;
             m_child_event = nullptr;
             m_parent_event = nullptr;

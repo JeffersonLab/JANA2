@@ -2,7 +2,7 @@
 #include <JANA/Topology/JArrow.h>
 
 
-JArrow::Port& JArrow::AddPort(std::string name, JEventLevel level) {
+JArrow::Port& JArrow::AddPort(std::string name, JEventLevel level, PortDirection direction) {
     if (m_port_lookup.find(name) != m_port_lookup.end()) {
         throw JException("Port with name '%s' already exists", name.c_str());
     }
@@ -10,6 +10,16 @@ JArrow::Port& JArrow::AddPort(std::string name, JEventLevel level) {
     auto port_raw_ptr = port.get();
     m_ports.push_back(std::move(port));
     m_port_lookup[name] = m_ports.size()-1;
+
+    auto it = m_auto_port_lookup.find({level, direction});
+    if (it != m_auto_port_lookup.end()) {
+        // There's a conflict! Multiple ports with the same level, direction
+        // Handle this case by disabling the lookup
+        it->second = -1;
+    }
+    else {
+        m_auto_port_lookup[{level, direction}] = m_ports.size()-1;
+    }
     return *port_raw_ptr;
 }
 
@@ -43,7 +53,7 @@ void JArrow::Push(OutputData& outputs, size_t output_count, size_t location_id) 
             port.GetPool()->Ingest(event, location_id);
         }
         else {
-            throw JException("Arrow %s: Port %d not wired!", m_name.c_str(), port_index);
+            throw JException("Arrow %s: Port %s not wired!", m_name.c_str(), port.GetName().c_str());
         }
     }
 }
@@ -89,6 +99,43 @@ std::string ToString(JArrow::FireResult r) {
         case JArrow::FireResult::Finished:      return "Finished";
         default:                                return "Error";
     }
+}
+
+std::string ToString(JArrow::PortDirection d) {
+    switch (d) {
+        case JArrow::PortDirection::In:  return "In";
+        case JArrow::PortDirection::Out: return "Out";
+        default:                         return "Unknown";
+    }
+}
+
+int JArrow::GetPortIndex(JEventLevel level, PortDirection direction) {
+    auto it = m_auto_port_lookup.find({level, direction});
+    if (it == m_auto_port_lookup.end()) {
+        throw JException("Unable to find port with (level=%s, direction=%s) on arrow '%s'", 
+                         toString(level).c_str(),
+                         ToString(direction).c_str(),
+                         GetName().c_str());
+    }
+    else if (it->second == -1) {
+        throw JException("Ambiguous port with (level=%s, direction=%s) on arrow '%s'", 
+                         toString(level).c_str(),
+                         ToString(direction).c_str(),
+                         GetName().c_str());
+    }
+    return it->second;
+}
+
+int JArrow::GetPortIndex(const std::string& port_name) { 
+    auto it = m_port_lookup.find(port_name);
+    if (it == m_port_lookup.end()) {
+        LOG_FATAL(GetLogger()) << "Unable to find port_name '" << port_name << "' on arrow '" << GetName() << "'. Valid port names are:";
+        for (auto& port : m_ports) {
+            LOG_FATAL(GetLogger()) << "    " << port->GetName();
+        }
+        throw JException("Unable to find port_name '%s' on arrow '%s'", port_name.c_str(), GetName().c_str());
+    }
+    return it->second;
 }
 
 

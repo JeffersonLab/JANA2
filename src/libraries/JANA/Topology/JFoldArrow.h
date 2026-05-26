@@ -26,9 +26,9 @@ public:
         m_child_level(child_level)
     {
         SetName(name);
-        AddPort("child_in", child_level).SetEnforcesOrdering(true);
-        AddPort("child_out", child_level);
-        AddPort("parent_out", parent_level);
+        AddPort("child_in", child_level, PortDirection::In).SetEnforcesOrdering(true);
+        AddPort("child_out", child_level, PortDirection::Out);
+        AddPort("parent_out", parent_level, PortDirection::Out);
         m_next_input_port = CHILD_IN;
     }
 

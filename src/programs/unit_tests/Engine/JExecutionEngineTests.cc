@@ -138,7 +138,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 
         sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);
-        REQUIRE(task.arrow->GetName() == "PhysicsEventMap2");
+        REQUIRE(task.arrow->GetName() == "PhysicsEventMap1");
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Draining);
         REQUIRE(sut->GetPerf().event_count == 0);
 

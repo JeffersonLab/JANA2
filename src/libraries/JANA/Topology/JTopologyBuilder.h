@@ -53,6 +53,8 @@ public:
     void Init() override;
 
     void AddArrow(JArrow* arrow);
+    JArrow* GetArrow(const std::string& arrow_name);
+    JEventPool* GetOrCreatePool(JEventLevel level);
 
     void ConnectQueue(std::string upstream_arrow_name, std::string upstream_port_name,
                       std::string downstream_arrow_name, std::string downstream_port_name);
@@ -67,6 +69,7 @@ public:
     void SetConfigureFn(std::function<void(JTopologyBuilder&, JComponentManager&)> configure_fn);
 
     void CreateTopology();
+    void CreateTopologyFromScratch();
 
     std::string PrintTopology();
 
@@ -76,11 +79,8 @@ public:
     const JProcessorMapping& GetProcessorMapping() { return mapping; };
 
 private:
-    void AttachLevel(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder);
-    void ConnectToFirstAvailable(JArrow* upstream, size_t upstream_port_id, std::vector<std::pair<JArrow*, size_t>> downstreams);
     void Connect(JArrow* upstream, size_t upstream_port_id, JArrow* downstream, size_t downstream_port_id);
     std::pair<JTapArrow*, JTapArrow*> CreateTapChain(std::vector<JEventProcessor*>& procs, std::string name);
-    JEventPool* GetOrCreatePool(JEventLevel level);
 };
 
 

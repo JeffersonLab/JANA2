@@ -96,9 +96,6 @@ public:
     uint64_t GetParentNumber(JEventLevel level) const;
     void SetParentNumber(JEventLevel level, uint64_t number);
 
-    void TakeRefToSelf();
-    int ReleaseRefToSelf();
-
     // Lifecycle
     void Clear(bool processed_successfully=true);
     void Finish();

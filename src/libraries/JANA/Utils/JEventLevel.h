@@ -5,6 +5,8 @@
 #include <JANA/JException.h>
 #include <ostream>
 #include <sstream>
+#include <vector>
+#include <map>
 
 enum class JEventLevel { Run, Subrun, SlowControls, Timeslice, Block, PhysicsEvent, Subevent, Task, None };
 
@@ -70,3 +72,60 @@ inline JEventLevel next_level(JEventLevel current_level) {
         default: return JEventLevel::None;
     }
 }
+
+class JEventLevelHierarchy {
+    std::vector<JEventLevel> m_bottom_levels;
+    std::vector<JEventLevel> m_parent_levels;
+    std::vector<JEventLevel> m_all_levels;
+    std::map<JEventLevel, std::vector<JEventLevel>> parents;
+    std::map<JEventLevel, std::vector<JEventLevel>> children;
+
+private:
+    void ToString(std::stringstream& ss, JEventLevel current) {
+        ss << current;
+        auto it = parents.find(current);
+        if (it != parents.end()) {
+            ss << "(";
+            size_t parent_count = it->second.size();
+            for (size_t i=0; i<parent_count; ++i) {
+                ToString(ss, it->second[i]);
+                if (i != parent_count-1) {
+                    ss << ", ";
+                }
+            }
+            ss << ")";
+        }
+    }
+
+public:
+
+    const std::vector<JEventLevel>& GetAllLevels() const {
+        return m_all_levels;
+    }
+    const std::vector<JEventLevel>& GetParentLevels() const {
+        return m_parent_levels;
+    }
+    const std::vector<JEventLevel>& GetBottomLevels() const {
+        return m_bottom_levels;
+    }
+    void AddBottomLevel(JEventLevel level) {
+        m_all_levels.push_back(level);
+        m_bottom_levels.push_back(level);
+    }
+    void AddParentLevel(JEventLevel child, JEventLevel parent) {
+        m_all_levels.push_back(parent);
+        m_parent_levels.push_back(parent);
+        parents[child].push_back(parent);
+        children[parent].push_back(child);
+    }
+    std::string ToString() {
+        std::stringstream ss;
+        for (size_t i=0; i<m_bottom_levels.size(); ++i) {
+            ToString(ss, m_bottom_levels[i]);
+            if (i != m_bottom_levels.size()-1) {
+                ss << ", ";
+            }
+        }
+        return ss.str();
+    }
+};

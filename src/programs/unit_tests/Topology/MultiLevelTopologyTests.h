@@ -181,7 +181,8 @@ struct MyMultilevelSource : public JEventSource {
 
     MyMultilevelSource() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
-        SetEventLevels({JEventLevel::Run, JEventLevel::SlowControls, JEventLevel::PhysicsEvent});
+        SetParentLevels({JEventLevel::Run, JEventLevel::SlowControls});
+        SetLevel(JEventLevel::PhysicsEvent);
 
         m_calibs_out.SetLevel(JEventLevel::Run);
         m_controls_out.SetLevel(JEventLevel::SlowControls);

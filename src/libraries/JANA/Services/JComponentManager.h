@@ -14,6 +14,7 @@
 
 class JEventProcessor;
 class JEventUnfolder;
+class JEventFolder;
 
 class JComponentManager : public JService {
 public:
@@ -23,35 +24,42 @@ public:
     void Init() override;
 
     // Called during plugin loading
-    void next_plugin(std::string plugin_name);
+    void NextPlugin(std::string plugin_name);
 
-    void add(std::string event_source_name);
-    void add(JEventSourceGenerator* source_generator);
-    void add(JFactoryGenerator* factory_generator);
-    void add(JEventSource* event_source);
-    void add(JEventProcessor* processor);
-    void add(JEventUnfolder* unfolder);
+    void Add(std::string event_source_name);
+    void Add(JEventSourceGenerator* source_generator);
+    void Add(JFactoryGenerator* factory_generator);
+    void Add(JEventSource* event_source);
+    void Add(JEventProcessor* processor);
+    void Add(JEventUnfolder* unfolder);
+    void Add(JEventFolder* folder);
 
     // Called after plugin loading
-    void configure_components();
+    void ConfigureComponents();
 
     // Helpers
-    void preinitialize_components();
-    void resolve_event_sources();
-    void initialize_components();
-    JEventSourceGenerator* resolve_user_event_source_generator() const;
-    JEventSourceGenerator* resolve_event_source(std::string source_name) const;
+    void PreinitializeComponents();
+    void ResolveEventSources();
+    void InitializeComponents();
+    JEventSourceGenerator* ResolveUserEventSourceGenerator() const;
+    JEventSourceGenerator* ResolveEventSource(std::string source_name) const;
 
     // Called after JApplication::Initialize() finishes
-    const JComponentSummary& get_component_summary();
+    const JComponentSummary& GetComponentSummary();
 
+    [[deprecated]]
     std::vector<JEventSourceGenerator*>& get_evt_src_gens();
+    [[deprecated]]
     std::vector<JEventSource*>& get_evt_srces();
-    std::vector<JEventProcessor*>& get_evt_procs();
-    std::vector<JFactoryGenerator*>& get_fac_gens();
-    std::vector<JEventUnfolder*>& get_unfolders();
 
-    void configure_event(JEvent& event);
+    std::vector<JEventSourceGenerator*>& GetSourceGenerators();
+    std::vector<JEventSource*>& GetSources();
+    std::vector<JEventProcessor*>& GetProcessors();
+    std::vector<JFactoryGenerator*>& GetFactoryGenerators();
+    std::vector<JEventUnfolder*>& GetUnfolders();
+    std::vector<JEventFolder*>& GetFolders();
+
+    void ConfigureEvent(JEvent& event);
 
 private:
 
@@ -64,6 +72,7 @@ private:
     std::vector<JEventSource*> m_evt_srces;
     std::vector<JEventProcessor*> m_evt_procs;
     std::vector<JEventUnfolder*> m_unfolders;
+    std::vector<JEventFolder*> m_folders;
 
     std::map<std::string, std::string> m_default_tags;
     bool m_enable_call_graph_recording = false;
