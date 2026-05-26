@@ -283,10 +283,10 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
         Connect(map_arrow, map_arrow->EVENT_OUT, unfold_arrow, unfold_arrow->PARENT_IN);
 
         if (grid.find({parent_level, Column::UnfoldBelow}) != grid.end()) {
-            throw JException("Only one unfolder allowed for parent level=%s", toString(parent_level));
+            throw JException("Only one unfolder allowed for parent level=%s", toString(parent_level).c_str());
         }
         if (grid.find({child_level, Column::UnfoldAbove}) != grid.end()) {
-            throw JException("Only one unfolder allowed for child level=%s", toString(child_level));
+            throw JException("Only one unfolder allowed for child level=%s", toString(child_level).c_str());
         }
         grid[{parent_level, Column::UnfoldBelow}] = {map_arrow, unfold_arrow};
         grid[{child_level, Column::UnfoldAbove}] = {unfold_arrow, unfold_arrow};
@@ -314,10 +314,10 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
         Connect(map_arrow, map_arrow->EVENT_OUT, fold_arrow, fold_arrow->CHILD_IN);
 
         if (grid.find({parent_level, Column::FoldBelow}) != grid.end()) {
-            throw JException("Only one folder allowed for parent level=%s", toString(parent_level));
+            throw JException("Only one folder allowed for parent level=%s", toString(parent_level).c_str());
         }
         if (grid.find({child_level, Column::FoldAbove}) != grid.end()) {
-            throw JException("Only one folder allowed for child level=%s", toString(child_level));
+            throw JException("Only one folder allowed for child level=%s", toString(child_level).c_str());
         }
         grid[{parent_level, Column::FoldBelow}] = {fold_arrow, fold_arrow};
         grid[{child_level, Column::FoldAbove}] = {map_arrow, fold_arrow};
