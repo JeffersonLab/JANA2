@@ -26,23 +26,28 @@ void InitPlugin(JApplication *app) {
     // Event processor that writes events (and timeslices, if they are present) to file
     app->Add(new MyFileWriter());
 
-    // Unfolder that takes timeslices and splits them into physics events.
-    app->Add(new MyTimesliceSplitter());
+    bool use_timeslices = app->RegisterParameter("use_timeslices", true);
 
-    // Factory that produces timeslice-level protoclusters from timeslice-level hits
-    app->Add(new JOmniFactoryGeneratorT<MyProtoclusterFactory>(
-                { .tag = "timeslice_protoclusterizer", 
-                  .level = JEventLevel::Timeslice,
-                  .input_names = {"hits"}, 
-                  .output_names = {"ts_protoclusters"}
-                }));
+    if (use_timeslices) {
+        // Unfolder that takes timeslices and splits them into physics events.
+        app->Add(new MyTimesliceSplitter());
 
-    // Factory that produces event-level protoclusters from event-level hits
-    app->Add(new JOmniFactoryGeneratorT<MyProtoclusterFactory>(
-                { .tag = "event_protoclusterizer", 
-                  .input_names = {"hits"}, 
-                  .output_names = {"evt_protoclusters"}}
-                ));
+        // Factory that produces timeslice-level protoclusters from timeslice-level hits
+        app->Add(new JOmniFactoryGeneratorT<MyProtoclusterFactory>(
+                    { .tag = "timeslice_protoclusterizer", 
+                    .level = JEventLevel::Timeslice,
+                    .input_names = {"hits"}, 
+                    .output_names = {"ts_protoclusters"}
+                    }));
+    }
+    else {
+        // Factory that produces event-level protoclusters from event-level hits
+        app->Add(new JOmniFactoryGeneratorT<MyProtoclusterFactory>(
+                    { .tag = "event_protoclusterizer", 
+                    .input_names = {"hits"}, 
+                    .output_names = {"evt_protoclusters"}}
+                    ));
+    }
 
     // Factory that produces event-level clusters from event-level protoclusters
     app->Add(new JOmniFactoryGeneratorT<MyClusterFactory>(
