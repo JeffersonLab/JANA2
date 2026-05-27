@@ -72,6 +72,10 @@ option(BUILD_SHARED_LIBS "Build into both shared and static libs." ON)
 option(BUILD_EXAMPLES "Build and install examples" ON)
 option(BUILD_TESTS "Build and install tests" ON)
 
+if (${BUILD_TESTS} AND ${USE_PODIO} AND NOT ${BUILD_EXAMPLES})
+    message(FATAL_ERROR "BUILD_TESTS=ON requires BUILD_EXAMPLES=ON when USE_PODIO=ON (unit tests depend on the PODIO example datamodel)")
+endif()
+
 if (${USE_PODIO})
     find_package(podio REQUIRED)
     set(JANA2_HAVE_PODIO 1)
