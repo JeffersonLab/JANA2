@@ -466,10 +466,19 @@ inline void JParameterManager::Parse(const std::string& in, JLogger::Level& out)
     else if (std::strcmp(token.c_str(), "warn") == 0) { 
         out = JLogger::Level::WARN;
     }
+    else if (std::strcmp(token.c_str(), "warning") == 0) { 
+        out = JLogger::Level::WARN;
+    }
     else if (std::strcmp(token.c_str(), "error") == 0) { 
         out = JLogger::Level::ERROR;
     }
+    else if (std::strcmp(token.c_str(), "err") == 0) { 
+        out = JLogger::Level::ERROR;
+    }
     else if (std::strcmp(token.c_str(), "fatal") == 0) { 
+        out = JLogger::Level::FATAL;
+    }
+    else if (std::strcmp(token.c_str(), "critical") == 0) { 
         out = JLogger::Level::FATAL;
     }
     else if (std::strcmp(token.c_str(), "off") == 0) { 
