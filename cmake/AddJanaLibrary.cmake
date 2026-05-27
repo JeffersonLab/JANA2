@@ -59,7 +59,7 @@ macro(add_jana_library library_name)
     set_target_properties(${library_name} PROPERTIES
         EXPORT_NAME ${library_name}
         SKIP_BUILD_RPATH FALSE
-        BUILD_WITH_INSTALL_RPATH TRUE
+        BUILD_WITH_INSTALL_RPATH FALSE
         INSTALL_RPATH_USE_LINK_PATH TRUE
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
     )
@@ -95,7 +95,7 @@ macro(add_jana_library library_name)
         target_link_libraries(${library_name}_tests PRIVATE ${library_name} "${JANA_NAMESPACE}VendoredCatch2")
         set_target_properties(${library_name}_tests PROPERTIES
             SKIP_BUILD_RPATH FALSE
-            BUILD_WITH_INSTALL_RPATH TRUE
+            BUILD_WITH_INSTALL_RPATH FALSE
             INSTALL_RPATH_USE_LINK_PATH TRUE
             INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
         )
