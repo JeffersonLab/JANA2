@@ -47,7 +47,10 @@ if(${USE_ROOT})
         COMMAND jana -Pplugins=RootDatamodelExample -Pjana:nevents=10)
         
     set_tests_properties(jana-example-rootdatamodel-tests
-        PROPERTIES DISABLED TRUE)
+        PROPERTIES
+            DISABLED TRUE
+            ENVIRONMENT "JANA_PLUGIN_PATH=${CMAKE_BINARY_DIR}/lib/JANA/plugins;LD_LIBRARY_PATH=$<TARGET_FILE_DIR:jana2_shared_lib>:$ENV{LD_LIBRARY_PATH}"
+    )
 
 else()
     message(STATUS "Skipping plugins/RootDatamodelExample because USE_ROOT=Off")
