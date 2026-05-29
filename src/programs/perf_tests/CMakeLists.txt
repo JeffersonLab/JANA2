@@ -7,7 +7,7 @@ if (USE_PODIO)
     target_link_libraries(jana-perf-tests PRIVATE PodioDatamodel PodioDatamodelDict)
 
 else()
-    message(STATUS "jana-perf-tests compiled without PODIO stress test because USE_PODIO=Off")
+    message(STATUS "jana-perf-tests compiled without PODIO because USE_PODIO=Off")
 
 endif()
 
