@@ -235,7 +235,9 @@ void JFactorySet::Print() const {
             table | databundle->GetSize();
         }
     }
-    table.Render(std::cout);
+    std::ostringstream oss;
+    table.Render(oss);
+    std::cout << oss.str();
 }
 
 //---------------------------------
