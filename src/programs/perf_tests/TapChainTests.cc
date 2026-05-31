@@ -62,6 +62,12 @@ TEST_CASE("TapChainTests_1") {
     app.Add(new JFactoryGeneratorT<Fac>);
     app.Add(new Proc);
 
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "tap_chain_tests_1.dat");
+    app.SetParameterValue("benchmark:use_log_scale", true);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "32");
+
     JBenchmarker benchmarker(&app);
     benchmarker.RunUntilFinished();
 }
@@ -77,6 +83,12 @@ TEST_CASE("TapChainTests_4") {
         app.Add(new Proc);
     }
 
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "tap_chain_tests_4.dat");
+    app.SetParameterValue("benchmark:use_log_scale", true);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "32");
+
     JBenchmarker benchmarker(&app);
     benchmarker.RunUntilFinished();
 }
@@ -91,6 +103,13 @@ TEST_CASE("TapChainTests_16") {
     for (int i=0; i<16; ++i) {
         app.Add(new Proc);
     }
+
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "tap_chain_tests_16.dat");
+    app.SetParameterValue("benchmark:use_log_scale", true);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "32");
+
     JBenchmarker benchmarker(&app);
     benchmarker.RunUntilFinished();
 }

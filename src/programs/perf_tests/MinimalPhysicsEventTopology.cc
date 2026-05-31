@@ -38,7 +38,11 @@ TEST_CASE("MinimalPhysicsEventTopology") {
     params->SetParameter("jtest:plotter_bytes", 0);
     params->SetParameter("jtest:plotter_bytes_spread", 0);
 
-    params->SetParameter("benchmark:resultsdir", "perftest_minimal_physicsevent_topology");
+    params->SetParameter("benchmark:resultsdir", "perf_tests");
+    params->SetParameter("benchmark:rates_filename", "minimal_physics_event_topology.dat");
+    params->SetParameter("benchmark:use_log_scale", true);
+    params->SetParameter("benchmark:minthreads", "1");
+    params->SetParameter("benchmark:maxthreads", "32");
 
     JApplication app(params);
     auto logger = params->GetLogger("PerfTests");

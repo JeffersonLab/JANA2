@@ -42,6 +42,11 @@ TEST_CASE("Mini") {
 TEST_CASE("MinimalSourceTopology") {
     LOG << "Running MinimalSourceTopology";
     JApplication app;
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "minimal_source_topology.dat");
+    app.SetParameterValue("benchmark:use_log_scale", true);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "32");
     app.Add(new Src);
     JBenchmarker benchmarker(&app);
     benchmarker.RunUntilFinished();

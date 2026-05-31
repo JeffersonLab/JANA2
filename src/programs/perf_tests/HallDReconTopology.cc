@@ -22,7 +22,11 @@ TEST_CASE("HallDReconTopology") {
     params->SetParameter("jtest:parser_ms", 2);
     params->SetParameter("jtest:plotter_ms", 2);
 
-    params->SetParameter("benchmark:resultsdir", "perftest_halld_recon_topology");
+    params->SetParameter("benchmark:resultsdir", "perf_tests");
+    params->SetParameter("benchmark:rates_filename", "halld_recon_topology.dat");
+    params->SetParameter("benchmark:use_log_scale", true);
+    params->SetParameter("benchmark:minthreads", "1");
+    params->SetParameter("benchmark:maxthreads", "32");
 
     JApplication app(params);
     auto logger = params->GetLogger("PerfTests");
