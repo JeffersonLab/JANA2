@@ -15,7 +15,10 @@ class JBenchmarker {
     unsigned m_thread_step = 1;
     unsigned m_nsamples = 15;
     std::string m_output_dir = "JANA_Test_Results";
+    std::string m_rates_filename = "rates.dat";
+    std::string m_samples_filename = "samples.dat";
     bool m_copy_script = true;
+    bool m_include_samples = true;
     bool m_use_log_scale = false;
 
 public:

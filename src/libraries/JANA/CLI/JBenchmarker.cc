@@ -61,6 +61,16 @@ JBenchmarker::JBenchmarker(JApplication* app) : m_app(app) {
             "Output directory name for benchmark test results");
 
     params->SetDefaultParameter(
+            "benchmark:rates_filename",
+            m_rates_filename,
+            "Filename for benchmark rates");
+
+    params->SetDefaultParameter(
+            "benchmark:samples_filename",
+            m_samples_filename,
+            "Filename for benchmark samples");
+
+    params->SetDefaultParameter(
             "benchmark:copyscript",
             m_copy_script,
             "Copy plotting script to results dir");
@@ -82,15 +92,17 @@ void JBenchmarker::RunUntilFinished() {
                        << "    benchmark:threadstep = " << m_thread_step << std::endl
                        << "    benchmark:use_log_scale = " << m_use_log_scale << std::endl
                        << "    benchmark:nsamples = " << m_nsamples << std::endl
-                       << "    benchmark:resultsdir = " << m_output_dir << std::endl;
+                       << "    benchmark:resultsdir = " << m_output_dir << std::endl
+                       << "    benchmark:rates_filename = " << m_rates_filename << std::endl
+                       << "    benchmark:samples_filename = " << m_samples_filename << std::endl;
 
 
     mkdir(m_output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-    std::ofstream samples_file(m_output_dir + "/samples.dat");
+    std::ofstream samples_file(m_output_dir + "/" + m_samples_filename);
     samples_file << "# nthreads     rate" << std::endl;
 
-    std::ofstream rates_file(m_output_dir + "/rates.dat");
+    std::ofstream rates_file(m_output_dir + "/" + m_rates_filename);
     rates_file << "# nthreads  avg_rate       rms" << std::endl;
 
 
