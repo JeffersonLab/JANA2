@@ -611,7 +611,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
     // Note that our worker threads will still wait at ExchangeTask() until they get
     // shut down separately during Scale().
     
-    if (m_runstatus == RunStatus::Running || m_runstatus == RunStatus::Pausing || m_runstatus == RunStatus::Draining) {
+    if (m_runstatus == RunStatus::Pausing || m_runstatus == RunStatus::Draining) {
         // We want to avoid scenarios such as where the topology already Finished but then gets reset to Paused
         // This also leaves a cleaner narrative in the logs. 
 
