@@ -6,8 +6,8 @@
 #include <algorithm>
 
 UnionFind::UnionFind(size_t item_count) {
-    parent.reserve(item_count);
-    rank.reserve(item_count);
+    parent.resize(item_count);
+    rank.resize(item_count);
     for (size_t i=0; i<item_count; ++i) {
         parent[i] = i;
         rank[i] = 0;
