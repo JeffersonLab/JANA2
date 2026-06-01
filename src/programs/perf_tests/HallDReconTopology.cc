@@ -18,9 +18,8 @@ TEST_CASE("HallDReconTopology") {
     params->SetParameter("jana:loglevel", "off");
 
     // Log levels get set as soon as JApp gets constructed
-    params->SetParameter("jtest:write_csv", false);
-    params->SetParameter("jtest:parser_ms", 2);
-    params->SetParameter("jtest:plotter_ms", 2);
+    params->SetParameter("jtest:parser:cputime_ms", 2);
+    params->SetParameter("jtest:plotter:cputime_ms", 2);
 
     params->SetParameter("benchmark:resultsdir", "perf_tests");
     params->SetParameter("benchmark:rates_filename", "halld_recon_topology.dat");
