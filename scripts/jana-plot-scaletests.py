@@ -49,7 +49,7 @@ def make_plot(plot_spec, input_dir):
 
         tpar = subplot['t_par']
         tseq = subplot['t_seq']
-        nthreads = np.arange(minnthreads, maxnthreads+1, 1)
+        #nthreads = np.arange(minnthreads, maxnthreads+1, 1)
         seq_bottleneck = 1000 / tseq
         par_bottleneck = 1000 * nthreads / tpar
         amdahl_ys = 1000 / (tseq + (tpar/nthreads))

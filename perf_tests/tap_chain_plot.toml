@@ -1,0 +1,23 @@
+
+title = "Chain length scaling"
+output_filename = "chain_length_scaling.pdf"
+use_latex = true
+
+[[test]]
+key = "1 JEventProcessor"
+datafile = "tap_chain_tests_1.dat"
+t_par = 1
+t_seq = 1
+
+[[test]]
+key = "4 JEventProcessors"
+datafile = "tap_chain_tests_4.dat"
+t_par = 1
+t_seq = 1
+
+[[test]]
+key = "16 JEventProcessors"
+datafile = "tap_chain_tests_16.dat"
+t_par = 1
+t_seq = 1
+
