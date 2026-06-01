@@ -495,7 +495,9 @@ void JExecutionEngine::ExchangeTask(Task& task, size_t worker_id, bool nonblocki
     // Notify one worker, who will notify the next, etc, as long as FindNextReadyTaskUnsafe() succeeds.
     // After FindNextReadyTaskUnsafe fails, all threads block until the next returning worker reactivates the
     // notification chain.
-    m_condvar.notify_one();
+    if (task.arrow != nullptr && task.arrow->IsParallel()) {
+        m_condvar.notify_one();
+    }
 }
 
 
