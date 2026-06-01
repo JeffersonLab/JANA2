@@ -1,6 +1,11 @@
 
 #include "JExecutionEngine.h"
 #include <JANA/Utils/JApplicationInspector.h>
+#include <JANA/JVersion.h>
+
+#if JANA2_HAVE_PERFETTO
+#include <JANA/Services/JPerfettoService.h>
+#endif
 
 #include <chrono>
 #include <cstddef>
@@ -416,12 +421,21 @@ void JExecutionEngine::RunWorker(Worker worker) {
     LOG_DEBUG(GetLogger()) << "Launched worker thread " << worker.worker_id << LOG_END;
     jana2_worker_id = worker.worker_id;
     jana2_worker_backtrace = worker.backtrace;
+#if JANA2_HAVE_PERFETTO
+    JPerfettoService::RegisterCurrentThread(worker.worker_id);
+#endif
     try {
         Task task;
         while (true) {
             ExchangeTask(task, worker.worker_id);
             if (task.arrow == nullptr) break; // Exit as soon as ExchangeTask() stops blocking
-            task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
+            {
+#if JANA2_HAVE_PERFETTO
+                TRACE_EVENT("jana", perfetto::DynamicString{task.arrow->GetName()},
+                    "worker_id", (uint64_t)worker.worker_id);
+#endif
+                task.arrow->Fire(task.input_event, task.outputs, task.output_count, task.status);
+            }
         }
         LOG_DEBUG(GetLogger()) << "Stopped worker thread " << worker.worker_id << LOG_END;
     }
