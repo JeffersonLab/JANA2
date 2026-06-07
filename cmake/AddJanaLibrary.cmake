@@ -101,6 +101,9 @@ macro(add_jana_library library_name)
         )
         #install(TARGETS ${library_name}_tests RUNTIME DESTINATION bin)
         add_test(NAME ${library_name}_tests COMMAND ${library_name}_tests)
+        set_tests_properties(${library_name}_tests PROPERTIES
+            ENVIRONMENT "LD_LIBRARY_PATH=$<TARGET_FILE_DIR:${library_name}>:$<TARGET_FILE_DIR:jana2_shared_lib>:$ENV{LD_LIBRARY_PATH}"
+        )
     endif()
 endmacro()
 
