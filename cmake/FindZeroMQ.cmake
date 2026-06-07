@@ -1,34 +1,34 @@
-# - Try to find ZeroMQ
-# Once done this will define
-# ZeroMQ_FOUND - System has ZeroMQ
-# ZeroMQ_INCLUDE_DIRS - The ZeroMQ include directories
-# ZeroMQ_LIBRARIES - The libraries needed to use ZeroMQ
-# ZeroMQ_DEFINITIONS - Compiler switches required for using ZeroMQ
+set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
+find_package(PkgConfig)
+pkg_check_modules(PC_LIBZMQ QUIET libzmq)
 
-find_path (ZeroMQ_INCLUDE_DIR zmq.h)
-find_library (ZeroMQ_LIBRARY NAMES zmq)
-set (ZeroMQ_LIBRARIES ${ZeroMQ_LIBRARY})
-set (ZeroMQ_INCLUDE_DIRS ${ZeroMQ_INCLUDE_DIR})
+set(ZeroMQ_VERSION ${PC_LIBZMQ_VERSION})
 
-# Use parent directory name of the include directory to
-# indicate where we are getting this from. This is
-# informational only for when the top-level file
-# prints "USE_ZEROMQ  On  -->"
-# n.b. it is possible the library and include directories
-# don't point to the same version!
-get_filename_component(ZeroMQ_DIR ${ZeroMQ_INCLUDE_DIR} DIRECTORY)
+find_path(ZeroMQ_INCLUDE_DIR zmq.h
+        PATHS ${ZeroMQ_DIR}/include
+        ${PC_LIBZMQ_INCLUDE_DIRS})
 
-# For debugging
-#message(STATUS "ZeroMQ_INCLUDE_DIR=${ZeroMQ_INCLUDE_DIR}")
-#message(STATUS "ZeroMQ_LIBRARY=${ZeroMQ_LIBRARY}")
-#message(STATUS "ZeroMQ_DIR=${ZeroMQ_DIR}")
+find_library(ZeroMQ_LIBRARY
+        NAMES zmq
+        PATHS ${ZeroMQ_DIR}/lib
+        ${PC_LIBZMQ_LIBDIR}
+        ${PC_LIBZMQ_LIBRARY_DIRS})
 
-# handle the QUIETLY and REQUIRED arguments and set ZeroMQ_FOUND to TRUE
+if(ZeroMQ_LIBRARY)
+    set(ZeroMQ_FOUND ON)
+endif()
+
+set ( ZeroMQ_LIBRARIES ${ZeroMQ_LIBRARY} )
+set ( ZeroMQ_INCLUDE_DIRS ${ZeroMQ_INCLUDE_DIR} )
+
+if(NOT TARGET libzmq)
+    add_library(libzmq UNKNOWN IMPORTED)
+    set_target_properties(libzmq PROPERTIES
+            IMPORTED_LOCATION ${ZeroMQ_LIBRARIES}
+            INTERFACE_INCLUDE_DIRECTORIES ${ZeroMQ_INCLUDE_DIRS})
+endif()
+
+include ( FindPackageHandleStandardArgs )
+# handle the QUIETLY and REQUIRED arguments and set ZMQ_FOUND to TRUE
 # if all listed variables are TRUE
-
-include (FindPackageHandleStandardArgs)
-find_package_handle_standard_args(ZeroMQ
-        FOUND_VAR ZeroMQ_FOUND
-        VERSION_VAR ZeroMQ_VERSION
-        REQUIRED_VARS ZeroMQ_DIR ZeroMQ_INCLUDE_DIRS ZeroMQ_LIBRARIES
-        )
+find_package_handle_standard_args ( ZeroMQ DEFAULT_MSG ZeroMQ_LIBRARIES ZeroMQ_INCLUDE_DIRS )
