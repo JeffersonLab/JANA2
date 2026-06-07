@@ -35,7 +35,10 @@ macro(add_jana_test test_target_name)
 
     install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
 
-    add_test(NAME ${test_target_name} COMMAND ${CMAKE_INSTALL_PREFIX}/bin/${test_target_name})
+    add_test(NAME ${test_target_name} COMMAND ${test_target_name})
+    set_tests_properties(${test_target_name} PROPERTIES
+        ENVIRONMENT "LD_LIBRARY_PATH=$<TARGET_FILE_DIR:jana2_shared_lib>:$ENV{LD_LIBRARY_PATH}"
+    )
 
 endmacro()
 

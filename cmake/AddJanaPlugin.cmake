@@ -67,9 +67,10 @@ macro(add_jana_plugin plugin_name)
         PREFIX ""
         SUFFIX ".so"
         SKIP_BUILD_RPATH FALSE
-        BUILD_WITH_INSTALL_RPATH TRUE
+        BUILD_WITH_INSTALL_RPATH FALSE
         INSTALL_RPATH_USE_LINK_PATH TRUE
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/JANA/plugins"
     )
 
     target_link_libraries(${plugin_name} PUBLIC "${JANA_NAMESPACE}${PLUGIN_JANA_LIB}")
@@ -99,12 +100,15 @@ macro(add_jana_plugin plugin_name)
         target_link_libraries(${plugin_name}-tests PRIVATE ${plugin_name} "${JANA_NAMESPACE}VendoredCatch2")
         set_target_properties(${plugin_name}-tests PROPERTIES
             SKIP_BUILD_RPATH FALSE
-            BUILD_WITH_INSTALL_RPATH TRUE
+            BUILD_WITH_INSTALL_RPATH FALSE
             INSTALL_RPATH_USE_LINK_PATH TRUE
             INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
         )
         #install(TARGETS ${plugin_name}-tests RUNTIME DESTINATION bin)
         add_test(NAME ${plugin_name}-tests COMMAND ${plugin_name}-tests)
+        set_tests_properties(${plugin_name}-tests PROPERTIES
+            ENVIRONMENT "JANA_PLUGIN_PATH=${CMAKE_BINARY_DIR}/lib/JANA/plugins;LD_LIBRARY_PATH=$<TARGET_FILE_DIR:jana2_shared_lib>:$ENV{LD_LIBRARY_PATH}"
+        )
     endif()
 endmacro()
 

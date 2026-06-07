@@ -6,6 +6,17 @@
 #include <JANA/JEvent.h>
 #include <JANA/JEventSource.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <JANA/JVersion.h>
+
+#if JANA2_HAVE_PERFETTO
+#include <JANA/Services/JPerfettoService.h>
+
+// Thread-local pointer to the factory whose span is currently open on this thread.
+// Used to build inter-factory dependency flow arrows: when factory B is triggered from
+// within factory A's Process(), g_current_executing_factory == A, so we can draw
+// an arrow A → B in the Perfetto timeline.
+static thread_local JFactory* g_current_executing_factory = nullptr;
+#endif
 
 
 class FlagGuard {
@@ -106,88 +117,157 @@ void JFactory::Create(const JEvent& event) {
         std::rethrow_exception(mException);
     }
 
-    // Make sure Init() ran, which might except...
-    try {
-        DoInit(); // This checks mInitStatus internally before calling Init()
-    }
-    catch(...) {
-        // If Init() excepts, we still need to store an empty collection
-        mStatus = Status::Excepted;
-        for (auto* output : GetOutputs()) {
-            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+    // The factory span wraps the entire activation: Init + run callbacks + input population + Process.
+    // factory_init spans (Init, BeginRun, ChangeRun, EndRun) appear as children of this factory span,
+    // making the phase structure visible when inspecting any factory span in the trace.
+    // Flow events connect each factory span to the parent factory that triggered it,
+    // drawn as arrows showing the data-dependency chain in the Perfetto UI.
+    {
+#if JANA2_HAVE_PERFETTO
+        // If a parent factory is currently executing on this thread it triggered us.
+        // Emit a flow-start instant inside the parent's still-open span, then open
+        // our span with a TerminatingFlow — Perfetto draws an arrow parent → us.
+        JFactory* const caller = g_current_executing_factory;
+        // Guard flow_id computation behind the category check: the FNV hash and
+        // GetEventNumber() are non-trivial work that should not run when tracing
+        // is disabled, even though the TRACE_EVENT_* args are already lazy.
+        if (TRACE_EVENT_CATEGORY_ENABLED("factory") && caller != nullptr) {
+            // FNV-1a-inspired hash: unique 64-bit flow ID per (caller, callee, event).
+            uint64_t flow_id = 14695981039346656037ULL;
+            flow_id = (flow_id ^ static_cast<uint64_t>(reinterpret_cast<uintptr_t>(caller))) * 1099511628211ULL;
+            flow_id = (flow_id ^ static_cast<uint64_t>(reinterpret_cast<uintptr_t>(this)))   * 1099511628211ULL;
+            flow_id = (flow_id ^ static_cast<uint64_t>(event.GetEventNumber())) * 1099511628211ULL;
+            // Flow starts here — we are still executing inside the parent's open span.
+            TRACE_EVENT_INSTANT("factory", perfetto::DynamicString{GetFactoryName()},
+                perfetto::ThreadTrack::Current(), perfetto::Flow::Global(flow_id));
+            // Our span starts, consuming the arrow from the parent's instant above.
+            TRACE_EVENT_BEGIN("factory", perfetto::DynamicString{GetFactoryName()},
+                perfetto::TerminatingFlow::Global(flow_id),
+                "tag", GetTag(), "event_nr", event.GetEventNumber());
+        } else {
+            TRACE_EVENT_BEGIN("factory", perfetto::DynamicString{GetFactoryName()},
+                "tag", GetTag(), "event_nr", event.GetEventNumber());
         }
-        for (auto* output : GetVariadicOutputs()) {
-            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
-        }
-        std::rethrow_exception(mException);
-    }
+        // RAII: close the Perfetto span on scope exit (exception-safe).
+        struct SpanGuard { ~SpanGuard() { TRACE_EVENT_END("factory"); } } span_guard;
+        // RAII: track the currently-executing factory so sub-factories can link back to us.
+        // Declared after span_guard — its destructor runs first, restoring the caller
+        // before the span closes.
+        struct CallerGuard {
+            JFactory** slot; JFactory* saved;
+            ~CallerGuard() { *slot = saved; }
+        } caller_guard{&g_current_executing_factory, caller};
+        g_current_executing_factory = this;
+#endif
 
-    // At this point, Init() has run and has _not_ excepted
-
-    if (mStatus == Status::Excepted) {
-        // But Process() might have already excepted!
-        std::rethrow_exception(mException);
-    }
-    else if (mStatus == Status::Empty) {
-        // Now we know that we need to run Process() to create the data in the first place
+        // Make sure Init() ran, which might except...
         try {
-            auto run_number = event.GetRunNumber();
-            if (mPreviousRunNumber != run_number) {
-                if (m_callback_style == CallbackStyle::LegacyMode) {
-                    if (mPreviousRunNumber != -1) {
-                        CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
-                    }
-                    CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.shared_from_this()); });
-                    CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
-                }
-                else if (m_callback_style == CallbackStyle::ExpertMode) {
-                    CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
-                }
-                mPreviousRunNumber = run_number;
-            }
-            for (auto* input : GetInputs()) {
-                input->Populate(event);
-            }
-            for (auto* input : GetVariadicInputs()) {
-                input->Populate(event);
-            }
-            if (m_callback_style == CallbackStyle::LegacyMode) {
-                CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
-            }
-            else if (m_callback_style == CallbackStyle::ExpertMode) {
-                CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event); });
-            }
-            else {
-                throw JException("Invalid callback style");
-            }
+            DoInit(); // This checks mInitStatus internally before calling Init()
         }
-        catch (...) {
-            // Save everything already created even if we throw an exception
-            // This is so that we leave everything in a valid state just in case someone tries to catch the exception recover,
-            // such as EICrecon. (Remember that a missing collection in the podio frame will segfault if anyone tries to write that frame)
-            // Note that the collections themselves won't know that they exited early
-
-            LOG << "Exception in JFactory::Create, prefix=" << GetPrefix();
+        catch(...) {
+            // If Init() excepts, we still need to store an empty collection
             mStatus = Status::Excepted;
-            mException = std::current_exception();
             for (auto* output : GetOutputs()) {
                 output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
             }
             for (auto* output : GetVariadicOutputs()) {
                 output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
             }
-            throw;
+            std::rethrow_exception(mException);
         }
 
-        // Save the (successfully processed) data
-        mStatus = Status::Processed;
-        for (auto* output : GetOutputs()) {
-            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
+        // At this point, Init() has run and has _not_ excepted
+
+        if (mStatus == Status::Excepted) {
+            // But Process() might have already excepted!
+            std::rethrow_exception(mException);
         }
-        for (auto* output : GetVariadicOutputs()) {
-            output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
+        else if (mStatus == Status::Empty) {
+            // Now we know that we need to run Process() to create the data in the first place
+            try {
+                auto run_number = event.GetRunNumber();
+                if (mPreviousRunNumber != run_number) {
+                    if (m_callback_style == CallbackStyle::LegacyMode) {
+                        if (mPreviousRunNumber != -1) {
+                            {
+#if JANA2_HAVE_PERFETTO
+                                TRACE_EVENT("factory_end_run", perfetto::DynamicString{GetFactoryName()},
+                                    "tag", GetTag(), "run_nr", mPreviousRunNumber);
+#endif
+                                CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
+                            }
+                        }
+                        {
+#if JANA2_HAVE_PERFETTO
+                            TRACE_EVENT("factory_change_run", perfetto::DynamicString{GetFactoryName()},
+                                "tag", GetTag(), "run_nr", run_number);
+#endif
+                            CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event.shared_from_this()); });
+                        }
+                        {
+#if JANA2_HAVE_PERFETTO
+                            TRACE_EVENT("factory_begin_run", perfetto::DynamicString{GetFactoryName()},
+                                "tag", GetTag(), "run_nr", run_number);
+#endif
+                            CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event.shared_from_this()); });
+                        }
+                    }
+                    else if (m_callback_style == CallbackStyle::ExpertMode) {
+                        {
+#if JANA2_HAVE_PERFETTO
+                            TRACE_EVENT("factory_change_run", perfetto::DynamicString{GetFactoryName()},
+                                "tag", GetTag(), "run_nr", run_number);
+#endif
+                            CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
+                        }
+                    }
+                    mPreviousRunNumber = run_number;
+                }
+                for (auto* input : GetInputs()) {
+                    input->Populate(event);
+                }
+                for (auto* input : GetVariadicInputs()) {
+                    input->Populate(event);
+                }
+                // Process() runs inside the factory span; dependent factory spans appear as children
+                if (m_callback_style == CallbackStyle::LegacyMode) {
+                    CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event.shared_from_this()); });
+                }
+                else if (m_callback_style == CallbackStyle::ExpertMode) {
+                    CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event); });
+                }
+                else {
+                    throw JException("Invalid callback style");
+                }
+            }
+            catch (...) {
+                // Save everything already created even if we throw an exception
+                // This is so that we leave everything in a valid state just in case someone tries to catch the exception recover,
+                // such as EICrecon. (Remember that a missing collection in the podio frame will segfault if anyone tries to write that frame)
+                // Note that the collections themselves won't know that they exited early
+
+                LOG << "Exception in JFactory::Create, prefix=" << GetPrefix();
+                mStatus = Status::Excepted;
+                mException = std::current_exception();
+                for (auto* output : GetOutputs()) {
+                    output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+                }
+                for (auto* output : GetVariadicOutputs()) {
+                    output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+                }
+                throw;
+            }
+
+            // Save the (successfully processed) data
+            mStatus = Status::Processed;
+            for (auto* output : GetOutputs()) {
+                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
+            }
+            for (auto* output : GetVariadicOutputs()) {
+                output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Created);
+            }
         }
-    }
+    } // end factory span
 }
 
 void JFactory::DoInit() {
@@ -201,7 +281,13 @@ void JFactory::DoInit() {
         service->Fetch(m_app);
     }
     try {
-        CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
+        {
+#if JANA2_HAVE_PERFETTO
+            TRACE_EVENT("factory_init", perfetto::DynamicString{GetFactoryName()},
+                "tag", GetTag());
+#endif
+            CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
+        }
         mInitStatus = InitStatus::InitRun;
     }
     catch (...) {

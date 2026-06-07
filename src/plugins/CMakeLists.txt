@@ -6,4 +6,5 @@ add_subdirectory(janarate)
 add_subdirectory(janaroot)
 add_subdirectory(janaview)
 add_subdirectory(regressiontest)
+add_subdirectory(perfetto)
 

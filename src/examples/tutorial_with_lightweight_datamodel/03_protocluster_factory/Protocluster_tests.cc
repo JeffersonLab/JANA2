@@ -170,7 +170,7 @@ TEST_CASE("Protocluster_factory_tests") {
     app.Add(new JFactoryGeneratorT<Protocluster_factory>());
     auto event = std::make_shared<JEvent>(&app);
 
-    event->Insert(make_two_cluster_hits(), "");
+    event->Insert(make_two_cluster_hits(), "rechits");
     auto clusters = event->Get<CalorimeterCluster>("proto");
 
     REQUIRE(clusters.size() == 2);
@@ -187,7 +187,7 @@ TEST_CASE("Protocluster_factory_epic_tests") {
     app.Add(new JFactoryGeneratorT<Protocluster_factory_epic>());
     auto event = std::make_shared<JEvent>(&app);
 
-    event->Insert(make_two_cluster_hits(), "");
+    event->Insert(make_two_cluster_hits(), "rechits");
     auto clusters = event->Get<CalorimeterCluster>("proto");
 
     REQUIRE(clusters.size() == 2);
@@ -204,7 +204,7 @@ TEST_CASE("Protocluster_factory_gluex_tests") {
     app.Add(new JFactoryGeneratorT<Protocluster_factory_gluex>());
     auto event = std::make_shared<JEvent>(&app);
 
-    event->Insert(make_two_cluster_hits(), "");
+    event->Insert(make_two_cluster_hits(), "rechits");
     auto clusters = event->Get<CalorimeterCluster>("proto");
 
     REQUIRE(clusters.size() == 2);
