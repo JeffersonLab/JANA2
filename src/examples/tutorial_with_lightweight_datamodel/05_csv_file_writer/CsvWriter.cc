@@ -8,7 +8,7 @@ CsvWriter::CsvWriter() {
     SetCallbackStyle(CallbackStyle::ExpertMode);
 
     m_event_header_in.SetOptional(true);
-    m_calo_hit_collections_in.SetRequestedDatabundleNames({"raw"});
+    m_calo_hit_collections_in.SetRequestedDatabundleNames({"rechits"});
 }
 
 void CsvWriter::Init() {
