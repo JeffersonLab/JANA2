@@ -44,7 +44,7 @@ if(${USE_ROOT})
     install(FILES ${my_pcms} DESTINATION lib/JANA/plugins)
 
     add_test(NAME jana-example-rootdatamodel-tests
-        COMMAND jana -Pplugins=RootDatamodelExample -Pjana:nevents=10)
+        COMMAND $<TARGET_FILE:jana> -Pplugins=RootDatamodelExample -Pjana:nevents=10)
         
     set_tests_properties(jana-example-rootdatamodel-tests
         PROPERTIES
