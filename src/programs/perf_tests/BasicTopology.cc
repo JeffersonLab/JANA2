@@ -13,7 +13,7 @@
 #include <JANA/JEventSource.h>
 
 
-namespace jana::minimal_physics_event_topology {
+namespace jana::perftest::basic {
 
 struct Data { size_t x; };
 
@@ -58,30 +58,13 @@ struct PEProc : public JEventProcessor {
 };
 
 
-TEST_CASE("MinimalPhysicsEventTopology") {
-
-    LOG << "Running MinimalPhysicsEventTopology";
-
-    JApplication app;
-    app.SetParameterValue("nthreads", "1");
-    app.SetParameterValue("jana:nevents", "10000");
-    app.SetParameterValue("jana:backoff_interval", "1");
-    //app.SetParameterValue("jana:backoff_interval", "10");
-    //app.SetParameterValue("jana:loglevel", "trace");
-
-    app.Add(new PESrc);
-    app.Add(new PEProc);
-    app.Add(new JFactoryGeneratorT<PEFac>);
-    app.Run();
-}
-
-TEST_CASE("MinimalPhysicsEventTopology_Benchmarking") {
+TEST_CASE("BasicTopology_Mini") {
 
     LOG << "Running MinimalPhysicsEventTopology_Benchmarking";
 
     JApplication app;
     app.SetParameterValue("benchmark:resultsdir", "perf_tests");
-    app.SetParameterValue("benchmark:rates_filename", "minimal_physics_event_topology.dat");
+    app.SetParameterValue("benchmark:rates_filename", "basic_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
     app.SetParameterValue("benchmark:maxthreads", "32");
@@ -96,6 +79,38 @@ TEST_CASE("MinimalPhysicsEventTopology_Benchmarking") {
     JBenchmarker benchmarker(&app);
     benchmarker.RunUntilFinished();
 }
+
+
+TEST_CASE("BasicTopology_JTest") {
+    // 5Hz for full reconstruction
+    // 20kHz for stripped-down reconstruction (not per-core)
+    // Base memory allcation: 100 MB/core + 600MB
+    // 1 thread/event, disentangle 1 event, turn into 40.
+    // disentangled (single event size) : 12.5 kB / event (before blown up)
+    // entangled "block of 40": dis * 40
+    
+    auto params = new JParameterManager;
+    params->SetParameter("jana:loglevel", "off");
+
+    // Log levels get set as soon as JApp gets constructed
+    params->SetParameter("jtest:parser:cputime_ms", 2);
+    params->SetParameter("jtest:plotter:cputime_ms", 2);
+
+    params->SetParameter("benchmark:resultsdir", "perf_tests");
+    params->SetParameter("benchmark:rates_filename", "basic_jtest.dat");
+    params->SetParameter("benchmark:use_log_scale", true);
+    params->SetParameter("benchmark:minthreads", "1");
+    params->SetParameter("benchmark:maxthreads", "32");
+
+    JApplication app(params);
+    auto logger = params->GetLogger("PerfTests");
+    app.AddPlugin("JTest");
+
+    LOG_WARN(logger) << "Running JTest tuned to imitate halld_recon" << LOG_END;
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
+
 
 
 } // namespace

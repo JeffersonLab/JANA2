@@ -9,7 +9,7 @@
 #include <JANA/JEventSource.h>
 
 
-namespace jana::tap_chain_tests {
+namespace jana::perftest::tapchain {
 
 struct Data { size_t x; };
 
@@ -53,9 +53,9 @@ struct Proc : public JEventProcessor {
 };
 
 
-TEST_CASE("TapChainTests_1") {
+TEST_CASE("TapChainTopology_1_Mini") {
 
-    LOG << "Running TapChainTests_1";
+    LOG << "Running TapChainTopology_1_Mini";
 
     JApplication app;
     app.Add(new Src);
@@ -63,7 +63,7 @@ TEST_CASE("TapChainTests_1") {
     app.Add(new Proc);
 
     app.SetParameterValue("benchmark:resultsdir", "perf_tests");
-    app.SetParameterValue("benchmark:rates_filename", "tap_chain_tests_1.dat");
+    app.SetParameterValue("benchmark:rates_filename", "tapchain_1_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
     app.SetParameterValue("benchmark:maxthreads", "32");
@@ -72,9 +72,9 @@ TEST_CASE("TapChainTests_1") {
     benchmarker.RunUntilFinished();
 }
 
-TEST_CASE("TapChainTests_4") {
+TEST_CASE("TapChainTopology_4_Mini") {
 
-    LOG << "Running TapChainTests_4";
+    LOG << "Running TapChainTopology_4_Mini";
 
     JApplication app;
     app.Add(new Src);
@@ -84,7 +84,7 @@ TEST_CASE("TapChainTests_4") {
     }
 
     app.SetParameterValue("benchmark:resultsdir", "perf_tests");
-    app.SetParameterValue("benchmark:rates_filename", "tap_chain_tests_4.dat");
+    app.SetParameterValue("benchmark:rates_filename", "tapchain_4_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
     app.SetParameterValue("benchmark:maxthreads", "32");
@@ -93,9 +93,9 @@ TEST_CASE("TapChainTests_4") {
     benchmarker.RunUntilFinished();
 }
 
-TEST_CASE("TapChainTests_16") {
+TEST_CASE("TapChainTopology_16_Mini") {
 
-    LOG << "Running TapChainTests_16";
+    LOG << "Running TapChainTopology_16_Mini";
 
     JApplication app;
     app.Add(new Src);
@@ -105,7 +105,7 @@ TEST_CASE("TapChainTests_16") {
     }
 
     app.SetParameterValue("benchmark:resultsdir", "perf_tests");
-    app.SetParameterValue("benchmark:rates_filename", "tap_chain_tests_16.dat");
+    app.SetParameterValue("benchmark:rates_filename", "tapchain_16_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
     app.SetParameterValue("benchmark:maxthreads", "32");

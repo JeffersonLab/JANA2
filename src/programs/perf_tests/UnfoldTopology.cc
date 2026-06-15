@@ -10,7 +10,7 @@
 #include <JANA/JEventSource.h>
 
 
-namespace jana::minimal_unfolder_topology {
+namespace jana::perftest::unfold {
 
 struct Data { size_t x; };
 
@@ -93,13 +93,13 @@ struct PEProc : public JEventProcessor {
 };
 
 
-TEST_CASE("MinimalUnfolderTopology") {
+TEST_CASE("UnfoldToplogy_Mini") {
 
     LOG << "Running MinimalUnfolderTopology";
 
     JApplication app;
     app.SetParameterValue("benchmark:resultsdir", "perf_tests");
-    app.SetParameterValue("benchmark:rates_filename", "minimal_unfolder_topology.dat");
+    app.SetParameterValue("benchmark:rates_filename", "unfold_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
     app.SetParameterValue("benchmark:maxthreads", "32");
