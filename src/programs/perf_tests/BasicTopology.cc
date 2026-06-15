@@ -11,6 +11,7 @@
 #include <JANA/JEventUnfolder.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventSource.h>
+#include <JANA/Utils/JBenchUtils.h>
 
 
 namespace jana::perftest::basic {
@@ -20,13 +21,16 @@ struct Data { size_t x; };
 struct PESrc : public JEventSource {
 
     Output<Data> data_out {this};
+    Parameter<int> latency_us {this, "latency_us", 0};
 
     PESrc() {
+        SetPrefix("src");
         SetCallbackStyle(CallbackStyle::ExpertMode);
         data_out.SetShortName("1");
     }
     JEventSource::Result Emit(JEvent& event) override {
         data_out().push_back(new Data {event.GetEventNumber()*3 });
+        JBenchUtils::consume_cpu_us(*latency_us);
         return Result::Success;
     };
 };
@@ -34,7 +38,9 @@ struct PESrc : public JEventSource {
 struct PEFac : public JFactory {
     Input<Data> data_in {this};
     Output<Data> data_out {this};
+    Parameter<int> latency_us {this, "latency_us", 0};
     PEFac() {
+        SetPrefix("fac");
         SetLevel(JEventLevel::PhysicsEvent);
         data_in.SetDatabundleName("1");
         data_out.SetShortName("2");
@@ -42,35 +48,104 @@ struct PEFac : public JFactory {
     void Process(const JEvent&) override {
         auto x = data_in().at(0)->x * 10;
         data_out().push_back(new Data {x});
+        JBenchUtils::consume_cpu_us(*latency_us);
     };
 };
 
 struct PEProc : public JEventProcessor {
     Input<Data> data_in {this};
+    Parameter<int> latency_us {this, "latency_us", 0};
     PEProc() {
+        SetPrefix("proc");
         SetLevel(JEventLevel::PhysicsEvent);
         SetCallbackStyle(CallbackStyle::ExpertMode);
         data_in.SetDatabundleName("2");
     }
     void ProcessSequential(const JEvent&) override {
         (void) (data_in().at(0)->x);
+        JBenchUtils::consume_cpu_us(*latency_us);
     };
 };
 
 
 TEST_CASE("BasicTopology_Mini") {
 
-    LOG << "Running MinimalPhysicsEventTopology_Benchmarking";
+    LOG << "Running BasicTopology_Mini";
 
     JApplication app;
+    app.SetParameterValue("src:latency_us", 0);  // Infinity Hz
+    app.SetParameterValue("fac:latency_us", 0);  // Infinity Hz
+    app.SetParameterValue("proc:latency_us", 0); // Infinity Hz
     app.SetParameterValue("benchmark:resultsdir", "perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "basic_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
     app.SetParameterValue("benchmark:maxthreads", "32");
-    //app.SetParameterValue("jana:backoff_interval", "1");
-    app.SetParameterValue("jana:backoff_interval", "1");
-    //app.SetParameterValue("jana:loglevel", "trace");
+
+    app.Add(new PESrc);
+    app.Add(new PEProc);
+    app.Add(new JFactoryGeneratorT<PEFac>);
+
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
+
+TEST_CASE("BasicTopology_Small") {
+
+    LOG << "Running BasicTopology_Small";
+
+    JApplication app;
+    app.SetParameterValue("src:latency_us", 0);
+    app.SetParameterValue("fac:latency_us", 1000000/5000);   // 5 kHz
+    app.SetParameterValue("proc:latency_us", 0);
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "basic_small.dat");
+    app.SetParameterValue("benchmark:use_log_scale", true);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "32");
+
+    app.Add(new PESrc);
+    app.Add(new PEProc);
+    app.Add(new JFactoryGeneratorT<PEFac>);
+
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
+
+TEST_CASE("BasicTopology_Medium") {
+
+    LOG << "Running BasicTopology_Medium";
+
+    JApplication app;
+    app.SetParameterValue("src:latency_us", 0);
+    app.SetParameterValue("fac:latency_us", 1000000/50);  // 50 Hz
+    app.SetParameterValue("proc:latency_us", 0);
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "basic_medium.dat");
+    app.SetParameterValue("benchmark:use_log_scale", true);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "32");
+
+    app.Add(new PESrc);
+    app.Add(new PEProc);
+    app.Add(new JFactoryGeneratorT<PEFac>);
+
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
+TEST_CASE("BasicTopology_Large") {
+
+    LOG << "Running BasicTopology_Large";
+
+    JApplication app;
+    app.SetParameterValue("src:latency_us", 0);          // Infinity Hz
+    app.SetParameterValue("fac:latency_us", 1000000/5);  // 5 Hz
+    app.SetParameterValue("proc:latency_us", 0);         // 100 Hz
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "basic_large.dat");
+    app.SetParameterValue("benchmark:use_log_scale", true);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "32");
 
     app.Add(new PESrc);
     app.Add(new PEProc);
@@ -110,7 +185,6 @@ TEST_CASE("BasicTopology_JTest") {
     JBenchmarker benchmarker(&app);
     benchmarker.RunUntilFinished();
 }
-
 
 
 } // namespace
