@@ -35,7 +35,7 @@ TEST_CASE("SourceTopology_Mini") {
     LOG << "Running SourceTopology_Mini";
     JApplication app;
     app.SetParameterValue("sut:latency_us", 0); // Infinity Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "source_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -49,7 +49,7 @@ TEST_CASE("SourceTopology_Small") {
     LOG << "Running SourceTopology_Small";
     JApplication app;
     app.SetParameterValue("sut:latency_us", 50); // 20 kHz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "source_small.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -63,7 +63,7 @@ TEST_CASE("SourceTopology_Medium") {
     LOG << "Running SourceTopology_Medium";
     JApplication app;
     app.SetParameterValue("sut:latency_us", 10000); // 100 Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "source_medium.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -77,7 +77,7 @@ TEST_CASE("SourceTopology_Large") {
     LOG << "Running SourceTopology_Large";
     JApplication app;
     app.SetParameterValue("sut:latency_us", 200000); // 5 Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "source_large.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");

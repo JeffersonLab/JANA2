@@ -75,7 +75,7 @@ TEST_CASE("TapChainTopology_1_Mini") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 0); // Inf Hz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_1_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -96,7 +96,7 @@ TEST_CASE("TapChainTopology_4_Mini") {
         app.Add(new Proc);
     }
 
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_4_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -120,7 +120,7 @@ TEST_CASE("TapChainTopology_16_Mini") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 0); // Inf Hz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_16_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -142,7 +142,7 @@ TEST_CASE("TapChainTopology_1_Small") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 5000); // 5 kHz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_1_small.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -166,7 +166,7 @@ TEST_CASE("TapChainTopology_4_Small") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 5000); // 5 kHz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_4_small.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -190,7 +190,7 @@ TEST_CASE("TapChainTopology_16_Small") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 5000); // 5 kHz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_16_small.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -213,7 +213,7 @@ TEST_CASE("TapChainTopology_1_Medium") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 100); // 100 Hz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_1_medium.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -237,7 +237,7 @@ TEST_CASE("TapChainTopology_4_Medium") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 100); // 100 Hz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_4_medium.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -261,7 +261,7 @@ TEST_CASE("TapChainTopology_16_Medium") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 100); // 100 Hz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_16_medium.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -283,7 +283,7 @@ TEST_CASE("TapChainTopology_1_Large") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 5); // 5 Hz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_1_large.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -307,7 +307,7 @@ TEST_CASE("TapChainTopology_4_Large") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 5); // 5 Hz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_4_large.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -331,7 +331,7 @@ TEST_CASE("TapChainTopology_16_Large") {
     app.SetParameterValue("src:latency_us", 0); // Inf Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 5); // 5 Hz
     app.SetParameterValue("proc:latency_us", 0); // Inf Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_16_large.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -355,7 +355,7 @@ TEST_CASE("TapChainTopology_Pipelining") {
     app.SetParameterValue("src:latency_us", 1'000'000 / 100); // 100 Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 100); // 100 Hz
     app.SetParameterValue("proc:latency_us", 1'000'000 / 100); // 100 Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "tapchain_pipelining.dat");
     app.SetParameterValue("benchmark:use_log_scale", false);
     app.SetParameterValue("benchmark:minthreads", "1");

@@ -119,7 +119,7 @@ TEST_CASE("UnfoldTopology_Mini") {
     app.SetParameterValue("unf:latency_us", 0); // Infinity Hz
     app.SetParameterValue("pefac:latency_us", 0); // Infinity Hz
     app.SetParameterValue("peproc:latency_us", 0); // Infinity Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "unfold_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -144,7 +144,7 @@ TEST_CASE("UnfoldTopology_Small") {
     app.SetParameterValue("unf:latency_us", 0); // Infinity Hz
     app.SetParameterValue("pefac:latency_us", 1'000'000 / 5000); // 5 kHz
     app.SetParameterValue("peproc:latency_us", 0); // Infinity Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "unfold_small.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -169,7 +169,7 @@ TEST_CASE("UnfoldTopology_Small_Saturation") {
     app.SetParameterValue("unf:latency_us", 1'000'000 / 20'000); // 20 kHz
     app.SetParameterValue("pefac:latency_us", 1'000'000 / 5000); // 5 kHz
     app.SetParameterValue("peproc:latency_us", 1'000'000 / 20'000); // 20 kHz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "unfold_small_saturation.dat");
     app.SetParameterValue("benchmark:use_log_scale", false);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -194,7 +194,7 @@ TEST_CASE("UnfoldTopology_Medium") {
     app.SetParameterValue("unf:latency_us", 0); // Infinity Hz
     app.SetParameterValue("pefac:latency_us", 1'000'000 / 100); // 100 Hz
     app.SetParameterValue("peproc:latency_us", 0); // Infinity Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "unfold_medium.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -219,7 +219,7 @@ TEST_CASE("UnfoldTopology_Medium_Saturation") {
     app.SetParameterValue("unf:latency_us", 1'000'000 / 400); // 400 Hz
     app.SetParameterValue("pefac:latency_us", 1'000'000 / 100); // 100 Hz
     app.SetParameterValue("peproc:latency_us", 1'000'000 / 400); // 400 Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "unfold_medium_saturation.dat");
     app.SetParameterValue("benchmark:use_log_scale", false);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -244,7 +244,7 @@ TEST_CASE("UnfoldTopology_Large") {
     app.SetParameterValue("unf:latency_us", 0); // Infinity Hz
     app.SetParameterValue("pefac:latency_us", 1'000'000 / 5); // 5 Hz
     app.SetParameterValue("peproc:latency_us", 0); // Infinity Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "unfold_large.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -270,7 +270,7 @@ TEST_CASE("UnfoldTopology_Large_Saturation") {
     app.SetParameterValue("unf:latency_us", 1'000'000 / 20); // 20 Hz
     app.SetParameterValue("pefac:latency_us", 1'000'000 / 5); // 5 Hz
     app.SetParameterValue("peproc:latency_us", 1'000'000 / 20); // 20 Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "unfold_large_saturation.dat");
     app.SetParameterValue("benchmark:use_log_scale", false);
     app.SetParameterValue("benchmark:minthreads", "1");

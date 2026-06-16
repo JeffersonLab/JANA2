@@ -76,7 +76,7 @@ TEST_CASE("BasicTopology_Mini") {
     app.SetParameterValue("src:latency_us", 0);  // Infinity Hz
     app.SetParameterValue("fac:latency_us", 0);  // Infinity Hz
     app.SetParameterValue("proc:latency_us", 0); // Infinity Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "basic_mini.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -98,7 +98,7 @@ TEST_CASE("BasicTopology_Small") {
     app.SetParameterValue("src:latency_us", 0);
     app.SetParameterValue("fac:latency_us", 1000000/5000);   // 5 kHz
     app.SetParameterValue("proc:latency_us", 0);
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "basic_small.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -120,7 +120,7 @@ TEST_CASE("BasicTopology_Small_Saturation") {
     app.SetParameterValue("src:latency_us", 1'000'000 / 40'000); // 40 kHz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 5000);   // 5 kHz
     app.SetParameterValue("proc:latency_us", 1'000'000 / 40'000); // 40 kHz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "basic_small_saturation.dat");
     app.SetParameterValue("benchmark:use_log_scale", false);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -142,7 +142,7 @@ TEST_CASE("BasicTopology_Medium") {
     app.SetParameterValue("src:latency_us", 0);
     app.SetParameterValue("fac:latency_us", 1000000/50);  // 50 Hz
     app.SetParameterValue("proc:latency_us", 0);
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "basic_medium.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -164,7 +164,7 @@ TEST_CASE("BasicTopology_Medium_Saturation") {
     app.SetParameterValue("src:latency_us", 1'000'000 / 400); // 400 Hz
     app.SetParameterValue("fac:latency_us", 1'000'000 / 50);  // 50 Hz
     app.SetParameterValue("proc:latency_us", 1'000'000 / 400); // 400 Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "basic_medium_saturation.dat");
     app.SetParameterValue("benchmark:use_log_scale", false);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -185,7 +185,7 @@ TEST_CASE("BasicTopology_Large") {
     app.SetParameterValue("src:latency_us", 0);          // Infinity Hz
     app.SetParameterValue("fac:latency_us", 1000000/5);  // 5 Hz
     app.SetParameterValue("proc:latency_us", 0);         // 100 Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "basic_large.dat");
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -207,7 +207,7 @@ TEST_CASE("BasicTopology_Large_Saturation") {
     app.SetParameterValue("src:latency_us", 1'000'000/40);  // 40 Hz
     app.SetParameterValue("fac:latency_us", 1'000'000/5);   // 5 Hz
     app.SetParameterValue("proc:latency_us", 1'000'000/40); // 40 Hz
-    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:resultsdir", "docs/perf_tests");
     app.SetParameterValue("benchmark:rates_filename", "basic_large_saturation.dat");
     app.SetParameterValue("benchmark:use_log_scale", false);
     app.SetParameterValue("benchmark:minthreads", "1");
@@ -237,7 +237,7 @@ TEST_CASE("BasicTopology_JTest") {
     params->SetParameter("jtest:parser:cputime_ms", 2);
     params->SetParameter("jtest:plotter:cputime_ms", 2);
 
-    params->SetParameter("benchmark:resultsdir", "perf_tests");
+    params->SetParameter("benchmark:resultsdir", "docs/perf_tests");
     params->SetParameter("benchmark:rates_filename", "basic_jtest.dat");
     params->SetParameter("benchmark:use_log_scale", true);
     params->SetParameter("benchmark:minthreads", "1");
