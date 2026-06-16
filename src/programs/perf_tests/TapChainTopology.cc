@@ -341,6 +341,29 @@ TEST_CASE("TapChainTopology_16_Large") {
     benchmarker.RunUntilFinished();
 }
 
+TEST_CASE("TapChainTopology_Pipelining") {
+
+    LOG << "Running TapChainTopology_Pipelining";
+
+    JApplication app;
+    app.Add(new Src);
+    app.Add(new JFactoryGeneratorT<Fac>);
+    for (int i=0; i<4; ++i) {
+        app.Add(new Proc);
+    }
+
+    app.SetParameterValue("src:latency_us", 1'000'000 / 100); // 100 Hz
+    app.SetParameterValue("fac:latency_us", 1'000'000 / 100); // 100 Hz
+    app.SetParameterValue("proc:latency_us", 1'000'000 / 100); // 100 Hz
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "tapchain_pipelining.dat");
+    app.SetParameterValue("benchmark:use_log_scale", false);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "16");
+
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
 
 
 }

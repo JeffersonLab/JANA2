@@ -112,6 +112,28 @@ TEST_CASE("BasicTopology_Small") {
     benchmarker.RunUntilFinished();
 }
 
+TEST_CASE("BasicTopology_Small_Saturation") {
+
+    LOG << "Running BasicTopology_Small_Saturation";
+
+    JApplication app;
+    app.SetParameterValue("src:latency_us", 1'000'000 / 40'000); // 40 kHz
+    app.SetParameterValue("fac:latency_us", 1'000'000 / 5000);   // 5 kHz
+    app.SetParameterValue("proc:latency_us", 1'000'000 / 40'000); // 40 kHz
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "basic_small_saturation.dat");
+    app.SetParameterValue("benchmark:use_log_scale", false);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "16");
+
+    app.Add(new PESrc);
+    app.Add(new PEProc);
+    app.Add(new JFactoryGeneratorT<PEFac>);
+
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
+
 TEST_CASE("BasicTopology_Medium") {
 
     LOG << "Running BasicTopology_Medium";
@@ -133,6 +155,28 @@ TEST_CASE("BasicTopology_Medium") {
     JBenchmarker benchmarker(&app);
     benchmarker.RunUntilFinished();
 }
+
+TEST_CASE("BasicTopology_Medium_Saturation") {
+
+    LOG << "Running BasicTopology_Medium_Saturation";
+
+    JApplication app;
+    app.SetParameterValue("src:latency_us", 1'000'000 / 400); // 400 Hz
+    app.SetParameterValue("fac:latency_us", 1'000'000 / 50);  // 50 Hz
+    app.SetParameterValue("proc:latency_us", 1'000'000 / 400); // 400 Hz
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "basic_medium_saturation.dat");
+    app.SetParameterValue("benchmark:use_log_scale", false);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "16");
+
+    app.Add(new PESrc);
+    app.Add(new PEProc);
+    app.Add(new JFactoryGeneratorT<PEFac>);
+
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
 TEST_CASE("BasicTopology_Large") {
 
     LOG << "Running BasicTopology_Large";
@@ -146,6 +190,28 @@ TEST_CASE("BasicTopology_Large") {
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
     app.SetParameterValue("benchmark:maxthreads", "32");
+
+    app.Add(new PESrc);
+    app.Add(new PEProc);
+    app.Add(new JFactoryGeneratorT<PEFac>);
+
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
+
+TEST_CASE("BasicTopology_Large_Saturation") {
+
+    LOG << "Running BasicTopology_Large_Saturation";
+
+    JApplication app;
+    app.SetParameterValue("src:latency_us", 1'000'000/40);  // 40 Hz
+    app.SetParameterValue("fac:latency_us", 1'000'000/5);   // 5 Hz
+    app.SetParameterValue("proc:latency_us", 1'000'000/40); // 40 Hz
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "basic_large_saturation.dat");
+    app.SetParameterValue("benchmark:use_log_scale", false);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "16");
 
     app.Add(new PESrc);
     app.Add(new PEProc);

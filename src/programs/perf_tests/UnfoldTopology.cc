@@ -160,6 +160,31 @@ TEST_CASE("UnfoldTopology_Small") {
     benchmarker.RunUntilFinished();
 }
 
+TEST_CASE("UnfoldTopology_Small_Saturation") {
+    LOG << "Running UnfoldTopology_Small_Saturation";
+
+    JApplication app;
+    app.SetParameterValue("bsrc:latency_us", 1'000'000 / 2'000); // 2 kHz
+    app.SetParameterValue("bfac:latency_us", 1'000'000 / 500); // 500 Hz
+    app.SetParameterValue("unf:latency_us", 1'000'000 / 20'000); // 20 kHz
+    app.SetParameterValue("pefac:latency_us", 1'000'000 / 5000); // 5 kHz
+    app.SetParameterValue("peproc:latency_us", 1'000'000 / 20'000); // 20 kHz
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "unfold_small_saturation.dat");
+    app.SetParameterValue("benchmark:use_log_scale", false);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "16");
+
+    app.Add(new BSrc);
+    app.Add(new Unf);
+    app.Add(new PEProc);
+    app.Add(new JFactoryGeneratorT<BFac>);
+    app.Add(new JFactoryGeneratorT<PEFac>);
+
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
+
 TEST_CASE("UnfoldTopology_Medium") {
     LOG << "Running UnfoldTopology_Medium";
 
@@ -185,6 +210,31 @@ TEST_CASE("UnfoldTopology_Medium") {
     benchmarker.RunUntilFinished();
 }
 
+TEST_CASE("UnfoldTopology_Medium_Saturation") {
+    LOG << "Running UnfoldTopology_Medium";
+
+    JApplication app;
+    app.SetParameterValue("bsrc:latency_us", 1'000'000 / 40); // 40 Hz
+    app.SetParameterValue("bfac:latency_us", 1'000'000 / 10); // 10 Hz
+    app.SetParameterValue("unf:latency_us", 1'000'000 / 400); // 400 Hz
+    app.SetParameterValue("pefac:latency_us", 1'000'000 / 100); // 100 Hz
+    app.SetParameterValue("peproc:latency_us", 1'000'000 / 400); // 400 Hz
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "unfold_medium_saturation.dat");
+    app.SetParameterValue("benchmark:use_log_scale", false);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "16");
+
+    app.Add(new BSrc);
+    app.Add(new Unf);
+    app.Add(new PEProc);
+    app.Add(new JFactoryGeneratorT<BFac>);
+    app.Add(new JFactoryGeneratorT<PEFac>);
+
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
+
 TEST_CASE("UnfoldTopology_Large") {
     LOG << "Running UnfoldTopology_Large";
 
@@ -199,6 +249,32 @@ TEST_CASE("UnfoldTopology_Large") {
     app.SetParameterValue("benchmark:use_log_scale", true);
     app.SetParameterValue("benchmark:minthreads", "1");
     app.SetParameterValue("benchmark:maxthreads", "32");
+
+    app.Add(new BSrc);
+    app.Add(new Unf);
+    app.Add(new PEProc);
+    app.Add(new JFactoryGeneratorT<BFac>);
+    app.Add(new JFactoryGeneratorT<PEFac>);
+
+    JBenchmarker benchmarker(&app);
+    benchmarker.RunUntilFinished();
+}
+
+
+TEST_CASE("UnfoldTopology_Large_Saturation") {
+    LOG << "Running UnfoldTopology_Large_Saturation";
+
+    JApplication app;
+    app.SetParameterValue("bsrc:latency_us", 1'000'000 / 2); // 2 Hz
+    app.SetParameterValue("bfac:latency_us", 1'000'000*2); // 0.5 Hz
+    app.SetParameterValue("unf:latency_us", 1'000'000 / 20); // 20 Hz
+    app.SetParameterValue("pefac:latency_us", 1'000'000 / 5); // 5 Hz
+    app.SetParameterValue("peproc:latency_us", 1'000'000 / 20); // 20 Hz
+    app.SetParameterValue("benchmark:resultsdir", "perf_tests");
+    app.SetParameterValue("benchmark:rates_filename", "unfold_large_saturation.dat");
+    app.SetParameterValue("benchmark:use_log_scale", false);
+    app.SetParameterValue("benchmark:minthreads", "1");
+    app.SetParameterValue("benchmark:maxthreads", "16");
 
     app.Add(new BSrc);
     app.Add(new Unf);
