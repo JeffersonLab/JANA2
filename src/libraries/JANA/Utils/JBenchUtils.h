@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <vector>
 #include <random>
 #include <string>
@@ -27,5 +28,7 @@ public:
     uint64_t consume_cpu_ms(uint64_t millisecs, double spread=0.0);
     uint64_t read_memory(const std::vector<char>& buffer);
     uint64_t write_memory(std::vector<char>& buffer, uint64_t bytes, double spread=0.0);
+
+    static void consume_cpu_us(uint64_t microsecs);
 
 };

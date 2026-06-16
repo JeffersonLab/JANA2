@@ -5,6 +5,7 @@
 
 #include "JBenchUtils.h"
 #include <chrono>
+#include <sys/types.h>
 
 
 void JBenchUtils::set_seed(size_t event_number, std::string caller_name)
@@ -74,6 +75,26 @@ uint64_t JBenchUtils::write_memory(std::vector<char>& buffer, uint64_t bytes, do
 }
 
 
+void JBenchUtils::consume_cpu_us(uint64_t microseconds) {
 
+    using clock = std::chrono::steady_clock;
+    auto deadline = clock::now() + std::chrono::microseconds(microseconds);
+
+    volatile double acc = 1.0;            // volatile: optimizer can't elide
+    while (clock::now() < deadline) {
+        // FMA is fast but not trivially free; 8 ops per loop body
+        // avoids tight branch-dominated loops that mispredict badly
+        acc = std::fma(acc, 1.0000001, 0.0000001);
+        acc = std::fma(acc, 1.0000001, 0.0000001);
+        acc = std::fma(acc, 1.0000001, 0.0000001);
+        acc = std::fma(acc, 1.0000001, 0.0000001);
+        acc = std::fma(acc, 1.0000001, 0.0000001);
+        acc = std::fma(acc, 1.0000001, 0.0000001);
+        acc = std::fma(acc, 1.0000001, 0.0000001);
+        acc = std::fma(acc, 1.0000001, 0.0000001);
+    }
+    // Prevent dead-store elimination at the call site too
+    asm volatile("" : : "r,m"(acc) : "memory");
+}
 
 
