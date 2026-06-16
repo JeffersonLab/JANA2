@@ -19,7 +19,7 @@ if(USE_ROOT)
 endif()
 set(USE_ZEROMQ @USE_ZEROMQ@)
 if(USE_ZEROMQ)
-    find_dependency(ZeroMQ REQUIRED)
+    find_dependency(cppzmq REQUIRED)
 endif()
 
 # Provide user with shared libraries by default if JANA was built with them. 
