@@ -2,6 +2,8 @@
 // Copyright 2023, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
+#include <JANA/JException.h>
+#include <JANA/JLogger.h>
 #include <JANA/JFactory.h>
 #include <JANA/JEvent.h>
 #include <JANA/JEventSource.h>
@@ -240,13 +242,31 @@ void JFactory::Create(const JEvent& event) {
                     throw JException("Invalid callback style");
                 }
             }
+            catch (JException& ex) {
+                // Save everything already created even if we throw an exception
+                // This is so that we leave everything in a valid state just in case someone tries to catch the exception recover,
+                // such as EICrecon. (Remember that a missing collection in the podio frame will segfault if anyone tries to write that frame)
+                // Note that the collections themselves won't know that they exited early
+
+                LOG_DEBUG(GetLogger()) << "Exception in JFactory::Create, prefix=" << GetPrefix()
+                                       << ", message=" << ex.GetMessage();
+                mStatus = Status::Excepted;
+                mException = std::current_exception();
+                for (auto* output : GetOutputs()) {
+                    output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+                }
+                for (auto* output : GetVariadicOutputs()) {
+                    output->LagrangianStore(*event.GetFactorySet(), JDatabundle::Status::Excepted);
+                }
+                throw;
+            }
             catch (...) {
                 // Save everything already created even if we throw an exception
                 // This is so that we leave everything in a valid state just in case someone tries to catch the exception recover,
                 // such as EICrecon. (Remember that a missing collection in the podio frame will segfault if anyone tries to write that frame)
                 // Note that the collections themselves won't know that they exited early
 
-                LOG << "Exception in JFactory::Create, prefix=" << GetPrefix();
+                LOG_DEBUG(GetLogger()) << "Exception in JFactory::Create, prefix=" << GetPrefix();
                 mStatus = Status::Excepted;
                 mException = std::current_exception();
                 for (auto* output : GetOutputs()) {
