@@ -61,7 +61,6 @@ JEventPool* JTopologyBuilder::GetOrCreatePool(JEventLevel level) {
     }
     else {
         auto* pool = new JEventPool(m_components, m_location_count, level);
-        pool->Scale(m_max_inflight_events[level]);
         pools.push_back(pool);
         pool_lookup[level] = pool;
         return pool;
@@ -416,42 +415,6 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
 void JTopologyBuilder::Init() {
 
     m_components = GetApplication()->GetService<JComponentManager>();
-
-    // We default event pool size to be equal to nthreads
-    // We parse the 'nthreads' parameter two different ways for backwards compatibility.
-    size_t nthreads = 1;
-    if (m_params->Exists("nthreads")) {
-        if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
-            nthreads = JCpuInfo::GetNumCpus();
-        } else {
-            nthreads = m_params->GetParameterValue<int>("nthreads");
-        }
-    }
-
-    m_max_inflight_events[JEventLevel::Run] = m_params->RegisterParameter("jana:max_inflight_runs", nthreads,
-                                "The number of runs which may be in-flight at once.");
-
-    m_max_inflight_events[JEventLevel::Subrun] = m_params->RegisterParameter("jana:max_inflight_subruns", nthreads,
-                                "The number of subruns which may be in-flight at once.");
-
-    m_max_inflight_events[JEventLevel::Timeslice] = m_params->RegisterParameter("jana:max_inflight_timeslices", nthreads,
-                                "The number of timeslices which may be in-flight at once.");
-
-    m_max_inflight_events[JEventLevel::Block] = m_params->RegisterParameter("jana:max_inflight_blocks", nthreads,
-                                "The number of blocks which may be in-flight at once.");
-
-    m_max_inflight_events[JEventLevel::SlowControls] = m_params->RegisterParameter("jana:max_inflight_slowcontrols", nthreads,
-                                "The number of slow control events which may be in-flight at once.");
-
-    m_max_inflight_events[JEventLevel::PhysicsEvent] = m_params->RegisterParameter("jana:max_inflight_events", nthreads,
-                                "The number of physics events which may be in-flight at once. Should be at least `nthreads` to prevent starvation; more gives better load balancing.");
-
-    m_max_inflight_events[JEventLevel::Subevent] = m_params->RegisterParameter("jana:max_inflight_subevents", 4*nthreads,
-                                "The number of subevents which may be in-flight at once.");
-
-    m_max_inflight_events[JEventLevel::Task] = m_params->RegisterParameter("jana:max_inflight_tasks", 8*nthreads,
-                                "The number of tasks which may be in-flight at once.");
-
     /*
     m_params->SetDefaultParameter("jana:enable_stealing", m_enable_stealing,
                                     "Enable work stealing. Improves load balancing when jana:locality != 0; otherwise does nothing.")
@@ -500,12 +463,10 @@ void JTopologyBuilder::Connect(JArrow* upstream, size_t upstream_port_id, JArrow
     }
     else {
         // Create new queue
-        size_t queue_capacity = 0;
-        for (auto level : downstream_port.GetLevels()) {
-            queue_capacity += m_max_inflight_events[level];
-        }
         queue = new JEventQueue(mapping.get_loc_count());
-        queue->Scale(queue_capacity);
+        for (auto level : downstream_port.GetLevels()) {
+            queue->AddLevel(level);
+        }
         queues.push_back(queue);
         downstream_port.Attach(queue);
     }

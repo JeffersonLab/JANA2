@@ -36,7 +36,6 @@ class JTopologyBuilder : public JService {
     std::map<JEventLevel, JEventPool*> pool_lookup;
 
     // Topology configuration
-    std::map<JEventLevel, size_t> m_max_inflight_events;
     size_t m_location_count = 1;
     //bool m_enable_stealing = false;
     int m_affinity = 0;

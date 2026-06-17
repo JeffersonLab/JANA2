@@ -32,6 +32,31 @@ void JExecutionEngine::Init() {
         m_desired_nthreads = JCpuInfo::GetNumCpus();
     }
 
+    m_max_inflight_events[JEventLevel::Run] = params->RegisterParameter("jana:max_inflight_runs", m_desired_nthreads,
+                                "The number of runs which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::Subrun] = params->RegisterParameter("jana:max_inflight_subruns", m_desired_nthreads,
+                                "The number of subruns which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::Timeslice] = params->RegisterParameter("jana:max_inflight_timeslices", m_desired_nthreads,
+                                "The number of timeslices which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::Block] = params->RegisterParameter("jana:max_inflight_blocks", m_desired_nthreads,
+                                "The number of blocks which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::SlowControls] = params->RegisterParameter("jana:max_inflight_slowcontrols", m_desired_nthreads,
+                                "The number of slow control events which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::PhysicsEvent] = params->RegisterParameter("jana:max_inflight_events", m_desired_nthreads,
+                                "The number of physics events which may be in-flight at once. Should be at least `nthreads` to prevent starvation; more gives better load balancing.");
+
+    m_max_inflight_events[JEventLevel::Subevent] = params->RegisterParameter("jana:max_inflight_subevents", 4*m_desired_nthreads,
+                                "The number of subevents which may be in-flight at once.");
+
+    m_max_inflight_events[JEventLevel::Task] = params->RegisterParameter("jana:max_inflight_tasks", 8*m_desired_nthreads,
+                                "The number of tasks which may be in-flight at once.");
+
+
     params->SetDefaultParameter("jana:timeout", m_timeout_s, 
         "Max time (in seconds) JANA will wait for a thread to update its heartbeat before hard-exiting. 0 to disable timeout completely.");
 
@@ -76,6 +101,19 @@ void JExecutionEngine::Init() {
         arrow_state.is_sink = arrow->IsSink();
         arrow_state.is_parallel = arrow->IsParallel();
         arrow_state.next_input = arrow->GetNextPortIndex();
+    }
+
+    // Scale queues and pools
+    for (auto* queue : m_topology->GetQueues()) {
+        size_t capacity = 0;
+        for (auto level : queue->GetLevels()) {
+            capacity += m_max_inflight_events[level];
+        }
+        queue->Scale(capacity);
+    }
+
+    for (auto* pool : m_topology->GetPools()) {
+        pool->Scale(m_max_inflight_events[pool->GetLevel()]);
     }
 }
 

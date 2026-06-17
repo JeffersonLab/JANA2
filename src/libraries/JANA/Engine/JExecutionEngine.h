@@ -98,6 +98,7 @@ private:
     // Concurrency
     std::mutex m_mutex;
     std::condition_variable m_condvar;
+    std::map<JEventLevel, size_t> m_max_inflight_events;
     std::vector<std::unique_ptr<WorkerState>> m_worker_states;
     std::vector<ArrowState> m_arrow_states;
     RunStatus m_runstatus = RunStatus::Paused;

@@ -25,6 +25,8 @@ public:
                size_t location_count,
                JEventLevel level = JEventLevel::PhysicsEvent);
 
+    JEventLevel GetLevel();
+
     void AttachForwardingPool(JEventPool* pool);
 
     void Scale(size_t capacity);

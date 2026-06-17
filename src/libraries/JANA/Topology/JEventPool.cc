@@ -37,6 +37,10 @@ void JEventPool::Scale(size_t capacity) {
     }
 }
 
+JEventLevel JEventPool::GetLevel() {
+    return m_level;
+}
+
 void JEventPool::Ingest(JEvent* event, size_t location) {
 
     // Check if event even belongs here. If not, forward to the correct pool

@@ -12,6 +12,7 @@
 #include <memory>
 #include <vector>
 #include <cassert>
+#include <set>
 
 // JEventQueue is a queue designed for communication between JArrows, with the following features:
 //
@@ -45,6 +46,10 @@ protected:
     std::vector<std::unique_ptr<LocalQueue>> m_local_queues;
     size_t m_capacity = 0;
 
+    // This is purely an annotation, so that the TopologyBuilder can
+    // create the queues, but let the engine scale them correctly
+    std::set<JEventLevel> m_levels; 
+
     // Order-establishing state
     bool m_establishes_ordering = false;
     size_t m_next_event_index = 0;
@@ -66,6 +71,13 @@ public:
 
     virtual ~JEventQueue() = default;
 
+    void AddLevel(JEventLevel level) {
+        m_levels.insert(level);
+    }
+
+    const std::set<JEventLevel>& GetLevels() {
+        return m_levels;
+    }
 
     void SetEstablishesOrdering(bool establishes_ordering=true) {
         m_establishes_ordering = establishes_ordering;
