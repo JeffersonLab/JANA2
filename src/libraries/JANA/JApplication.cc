@@ -153,14 +153,6 @@ void JApplication::Initialize() {
 
     // Once all components have been wired in jcm::configure_components(), there shouldn't be any unused wirings
     wiring_service->CheckAllWiringsAreUsed();
-
-    // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
-    m_desired_nthreads = 1;
-    m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "Desired number of worker threads, or 'Ncores' to use all available cores.");
-    if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
-        m_desired_nthreads = JCpuInfo::GetNumCpus();
-    }
-
     topology_builder->CreateTopology();
 
     m_params->SetDefaultParameter("jana:inspect", m_inspect, "Controls whether to drop immediately into the Inspector upon Run()");
@@ -209,8 +201,7 @@ void JApplication::Run(bool wait_until_stopped, bool finish) {
     // Print summary of all config parameters
     m_params->PrintParameters();
 
-    LOG_WARN(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
-    m_execution_engine->ScaleWorkers(m_desired_nthreads);
+    m_execution_engine->ScaleWorkers();
     if (m_inspect) {
         m_execution_engine->RequestInspector();
     }
@@ -235,7 +226,6 @@ void JApplication::Run(bool wait_until_stopped, bool finish) {
 
 
 void JApplication::Scale(int nthreads) {
-    LOG_WARN(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
     m_execution_engine->ScaleWorkers(nthreads);
     m_execution_engine->RunTopology();
 }
@@ -365,6 +355,5 @@ void JApplication::PrintStatus() {
     LOG_INFO(m_logger) << "Uptime [s]:          " << perf.uptime_ms*1000 << LOG_END;
     LOG_INFO(m_logger) << "Throughput [Hz]:     " << perf.throughput_hz << LOG_END;
 }
-
 
 

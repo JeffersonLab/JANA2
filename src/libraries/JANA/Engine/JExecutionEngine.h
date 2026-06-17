@@ -86,6 +86,7 @@ private:
     Service<JTopologyBuilder> m_topology {this};
 
     // Parameters
+    int m_desired_nthreads = 1;
     bool m_show_ticker = true;
     bool m_enable_timeout = true;
     int m_backoff_ms = 10;
@@ -132,6 +133,7 @@ public:
     void DrainTopology();
     void FinishTopology();
 
+    void ScaleWorkers();
     void ScaleWorkers(size_t nthreads);
     Worker RegisterWorker();
     void RunWorker(Worker);

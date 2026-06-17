@@ -145,7 +145,6 @@ private:
     std::atomic_bool m_initialized {false};
     std::atomic_bool m_services_available {false};
     int  m_exit_code = (int) ExitCode::Success;
-    int  m_desired_nthreads;
 
     // For instantaneous rate calculations
     std::mutex m_inst_rate_mutex;

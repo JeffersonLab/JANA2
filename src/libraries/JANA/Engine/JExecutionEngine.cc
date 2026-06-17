@@ -24,7 +24,13 @@ thread_local int jana2_worker_id = -1;
 thread_local JBacktrace* jana2_worker_backtrace = nullptr;
 
 void JExecutionEngine::Init() {
+
     auto params = GetApplication()->GetJParameterManager();
+
+    params->SetDefaultParameter("nthreads", m_desired_nthreads, "Desired number of worker threads, or 'Ncores' to use all available cores.");
+    if (params->GetParameterValue<std::string>("nthreads") == "Ncores") {
+        m_desired_nthreads = JCpuInfo::GetNumCpus();
+    }
 
     params->SetDefaultParameter("jana:timeout", m_timeout_s, 
         "Max time (in seconds) JANA will wait for a thread to update its heartbeat before hard-exiting. 0 to disable timeout completely.");
@@ -108,6 +114,10 @@ void JExecutionEngine::RunTopology() {
     m_condvar.notify_one();
 }
 
+void JExecutionEngine::ScaleWorkers() {
+    ScaleWorkers(m_desired_nthreads);
+}
+
 void JExecutionEngine::ScaleWorkers(size_t nthreads) {
     // We both create and destroy the pool of workers here. They all sleep until they 
     // receive work from the scheduler, which won't happen until the runstatus <- {Running, 
@@ -116,6 +126,7 @@ void JExecutionEngine::ScaleWorkers(size_t nthreads) {
 
     // If we scale to zero, no workers will run. This is useful for testing, and also for using
     // an external thread team, should the need arise.
+    LOG_WARN(m_logger) << "Scaling to " << nthreads << " worker threads";
 
     std::unique_lock<std::mutex> lock(m_mutex);
 
