@@ -57,7 +57,7 @@ inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
         case JLogger::Level::INFO:  return s << "info";
         case JLogger::Level::WARN:  return s << "warn";
         case JLogger::Level::ERROR: return s << "error";
-        case JLogger::Level::FATAL: return s << "fatal";
+        case JLogger::Level::FATAL: return s << "critical";
         default:               return s << "off";
     }
 }
