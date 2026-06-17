@@ -53,10 +53,14 @@ TEST_CASE("UnfoldTests_Basic") {
     app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
 
-    JEventPool parent_pool {jcm, 5, 1, JEventLevel::Timeslice};
-    JEventPool child_pool {jcm, 5, 1, JEventLevel::PhysicsEvent};
-    JEventQueue parent_queue {3, 1};
-    JEventQueue child_queue {3, 1};
+    JEventPool parent_pool {jcm, 1, JEventLevel::Timeslice};
+    parent_pool.Scale(5);
+    JEventPool child_pool {jcm, 1, JEventLevel::PhysicsEvent};
+    child_pool.Scale(3);
+    JEventQueue parent_queue {1};
+    parent_queue.Scale(5);
+    JEventQueue child_queue {1};
+    child_queue.Scale(3);
 
     auto ts1 = parent_pool.Pop(0);
     ts1->SetEventNumber(17);
@@ -95,13 +99,18 @@ TEST_CASE("FoldArrowTests") {
     auto jcm = app.GetService<JComponentManager>();
 
     // We only use these to obtain preconfigured JEvents
-    JEventPool parent_pool {jcm, 5, 1, JEventLevel::Timeslice};
-    JEventPool child_pool {jcm, 5, 1, JEventLevel::PhysicsEvent};
+    JEventPool parent_pool {jcm, 1, JEventLevel::Timeslice};
+    JEventPool child_pool {jcm, 1, JEventLevel::PhysicsEvent};
+    parent_pool.Scale(5);
+    child_pool.Scale(5);
 
     // We set up our test cases by putting events on these queues
-    JEventQueue child_in(5, 1);
-    JEventQueue child_out(5, 1);
-    JEventQueue parent_out(5, 1);
+    JEventQueue child_in(1);
+    JEventQueue child_out(1);
+    JEventQueue parent_out(1);
+    child_in.Scale(5);
+    child_out.Scale(5);
+    parent_out.Scale(5);
 
     JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::PhysicsEvent);
     arrow.GetPort(JFoldArrow::CHILD_IN).Attach(&child_in);

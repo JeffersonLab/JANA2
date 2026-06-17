@@ -4,6 +4,8 @@
 // Author: Nathan Brei
 
 #pragma once
+#include <JANA/JEvent.h>
+#include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/JEvent.h>
 
@@ -54,13 +56,12 @@ protected:
     int m_max_index = 0;
 
 public:
-    inline JEventQueue(size_t initial_capacity, size_t locations_count) {
+    inline JEventQueue(size_t locations_count) {
 
         assert(locations_count >= 1);
         for (size_t location=0; location<locations_count; ++location) {
             m_local_queues.push_back(std::make_unique<LocalQueue>());
         }
-        Scale(initial_capacity);
     }
 
     virtual ~JEventQueue() = default;
@@ -83,12 +84,8 @@ public:
     }
 
     virtual void Scale(size_t capacity) {
-        if (capacity < m_capacity) {
-            for (auto& local_queue : m_local_queues) {
-                if (local_queue->size != 0) {
-                    throw JException("Attempted to shrink a non-empty JEventQueue. Please drain the topology before attempting to downscale.");
-                }
-            }
+        if (m_capacity != 0) {
+            throw JException("Re-scaling queues is not supported at this time");
         }
         m_capacity = capacity;
         m_max_index = capacity - 1; // zero-indexed

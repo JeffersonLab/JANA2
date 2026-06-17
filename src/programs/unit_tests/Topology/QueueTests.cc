@@ -9,7 +9,8 @@
 
 TEST_CASE("JEventQueueTests_Basic") {
 
-    JEventQueue sut(2,1);
+    JEventQueue sut(1);
+    sut.Scale(2);
 
     JEvent event1;
     event1.SetEventNumber(1);

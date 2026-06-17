@@ -13,7 +13,8 @@ TEST_CASE("JPoolTests_SingleLocationLimitEvents") {
     app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
 
-    JEventPool pool(jcm, 3, 1);
+    JEventPool pool(jcm, 1);
+    pool.Scale(3);
 
     auto* e = pool.Pop(0);
     REQUIRE(e != nullptr);

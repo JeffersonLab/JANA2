@@ -60,7 +60,8 @@ JEventPool* JTopologyBuilder::GetOrCreatePool(JEventLevel level) {
         return pool_it->second;
     }
     else {
-        auto* pool = new JEventPool(m_components, m_max_inflight_events[level], m_location_count, level);
+        auto* pool = new JEventPool(m_components, m_location_count, level);
+        pool->Scale(m_max_inflight_events[level]);
         pools.push_back(pool);
         pool_lookup[level] = pool;
         return pool;
@@ -503,7 +504,8 @@ void JTopologyBuilder::Connect(JArrow* upstream, size_t upstream_port_id, JArrow
         for (auto level : downstream_port.GetLevels()) {
             queue_capacity += m_max_inflight_events[level];
         }
-        queue = new JEventQueue(queue_capacity, mapping.get_loc_count());
+        queue = new JEventQueue(mapping.get_loc_count());
+        queue->Scale(queue_capacity);
         queues.push_back(queue);
         downstream_port.Attach(queue);
     }

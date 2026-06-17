@@ -22,7 +22,6 @@ private:
 
 public:
     JEventPool(std::shared_ptr<JComponentManager> component_manager,
-               size_t max_inflight_events,
                size_t location_count,
                JEventLevel level = JEventLevel::PhysicsEvent);
 
