@@ -14,6 +14,7 @@ set(JANA2_SOURCES
     JLogger.cc
 
     Engine/JExecutionEngine_Dynamic.cc
+    Engine/JExecutionEngine_Static.cc
 
     Topology/JArrow.cc
     Topology/JEventPool.cc

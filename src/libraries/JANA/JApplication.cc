@@ -4,6 +4,7 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventSource.h>
+#include <JANA/Engine/JExecutionEngine_Static.h>
 #include <JANA/Engine/JExecutionEngine_Dynamic.h>
 #include <JANA/Services/JComponentManager.h>
 #include <JANA/Services/JGlobalRootLock.h>
@@ -157,11 +158,10 @@ void JApplication::Initialize() {
 
     int engine = m_params->RegisterParameter("jana:engine", 0, "0: Dynamic engine; 1: Static engine");
 
-    if (engine == 0) {
-        m_execution_engine = std::make_unique<JExecutionEngine_Dynamic>();
-    }
-    else {
-        throw JException("Invalid engine: %d", engine);
+    switch (engine) {
+        case 0: m_execution_engine = std::make_unique<JExecutionEngine_Dynamic>(); break;
+        case 1: m_execution_engine = std::make_unique<JExecutionEngine_Static>(); break;
+        default: throw JException("Invalid engine: %d", engine);
     }
     m_execution_engine->SetTickerEnabled(m_ticker_enabled);
     m_execution_engine->SetTimeoutEnabled(m_timeout_enabled);

@@ -125,6 +125,7 @@ public:
     Port& AddPort(std::string port_name, JEventLevel level, PortDirection direction);
     Port& GetPort(size_t port_index) { return *m_ports.at(port_index); }
     Port& GetPort(JEventLevel level, PortDirection direction) { return *m_ports.at(m_auto_port_lookup.at({level, direction})); }
+    const std::vector<std::unique_ptr<Port>>& GetAllPorts() { return m_ports; }
 
     int GetPortIndex(JEventLevel level, PortDirection direction);
     int GetPortIndex(const std::string& port_name);
