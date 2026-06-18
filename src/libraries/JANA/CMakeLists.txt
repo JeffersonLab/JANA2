@@ -13,7 +13,7 @@ set(JANA2_SOURCES
     JEvent.cc
     JLogger.cc
 
-    Engine/JExecutionEngine.cc
+    Engine/JExecutionEngine_Dynamic.cc
 
     Topology/JArrow.cc
     Topology/JEventPool.cc

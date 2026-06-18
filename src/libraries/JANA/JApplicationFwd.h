@@ -139,6 +139,8 @@ private:
     std::shared_ptr<JComponentManager> m_component_manager;
     std::shared_ptr<JExecutionEngine> m_execution_engine;
 
+    bool m_ticker_enabled = true;
+    bool m_timeout_enabled = true;
     bool m_inspect = false;
     bool m_quitting = false;
     bool m_skip_join = false;

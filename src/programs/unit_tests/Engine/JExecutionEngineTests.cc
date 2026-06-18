@@ -1,10 +1,9 @@
 
-#define JANA2_TESTCASE
-
-#include "JANA/Engine/JExecutionEngine.h"
-#include "JANA/Utils/JBenchUtils.h"
 #include <catch.hpp>
 
+#define JANA2_TESTCASE
+#include <JANA/Engine/JExecutionEngine_Dynamic.h>
+#include <JANA/Utils/JBenchUtils.h>
 #include <JANA/JApplication.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
@@ -50,7 +49,8 @@ TEST_CASE("JExecutionEngine_StateMachine") {
     app.Add(new TestSource());
     app.Add(new TestProc());
     app.Initialize();
-    auto sut = app.GetService<JExecutionEngine>();
+    auto sut_base = app.GetService<JExecutionEngine>();
+    auto sut = std::static_pointer_cast<JExecutionEngine_Dynamic>(sut_base);
 
     SECTION("ManualFinish") {
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Paused);
@@ -62,7 +62,7 @@ TEST_CASE("JExecutionEngine_StateMachine") {
         
         // Need to trigger the Pause since there are no workers to do so
         auto worker = sut->RegisterWorker();
-        JExecutionEngine::Task task;
+        JExecutionEngine_Dynamic::Task task;
         sut->ExchangeTask(task, worker.worker_id, true);
 
         sut->RunSupervisor();
@@ -81,7 +81,7 @@ TEST_CASE("JExecutionEngine_StateMachine") {
 
         // Need to trigger the Pause since there are no workers to do so
         auto worker = sut->RegisterWorker();
-        JExecutionEngine::Task task;
+        JExecutionEngine_Dynamic::Task task;
         sut->ExchangeTask(task, worker.worker_id, true);
 
         sut->RunSupervisor();
@@ -100,7 +100,8 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
     app.Add(new TestSource());
     app.Add(new TestProc());
     app.Initialize();
-    auto sut = app.GetService<JExecutionEngine>();
+    auto sut_base = app.GetService<JExecutionEngine>();
+    auto sut = std::static_pointer_cast<JExecutionEngine_Dynamic>(sut_base);
 
 
     SECTION("SelfTermination") {
@@ -113,7 +114,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
         sut->RunTopology();
         REQUIRE(sut->GetRunStatus() == JExecutionEngine::RunStatus::Running);
 
-        JExecutionEngine::Task task;
+        JExecutionEngine_Dynamic::Task task;
 
         sut->ExchangeTask(task, worker.worker_id);
         REQUIRE(task.arrow != nullptr);

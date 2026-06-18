@@ -4,7 +4,7 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventSource.h>
-#include <JANA/Engine/JExecutionEngine.h>
+#include <JANA/Engine/JExecutionEngine_Dynamic.h>
 #include <JANA/Services/JComponentManager.h>
 #include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Services/JParameterManager.h>
@@ -40,12 +40,10 @@ JApplication::JApplication(JParameterManager* params) {
     m_component_manager = std::make_shared<JComponentManager>();
     m_plugin_loader = std::make_shared<JPluginLoader>();
     m_service_locator = std::make_unique<JServiceLocator>();
-    m_execution_engine = std::make_unique<JExecutionEngine>();
 
     ProvideService(m_params);
     ProvideService(m_component_manager);
     ProvideService(m_plugin_loader);
-    ProvideService(m_execution_engine);
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
     ProvideService(std::make_shared<jana::services::JWiringService>());
@@ -157,7 +155,18 @@ void JApplication::Initialize() {
 
     m_params->SetDefaultParameter("jana:inspect", m_inspect, "Controls whether to drop immediately into the Inspector upon Run()");
 
-    auto execution_engine = m_service_locator->get<JExecutionEngine>();
+    int engine = m_params->RegisterParameter("jana:engine", 0, "0: Dynamic engine; 1: Static engine");
+
+    if (engine == 0) {
+        m_execution_engine = std::make_unique<JExecutionEngine_Dynamic>();
+    }
+    else {
+        throw JException("Invalid engine: %d", engine);
+    }
+    m_execution_engine->SetTickerEnabled(m_ticker_enabled);
+    m_execution_engine->SetTimeoutEnabled(m_timeout_enabled);
+    ProvideService(m_execution_engine);
+    m_service_locator->get<JExecutionEngine>(); // Triggers initialization
 
     // Make sure that Init() is called on any remaining JServices
     m_service_locator->InitAllServices();
@@ -297,18 +306,34 @@ const JComponentSummary& JApplication::GetComponentSummary() {
 
 // Performance/status monitoring
 void JApplication::SetTicker(bool ticker_on) {
-    m_execution_engine->SetTickerEnabled(ticker_on);
+    if (m_execution_engine == nullptr) {
+        m_ticker_enabled = ticker_on;
+    }
+    else {
+        m_execution_engine->SetTickerEnabled(ticker_on);
+    }
 }
 
 bool JApplication::IsTickerEnabled() {
+    if (m_execution_engine == nullptr) {
+        return m_ticker_enabled;
+    }
     return m_execution_engine->IsTickerEnabled();
 }
 
 void JApplication::SetTimeoutEnabled(bool enabled) {
-    m_execution_engine->SetTimeoutEnabled(enabled);
+    if (m_execution_engine == nullptr) {
+        m_timeout_enabled = enabled;
+    }
+    else {
+        m_execution_engine->SetTimeoutEnabled(enabled);
+    }
 }
 
 bool JApplication::IsTimeoutEnabled() {
+    if (m_execution_engine == nullptr) {
+        return m_timeout_enabled;
+    }
     return m_execution_engine->IsTimeoutEnabled();
 }
 

@@ -1,5 +1,5 @@
 
-#include "JExecutionEngine.h"
+#include <JANA/Engine/JExecutionEngine_Dynamic.h>
 #include <JANA/Utils/JApplicationInspector.h>
 #include <JANA/JVersion.h>
 
@@ -23,7 +23,7 @@
 thread_local int jana2_worker_id = -1;
 thread_local JBacktrace* jana2_worker_backtrace = nullptr;
 
-void JExecutionEngine::Init() {
+void JExecutionEngine_Dynamic::Init() {
 
     auto params = GetApplication()->GetJParameterManager();
 
@@ -117,12 +117,12 @@ void JExecutionEngine::Init() {
     }
 }
 
-void JExecutionEngine::RequestInspector() {
+void JExecutionEngine_Dynamic::RequestInspector() {
     std::unique_lock<std::mutex> lock(m_mutex);
     m_interrupt_status = InterruptStatus::InspectRequested;
 }
 
-void JExecutionEngine::RunTopology() {
+void JExecutionEngine_Dynamic::RunTopology() {
     std::unique_lock<std::mutex> lock(m_mutex);
 
     if (m_runstatus == RunStatus::Failed) {
@@ -152,11 +152,11 @@ void JExecutionEngine::RunTopology() {
     m_condvar.notify_one();
 }
 
-void JExecutionEngine::ScaleWorkers() {
+void JExecutionEngine_Dynamic::ScaleWorkers() {
     ScaleWorkers(m_desired_nthreads);
 }
 
-void JExecutionEngine::ScaleWorkers(size_t nthreads) {
+void JExecutionEngine_Dynamic::ScaleWorkers(size_t nthreads) {
     // We both create and destroy the pool of workers here. They all sleep until they 
     // receive work from the scheduler, which won't happen until the runstatus <- {Running, 
     // Pausing, Draining} and there is a task ready to execute. This way worker creation/destruction
@@ -186,7 +186,7 @@ void JExecutionEngine::ScaleWorkers(size_t nthreads) {
             worker->is_stop_requested = false;
             worker->cpu_id = mapping.get_cpu_id(worker_id);
             worker->location_id = mapping.get_loc_id(worker_id);
-            worker->thread = new std::thread(&JExecutionEngine::RunWorker, this, Worker{worker_id, &worker->backtrace});
+            worker->thread = new std::thread(&JExecutionEngine_Dynamic::RunWorker, this, Worker{worker_id, &worker->backtrace});
             LOG_DEBUG(GetLogger()) << "Launching worker thread " << worker_id << " on cpu=" << worker->cpu_id << ", location=" << worker->location_id << LOG_END;
             m_worker_states.push_back(std::move(worker));
 
@@ -241,7 +241,7 @@ void JExecutionEngine::ScaleWorkers(size_t nthreads) {
     }
 }
 
-void JExecutionEngine::PauseTopology() {
+void JExecutionEngine_Dynamic::PauseTopology() {
     std::unique_lock<std::mutex> lock(m_mutex);
     if (m_runstatus != RunStatus::Running) return;
     m_runstatus = RunStatus::Pausing;
@@ -255,7 +255,7 @@ void JExecutionEngine::PauseTopology() {
     m_condvar.notify_all();
 }
 
-void JExecutionEngine::DrainTopology() {
+void JExecutionEngine_Dynamic::DrainTopology() {
     std::unique_lock<std::mutex> lock(m_mutex);
     if (m_runstatus != RunStatus::Running) return;
     m_runstatus = RunStatus::Draining;
@@ -271,7 +271,7 @@ void JExecutionEngine::DrainTopology() {
     m_condvar.notify_all();
 }
 
-void JExecutionEngine::RunSupervisor() {
+void JExecutionEngine_Dynamic::RunSupervisor() {
 
     if (m_interrupt_status == InterruptStatus::NoInterruptsUnsupervised) {
         m_interrupt_status = InterruptStatus::NoInterruptsSupervised;
@@ -348,7 +348,7 @@ void JExecutionEngine::RunSupervisor() {
     PrintFinalReport();
 }
 
-bool JExecutionEngine::CheckTimeout() {
+bool JExecutionEngine_Dynamic::CheckTimeout() {
     std::unique_lock<std::mutex> lock(m_mutex);
     auto now = clock_t::now();
     bool timeout_detected = false;
@@ -364,7 +364,7 @@ bool JExecutionEngine::CheckTimeout() {
     return timeout_detected;
 }
 
-void JExecutionEngine::HandleFailures() {
+void JExecutionEngine_Dynamic::HandleFailures() {
 
     std::unique_lock<std::mutex> lock(m_mutex);
 
@@ -399,7 +399,7 @@ void JExecutionEngine::HandleFailures() {
     }
 }
 
-void JExecutionEngine::FinishTopology() {
+void JExecutionEngine_Dynamic::FinishTopology() {
     std::unique_lock<std::mutex> lock(m_mutex);
     assert(m_runstatus == RunStatus::Paused);
 
@@ -414,12 +414,12 @@ void JExecutionEngine::FinishTopology() {
     LOG_INFO(GetLogger()) << "Finished processing." << LOG_END;
 }
 
-JExecutionEngine::RunStatus JExecutionEngine::GetRunStatus() {
+JExecutionEngine::RunStatus JExecutionEngine_Dynamic::GetRunStatus() {
     std::unique_lock<std::mutex> lock(m_mutex);
     return m_runstatus;
 }
 
-JExecutionEngine::Perf JExecutionEngine::GetPerf() {
+JExecutionEngine::Perf JExecutionEngine_Dynamic::GetPerf() {
     std::unique_lock<std::mutex> lock(m_mutex);
     Perf result;
     if (m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Failed) {
@@ -444,7 +444,7 @@ JExecutionEngine::Perf JExecutionEngine::GetPerf() {
     return result;
 }
 
-JExecutionEngine::Worker JExecutionEngine::RegisterWorker() {
+JExecutionEngine_Dynamic::Worker JExecutionEngine_Dynamic::RegisterWorker() {
     std::unique_lock<std::mutex> lock(m_mutex);
     auto mapping = m_topology->GetProcessorMapping();
     auto worker_id = m_worker_states.size();
@@ -465,7 +465,7 @@ JExecutionEngine::Worker JExecutionEngine::RegisterWorker() {
 }
 
 
-void JExecutionEngine::RunWorker(Worker worker) {
+void JExecutionEngine_Dynamic::RunWorker(Worker worker) {
 
     LOG_DEBUG(GetLogger()) << "Launched worker thread " << worker.worker_id << LOG_END;
     jana2_worker_id = worker.worker_id;
@@ -503,7 +503,7 @@ void JExecutionEngine::RunWorker(Worker worker) {
 }
 
 
-void JExecutionEngine::ExchangeTask(Task& task, size_t worker_id, bool nonblocking) {
+void JExecutionEngine_Dynamic::ExchangeTask(Task& task, size_t worker_id, bool nonblocking) {
 
     auto checkin_time = std::chrono::steady_clock::now();
     // It's important to start measuring this _before_ acquiring the lock because acquiring the lock
@@ -550,7 +550,7 @@ void JExecutionEngine::ExchangeTask(Task& task, size_t worker_id, bool nonblocki
 }
 
 
-void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, WorkerState& worker, clock_t::time_point checkin_time) {
+void JExecutionEngine_Dynamic::CheckinCompletedTask_Unsafe(Task& task, WorkerState& worker, clock_t::time_point checkin_time) {
 
     auto processing_duration = checkin_time - worker.last_checkout_time;
 
@@ -598,7 +598,7 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, WorkerState& work
 };
 
 
-void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker) {
+void JExecutionEngine_Dynamic::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker) {
 
     if (m_runstatus == RunStatus::Running || m_runstatus == RunStatus::Draining) {
         // We only pick up a new task if the topology is running or draining.
@@ -703,7 +703,7 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
 }
 
 
-void JExecutionEngine::PrintFinalReport() {
+void JExecutionEngine_Dynamic::PrintFinalReport() {
 
     std::unique_lock<std::mutex> lock(m_mutex);
     auto event_count = m_event_count_at_finish - m_event_count_at_start;
@@ -756,23 +756,23 @@ void JExecutionEngine::PrintFinalReport() {
 
 }
 
-void JExecutionEngine::SetTickerEnabled(bool show_ticker) {
+void JExecutionEngine_Dynamic::SetTickerEnabled(bool show_ticker) {
     m_show_ticker = show_ticker;
 }
 
-bool JExecutionEngine::IsTickerEnabled() const {
+bool JExecutionEngine_Dynamic::IsTickerEnabled() const {
     return m_show_ticker;
 }
 
-void JExecutionEngine::SetTimeoutEnabled(bool timeout_enabled) {
+void JExecutionEngine_Dynamic::SetTimeoutEnabled(bool timeout_enabled) {
     m_enable_timeout = timeout_enabled;
 }
 
-bool JExecutionEngine::IsTimeoutEnabled() const {
+bool JExecutionEngine_Dynamic::IsTimeoutEnabled() const {
     return m_enable_timeout;
 }
 
-JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
+JArrow::FireResult JExecutionEngine_Dynamic::Fire(size_t arrow_id, size_t location_id) {
 
     std::unique_lock<std::mutex> lock(m_mutex);
     if (arrow_id >= m_topology->GetArrows().size()) {
@@ -836,7 +836,7 @@ JArrow::FireResult JExecutionEngine::Fire(size_t arrow_id, size_t location_id) {
 }
 
 
-void JExecutionEngine::HandleSIGINT() {
+void JExecutionEngine_Dynamic::HandleSIGINT() {
     InterruptStatus status = m_interrupt_status;
     std::cout << std::endl;
     switch (status) {
@@ -849,22 +849,22 @@ void JExecutionEngine::HandleSIGINT() {
     }
 }
 
-void JExecutionEngine::HandleSIGUSR1() {
+void JExecutionEngine_Dynamic::HandleSIGUSR1() {
     m_send_worker_report_requested = true;
 }
 
-void JExecutionEngine::HandleSIGUSR2() {
+void JExecutionEngine_Dynamic::HandleSIGUSR2() {
     if (jana2_worker_backtrace != nullptr) {
         jana2_worker_backtrace->Capture(3);
     }
 }
 
-void JExecutionEngine::HandleSIGTSTP() {
+void JExecutionEngine_Dynamic::HandleSIGTSTP() {
     std::cout << std::endl;
     m_print_worker_report_requested = true;
 }
 
-void JExecutionEngine::PrintWorkerReport(bool send_to_pipe) {
+void JExecutionEngine_Dynamic::PrintWorkerReport(bool send_to_pipe) {
 
     std::unique_lock<std::mutex> lock(m_mutex);
     LOG_INFO(GetLogger()) << "Generating worker report. It may take some time to retrieve each symbol's debug information." << LOG_END;
@@ -904,7 +904,7 @@ void JExecutionEngine::PrintWorkerReport(bool send_to_pipe) {
 }
 
 
-std::string ToString(JExecutionEngine::RunStatus runstatus) {
+std::string ToString(JExecutionEngine_Dynamic::RunStatus runstatus) {
     switch(runstatus) {
         case JExecutionEngine::RunStatus::Running: return "Running";
         case JExecutionEngine::RunStatus::Paused: return "Paused";
