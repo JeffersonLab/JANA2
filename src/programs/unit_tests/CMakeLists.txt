@@ -36,7 +36,8 @@ set(TEST_SOURCES
     Engine/ScaleTests.cc
     Engine/TerminationTests.cc
     Engine/TimeoutTests.cc
-    Engine/JExecutionEngineTests.cc
+    Engine/JExecutionEngine_DynamicTests.cc
+    Engine/JExecutionEngine_StaticTests.cc
     Engine/OrderingTests.cc
 
     Utils/JAutoActivatorTests.cc

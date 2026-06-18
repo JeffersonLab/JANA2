@@ -10,7 +10,7 @@
 #include <chrono>
 #include <thread>
 
-namespace jana::engine::tests {
+namespace jana::dynamicengine::tests {
 
 struct TestData { int x; };
 struct TestSource : public JEventSource {
@@ -43,7 +43,7 @@ struct TestProc : public JEventProcessor {
 };
 
 
-TEST_CASE("JExecutionEngine_StateMachine") {
+TEST_CASE("JExecutionEngine_Dynamic_StateMachine") {
 
     JApplication app;
     app.Add(new TestSource());
@@ -92,7 +92,7 @@ TEST_CASE("JExecutionEngine_StateMachine") {
 }
 
 
-TEST_CASE("JExecutionEngine_ExternalWorkers") {
+TEST_CASE("JExecutionEngine_Dynamic_ExternalWorkers") {
     JApplication app;
     app.SetParameterValue("jana:nevents", 1);
     app.SetParameterValue("jana:max_inflight_events", 2);
@@ -169,7 +169,7 @@ TEST_CASE("JExecutionEngine_ExternalWorkers") {
 }
 
 
-TEST_CASE("JExecutionEngine_ScaleWorkers") {
+TEST_CASE("JExecutionEngine_Dynamic_ScaleWorkers") {
     JApplication app;
     app.SetParameterValue("jana:nevents", 10);
     app.SetParameterValue("jana:loglevel", "debug");
@@ -188,7 +188,7 @@ TEST_CASE("JExecutionEngine_ScaleWorkers") {
 }
 
 
-TEST_CASE("JExecutionEngine_RunSingleEvent") {
+TEST_CASE("JExecutionEngine_Dynamic_RunSingleEvent") {
     JApplication app;
     app.SetParameterValue("jana:nevents", 3);
     app.SetParameterValue("jana:loglevel", "debug");
@@ -236,7 +236,7 @@ TEST_CASE("JExecutionEngine_RunSingleEvent") {
     }
 }
 
-TEST_CASE("JExecutionEngine_ExternalPause") {
+TEST_CASE("JExecutionEngine_Dynamic_ExternalPause") {
     JApplication app;
     app.SetParameterValue("jana:loglevel", "info");
     app.SetParameterValue("jana:max_inflight_events", 4);
@@ -291,7 +291,7 @@ TEST_CASE("JExecutionEngine_ExternalPause") {
     }
 }
 
-} // jana::engine::tests
+} // jana::dynamicengine::tests
 
 
 
