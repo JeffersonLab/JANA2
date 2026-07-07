@@ -8,12 +8,13 @@
 #include <vector>
 #include <map>
 
-enum class JEventLevel { Run, Subrun, SlowControls, Timeslice, Block, PhysicsEvent, Subevent, Task, None };
+enum class JEventLevel { Run, Subrun, SlowControls, Timeframe, Timeslice, Block, PhysicsEvent, Subevent, Task, None };
 
 inline std::ostream& operator<<(std::ostream& os, JEventLevel level) {
     switch (level) {
         case JEventLevel::Run: os << "Run"; break;
         case JEventLevel::Subrun: os << "Subrun"; break;
+        case JEventLevel::Timeframe: os << "Timeframe"; break;
         case JEventLevel::Timeslice: os << "Timeslice"; break;
         case JEventLevel::Block: os << "Block"; break;
         case JEventLevel::SlowControls: os << "SlowControls"; break;
@@ -29,6 +30,7 @@ inline char toChar(JEventLevel level) {
     switch (level) {
         case JEventLevel::Run: return 'R';
         case JEventLevel::Subrun: return 'r';
+        case JEventLevel::Timeframe: return 'F';
         case JEventLevel::Timeslice: return 'T';
         case JEventLevel::Block: return 'B';
         case JEventLevel::SlowControls: return 'C';
@@ -48,6 +50,7 @@ inline std::string toString(JEventLevel level) {
 inline JEventLevel parseEventLevel(const std::string& level) {
     if (level == "Run") return JEventLevel::Run;
     if (level == "Subrun") return JEventLevel::Subrun;
+    if (level == "Timeframe") return JEventLevel::Timeframe;
     if (level == "Timeslice") return JEventLevel::Timeslice;
     if (level == "Block") return JEventLevel::Block;
     if (level == "SlowControls") return JEventLevel::SlowControls;
@@ -63,6 +66,7 @@ inline JEventLevel next_level(JEventLevel current_level) {
     switch (current_level) {
         case JEventLevel::Run: return JEventLevel::Subrun;
         case JEventLevel::Subrun: return JEventLevel::Timeslice;
+        case JEventLevel::Timeframe: return JEventLevel::Timeslice;
         case JEventLevel::Timeslice: return JEventLevel::Block;
         case JEventLevel::Block: return JEventLevel::SlowControls;
         case JEventLevel::SlowControls: return JEventLevel::PhysicsEvent;
