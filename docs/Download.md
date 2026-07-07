@@ -11,6 +11,26 @@
 - [See online documentation](https://jeffersonlab.github.io/JANA2/)
 - [See online doxygen documentation](https://jeffersonlab.github.io/JANA2/refcpp/)
 
+### 2026.03.00
+
+#### Dependencies
+- Now builds with ROOT v6.40 (#498)
+- Adds optional bindings for Perfetto  (#497)
+- Swaps out optional dependency libzmq for cppzmq (#507, #509)
+- Building/installing examples is now optional (#505, 501)
+
+#### Bugfixes
+- Parameter parsing conflict: JLogger::Level vs spdlog level (#509)
+- Test cases run in the build directory without pulling in artifacts from the install directory (#505, #504, #503)
+
+#### Refactoring
+- Redesign of the TopologyBuilder interface (#495)
+- Topologies which include an Unfolder no longer also pull in a no-op Folder (#499)
+- Improve engine performance with ultra fine grain parallelism (#508)
+
+#### Ergonomics
+- Improve logging of swallowed exceptions (#509)
+
 ### 2026.02.00
 
 This release redesigns the `JFactory` state machine, changing `JFactory`'s behavior so that it now handles certain
