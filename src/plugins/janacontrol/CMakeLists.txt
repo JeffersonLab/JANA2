@@ -22,10 +22,8 @@ if (${USE_ZEROMQ})
         PUBLIC_HEADER ${janacontrol_PLUGIN_HEADERS}
         TESTS ${janacontrol_PLUGIN_TESTS})
 
-    target_include_directories(janacontrol PUBLIC ${ZeroMQ_INCLUDE_DIRS})
-    target_link_libraries(janacontrol PUBLIC ${ZeroMQ_LIBRARIES})
-    target_include_directories(janacontrol-tests PUBLIC ${ZeroMQ_INCLUDE_DIRS})
-    target_link_libraries(janacontrol-tests PUBLIC ${ZeroMQ_LIBRARIES})
+    target_link_libraries(janacontrol PUBLIC libzmq)
+    target_link_libraries(janacontrol-tests PUBLIC libzmq)
 
 else()
     message(STATUS "Skipping plugins/janacontrol because USE_ZEROMQ=Off")
