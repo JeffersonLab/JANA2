@@ -20,40 +20,38 @@
 
 class JComponentManager;
 
-class JEventSourceGenerator{
-    public:
-
+class JEventSourceGenerator {
+    protected:
         friend JComponentManager;
+        JApplication* mApplication{nullptr};
+        std::string mPluginName;
+        JEventLevel mLevel = JEventLevel::None;
 
-        JEventSourceGenerator(JApplication *app=nullptr):mApplication(app){}
+    public:
+        JEventSourceGenerator(JApplication* app=nullptr) : mApplication(app){}
         virtual ~JEventSourceGenerator(){}
 
         // Default versions of these are defined in JEventSourceGeneratorT.h
         virtual std::string GetType(void) const { return "Unknown";} ///< Return name of the source type this will generate
         virtual std::string GetDescription(void) const { return ""; } ///< Return description of the source type this will generate
-        virtual JEventSource* MakeJEventSource( std::string source ) = 0; ///< Create an instance of the source type this generates
-        virtual double CheckOpenable( std::string source ) = 0; ///< See JEventSourceGeneratorT for description
+        virtual JEventSource* MakeJEventSource(std::string source) = 0; ///< Create an instance of the source type this generates
+        virtual double CheckOpenable(std::string source) = 0; ///< See JEventSourceGeneratorT for description
 
+        JEventLevel GetLevel() { return mLevel; }
+        void SetLevel(JEventLevel level) { mLevel = level; }
 
     protected:
 
         /// This is called by JEventSourceManager::AddJEventSourceGenerator which
         /// itself is called by JApplication::Add(JEventSourceGenerator*). There
         /// should be no need to call it from anywhere else.
-        void SetJApplication(JApplication *app){ mApplication = app; }
+        void SetJApplication(JApplication* app){ mApplication = app; }
 
         /// SetPluginName is called by JANA itself and should not be exposed to the user.
         void SetPluginName(std::string plugin_name) { mPluginName = plugin_name; };
 
         /// GetPluginName is called by JANA itself and should not be exposed to the user.
         std::string GetPluginName() const { return mPluginName; }
-
-        JEventLevel GetLevel() { return mLevel; }
-        void SetLevel(JEventLevel level) { mLevel = level; }
-
-        JApplication* mApplication{nullptr};
-        std::string mPluginName;
-        JEventLevel mLevel = JEventLevel::None;
 };
 
 
