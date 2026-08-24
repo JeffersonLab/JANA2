@@ -49,7 +49,6 @@ void JArrow::Push(OutputData& outputs, size_t output_count, size_t location_id) 
             port.GetQueue()->Push(event, location_id);
         }
         else if (port.GetPool() != nullptr) {
-            event->Clear(!port.GetSkipFinishEvent());
             port.GetPool()->Ingest(event, location_id);
         }
         else {

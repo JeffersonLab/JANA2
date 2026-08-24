@@ -87,6 +87,7 @@ void JEventPool::Ingest(JEvent* event, size_t location) {
     if (event->GetChildCount() == 0) {
         // There's no way for additional children to appear because Ingest takes the "original" parent
         //LOG << "JEventPool::Ingest: " << toString(m_level) << " event is pushed";
+        event->Clear();
         Push(event, location);
     }
     else {
@@ -102,6 +103,7 @@ void JEventPool::NotifyThatAllChildrenFinished(JEvent* event, size_t location) {
     //LOG << "JEventPool::Notify called for level " << toString(m_level);
     size_t was_present = m_pending.erase(event);
     if (was_present == 1) {
+        event->Clear();
         Push(event, location);
         //LOG << "JEventPool at level " << toString(m_level) << " has pushed a parent event";
     }
