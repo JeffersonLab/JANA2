@@ -187,7 +187,7 @@ TEST_CASE("PodioClearData_Test") {
         REQUIRE(clusters->at(0).Hits_size() == 1);
         REQUIRE(clusters->at(0).Hits().at(0).cellID() == 22);
 
-        event->Clear(true);
+        event->Clear();
 
         ExampleHitCollection hits2;
         auto h2 = hits2.create();
@@ -218,7 +218,7 @@ TEST_CASE("PodioClearData_Test") {
         REQUIRE(clusters->at(0).Hits_size() == 1);
         REQUIRE(clusters->at(0).Hits().at(0).cellID() == 22);
 
-        event->Clear(true);
+        event->Clear();
 
         ExampleHitCollection hits2;
         auto h2 = hits2.create();
@@ -297,7 +297,7 @@ TEST_CASE("PodioMultifactoryClearData_Test") {
         REQUIRE(other_clusters.size() == 1);
 
 
-        event->Clear(true);
+        event->Clear();
 
         ExampleHitCollection hits2;
         auto h2 = hits2.create();
@@ -331,7 +331,7 @@ TEST_CASE("PodioMultifactoryClearData_Test") {
         REQUIRE(clusters->at(0).Hits_size() == 1);
         REQUIRE(clusters->at(0).Hits().at(0).cellID() == 22);
 
-        event->Clear(true);
+        event->Clear();
 
         ExampleHitCollection hits2;
         auto h2 = hits2.create();
@@ -409,7 +409,7 @@ TEST_CASE("PodioTests_ExceptionInFactoryInit") {
         auto frame = event.Get<podio::Frame>().at(0);
         REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 0);
 
-        event.Clear(true);
+        event.Clear();
 
         try {
             event.GetCollectionBase("ExampleHit");
@@ -440,7 +440,7 @@ TEST_CASE("PodioTests_ExceptionInFactoryInit") {
         auto frame = event.Get<podio::Frame>().at(0);
         REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 0);
 
-        event.Clear(true);
+        event.Clear();
 
         try {
             event.GetCollectionBase("ExampleHit");
@@ -478,7 +478,7 @@ TEST_CASE("PodioTests_ExceptionInFactoryInit") {
         REQUIRE(frame->get<ExampleHitCollection>("ExampleHit").size() == 1);
 
         std::cout << "Clearing event" << std::endl;
-        event.Clear(true);
+        event.Clear();
         event.SetEventNumber(23);
 
         std::cout << "Calling failing factory" << std::endl;

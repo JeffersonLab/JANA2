@@ -148,10 +148,14 @@ int JEvent::GetChildCount() {
     return mReferenceCount;
 }
 
-void JEvent::Clear(bool processed_successfully) {
-    if (processed_successfully && mEventSource != nullptr) {
+void JEvent::Clear() {
+    // Calling JEvent::FinishEvent() without a preceding Emit()/GetEvent() is not allowed.
+    // (This is not academic -- GlueX relies on this behavior)
+    // We test whether the event was in fact emitted by checking if mEventSource==nullptr.
+    if (mEventSource != nullptr) {
         mEventSource->DoFinishEvent(*this);
         mIsWarmedUp = true;
+        mEventSource = nullptr;
     }
     mFactorySet.Clear();
     mInspector.Reset();

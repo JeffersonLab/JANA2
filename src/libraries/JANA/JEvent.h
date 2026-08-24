@@ -97,7 +97,7 @@ public:
     void SetParentNumber(JEventLevel level, uint64_t number);
 
     // Lifecycle
-    void Clear(bool processed_successfully=true);
+    void Clear();
     void Finish();
 
     JFactory* GetFactory(const std::string& object_name, const std::string& tag) const;

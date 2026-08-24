@@ -95,7 +95,6 @@ JEventSource::Result JEventSource::DoNext(std::shared_ptr<JEvent> event) {
 
         // We configure the event
         event->SetEventNumber(m_events_emitted); // Default event number to event count
-        event->SetJEventSource(this);
         event->SetSequential(false);
         event->GetJCallGraphRecorder()->Reset();
 
@@ -159,6 +158,10 @@ JEventSource::Result JEventSource::DoNext(std::shared_ptr<JEvent> event) {
 
         if (result == Result::Success) {
             m_events_emitted += 1;
+            // We only set the JEventSource once Emit/GetEvent succeeded because it also controls
+            // m_events_processed and EventSource::FinishEvent
+            event->SetJEventSource(this); 
+
             // We end up here if we read an entry in our file or retrieved a message from our socket,
             // and believe we could obtain another one immediately if we wanted to
             for (auto* output : GetOutputs()) {
@@ -213,6 +216,7 @@ std::pair<JEventSource::Result, size_t> JEventSource::Skip(JEvent& event, size_t
 
     while (events_to_skip > 0 && result == Result::Success) {
         try {
+            event.SetJEventSource(this);
             auto previous_origin = event.GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
             if (m_callback_style == CallbackStyle::LegacyMode) {
                 GetEvent(event.shared_from_this());
@@ -226,7 +230,8 @@ std::pair<JEventSource::Result, size_t> JEventSource::Skip(JEvent& event, size_t
             if (m_enable_finish_event) {
                 CallWithJExceptionWrapper("JEventSource::FinishEvent", [&](){ FinishEvent(event); });
             }
-            event.Clear(false);
+            event.SetJEventSource(nullptr); // This tells event::Clear() _not_ to call FinishEvent()
+            event.Clear();
             events_to_skip -= 1;
         }
         catch (RETURN_STATUS rs) {
