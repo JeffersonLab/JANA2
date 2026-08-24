@@ -11,6 +11,15 @@
 - [See online documentation](https://jeffersonlab.github.io/JANA2/)
 - [See online doxygen documentation](https://jeffersonlab.github.io/JANA2/refcpp/)
 
+### 2026.03.01
+
+Fixes several important bugs in v2026.03.00. 
+
+- Parent event cleared prematurely. Introduced in v2026.03.00. Issue #515, PR #516.
+- Pool depletion and hang in JUnfoldArrow due to state machine bug. Introduced in v2026.03.00. PR #514.
+- JEventSourceGenerator::SetLevel() was set to private. PR #513.
+- janacontrol links against libzmq target instead of inconsistently defined CMake variable. PR #512.
+
 ### 2026.03.00
 
 #### Dependencies
