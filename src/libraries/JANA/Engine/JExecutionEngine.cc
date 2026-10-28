@@ -1,5 +1,7 @@
 
 #include "JExecutionEngine.h"
+#include "JANA/Utils/JEventLevel.h"
+#include "JANA/Utils/JTypeInfo.h"
 #include <JANA/Utils/JApplicationInspector.h>
 #include <JANA/JVersion.h>
 
@@ -67,7 +69,6 @@ void JExecutionEngine::Init() {
         m_arrow_states.emplace_back();
         auto& arrow_state = m_arrow_states.back();
         arrow_state.is_source = arrow->IsSource();
-        arrow_state.is_sink = arrow->IsSink();
         arrow_state.is_parallel = arrow->IsParallel();
         arrow_state.next_input = arrow->GetNextPortIndex();
     }
@@ -93,7 +94,16 @@ void JExecutionEngine::RunTopology() {
 
     // Set start time and event count
     m_time_at_start = clock_t::now();
-    m_event_count_at_start = m_event_count_at_finish;
+    for (auto& pair : m_processed_event_counts) {
+        //event_count_at_start = event_count_at_finish;
+        pair.second.first = pair.second.second;
+    }
+    for (auto& arrow_state : m_arrow_states) {
+        // Reset all arrow event counts to 0 when topology starts up
+        for (auto& evt_counts : arrow_state.processed_event_counts) {
+            evt_counts.second = 0;
+        }
+    }
 
     // Reactivate topology
     for (auto& arrow: m_arrow_states) {
@@ -276,16 +286,19 @@ void JExecutionEngine::RunSupervisor() {
         }
 
         if (m_show_ticker) {
+            auto next_event_count = perf.processed_event_counts[perf.event_level];
             auto next_measurement_time = clock_t::now();
             auto last_measurement_duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(next_measurement_time - last_measurement_time).count();
-            float latest_throughput_hz = (last_measurement_duration_ms == 0) ? 0 : (perf.event_count - last_event_count) * 1000.0 / last_measurement_duration_ms;
+            float latest_throughput_hz = (last_measurement_duration_ms == 0) ? 0 : (next_event_count - last_event_count) * 1000.0 / last_measurement_duration_ms;
             last_measurement_time = next_measurement_time;
-            last_event_count = perf.event_count;
+            last_event_count = next_event_count;
 
             // Print rates
-            LOG_INFO(m_logger) << "Status: " << perf.event_count << " events processed at "
-                            << JTypeInfo::to_string_with_si_prefix(latest_throughput_hz) << "Hz ("
-                            << JTypeInfo::to_string_with_si_prefix(perf.throughput_hz) << "Hz avg)" << LOG_END;
+            LOG_INFO(m_logger)
+                << "Status: " << next_event_count << " "
+                << ToStringWithLowercasePlurals(perf.event_level) << " processed at "
+                << JTypeInfo::to_string_with_si_prefix(latest_throughput_hz) << "Hz ("
+                << JTypeInfo::to_string_with_si_prefix(perf.throughputs_hz[perf.event_level]) << "Hz avg)" << LOG_END;
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(m_ticker_ms));
@@ -373,25 +386,25 @@ JExecutionEngine::RunStatus JExecutionEngine::GetRunStatus() {
 JExecutionEngine::Perf JExecutionEngine::GetPerf() {
     std::unique_lock<std::mutex> lock(m_mutex);
     Perf result;
-    if (m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Failed) {
-        result.event_count = m_event_count_at_finish - m_event_count_at_start;
+    if (m_runstatus == RunStatus::Paused || m_runstatus == RunStatus::Failed || m_runstatus == RunStatus::Finished) {
         result.uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_time_at_finish - m_time_at_start).count();
     }
     else {
-        // Obtain current event count
-        size_t current_event_count = 0;
-        for (auto& state : m_arrow_states) {
-            if (state.is_sink) {
-                current_event_count += state.events_processed;
-            }
-        }
-        result.event_count = current_event_count - m_event_count_at_start;
         result.uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(clock_t::now() - m_time_at_start).count();
+    }
+    for (auto& p : m_processed_event_counts) {
+        auto level = p.first;
+        auto event_count_at_start = p.second.first;
+        auto event_count_at_finish = p.second.second;
+        auto event_count_delta = event_count_at_finish - event_count_at_start;
+        result.processed_event_counts[level] = event_count_delta;
+        result.throughputs_hz[level] = (result.uptime_ms == 0) ? 0 : (event_count_delta * 1000.0 / result.uptime_ms);
     }
     result.runstatus = m_runstatus;
     result.thread_count = m_worker_states.size();
-    result.throughput_hz = (result.uptime_ms == 0) ? 0 : (result.event_count * 1000.0) / result.uptime_ms;
-    result.event_level = JEventLevel::PhysicsEvent;
+    result.event_level = m_ticker_level;
+    result.event_count = result.processed_event_counts[result.event_level];
+    result.throughput_hz = result.throughputs_hz[result.event_level];
     return result;
 }
 
@@ -510,9 +523,17 @@ void JExecutionEngine::CheckinCompletedTask_Unsafe(Task& task, WorkerState& work
     arrow_state.active_tasks -= 1;
     arrow_state.total_processing_duration += processing_duration;
 
+    // Update event counts for arrow and topology (used for ticker and metrics)
     for (size_t output=0; output<task.output_count; ++output) {
-        if (!task.arrow->GetPort(task.outputs[output].second).GetSkipFinishEvent()) {
-            arrow_state.events_processed++;
+        auto port_id = task.outputs[output].second;
+        auto port = task.arrow->GetPort(port_id);
+        auto level = task.outputs[output].first->GetLevel();
+
+        if (port.GetContributesTopologyEventCounts()) {
+            m_processed_event_counts[level].second++;
+        }
+        if (port.GetContributesArrowEventCounts()) {
+            arrow_state.processed_event_counts[level]++;
         }
     }
 
@@ -632,14 +653,8 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
         if (!any_active_source_found && !any_active_task_found) {
             // Pause the topology
             m_time_at_finish = clock_t::now();
-            m_event_count_at_finish = 0;
-            for (auto& arrow_state : m_arrow_states) {
-                if (arrow_state.is_sink) {
-                    m_event_count_at_finish += arrow_state.events_processed;
-                }
-            }
-            LOG_DEBUG(GetLogger()) << "Scheduler: Processing paused" << LOG_END;
             m_runstatus = RunStatus::Paused;
+            LOG_DEBUG(GetLogger()) << "Scheduler: Processing paused" << LOG_END;
             // I think this is the ONLY site where the topology gets paused. Verify this?
         }
     }
@@ -657,20 +672,35 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
 void JExecutionEngine::PrintFinalReport() {
 
     std::unique_lock<std::mutex> lock(m_mutex);
-    auto event_count = m_event_count_at_finish - m_event_count_at_start;
     auto uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_time_at_finish - m_time_at_start).count();
     auto thread_count = m_worker_states.size();
-    auto throughput_hz = (event_count * 1000.0) / uptime_ms;
 
-    LOG_INFO(GetLogger()) << "Detailed report:" << LOG_END;
-    LOG_INFO(GetLogger()) << LOG_END;
-    LOG_INFO(GetLogger()) << "  Avg throughput [Hz]:         " << std::setprecision(3) << throughput_hz << LOG_END;
-    LOG_INFO(GetLogger()) << "  Completed events [count]:    " << event_count << LOG_END;
-    LOG_INFO(GetLogger()) << "  Total uptime [s]:            " << std::setprecision(4) << uptime_ms/1000.0 << LOG_END;
-    LOG_INFO(GetLogger()) << "  Thread team size [count]:    " << thread_count << LOG_END;
-    LOG_INFO(GetLogger()) << LOG_END;
-    LOG_INFO(GetLogger()) << "  Arrow-level metrics:" << LOG_END;
-    LOG_INFO(GetLogger()) << LOG_END;
+    std::ostringstream oss;
+
+    oss << "Detailed report:\n"
+        << "  Ran for " << std::setprecision(4) << uptime_ms/1000.0 << " seconds with " << thread_count << " worker threads\n";
+
+    for (auto& pair : m_processed_event_counts) {
+        auto level = pair.first;
+        auto evt_count_at_start = pair.second.first;
+        auto evt_count_at_finish = pair.second.second;
+        auto evt_count_delta = evt_count_at_finish - evt_count_at_start;
+        auto throughput = evt_count_delta * 1000.0 / uptime_ms;
+        oss << "  Completed " << evt_count_delta << " " << ToStringWithLowercasePlurals(level)
+            << " at " << JTypeInfo::to_string_with_si_prefix(throughput) << "Hz avg\n";
+
+        // This is meant to handle exactly two scenarios:
+        // 1. The user runs JANA by simply passing in a file and waiting for completion.
+        //    In this case, PrintFinalReport() runs exactly once when the source finishes, and
+        //    evt_count_at_start=0, and evt_count_delta = evt_count_at_finish. No confusion.
+        //
+        // 2. The user runs JANA interactively and/or intermittently, e.g. running scaling tests
+        //    In this case, PrintFinalReport() runs every time the execution engine pauses,
+        //    e.g. when the user presses Ctrl-C, or JBenchmarker calls Pause(). In this case, it shows
+        //    how many events were processed since the last Run(), and with what throughput.
+        //    Remember that throughput is always specific to the last Run/Pause interval.
+    }
+    oss << "\n";
 
     size_t total_useful_ms = 0;
 
@@ -679,32 +709,42 @@ void JExecutionEngine::PrintFinalReport() {
         auto& arrow_state = m_arrow_states[arrow_id];
         auto useful_ms = std::chrono::duration_cast<std::chrono::milliseconds>(arrow_state.total_processing_duration).count();
         total_useful_ms += useful_ms;
-        auto avg_latency = useful_ms*1.0/arrow_state.events_processed;
-        auto throughput_bottleneck = 1000.0 / avg_latency;
-        if (arrow->IsParallel()) {
-            throughput_bottleneck *= thread_count;
-        }
 
-        LOG_INFO(GetLogger()) << "  - Arrow name:                 " << arrow->GetName() << LOG_END;
-        LOG_INFO(GetLogger()) << "    Parallel:                   " << arrow->IsParallel() << LOG_END;
-        LOG_INFO(GetLogger()) << "    Events completed:           " << arrow_state.events_processed << LOG_END;
-        LOG_INFO(GetLogger()) << "    Avg latency [ms/event]:     " << avg_latency << LOG_END;
-        LOG_INFO(GetLogger()) << "    Throughput bottleneck [Hz]: " << throughput_bottleneck << LOG_END;
-        LOG_INFO(GetLogger()) << LOG_END;
+        oss << "  " << arrow->GetName() << " (" << (arrow->IsParallel() ? "parallel" : "sequential") << ")\n";
+
+        for (auto& pair : arrow_state.processed_event_counts) {
+            auto level = pair.first;
+            auto events_processed = pair.second;  // We don't need 
+            auto throughput_per_worker = events_processed * 1000.0 / useful_ms;
+            auto throughput_bottleneck = arrow->IsParallel() ? throughput_per_worker * thread_count : throughput_per_worker;
+            if (arrow->IsParallel()) {
+                oss << "    Processed " << events_processed << " " << ToStringWithLowercasePlurals(level)
+                    << " at " << JTypeInfo::to_string_with_si_prefix(throughput_per_worker) << "Hz effective per worker ("
+                    << JTypeInfo::to_string_with_si_prefix(throughput_bottleneck) << "Hz max)\n";
+            }
+            else {
+                oss << "    Processed " << events_processed << " " << ToStringWithLowercasePlurals(level)
+                    << " at " << JTypeInfo::to_string_with_si_prefix(throughput_per_worker) << "Hz effective\n";
+            }
+        }
+        oss << "\n";
     }
 
     auto total_scheduler_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_scheduler_duration).count();
     auto total_idle_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_idle_duration).count();
 
-    LOG_INFO(GetLogger()) << "  Total useful time [s]:     " << std::setprecision(6) << total_useful_ms/1000.0 << LOG_END;
-    LOG_INFO(GetLogger()) << "  Total scheduler time [s]:  " << std::setprecision(6) << total_scheduler_ms/1000.0 << LOG_END;
-    LOG_INFO(GetLogger()) << "  Total idle time [s]:       " << std::setprecision(6) << total_idle_ms/1000.0 << LOG_END;
+    auto total_time_s = uptime_ms * thread_count / 1000.0;
+    auto total_useful_time_s = total_useful_ms / 1000.0;
+    auto total_scheduler_time_s = total_scheduler_ms / 1000.0;
+    auto total_idle_time_s = total_idle_ms / 1000.0;
+    auto total_lost_time_s = total_time_s - total_useful_time_s - total_scheduler_time_s - total_idle_time_s;
+    oss << "  Total useful time [s]:     " << std::setprecision(6) << total_useful_time_s << " (" << std::setprecision(3) << total_useful_time_s/total_time_s*100 << " %)\n";
+    oss << "  Total scheduler time [s]:  " << std::setprecision(6) << total_scheduler_time_s << " (" << std::setprecision(3) << total_scheduler_time_s/total_time_s*100 << " %)\n";
+    oss << "  Total idle time [s]:       " << std::setprecision(6) << total_idle_time_s << " (" << std::setprecision(3) << total_idle_time_s/total_time_s*100 << " %)\n";
+    oss << "  Total lost time [s]:       " << std::setprecision(6) << total_lost_time_s << " (" << std::setprecision(3) << total_lost_time_s/total_time_s*100 << " %)\n";
+    oss << "\n";
 
-    LOG_INFO(GetLogger()) << LOG_END;
-
-    LOG_INFO(GetLogger()) << "Final report: " << event_count << " events processed at "
-                          << JTypeInfo::to_string_with_si_prefix(throughput_hz) << "Hz" << LOG_END;
-
+    LOG_INFO(GetLogger()) << oss.str();
 }
 
 void JExecutionEngine::SetTickerEnabled(bool show_ticker) {

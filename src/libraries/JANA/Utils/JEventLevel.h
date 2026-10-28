@@ -41,6 +41,21 @@ inline char toChar(JEventLevel level) {
     }
 }
 
+inline std::string ToStringWithLowercasePlurals(JEventLevel level) {
+    switch (level) {
+        case JEventLevel::Run: return "runs"; break;
+        case JEventLevel::Subrun: return "subruns"; break;
+        case JEventLevel::Timeframe: return "timeframes"; break;
+        case JEventLevel::Timeslice: return "timeslices"; break;
+        case JEventLevel::Block: return "blocks"; break;
+        case JEventLevel::SlowControls: return "slow controls events"; break;
+        case JEventLevel::PhysicsEvent: return "physics events"; break;
+        case JEventLevel::Subevent: return "subevents"; break;
+        case JEventLevel::Task: return "tasks"; break;
+        default: return "non-events"; break;
+    }
+}
+
 inline std::string toString(JEventLevel level) {
     std::stringstream ss;
     ss << level;

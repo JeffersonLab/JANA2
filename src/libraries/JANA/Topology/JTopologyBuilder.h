@@ -13,11 +13,11 @@
 #include <JANA/Topology/JEventPool.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JProcessorMapping.h>
+#include <JANA/Topology/JArrow.h>
 
 
 class JParameterManager;
 class JComponentManager;
-class JArrow;
 class JFoldArrow;
 class JUnfoldArrow;
 class JTapArrow;
