@@ -82,6 +82,7 @@ void JExecutionEngine::RequestInspector() {
 void JExecutionEngine::RunTopology() {
     std::unique_lock<std::mutex> lock(m_mutex);
 
+    LOG_INFO(GetLogger()) << "Calling RunTopology";
     if (m_runstatus == RunStatus::Failed) {
         throw JException("Cannot switch topology runstatus to Running because it is already Failed");
     }
@@ -94,6 +95,9 @@ void JExecutionEngine::RunTopology() {
 
     // Set start time and event count
     m_time_at_start = clock_t::now();
+    m_time_at_finish = m_time_at_start;
+    m_total_idle_duration = clock_t::duration::zero();
+    m_total_scheduler_duration = clock_t::duration::zero();
     for (auto& pair : m_processed_event_counts) {
         //event_count_at_start = event_count_at_finish;
         pair.second.first = pair.second.second;
@@ -103,6 +107,7 @@ void JExecutionEngine::RunTopology() {
         for (auto& evt_counts : arrow_state.processed_event_counts) {
             evt_counts.second = 0;
         }
+        arrow_state.total_processing_duration = clock_t::duration::zero();
     }
 
     // Reactivate topology
@@ -266,6 +271,7 @@ void JExecutionEngine::RunSupervisor() {
 
         if (m_interrupt_status == InterruptStatus::InspectRequested) {
             if (perf.runstatus == RunStatus::Paused) {
+                PrintFinalReport();
                 LOG_INFO(GetLogger()) << "Entering inspector" << LOG_END;
                 m_enable_timeout = false;
                 m_interrupt_status = InterruptStatus::InspectInProgress;
@@ -677,7 +683,7 @@ void JExecutionEngine::PrintFinalReport() {
 
     std::ostringstream oss;
 
-    oss << "Detailed report:\n"
+    oss << "\nDetailed report:\n\n"
         << "  Ran for " << std::setprecision(4) << uptime_ms/1000.0 << " seconds with " << thread_count << " worker threads\n";
 
     for (auto& pair : m_processed_event_counts) {
@@ -731,17 +737,21 @@ void JExecutionEngine::PrintFinalReport() {
     }
 
     auto total_scheduler_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_scheduler_duration).count();
-    auto total_idle_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_idle_duration).count();
+    //auto total_idle_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_idle_duration).count();
 
     auto total_time_s = uptime_ms * thread_count / 1000.0;
     auto total_useful_time_s = total_useful_ms / 1000.0;
     auto total_scheduler_time_s = total_scheduler_ms / 1000.0;
-    auto total_idle_time_s = total_idle_ms / 1000.0;
-    auto total_lost_time_s = total_time_s - total_useful_time_s - total_scheduler_time_s - total_idle_time_s;
+    //auto total_idle_time_s = total_idle_ms / 1000.0;
+    //auto total_lost_time_s = total_time_s - total_useful_time_s - total_scheduler_time_s - total_idle_time_s;
     oss << "  Total useful time [s]:     " << std::setprecision(6) << total_useful_time_s << " (" << std::setprecision(3) << total_useful_time_s/total_time_s*100 << " %)\n";
     oss << "  Total scheduler time [s]:  " << std::setprecision(6) << total_scheduler_time_s << " (" << std::setprecision(3) << total_scheduler_time_s/total_time_s*100 << " %)\n";
-    oss << "  Total idle time [s]:       " << std::setprecision(6) << total_idle_time_s << " (" << std::setprecision(3) << total_idle_time_s/total_time_s*100 << " %)\n";
-    oss << "  Total lost time [s]:       " << std::setprecision(6) << total_lost_time_s << " (" << std::setprecision(3) << total_lost_time_s/total_time_s*100 << " %)\n";
+
+    // I am disabling the idle time metric because this doesn't work with pause->inspect->resume behavior.
+    // Essentially, the idle duration (as currently implemented) includes the time spent inspecting and there isn't an easy way to fix that.
+
+    //oss << "  Total idle time [s]:       " << std::setprecision(6) << total_idle_time_s << " (" << std::setprecision(3) << total_idle_time_s/total_time_s*100 << " %)\n";
+    //oss << "  Total lost time [s]:       " << std::setprecision(6) << total_lost_time_s << " (" << std::setprecision(3) << total_lost_time_s/total_time_s*100 << " %)\n";
     oss << "\n";
 
     LOG_INFO(GetLogger()) << oss.str();
