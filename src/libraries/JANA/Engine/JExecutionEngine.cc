@@ -41,6 +41,8 @@ void JExecutionEngine::Init() {
 
     params->SetDefaultParameter("jana:ticker_interval", m_ticker_ms, "Controls the ticker interval (in ms)");
 
+    params->SetDefaultParameter("jana:ticker_level", m_ticker_level, "Controls the ticker event level (e.g. PhysicsEvent, Timeframe, Block, ...)");
+
     auto p = params->SetDefaultParameter("jana:status_fname", m_path_to_named_pipe,
         "Filename of named pipe for retrieving instantaneous status info");
 
