@@ -10,6 +10,7 @@
 #include <string>
 #include <fstream>
 #include <cstring>
+#include <algorithm>
 #include <JANA/Utils/JTablePrinter.h>
 
 using namespace std;
@@ -233,6 +234,7 @@ std::map<std::string, JParameter*> JParameterManager::GetAllParameters() {
 /// There should be a space between the key and the value. The key may contain no spaces.
 /// The value is taken as the rest of the line up to, but not including the newline.
 /// A key may be specified with no value and the value will be set to "1".
+/// A value of "" (two double quotes) sets the value to the empty string.
 /// A "#" charater will discard the remaining characters in a line up to
 /// the next newline. Lines starting with "#" are ignored completely.
 /// Lines with no characters (except for the newline) are ignored.
@@ -248,14 +250,11 @@ void JParameterManager::ReadConfigFile(std::string filename) {
     }
 
     // Loop over lines
-    char line[8192];
-    while (!ifs.eof()) {
-        // Read in next line ignoring comments
-        bzero(line, 8192);
-        ifs.getline(line, 8190);
-        if (strlen(line) == 0) continue;
-        if (line[0] == '#') continue;
-        string str(line);
+    string str;
+    while (std::getline(ifs, str)) {
+        // Ignore empty lines and comments
+        if (str.empty()) continue;
+        if (str[0] == '#') continue;
 
         // Check for comment character and erase comment if found
         size_t comment_pos = str.find('#');
@@ -286,6 +285,7 @@ void JParameterManager::ReadConfigFile(std::string filename) {
             val += tokens[i];
         }
         if (val == "")val = "1";
+        else if (val == "\"\"") val = ""; // Empty string, as written by WriteConfigFile
 
         // Override defaulted values only
         JParameter* param = FindParameter(key);
@@ -331,7 +331,7 @@ void JParameterManager::WriteConfigFile(std::string filename) {
     size_t max_val_len = 0;
     for (auto pair : m_parameters) {
         auto key_len = pair.first.length();
-        auto val_len = pair.second->GetValue().length();
+        auto val_len = std::max<size_t>(pair.second->GetValue().length(), 2); // Empty values are written as ""
         if (key_len > max_key_len) max_key_len = key_len;
         if (val_len > max_val_len) max_val_len = val_len;
     }
@@ -340,6 +340,7 @@ void JParameterManager::WriteConfigFile(std::string filename) {
     for (auto pair : m_parameters) {
         std::string key = pair.first;
         std::string val = pair.second->GetValue();
+        if (val.empty()) val = "\"\"";
         std::string desc = pair.second->GetDescription();
 
         ofs << key << string(max_key_len - key.length(), ' ') << " "
