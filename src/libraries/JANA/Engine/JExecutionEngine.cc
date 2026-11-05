@@ -685,8 +685,7 @@ void JExecutionEngine::PrintFinalReport() {
 
     std::ostringstream oss;
 
-    oss << "\nDetailed report:\n\n"
-        << "  Ran for " << std::setprecision(4) << uptime_ms/1000.0 << " seconds with " << thread_count << " worker threads\n";
+    oss << "\nDetailed report:\n\n";
 
     for (auto& pair : m_processed_event_counts) {
         auto level = pair.first;
@@ -746,6 +745,7 @@ void JExecutionEngine::PrintFinalReport() {
     auto total_scheduler_time_s = total_scheduler_ms / 1000.0;
     //auto total_idle_time_s = total_idle_ms / 1000.0;
     //auto total_lost_time_s = total_time_s - total_useful_time_s - total_scheduler_time_s - total_idle_time_s;
+    oss << "  Ran for " << std::setprecision(4) << uptime_ms/1000.0 << " seconds with " << thread_count << " worker threads\n";
     oss << "  Total useful time [s]:     " << std::setprecision(6) << total_useful_time_s << " (" << std::setprecision(3) << total_useful_time_s/total_time_s*100 << " %)\n";
     oss << "  Total scheduler time [s]:  " << std::setprecision(6) << total_scheduler_time_s << " (" << std::setprecision(3) << total_scheduler_time_s/total_time_s*100 << " %)\n";
 
