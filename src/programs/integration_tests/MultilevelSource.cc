@@ -5,6 +5,7 @@
 #include <JANA/JApplication.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
+#include <JANA/Engine/JExecutionEngine.h>
 
 namespace jana::integration_tests::multilevel_source {
 
@@ -132,6 +133,26 @@ TEST_CASE("InterleavedSource") {
     app.Add(new InterleavedSource(run_period, sc_period, total_events));
     app.Add(new MultilevelProcessor(run_period, sc_period));
     app.Run();
+
+    auto ee = app.GetService<JExecutionEngine>();
+    auto perf = ee->GetPerf();
+
+    REQUIRE(perf.runstatus == JExecutionEngine::RunStatus::Finished);
+
+    // All three event levels should have been processed with positive throughput
+    REQUIRE(perf.throughputs_hz.count(JEventLevel::PhysicsEvent) == 1);
+    REQUIRE(perf.throughputs_hz.count(JEventLevel::Run) == 1);
+    REQUIRE(perf.throughputs_hz.count(JEventLevel::SlowControls) == 1);
+    REQUIRE(perf.throughputs_hz.at(JEventLevel::PhysicsEvent) > 0);
+    REQUIRE(perf.throughputs_hz.at(JEventLevel::Run) > 0);
+    REQUIRE(perf.throughputs_hz.at(JEventLevel::SlowControls) > 0);
+
+    // throughput ratios must match the configured event-level ratios exactly,
+    // because all levels share the same uptime denominator
+    REQUIRE(perf.throughputs_hz.at(JEventLevel::PhysicsEvent) ==
+            Approx(perf.throughputs_hz.at(JEventLevel::Run) * run_period));
+    REQUIRE(perf.throughputs_hz.at(JEventLevel::PhysicsEvent) ==
+            Approx(perf.throughputs_hz.at(JEventLevel::SlowControls) * sc_period));
 }
 
 } // namespace jana::integration_tests::multilevel_source
