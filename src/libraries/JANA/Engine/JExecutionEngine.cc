@@ -678,6 +678,16 @@ void JExecutionEngine::FindNextReadyTask_Unsafe(Task& task, WorkerState& worker)
 
 
 void JExecutionEngine::PrintFinalReport() {
+    // This is meant to handle exactly two scenarios:
+    // 1. The user runs JANA by simply passing in a file and waiting for completion.
+    //    In this case, PrintFinalReport() runs exactly once when the source finishes, and
+    //    evt_count_at_start=0, and evt_count_delta = evt_count_at_finish. No confusion.
+    //
+    // 2. The user runs JANA interactively and/or intermittently, e.g. running scaling tests
+    //    In this case, PrintFinalReport() runs every time the execution engine pauses,
+    //    e.g. when the user presses Ctrl-C, or JBenchmarker calls Pause(). In this case, it shows
+    //    how many events were processed since the last Run(), and with what throughput.
+    //    Remember that throughput is always specific to the last Run/Pause interval.
 
     std::unique_lock<std::mutex> lock(m_mutex);
     auto uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_time_at_finish - m_time_at_start).count();
@@ -685,7 +695,13 @@ void JExecutionEngine::PrintFinalReport() {
 
     std::ostringstream oss;
 
-    oss << "\nDetailed report:\n\n";
+    oss << "\nOverall performance report:\n\n";
+
+    size_t total_useful_ms = 0;
+    for (auto& arrow_state : m_arrow_states) {
+        auto useful_ms = std::chrono::duration_cast<std::chrono::milliseconds>(arrow_state.total_processing_duration).count();
+        total_useful_ms += useful_ms;
+    }
 
     for (auto& pair : m_processed_event_counts) {
         auto level = pair.first;
@@ -695,21 +711,21 @@ void JExecutionEngine::PrintFinalReport() {
         auto throughput = evt_count_delta * 1000.0 / uptime_ms;
         oss << "  Completed " << evt_count_delta << " " << ToStringWithLowercasePlurals(level)
             << " at " << JTypeInfo::to_string_with_si_prefix(throughput) << "Hz avg\n";
-
-        // This is meant to handle exactly two scenarios:
-        // 1. The user runs JANA by simply passing in a file and waiting for completion.
-        //    In this case, PrintFinalReport() runs exactly once when the source finishes, and
-        //    evt_count_at_start=0, and evt_count_delta = evt_count_at_finish. No confusion.
-        //
-        // 2. The user runs JANA interactively and/or intermittently, e.g. running scaling tests
-        //    In this case, PrintFinalReport() runs every time the execution engine pauses,
-        //    e.g. when the user presses Ctrl-C, or JBenchmarker calls Pause(). In this case, it shows
-        //    how many events were processed since the last Run(), and with what throughput.
-        //    Remember that throughput is always specific to the last Run/Pause interval.
     }
-    oss << "\n";
 
-    size_t total_useful_ms = 0;
+    auto total_scheduler_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_scheduler_duration).count();
+    //auto total_idle_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_idle_duration).count();
+
+    auto total_time_s = uptime_ms * thread_count / 1000.0;
+    auto total_useful_time_s = total_useful_ms / 1000.0;
+    auto total_scheduler_time_s = total_scheduler_ms / 1000.0;
+    //auto total_idle_time_s = total_idle_ms / 1000.0;
+    //auto total_lost_time_s = total_time_s - total_useful_time_s - total_scheduler_time_s - total_idle_time_s;
+    oss << "\n";
+    oss << "  Ran for " << std::setprecision(4) << uptime_ms/1000.0 << " seconds with " << thread_count << " worker threads\n";
+    oss << "  Total useful time    [cpu-seconds]:  " << std::setprecision(6) << total_useful_time_s << " (" << std::setprecision(3) << total_useful_time_s/total_time_s*100 << " %)\n";
+    oss << "  Total scheduler time [cpu-seconds]:  " << std::setprecision(6) << total_scheduler_time_s << " (" << std::setprecision(3) << total_scheduler_time_s/total_time_s*100 << " %)\n";
+    oss << "\nArrow performance report:\n\n";
 
     for (size_t arrow_id=0; arrow_id < m_arrow_states.size(); ++arrow_id) {
         auto* arrow = m_topology->GetArrows()[arrow_id];
@@ -717,7 +733,7 @@ void JExecutionEngine::PrintFinalReport() {
         auto useful_ms = std::chrono::duration_cast<std::chrono::milliseconds>(arrow_state.total_processing_duration).count();
         total_useful_ms += useful_ms;
 
-        oss << "  " << arrow->GetName() << " (" << (arrow->IsParallel() ? "parallel" : "sequential") << ")\n";
+        oss << "  - " << arrow->GetName() << " (" << (arrow->IsParallel() ? "parallel" : "sequential") << ")\n";
 
         for (auto& pair : arrow_state.processed_event_counts) {
             auto level = pair.first;
@@ -737,24 +753,6 @@ void JExecutionEngine::PrintFinalReport() {
         oss << "\n";
     }
 
-    auto total_scheduler_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_scheduler_duration).count();
-    //auto total_idle_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_total_idle_duration).count();
-
-    auto total_time_s = uptime_ms * thread_count / 1000.0;
-    auto total_useful_time_s = total_useful_ms / 1000.0;
-    auto total_scheduler_time_s = total_scheduler_ms / 1000.0;
-    //auto total_idle_time_s = total_idle_ms / 1000.0;
-    //auto total_lost_time_s = total_time_s - total_useful_time_s - total_scheduler_time_s - total_idle_time_s;
-    oss << "  Ran for " << std::setprecision(4) << uptime_ms/1000.0 << " seconds with " << thread_count << " worker threads\n";
-    oss << "  Total useful time [s]:     " << std::setprecision(6) << total_useful_time_s << " (" << std::setprecision(3) << total_useful_time_s/total_time_s*100 << " %)\n";
-    oss << "  Total scheduler time [s]:  " << std::setprecision(6) << total_scheduler_time_s << " (" << std::setprecision(3) << total_scheduler_time_s/total_time_s*100 << " %)\n";
-
-    // I am disabling the idle time metric because this doesn't work with pause->inspect->resume behavior.
-    // Essentially, the idle duration (as currently implemented) includes the time spent inspecting and there isn't an easy way to fix that.
-
-    //oss << "  Total idle time [s]:       " << std::setprecision(6) << total_idle_time_s << " (" << std::setprecision(3) << total_idle_time_s/total_time_s*100 << " %)\n";
-    //oss << "  Total lost time [s]:       " << std::setprecision(6) << total_lost_time_s << " (" << std::setprecision(3) << total_lost_time_s/total_time_s*100 << " %)\n";
-    oss << "\n";
 
     LOG_INFO(GetLogger()) << oss.str();
 }
