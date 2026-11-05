@@ -163,12 +163,19 @@ JEventSource::Result JEventSource::DoNext(std::shared_ptr<JEvent> event) {
             event->SetJEventSource(this); 
 
             // We end up here if we read an entry in our file or retrieved a message from our socket,
-            // and believe we could obtain another one immediately if we wanted to
+            // and believe we could obtain another one immediately if we wanted to.
+            // For multilevel sources, outputs carry a level set by the user; only store outputs
+            // that match the current event's level (level=None means "always store").
+            auto event_level = event->GetLevel();
             for (auto* output : GetOutputs()) {
-                output->EulerianStore(*event->GetFactorySet());
+                if (output->GetLevel() == JEventLevel::None || output->GetLevel() == event_level) {
+                    output->EulerianStore(*event->GetFactorySet());
+                }
             }
             for (auto* output : GetVariadicOutputs()) {
-                output->EulerianStore(*event->GetFactorySet());
+                if (output->GetLevel() == JEventLevel::None || output->GetLevel() == event_level) {
+                    output->EulerianStore(*event->GetFactorySet());
+                }
             }
             return Result::Success;
         }
