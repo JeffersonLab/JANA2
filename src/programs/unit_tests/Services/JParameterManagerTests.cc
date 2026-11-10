@@ -6,6 +6,8 @@
 #include <JANA/Services/JParameterManager.h>
 #include <string>
 #include <vector>
+#include <cstdio>
+#include <fstream>
 #include "catch.hpp"
 
 TEST_CASE("JParameterManager::SetDefaultParameter") {
@@ -611,3 +613,39 @@ TEST_CASE("JParameterManager_ConflictingDefaults") {
 
 
 
+
+
+TEST_CASE("JParameterManager_ConfigFileRoundTrip") {
+
+    std::string filename = "JParameterManager_ConfigFileRoundTrip.config";
+
+    SECTION("Values longer than 10000 characters") {
+        std::string long_val(12000, 'x');
+        JParameterManager writer;
+        writer.SetParameter("long_param", long_val);
+        writer.WriteConfigFile(filename);
+
+        JParameterManager reader;
+        reader.ReadConfigFile(filename);
+        REQUIRE(reader.GetParameterValue<std::string>("long_param") == long_val);
+    }
+
+    SECTION("Empty values and flags") {
+        JParameterManager writer;
+        writer.SetParameter("empty_param", std::string(""));
+        writer.SetParameter("nonempty_param", std::string("abc"));
+        writer.WriteConfigFile(filename);
+        {
+            std::ofstream ofs(filename, std::ios::app);
+            ofs << "flag_param" << std::endl;
+        }
+
+        JParameterManager reader;
+        reader.ReadConfigFile(filename);
+        REQUIRE(reader.GetParameterValue<std::string>("empty_param") == "");
+        REQUIRE(reader.GetParameterValue<std::string>("nonempty_param") == "abc");
+        REQUIRE(reader.GetParameterValue<std::string>("flag_param") == "1");
+    }
+
+    std::remove(filename.c_str());
+}
