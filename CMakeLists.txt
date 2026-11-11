@@ -3,6 +3,8 @@ cmake_policy(SET CMP0074 NEW) # find_package() uses <PackageName>_ROOT implicit 
 
 project(jana2 VERSION 2026.03.01)
 
+include(GNUInstallDirs)
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
 # Default the C++ standard to C++17, and validate that they provided one we can use
@@ -164,14 +166,14 @@ if (USE_PERFETTO)
     add_library(perfetto_sdk STATIC ${PERFETTO_SDK_DIR}/perfetto.cc)
     target_include_directories(perfetto_sdk PUBLIC
         $<BUILD_INTERFACE:${PERFETTO_SDK_DIR}>
-        $<INSTALL_INTERFACE:include/perfetto>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/perfetto>
     )
     target_compile_options(perfetto_sdk PRIVATE
         $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:
             -Wno-sign-compare -Wno-unused-parameter -Wno-missing-field-initializers>
     )
-    install(TARGETS perfetto_sdk EXPORT jana2_targets DESTINATION lib)
-    install(FILES ${PERFETTO_SDK_DIR}/perfetto.h DESTINATION include/perfetto)
+    install(TARGETS perfetto_sdk EXPORT jana2_targets DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    install(FILES ${PERFETTO_SDK_DIR}/perfetto.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/perfetto)
     set(JANA2_HAVE_PERFETTO 1)
 else()
     set(JANA2_HAVE_PERFETTO 0)
@@ -278,10 +280,10 @@ endif()
 
 #---------------------------------------------------------------------------------------
 
-install(DIRECTORY scripts/ DESTINATION bin FILES_MATCHING PATTERN "jana-*.py"
+install(DIRECTORY scripts/ DESTINATION ${CMAKE_INSTALL_BINDIR} FILES_MATCHING PATTERN "jana-*.py"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
 
-    install(FILES "scripts/jana-status.sh" RENAME "jana-status" DESTINATION "bin"
+    install(FILES "scripts/jana-status.sh" RENAME "jana-status" DESTINATION ${CMAKE_INSTALL_BINDIR}
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
 
 include(${CMAKE_SOURCE_DIR}/cmake/MakeConfig.cmake)

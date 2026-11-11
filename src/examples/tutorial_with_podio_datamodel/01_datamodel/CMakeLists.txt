@@ -13,15 +13,15 @@ PODIO_ADD_ROOT_IO_DICT(jana2_tutorial_podio_datamodel_dict jana2_tutorial_podio_
 
 install(TARGETS jana2_tutorial_podio_datamodel
     EXPORT jana2_targets
-    LIBRARY DESTINATION lib
-    PUBLIC_HEADER DESTINATION include/jana2_tutorial_podio_datamodel
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jana2_tutorial_podio_datamodel
 )
 
 install(TARGETS jana2_tutorial_podio_datamodel_dict
     EXPORT jana2_targets
-    DESTINATION lib
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/jana2_tutorial_podio_datamodel_dictDict.rootmap DESTINATION lib)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libjana2_tutorial_podio_datamodel_dict_rdict.pcm DESTINATION lib)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/jana2_tutorial_podio_datamodel_dictDict.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libjana2_tutorial_podio_datamodel_dict_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

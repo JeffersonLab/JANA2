@@ -1,4 +1,6 @@
 
+include(GNUInstallDirs)
+
 macro(add_jana_plugin plugin_name)
 
     # Parse remaining arguments
@@ -69,7 +71,7 @@ macro(add_jana_plugin plugin_name)
         SKIP_BUILD_RPATH FALSE
         BUILD_WITH_INSTALL_RPATH FALSE
         INSTALL_RPATH_USE_LINK_PATH TRUE
-        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
+        INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR};${CMAKE_INSTALL_LIBDIR}/${INSTALL_NAMESPACE}/plugins"
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/JANA/plugins"
     )
 
@@ -83,15 +85,15 @@ macro(add_jana_plugin plugin_name)
         target_include_directories(${plugin_name}
             PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                $<INSTALL_INTERFACE:include/${INSTALL_NAMESPACE}/plugins/${plugin_name}>
+                $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${INSTALL_NAMESPACE}/plugins/${plugin_name}>
         )
     endif()
 
     # Install target
     install(TARGETS ${plugin_name}
         EXPORT ${PLUGIN_EXPORT}
-        PUBLIC_HEADER DESTINATION include/${INSTALL_NAMESPACE}/plugins/${plugin_name}
-        LIBRARY DESTINATION lib/${INSTALL_NAMESPACE}/plugins
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${INSTALL_NAMESPACE}/plugins/${plugin_name}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/${INSTALL_NAMESPACE}/plugins
     )
 
     # Handle tests
@@ -102,9 +104,9 @@ macro(add_jana_plugin plugin_name)
             SKIP_BUILD_RPATH FALSE
             BUILD_WITH_INSTALL_RPATH FALSE
             INSTALL_RPATH_USE_LINK_PATH TRUE
-            INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
+            INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR};${CMAKE_INSTALL_LIBDIR}/${INSTALL_NAMESPACE}/plugins"
         )
-        #install(TARGETS ${plugin_name}-tests RUNTIME DESTINATION bin)
+        #install(TARGETS ${plugin_name}-tests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
         add_test(NAME ${plugin_name}-tests COMMAND ${plugin_name}-tests)
         set_tests_properties(${plugin_name}-tests PROPERTIES
             ENVIRONMENT "JANA_PLUGIN_PATH=${CMAKE_BINARY_DIR}/lib/JANA/plugins;LD_LIBRARY_PATH=$<TARGET_FILE_DIR:jana2_shared_lib>:$ENV{LD_LIBRARY_PATH}"

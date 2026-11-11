@@ -9,5 +9,5 @@ target_link_libraries(lw-tutorial-recon PRIVATE
 )
 # Note that if you are outside the JANA2 source tree, you need to target_link_libraries against JANA::jana2_shared_lib instead
 
-install(TARGETS lw-tutorial-recon DESTINATION bin)
+install(TARGETS lw-tutorial-recon DESTINATION ${CMAKE_INSTALL_BINDIR})
 

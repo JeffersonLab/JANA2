@@ -4,7 +4,7 @@ include(CMakePackageConfigHelpers)
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/JANAConfig.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake/JANAConfig.cmake"
-    INSTALL_DESTINATION "lib/JANA/cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/JANA/cmake"
 )
 
 write_basic_package_version_file(
@@ -16,20 +16,20 @@ write_basic_package_version_file(
 install(EXPORT jana2_targets 
     FILE "JANATargets.cmake"
     NAMESPACE JANA:: 
-    DESTINATION "lib/JANA/cmake")
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/JANA/cmake")
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake/JANAConfig.cmake" 
-    DESTINATION "lib/JANA/cmake")
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/JANA/cmake")
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake/JANAConfigVersion.cmake" 
-    DESTINATION "lib/JANA/cmake")
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/JANA/cmake")
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddJanaPlugin.cmake"
-    DESTINATION "lib/JANA/cmake")
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/JANA/cmake")
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddJanaLibrary.cmake"
-    DESTINATION "lib/JANA/cmake")
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/JANA/cmake")
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddJanaTest.cmake"
-    DESTINATION "lib/JANA/cmake")
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/JANA/cmake")
 

@@ -12,8 +12,8 @@ if(USE_ROOT)
         PUBLIC_HEADER ${JANAVIEW_HEADERS}
     )
 
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libjv_mainframe_rdict.pcm DESTINATION lib/JANA/plugins)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libjv_mainframe.rootmap DESTINATION lib/JANA/plugins)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libjv_mainframe_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR}/JANA/plugins)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libjv_mainframe.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR}/JANA/plugins)
 
 else()
 

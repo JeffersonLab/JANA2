@@ -93,7 +93,7 @@ endif()
 add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2> $<TARGET_OBJECTS:VendoredMD5>)
 set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
-target_include_directories(jana2_static_lib PUBLIC $<INSTALL_INTERFACE:include>)
+target_include_directories(jana2_static_lib PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(jana2_static_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 target_link_libraries(jana2_static_lib PUBLIC VendoredTomlPlusPlus)
 
@@ -106,14 +106,14 @@ if (${USE_PODIO})
 elseif (${USE_ROOT})
     target_link_libraries(jana2_static_lib PUBLIC ROOT::Core)
 endif()
-install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
+install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 
 # Build shared library
 add_library(jana2_shared_lib SHARED $<TARGET_OBJECTS:jana2> $<TARGET_OBJECTS:VendoredMD5>)
 set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
-target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
+target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(jana2_shared_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 target_link_libraries(jana2_shared_lib PUBLIC VendoredTomlPlusPlus)
 
@@ -127,7 +127,7 @@ elseif (${USE_ROOT})
     target_link_libraries(jana2_shared_lib PUBLIC ROOT::Core)
 endif()
 
-install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)
+install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 set(INSTALL_RPATH_USE_LINK_PATH True)
 
 
@@ -144,18 +144,18 @@ file(GLOB jana_cli_headers "CLI/*.h*")
 file(GLOB jana_component_headers "Components/*.h*")
 file(GLOB jana_topology_headers "Topology/*.h*")
 
-install(FILES ${jana_headers} DESTINATION include/JANA)
-install(FILES ${jana_engine_headers} DESTINATION include/JANA/Engine)
-install(FILES ${jana_services_headers} DESTINATION include/JANA/Services)
-install(FILES ${jana_utils_headers} DESTINATION include/JANA/Utils)
-install(FILES ${jana_calibs_headers} DESTINATION include/JANA/Calibrations)
-install(FILES ${jana_geometry_headers} DESTINATION include/JANA/Geometry)
-install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
-install(FILES ${jana_component_headers} DESTINATION include/JANA/Components)
-install(FILES ${jana_topology_headers} DESTINATION include/JANA/Topology)
+install(FILES ${jana_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/JANA)
+install(FILES ${jana_engine_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/JANA/Engine)
+install(FILES ${jana_services_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/JANA/Services)
+install(FILES ${jana_utils_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/JANA/Utils)
+install(FILES ${jana_calibs_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/JANA/Calibrations)
+install(FILES ${jana_geometry_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/JANA/Geometry)
+install(FILES ${jana_cli_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/JANA/CLI)
+install(FILES ${jana_component_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/JANA/Components)
+install(FILES ${jana_topology_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/JANA/Topology)
 
 #if (${USE_PODIO})
-#    install(FILES ${jana_podio_headers} DESTINATION include/JANA/Podio)
+#    install(FILES ${jana_podio_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/JANA/Podio)
 #endif()
 
 

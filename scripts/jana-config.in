@@ -61,6 +61,8 @@ fi
 
 
 CMAKE_INSTALL_PREFIX="@CMAKE_INSTALL_PREFIX@"
+CMAKE_INSTALL_LIBDIR="@CMAKE_INSTALL_LIBDIR@"
+CMAKE_INSTALL_INCLUDEDIR="@CMAKE_INSTALL_INCLUDEDIR@"
 CMAKE_CXX_STANDARD="@CMAKE_CXX_STANDARD@"
 
 JANA_VERSION="@PROJECT_VERSION@"
@@ -116,16 +118,16 @@ while test $# -gt 0; do
 
 	case $1 in
 		--cflags|--cxxflags)
-			mess="$mess -I${JANA_INSTALL_DIR}/include ${CPPFLAGS}"
+			mess="$mess -I${JANA_INSTALL_INCLUDEDIR} ${CPPFLAGS}"
 			;;
 		--version|-v)
 			mess="${JANA_VERSION}"
 			;;
 		--libs)
-			mess="$mess -Wl,-rpath,${JANA_INSTALL_DIR}/lib -L${JANA_INSTALL_DIR}/lib -lJANA ${LDFLAGS} ${JANA_ONLY_LIBS} ${LIBS}"
+			mess="$mess -Wl,-rpath,${CMAKE_INSTALL_LIBDIR} -L${CMAKE_INSTALL_LIBDIR} -lJANA ${LDFLAGS} ${JANA_ONLY_LIBS} ${LIBS}"
 			;;
 		--static-libs)
-			mess="$mess ${JANA_INSTALL_DIR}/lib/libJANA.a ${LDFLAGS} ${JANA_ONLY_LIBS} ${LIBS}"
+			mess="$mess ${CMAKE_INSTALL_LIBDIR}/libJANA.a ${LDFLAGS} ${JANA_ONLY_LIBS} ${LIBS}"
 			;;
 		--jana-only)
 			CPPFLAGS=""
