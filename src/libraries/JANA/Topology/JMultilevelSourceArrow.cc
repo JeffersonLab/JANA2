@@ -13,7 +13,7 @@ JMultilevelSourceArrow::JMultilevelSourceArrow(const std::string& name, JEventSo
     m_levels.push_back(m_child_event_level);
     m_next_input_port = 0;
     for (auto level : m_levels) {
-        AddPort(toString(level) + "In", level, PortDirection::In).SetSkipFinishEvent(true);
+        AddPort(toString(level) + "In", level, PortDirection::In);
         AddPort(toString(level) + "Out", level, PortDirection::Out);
     }
 }

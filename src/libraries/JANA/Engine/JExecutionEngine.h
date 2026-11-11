@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "JANA/Utils/JEventLevel.h"
 #include <JANA/JService.h>
 #include <JANA/Topology/JArrow.h>
 #include <JANA/Topology/JTopologyBuilder.h>
@@ -27,10 +28,12 @@ public:
     struct Perf {
         RunStatus runstatus;
         size_t thread_count;
-        size_t event_count;
         size_t uptime_ms;
-        double throughput_hz;
+        int event_count; // Equivalent to processed_event_counts[event_level]. Kept for compatibility.
+        double throughput_hz; // Same as above
         JEventLevel event_level;
+        std::map<JEventLevel, int> processed_event_counts;
+        std::map<JEventLevel, double> throughputs_hz;
     };
 
     struct Worker {
@@ -56,11 +59,10 @@ private:
         Status status = Status::Paused;
         bool is_parallel = false;
         bool is_source = false;
-        bool is_sink = false;
         size_t next_input = 0;
         size_t active_tasks = 0;
-        size_t events_processed;
         clock_t::duration total_processing_duration;
+        std::map<JEventLevel, int> processed_event_counts;
     };
 
     struct WorkerState {
@@ -93,6 +95,7 @@ private:
     int m_timeout_s = 8;
     int m_warmup_timeout_s = 30;
     std::string m_path_to_named_pipe = "/tmp/jana_status";
+    JEventLevel m_ticker_level = JEventLevel::PhysicsEvent;
 
     // Concurrency
     std::mutex m_mutex;
@@ -106,8 +109,7 @@ private:
     size_t m_next_arrow_id=0;
 
     // Metrics
-    size_t m_event_count_at_start = 0;
-    size_t m_event_count_at_finish = 0;
+    std::map<JEventLevel, std::pair<int,int>> m_processed_event_counts; // (start, finish)
     clock_t::time_point m_time_at_start;
     clock_t::time_point m_time_at_finish;
     clock_t::duration m_total_idle_duration = clock_t::duration::zero();

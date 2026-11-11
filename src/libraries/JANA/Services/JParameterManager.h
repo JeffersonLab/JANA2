@@ -17,6 +17,7 @@
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
 #include <JANA/Services/JServiceLocator.h>
+#include <JANA/Utils/JEventLevel.h>
 
 class JParameter {
 
@@ -489,6 +490,42 @@ inline void JParameterManager::Parse(const std::string& in, JLogger::Level& out)
     }
 }
 
+template<>
+inline void JParameterManager::Parse(const std::string& in, JEventLevel& out) {
+    std::string token(in);
+    std::transform(in.begin(), in.end(), token.begin(), ::tolower);
+    if (std::strcmp(token.c_str(), "run") == 0) { 
+        out = JEventLevel::Run;
+    }
+    else if (std::strcmp(token.c_str(), "subrun") == 0) { 
+        out = JEventLevel::Subrun;
+    }
+    else if (std::strcmp(token.c_str(), "timeframe") == 0) { 
+        out = JEventLevel::Timeframe;
+    }
+    else if (std::strcmp(token.c_str(), "timeslice") == 0) { 
+        out = JEventLevel::Timeslice;
+    }
+    else if (std::strcmp(token.c_str(), "block") == 0) { 
+        out = JEventLevel::Block;
+    }
+    else if (std::strcmp(token.c_str(), "slowcontrols") == 0) { 
+        out = JEventLevel::SlowControls;
+    }
+    else if (std::strcmp(token.c_str(), "physicsevent") == 0) { 
+        out = JEventLevel::PhysicsEvent;
+    }
+    else if (std::strcmp(token.c_str(), "subevent") == 0) { 
+        out = JEventLevel::Subevent;
+    }
+    else if (std::strcmp(token.c_str(), "task") == 0) { 
+        out = JEventLevel::Task;
+    }
+    else {
+        throw JException("Unable to parse event level: '%s'. Options are: Run, Subrun, Timeframe, Timeslice, Block, SlowControls, PhysicsEvent, Subevent, Task", in.c_str());
+    }
+}
+
 #if __cplusplus >= 201703L
 /// @brief Basic implementation of Stringify for C++17 and newer. Provides a helpful error message when attempting to stringify a type that doesn't come with a stream operator.
 template <typename T>
@@ -543,6 +580,10 @@ inline std::string JParameterManager::Stringify(const std::string& value) {
     return value;
 }
 
+template <>
+inline std::string JParameterManager::Stringify(const JEventLevel& value) {
+    return toString(value);
+}
 
 template <typename T>
 inline std::string JParameterManager::Stringify(const std::vector<T> &values) {

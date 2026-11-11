@@ -391,10 +391,9 @@ void JTopologyBuilder::CreateTopologyFromScratch() {
         }
         // Connect last_arrow to pool
         auto port_index = last_arrow->GetPortIndex(level, JArrow::PortDirection::Out);
-        if (level == JEventLevel::PhysicsEvent) {
-            last_arrow->SetIsSink(true);
-        }
-        last_arrow->GetPort(port_index).Attach(pool);
+        auto& port = last_arrow->GetPort(port_index);
+        port.Attach(pool);
+        port.SetContributesTopologyEventCounts(true); // The last arrow at each level updates event counts
     }
 
     // -----------------------------

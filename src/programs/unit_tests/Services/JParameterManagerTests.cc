@@ -4,6 +4,7 @@
 
 
 #include <JANA/Services/JParameterManager.h>
+#include "JANA/Utils/JEventLevel.h"
 #include <string>
 #include <vector>
 #include <cstdio>
@@ -119,6 +120,13 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
         jpm.Parse<std::string>(z,testString);
         REQUIRE( testString == "My String Value With Spaces" );
     }
+}
+
+TEST_CASE("JParameterManager_JEventLevel") {
+    JParameterManager jpm;
+    jpm.SetParameter("test_param", "PhysicsEvent");
+    auto level = jpm.GetParameterValue<JEventLevel>("test_param");
+    REQUIRE(level == JEventLevel::PhysicsEvent);
 }
 
 

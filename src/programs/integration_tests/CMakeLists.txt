@@ -1,9 +1,11 @@
 
 
-set(JANA2_INTEGRATION_TEST_SOURCES 
+set(JANA2_INTEGRATION_TEST_SOURCES
     SimpleOffloading.cc
     BatchedArrow.cc
     HierarchicalOwnership.cc
+    MultilevelSource.cc
+    TimesliceUnfolder.cc
 )
 
 add_jana_test(jana-integration-tests SOURCES ${JANA2_INTEGRATION_TEST_SOURCES})

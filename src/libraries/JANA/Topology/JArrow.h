@@ -25,9 +25,10 @@ public:
         std::vector<JEventLevel> m_levels;
         JEventQueue* m_queue = nullptr;
         JEventPool* m_pool = nullptr;
-        bool m_skip_finish_event = false;
         bool m_establishes_ordering = false;
         bool m_enforces_ordering = false;
+        bool m_contributes_topology_event_counts = false;
+        bool m_contributes_arrow_event_counts = false;
 
     public:
         Port(std::string name, std::vector<JEventLevel> levels): m_name(name), m_levels(levels) {};
@@ -38,9 +39,20 @@ public:
 
         const std::string& GetName() { return m_name; }
         const std::vector<JEventLevel>& GetLevels() { return m_levels; }
+        bool GetContributesTopologyEventCounts() { return m_contributes_topology_event_counts; }
+        bool GetContributesArrowEventCounts() { return m_contributes_arrow_event_counts; }
         bool GetEstablishesOrdering() { return m_establishes_ordering; }
         bool GetEnforcesOrdering() { return m_enforces_ordering; }
-        bool GetSkipFinishEvent() { return m_skip_finish_event; }
+
+        Port& SetContributesTopologyEventCounts(bool contributes) { 
+            m_contributes_topology_event_counts = contributes;
+            return *this;
+        }
+
+        Port& SetContributesArrowEventCounts(bool contributes) { 
+            m_contributes_arrow_event_counts = contributes;
+            return *this;
+        }
 
         Port& SetEstablishesOrdering(bool establishes) { 
             m_establishes_ordering = establishes; 
@@ -49,11 +61,6 @@ public:
 
         Port& SetEnforcesOrdering(bool enforces) { 
             m_enforces_ordering = enforces;
-            return *this;
-        }
-
-        Port& SetSkipFinishEvent(bool skip_finish_event) {
-            this->m_skip_finish_event = skip_finish_event;
             return *this;
         }
 
@@ -76,7 +83,6 @@ private:
     int m_id;                      // Used internally
     bool m_is_parallel = false;    // Whether or not it is safe to parallelize
     bool m_is_source = false;      // Whether or not this arrow should activate/drain the topology
-    bool m_is_sink = false;        // Whether or not tnis arrow contributes to the final event count
 
 protected:
     using clock_t = std::chrono::steady_clock;
@@ -112,7 +118,6 @@ public:
     JLogger& GetLogger() { return m_logger; }
     bool IsParallel() { return m_is_parallel; }
     bool IsSource() { return m_is_source; }
-    bool IsSink() { return m_is_sink; }
     int GetNextPortIndex() { return m_next_input_port; }
 
     void SetName(std::string name) { m_name = name; }
@@ -120,12 +125,12 @@ public:
     void SetLogger(JLogger logger) { m_logger = logger; }
     void SetIsParallel(bool is_parallel) { m_is_parallel = is_parallel; }
     void SetIsSource(bool is_source) { m_is_source = is_source; }
-    void SetIsSink(bool is_sink) { m_is_sink = is_sink; }
 
     Port& AddPort(std::string port_name, JEventLevel level, PortDirection direction);
     Port& GetPort(size_t port_index) { return *m_ports.at(port_index); }
     Port& GetPort(JEventLevel level, PortDirection direction) { return *m_ports.at(m_auto_port_lookup.at({level, direction})); }
 
+    size_t GetPortCount() { return m_ports.size(); }
     int GetPortIndex(JEventLevel level, PortDirection direction);
     int GetPortIndex(const std::string& port_name);
     void SetNextPortIndex(int input_port) { m_next_input_port = input_port; }

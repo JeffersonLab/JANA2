@@ -7,6 +7,9 @@ JArrow::Port& JArrow::AddPort(std::string name, JEventLevel level, PortDirection
         throw JException("Port with name '%s' already exists", name.c_str());
     }
     auto port = std::make_unique<Port>(name, level);
+    if (direction == PortDirection::Out) {
+        port->SetContributesArrowEventCounts(true);
+    }
     auto port_raw_ptr = port.get();
     m_ports.push_back(std::move(port));
     m_port_lookup[name] = m_ports.size()-1;
