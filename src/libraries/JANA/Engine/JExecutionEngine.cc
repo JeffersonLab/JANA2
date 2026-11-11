@@ -345,7 +345,9 @@ void JExecutionEngine::HandleFailures() {
         if (worker->is_timed_out) {
             std::string arrow_name = (worker->last_arrow_id == static_cast<uint64_t>(-1)) ? "(none)" : m_topology->GetArrows()[worker->last_arrow_id]->GetName();
             LOG_FATAL(GetLogger()) << "Timeout in worker thread " << worker->worker_id << " while executing " << arrow_name << " on event #" << worker->last_event_nr << LOG_END;
+#ifndef __EMSCRIPTEN__
             pthread_kill(worker->thread->native_handle(), SIGUSR2);
+#endif
             LOG_INFO(GetLogger()) << "Worker thread signalled; waiting for backtrace capture." << LOG_END;
             worker->backtrace.WaitForCapture();
         }
@@ -871,7 +873,9 @@ void JExecutionEngine::PrintWorkerReport(bool send_to_pipe) {
     LOG_INFO(GetLogger()) << "Generating worker report. It may take some time to retrieve each symbol's debug information." << LOG_END;
     for (auto& worker: m_worker_states) {
         worker->backtrace.Reset();
+#ifndef __EMSCRIPTEN__
         pthread_kill(worker->thread->native_handle(), SIGUSR2);
+#endif
     }
     for (auto& worker: m_worker_states) {
         worker->backtrace.WaitForCapture();

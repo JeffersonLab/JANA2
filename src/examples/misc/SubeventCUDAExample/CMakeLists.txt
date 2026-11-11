@@ -16,7 +16,7 @@ if (USE_CUDA)
         OUTPUT_NAME "SubeventCUDAExample"
 		CUDA_ARCHITECTURES "75;80")
 
-	install(TARGETS SubeventCUDAExample DESTINATION bin)
+	install(TARGETS SubeventCUDAExample DESTINATION ${CMAKE_INSTALL_BINDIR})
     add_test(NAME jana-example-subevent-cuda-tests
         COMMAND SubeventCUDAExample)
 

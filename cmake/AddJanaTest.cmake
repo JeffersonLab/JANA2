@@ -33,7 +33,7 @@ macro(add_jana_test test_target_name)
         INSTALL_RPATH_USE_LINK_PATH TRUE
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/JANA/plugins")
 
-    install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
+    install(TARGETS ${test_target_name} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
     add_test(NAME ${test_target_name} COMMAND ${test_target_name})
     set_tests_properties(${test_target_name} PROPERTIES

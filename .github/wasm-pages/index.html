@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>JANA2 WebAssembly</title>
+    <!-- Required for SharedArrayBuffer (pthreads) on GitHub Pages -->
+    <script src="coi-serviceworker.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #1e1e1e; color: #ddd; }
+        #output { width: 100%; height: 600px; background: #000; color: #0f0; font-family: monospace; padding: 10px; overflow-y: auto; border-radius: 5px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 3px; }
+        button:disabled { background: #555; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>JANA2 WebAssembly + Dynamic Linking</h1>
+    <p>This runs JANA2 natively in the browser with Web Workers (pthreads) and dynamically loads the <code>JTest.so</code> side module.</p>
+    
+    <button id="runBtn" disabled>Loading WASM...</button>
+    <br><br>
+    <pre id="output"></pre>
+
+    <script>
+        // Track whether COI is working
+        if (typeof SharedArrayBuffer === 'undefined') {
+            document.getElementById('output').innerHTML += "<span style='color:red'>Error: SharedArrayBuffer is not defined. COI ServiceWorker failed or your browser does not support it.</span>\n";
+        }
+
+        var Module = {
+            print: function(text) {
+                const output = document.getElementById('output');
+                output.innerHTML += text + '\n';
+                output.scrollTop = output.scrollHeight;
+                console.log(text);
+            },
+            printErr: function(text) {
+                const output = document.getElementById('output');
+                output.innerHTML += '<span style="color:#ff6b6b">' + text + '</span>\n';
+                output.scrollTop = output.scrollHeight;
+                console.error(text);
+            },
+            // Preload the side module. Emscripten will fetch this automatically.
+            // When JANA calls dlopen, it'll link into this.
+            dynamicLibraries: ['JTest.so'],
+            
+            onRuntimeInitialized: function() {
+                document.getElementById('runBtn').innerText = 'Run JANA2 (-Pplugins=JTest -Pnthreads=4)';
+                document.getElementById('runBtn').disabled = false;
+                Module.print("Runtime initialized. Ready.");
+            },
+            
+            // Do not call main automatically
+            noInitialRun: true
+        };
+
+        document.getElementById('runBtn').addEventListener('click', function() {
+            this.disabled = true;
+            Module.print("\n--- Executing: jana -Pplugins=JTest -Pnthreads=4 -b -Pjana:nevents=100 ---");
+            
+            try {
+                Module.callMain(['-Pplugins=JTest', '-Pnthreads=4', '-b', '-Pjana:nevents=100']);
+            } catch(e) {
+                Module.printErr("Exception caught: " + e);
+            }
+        });
+    </script>
+    
+    <script src="jana.js"></script>
+</body>
+</html>

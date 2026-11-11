@@ -1,10 +1,12 @@
-
 add_subdirectory(JTest)
 add_subdirectory(janacontrol)
 add_subdirectory(janadot)
 add_subdirectory(janarate)
-add_subdirectory(janaroot)
-add_subdirectory(janaview)
+if(USE_ROOT)
+    add_subdirectory(janaroot)
+    if(TARGET ROOT::Gui)
+        add_subdirectory(janaview)
+    endif()
+endif()
 add_subdirectory(regressiontest)
 add_subdirectory(perfetto)
-

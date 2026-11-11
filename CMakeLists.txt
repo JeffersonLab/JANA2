@@ -2,6 +2,19 @@ cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0074 NEW) # find_package() uses <PackageName>_ROOT implicit hints
 
 project(jana2 VERSION 2026.03.01)
+include(GNUInstallDirs)
+if(EMSCRIPTEN)
+    set(CMAKE_INSTALL_BINDIR ".")
+    set(CMAKE_INSTALL_LIBDIR ".")
+endif()
+if(EMSCRIPTEN)
+    string(APPEND CMAKE_CXX_FLAGS " -fwasm-exceptions")
+    string(APPEND CMAKE_C_FLAGS " -fwasm-exceptions")
+    set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
+    string(APPEND CMAKE_EXE_LINKER_FLAGS " -sMAIN_MODULE=1 -sWASM_BIGINT=1 -fwasm-exceptions -sALLOW_MEMORY_GROWTH=1")
+    string(APPEND CMAKE_SHARED_LINKER_FLAGS " -sSIDE_MODULE=1 -sWASM_BIGINT=1 -fwasm-exceptions -sALLOW_MEMORY_GROWTH=1")
+    string(APPEND CMAKE_MODULE_LINKER_FLAGS " -sSIDE_MODULE=1 -sWASM_BIGINT=1 -fwasm-exceptions -sALLOW_MEMORY_GROWTH=1")
+endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
@@ -80,7 +93,7 @@ endif()
 if (${USE_PODIO})
     find_package(podio REQUIRED)
     set(JANA2_HAVE_PODIO 1)
-    set(USE_ROOT ON)
+    # set(USE_ROOT ON) # Disabled for WASM
     include_directories(SYSTEM ${podio_INCLUDE_DIR})
 else()
     set(JANA2_HAVE_PODIO 0)
@@ -170,7 +183,7 @@ if (USE_PERFETTO)
         $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:
             -Wno-sign-compare -Wno-unused-parameter -Wno-missing-field-initializers>
     )
-    install(TARGETS perfetto_sdk EXPORT jana2_targets DESTINATION lib)
+    install(TARGETS perfetto_sdk EXPORT jana2_targets DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(FILES ${PERFETTO_SDK_DIR}/perfetto.h DESTINATION include/perfetto)
     set(JANA2_HAVE_PERFETTO 1)
 else()
@@ -278,10 +291,10 @@ endif()
 
 #---------------------------------------------------------------------------------------
 
-install(DIRECTORY scripts/ DESTINATION bin FILES_MATCHING PATTERN "jana-*.py"
+install(DIRECTORY scripts/ DESTINATION ${CMAKE_INSTALL_BINDIR} FILES_MATCHING PATTERN "jana-*.py"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
 
-    install(FILES "scripts/jana-status.sh" RENAME "jana-status" DESTINATION "bin"
+    install(FILES "scripts/jana-status.sh" RENAME "jana-status" DESTINATION "${CMAKE_INSTALL_BINDIR}"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
 
 include(${CMAKE_SOURCE_DIR}/cmake/MakeConfig.cmake)

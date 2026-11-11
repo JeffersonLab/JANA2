@@ -1,0 +1,71 @@
+name: Deploy WASM Pages
+
+on:
+  push:
+    branches:
+      - wasm
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Configure CMake
+        run: |
+          emcmake cmake -B build -S . \
+            -DCMAKE_CXX_FLAGS="-pthread -sUSE_PTHREADS=1" \
+            -DCMAKE_C_FLAGS="-pthread -sUSE_PTHREADS=1" \
+            -DCMAKE_EXE_LINKER_FLAGS="-sEXPORTED_RUNTIME_METHODS=callMain,FS -pthread -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency -sPROXY_TO_PTHREAD=1" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-pthread -sUSE_PTHREADS=1" \
+            -DCMAKE_MODULE_LINKER_FLAGS="-pthread -sUSE_PTHREADS=1" \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build jana and JTest
+        run: cmake --build build --target jana JTest -j4
+
+      - name: Prepare Pages Directory
+        run: |
+          mkdir -p dist
+          # Copy our HTML and ServiceWorker
+          cp .github/wasm-pages/index.html dist/
+          cp .github/wasm-pages/coi-serviceworker.js dist/
+          
+          # Copy the WASM artifacts
+          cp build/src/programs/jana/jana.js dist/
+          cp build/src/programs/jana/jana.wasm dist/
+          cp build/src/programs/jana/jana.worker.js dist/ || true
+          
+          cp build/lib/libJANA.so dist/ || cp build/src/libraries/JANA/libJANA.so dist/
+
+          # Copy the plugin side module
+          cp build/lib/JANA/plugins/JTest.so dist/ || cp build/src/plugins/JTest/JTest.so dist/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

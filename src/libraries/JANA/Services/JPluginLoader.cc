@@ -138,6 +138,10 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
         // User didn't provide a path, so we have to search
         // If no valid paths found, `path` variable stays empty
 
+#ifdef __EMSCRIPTEN__
+        if (path.empty()) path = name + ".so";
+#endif
+
         if (path.empty()) {
             LOG_ERROR(m_logger) 
                 << "Couldn't find plugin '" << name << "'\n" 

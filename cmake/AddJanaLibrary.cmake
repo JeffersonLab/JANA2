@@ -86,7 +86,7 @@ macro(add_jana_library library_name)
     install(TARGETS ${library_name}
         EXPORT ${LIBRARY_EXPORT}
         PUBLIC_HEADER DESTINATION include/${INSTALL_NAMESPACE}/${CWD_NAME}
-        LIBRARY DESTINATION lib
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
 
     # Handle tests
@@ -99,7 +99,7 @@ macro(add_jana_library library_name)
             INSTALL_RPATH_USE_LINK_PATH TRUE
             INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
         )
-        #install(TARGETS ${library_name}_tests RUNTIME DESTINATION bin)
+        #install(TARGETS ${library_name}_tests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
         add_test(NAME ${library_name}_tests COMMAND ${library_name}_tests)
         set_tests_properties(${library_name}_tests PROPERTIES
             ENVIRONMENT "LD_LIBRARY_PATH=$<TARGET_FILE_DIR:${library_name}>:$<TARGET_FILE_DIR:jana2_shared_lib>:$ENV{LD_LIBRARY_PATH}"

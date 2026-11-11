@@ -5,6 +5,60 @@
 
 #include "JBacktrace.h"
 
+#ifdef __EMSCRIPTEN__
+#include <sstream>
+
+JBacktrace::JBacktrace(const JBacktrace& other) {
+    m_ready = other.m_ready.load();
+    m_frame_count = other.m_frame_count;
+    m_frames_to_omit = other.m_frames_to_omit;
+    m_buffer = other.m_buffer;
+}
+
+JBacktrace& JBacktrace::operator=(const JBacktrace& other) {
+    m_ready = other.m_ready.load();
+    m_frame_count = other.m_frame_count;
+    m_frames_to_omit = other.m_frames_to_omit;
+    m_buffer = other.m_buffer;
+    return *this;
+}
+
+JBacktrace::JBacktrace(JBacktrace&& other) {
+    m_ready = other.m_ready.load();
+    m_frame_count = other.m_frame_count;
+    m_frames_to_omit = other.m_frames_to_omit;
+    m_buffer = std::move(other.m_buffer);
+}
+
+void JBacktrace::Reset() {
+    m_ready = false;
+}
+
+void JBacktrace::WaitForCapture() const {
+}
+
+void JBacktrace::Capture(int frames_to_omit) {
+    m_frame_count = 0;
+    m_frames_to_omit = frames_to_omit;
+    m_ready.store(true, std::memory_order_release);
+}
+
+void JBacktrace::Format(std::ostream& os) const {
+    os << "Backtrace not supported on Emscripten." << std::endl;
+}
+
+std::string JBacktrace::AddrToLineInfo(const char* filename, size_t offset) const {
+    return "";
+}
+
+std::string JBacktrace::ToString() const {
+    std::ostringstream oss;
+    Format(oss);
+    return oss.str();
+}
+
+#else
+
 #include <chrono>
 #include <sstream>
 #include <execinfo.h>
@@ -130,5 +184,6 @@ std::string JBacktrace::ToString() const {
     return oss.str();
 }
 
+#endif
 
 

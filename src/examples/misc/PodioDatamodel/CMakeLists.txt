@@ -14,17 +14,17 @@ if (USE_PODIO)
 
     install(TARGETS PodioDatamodel
         EXPORT jana2_targets
-        LIBRARY DESTINATION lib
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION include/JANA/examples/PodioDatamodel
     )
 
     install(TARGETS PodioDatamodelDict
         EXPORT jana2_targets
-        DESTINATION lib
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
 
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/PodioDatamodelDictDict.rootmap DESTINATION lib)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libPodioDatamodelDict_rdict.pcm DESTINATION lib)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/PodioDatamodelDictDict.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libPodioDatamodelDict_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 else()
     message(STATUS "Skipping examples/PodioDatamodel because USE_PODIO=Off")

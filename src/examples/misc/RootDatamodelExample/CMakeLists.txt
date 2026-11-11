@@ -41,7 +41,7 @@ if(${USE_ROOT})
     target_link_libraries(RootDatamodelExample PUBLIC ROOT::Core)
 
     message(STATUS "Installing ROOT PCM files: ${my_pcms}")
-    install(FILES ${my_pcms} DESTINATION lib/JANA/plugins)
+    install(FILES ${my_pcms} DESTINATION ${JANA_INSTALL_PLUGINDIR})
 
     add_test(NAME jana-example-rootdatamodel-tests
         COMMAND $<TARGET_FILE:jana> -Pplugins=RootDatamodelExample -Pjana:nevents=10)

@@ -68,6 +68,8 @@ uint32_t GetCpuID() {
 #endif // __cpuid_count
     return cpuid;
 
+#elif defined(__EMSCRIPTEN__)
+    return 0;
 #else //__APPLE__
     return sched_getcpu();
 #endif //__APPLE__
@@ -75,7 +77,9 @@ uint32_t GetCpuID() {
 
 
 bool PinThreadToCpu(std::thread* thread, size_t cpu_id) {
-
+#ifdef __EMSCRIPTEN__
+    return false;
+#else
     if (typeid(std::thread::native_handle_type) != typeid(pthread_t)) {
         return false;
     }
@@ -99,6 +103,7 @@ bool PinThreadToCpu(std::thread* thread, size_t cpu_id) {
     }
 #endif
     return true;
+#endif // __EMSCRIPTEN__
 }
 
 } // JCpuInfo namespace

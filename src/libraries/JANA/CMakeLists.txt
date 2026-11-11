@@ -83,7 +83,10 @@ if (USE_PERFETTO)
 endif()
 
 if (${USE_PODIO})
-    target_link_libraries(jana2 PUBLIC podio::podio podio::podioRootIO)
+    target_link_libraries(jana2 PUBLIC podio::podio)
+    if(USE_ROOT)
+        target_link_libraries(jana2 PUBLIC podio::podioRootIO)
+    endif()
 elseif (${USE_ROOT})
     target_link_libraries(jana2 PUBLIC ROOT::Core)
 endif()
@@ -102,11 +105,14 @@ if (USE_PERFETTO)
 endif()
 
 if (${USE_PODIO})
-    target_link_libraries(jana2_static_lib PUBLIC podio::podio podio::podioRootIO)
+    target_link_libraries(jana2_static_lib PUBLIC podio::podio)
+    if(USE_ROOT)
+        target_link_libraries(jana2_static_lib PUBLIC podio::podioRootIO)
+    endif()
 elseif (${USE_ROOT})
     target_link_libraries(jana2_static_lib PUBLIC ROOT::Core)
 endif()
-install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
+install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 
 # Build shared library
@@ -122,12 +128,15 @@ if (USE_PERFETTO)
 endif()
 
 if (${USE_PODIO})
-    target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO)
+    target_link_libraries(jana2_shared_lib PUBLIC podio::podio)
+    if(USE_ROOT)
+        target_link_libraries(jana2_shared_lib PUBLIC podio::podioRootIO)
+    endif()
 elseif (${USE_ROOT})
     target_link_libraries(jana2_shared_lib PUBLIC ROOT::Core)
 endif()
 
-install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)
+install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 set(INSTALL_RPATH_USE_LINK_PATH True)
 
 

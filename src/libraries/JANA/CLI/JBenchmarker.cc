@@ -1,3 +1,6 @@
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
@@ -191,6 +194,87 @@ void JBenchmarker::RunUntilFinished() {
     // Close files
     // Hopefully, because we called flush(), the files will be partially filled even if we are SIGKILLed
     // before we reach this point.
+
+#ifdef __EMSCRIPTEN__
+
+    MAIN_THREAD_EM_ASM({
+
+        var rates_path = UTF8ToString($0);
+
+        var samples_path = UTF8ToString($1);
+
+        if (typeof window !== "undefined" && typeof Blob !== "undefined") {
+
+            function triggerDownload(path) {
+
+                try {
+
+                    var content = FS.readFile(path);
+
+                    var blob = new Blob([content], { type: "application/octet-stream" });
+
+                    var url = URL.createObjectURL(blob);
+
+                    var a = document.createElement("a");
+
+                    a.href = url;
+
+                    var parts = path.split("/");
+
+                    a.download = parts[parts.length - 1];
+
+                    document.body.appendChild(a);
+
+                    a.click();
+
+                    document.body.removeChild(a);
+
+                    URL.revokeObjectURL(url);
+
+                } catch(e) {
+
+                    console.error("Failed to download " + path, e);
+
+                }
+
+            }
+
+            triggerDownload(rates_path);
+
+            setTimeout(function() { triggerDownload(samples_path); }, 500);
+
+        } else if (typeof ENVIRONMENT_IS_NODE !== "undefined" && ENVIRONMENT_IS_NODE) {
+
+            var fs = require("fs");
+
+            function copyOut(path) {
+
+                try {
+
+                    var content = FS.readFile(path);
+
+                    var parts = path.split("/");
+
+                    fs.writeFileSync(parts[parts.length - 1], content);
+
+                } catch(e) {
+
+                    console.error("Failed to extract " + path, e);
+
+                }
+
+            }
+
+            copyOut(rates_path);
+
+            copyOut(samples_path);
+
+        }
+
+    }, (m_output_dir + "/" + m_rates_filename).c_str(), (m_output_dir + "/" + m_samples_filename).c_str());
+
+#endif
+
 
     samples_file.close();
     rates_file.close();

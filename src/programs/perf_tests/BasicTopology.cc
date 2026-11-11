@@ -29,7 +29,7 @@ struct PESrc : public JEventSource {
         data_out.SetShortName("1");
     }
     JEventSource::Result Emit(JEvent& event) override {
-        data_out().push_back(new Data {event.GetEventNumber()*3 });
+        data_out().push_back(new Data {static_cast<size_t>(event.GetEventNumber()*3) });
         JBenchUtils::consume_cpu_us(*latency_us);
         return Result::Success;
     };

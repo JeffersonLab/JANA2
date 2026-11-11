@@ -27,7 +27,7 @@ struct BSrc : public JEventSource {
         data_out.SetShortName("1");
     }
     JEventSource::Result Emit(JEvent& block) override {
-        data_out().push_back(new Data {block.GetEventNumber()*3 });
+        data_out().push_back(new Data {static_cast<size_t>(block.GetEventNumber()*3) });
         JBenchUtils::consume_cpu_us(*latency_us);
         return Result::Success;
     };
